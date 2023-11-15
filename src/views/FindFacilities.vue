@@ -133,7 +133,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.fetchFacilities();
-  //   await this.store.dispatch('util/getSecurityGroups')
+    await this.store.dispatch('util/fetchFacilityTypes')
   },
   methods: {
     async updateQuery() {
