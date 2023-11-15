@@ -10,31 +10,57 @@
       <ion-item lines="none" class="ion-margin-top">
         <ion-label>
           <h1>{{ "Facility Name" }}</h1>
-          <p>Facility Id</p>
+          <p>{{ "Facility Id" }}</p>
         </ion-label>
       </ion-item>
   
       <section>
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>
-              {{ translate("Address") }}
-            </ion-card-title>
-          </ion-card-header>
-          <ion-item lines="full">
-            <ion-label>
-              <h3>{{ "Address line 1" }}</h3>
-              <h3>{{ "Address line 2" }}</h3>
-              <p class="ion-text-wrap">{{ "City," }} {{ "Zipcode" }}</p>
-              <p class="ion-text-wrap">{{ "State," }} {{ "Country" }}</p>
-            </ion-label>
-          </ion-item>
-          <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
-          <ion-button expand="block" fill="outline">
-            {{ translate("Add") }}
-            <ion-icon slot="end" :icon="addCircleOutline" />
-          </ion-button>
-        </ion-card>
+        <div>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>
+                {{ translate("Address") }}
+              </ion-card-title>
+            </ion-card-header>
+            <ion-item lines="full">
+              <ion-label>
+                <h3>{{ "Address line 1" }}</h3>
+                <h3>{{ "Address line 2" }}</h3>
+                <p class="ion-text-wrap">{{ "City," }} {{ "Zipcode" }}</p>
+                <p class="ion-text-wrap">{{ "State," }} {{ "Country" }}</p>
+              </ion-label>
+            </ion-item>
+            <ion-button fill="clear" @click="addAddress">{{ translate("Edit") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="addAddress">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
+          </ion-card>
+
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>
+                {{ translate("Latitude & Longitude") }}
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
+            </ion-card-content>
+            <ion-item lines="full">
+              <ion-label>{{ translate("Latitude") }}</ion-label>
+              <p>{{ "<latitude>" }}</p>
+              </ion-item>
+              <ion-item lines="full">
+                <ion-label>{{ translate("Longitude") }}</ion-label>
+                <p>{{ "<longitude>" }}</p>
+            </ion-item>
+            <ion-button fill="clear" @click="addGeoPoint">{{ translate("Edit") }}</ion-button>
+            <ion-button expand="block" fill="outline" @click="addGeoPoint">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
+          </ion-card>
+        </div>
   
         <ion-card>
           <ion-card-header>
@@ -163,10 +189,8 @@
             <ion-toggle :checked="true" slot="end" />
           </ion-item>
           <ion-item lines="full">
-            <ion-label>{{ translate("Days to ship") }} {{ 2 }}</ion-label>
-            <ion-button color="medium" fill="clear" slot="end">
-              <ion-icon slot="icon-only" :icon="closeOutline" />
-            </ion-button>
+            <ion-label>{{ translate("Days to ship") }}</ion-label>
+            <ion-input type="number" min="0" placeholder="0"/>
           </ion-item>
           <ion-button fill="outline" expand="block">
             {{ translate("Update days to ship") }}
@@ -213,6 +237,7 @@ import {
   IonContent,
   IonHeader, 
   IonIcon,
+  IonInput,
   IonItem,
   IonLabel,
   IonList,
@@ -222,11 +247,14 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
-  popoverController
+  popoverController,
+  modalController
 } from '@ionic/vue'
 import { addOutline, addCircleOutline, closeOutline, ellipsisVerticalOutline } from 'ionicons/icons'
 import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import { translate } from '@hotwax/dxp-components';
+import AddAddressModal from '@/components/AddAddressModal.vue'
+import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -243,6 +271,7 @@ export default defineComponent({
     IonContent,
     IonHeader, 
     IonIcon,
+    IonInput,
     IonItem,
     IonLabel,
     IonList,
@@ -257,10 +286,26 @@ export default defineComponent({
     async openStorePopover(ev: Event) {
       const popover = await popoverController.create({
         component: OpenStorePopover,
-        event: ev
+        event: ev,
+        showBackdrop: false
       });
       return popover.present()
     },
+    async addAddress() {
+      const addAddressModal = await modalController.create({
+        component: AddAddressModal
+      })
+
+      addAddressModal.present()
+    },
+    async addGeoPoint() {
+      const addGeoPointModal = await modalController.create({
+        component: AddGeoPointModal
+      })
+
+      addGeoPointModal.present()
+
+    }
   },
   setup() {
     return {
