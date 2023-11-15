@@ -52,9 +52,22 @@
             </div>
 
             <div class="tablet">
-              <ion-label>
-                {{ 'THRESHOLD CONSUMED' }}
-              </ion-label>
+              <ion-item lines="none" v-if="facility.orderLimitType === 'custom'">
+                <ion-text>{{ facility?.orderCount }}</ion-text>
+                <ion-chip :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">{{ facility?.maximumOrderLimit }}</ion-chip>
+              </ion-item>
+              <ion-item lines="none" v-else-if="facility.orderLimitType === 'unlimited'">
+                <ion-chip :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
+                  {{ translate("Unlimited orders") }}
+                  <ion-icon :icon="lockOpenOutline"/>
+                </ion-chip>
+              </ion-item>
+              <ion-item lines="none" v-else>
+                <ion-chip :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
+                  <ion-label>{{ translate("No capacity") }}</ion-label>
+                  <ion-icon :icon="lockClosedOutline"/>
+                </ion-chip>
+              </ion-item>
             </div>
           </div>
         </main>
@@ -92,19 +105,28 @@ import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
+  IonText,
   IonTitle,
-  IonToolbar
+  IonToolbar,
+  popoverController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import {
   businessOutline,
   globeOutline,
+  lockClosedOutline,
+  lockOpenOutline,
   shareOutline,
   storefrontOutline
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
+import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
+import { hasError } from '@/adapter';
+import { FacilityService } from '@/services/FacilityService'
+import { showToast } from '@/utils';
+import logger from '@/logger';
 
 export default defineComponent({
   name: 'FindFacilities',
@@ -122,6 +144,7 @@ export default defineComponent({
     IonSearchbar,
     IonSelect,
     IonSelectOption,
+    IonText,
     IonTitle,
     IonToolbar
   },
@@ -165,6 +188,41 @@ export default defineComponent({
         event.target.complete();
       });
     },
+    async changeOrderLimitPopover(ev: Event, facility: any) {
+      const popover = await popoverController.create({
+        component: OrderLimitPopover,
+        event: ev,
+        showBackdrop: false,
+        componentProps: { fulfillmentOrderLimit: facility.maximumOrderLimit }
+      });
+      popover.present();
+
+      const result = await popover.onDidDismiss();
+      // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
+      if(result.data != undefined && result.data !== facility.maximumOrderLimit) {
+        await this.updateFacility(result.data, facility)
+      }
+    },
+    async updateFacility(maximumOrderLimit: number | string, facility: any) {
+      let resp;
+
+      try {
+        resp = await FacilityService.updateFacility({
+          "facilityId": facility.facilityId,
+          maximumOrderLimit
+        })
+
+        if(!hasError(resp)) {
+          facility.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+          showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }))
+        logger.error('Failed to update facility', err)
+      }
+    }
   },
   setup() {
     const router = useRouter();
@@ -173,6 +231,8 @@ export default defineComponent({
     return {
       businessOutline,
       globeOutline,
+      lockClosedOutline,
+      lockOpenOutline,
       router,
       shareOutline,
       storefrontOutline,

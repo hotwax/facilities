@@ -43,7 +43,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "entityName": "FacilityAndProductStore",
       "noConditionFind": "Y",
       "distinct": "Y",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId'],
+      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit'],
       ...payload
     }
 
@@ -60,6 +60,15 @@ const actions: ActionTree<FacilityState, RootState> = {
         const facilityOnlineGroupInformation = await FacilityService.fetchFacilityOnlineGroupInformation(facilities.map((facility: any) => facility.facilityId))
 
         facilities.map((facility: any) => {
+          const fulfillmentOrderLimit = facility.maximumOrderLimit
+          if (fulfillmentOrderLimit === 0) {
+            facility.orderLimitType = 'no-capacity'
+          } else if (fulfillmentOrderLimit) {
+            facility.orderLimitType = 'custom'
+          } else {
+            facility.orderLimitType = 'unlimited'
+          }
+
           if(facilityOnlineGroupInformation.includes(facility.facilityId)) {
             facility.sellOnline = true
           } else {
@@ -81,7 +90,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_QUERY_UPDATED, query)
   },
 
-  clearFacilites({ commit }) {
+  clearFacilityState({ commit }) {
     commit(types.FACILITY_QUERY_UPDATED, {
       queryString: '',
       productStoreId: '',

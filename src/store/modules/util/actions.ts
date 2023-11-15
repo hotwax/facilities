@@ -26,7 +26,6 @@ const actions: ActionTree<UtilState, RootState> = {
         throw resp.data
       }
     } catch (error) {
-      showToast(translate('Something went wrong.'));
       logger.error(error)
     }
     commit(types.UTIL_PRODUCT_STORES_UPDATED, productStores)
@@ -63,7 +62,6 @@ const actions: ActionTree<UtilState, RootState> = {
         throw resp.data
       }
     } catch (error) {
-      showToast(translate('Something went wrong.'));
       logger.error(error)
     }
 

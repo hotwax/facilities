@@ -45,7 +45,16 @@ const fetchFacilityOnlineGroupInformation = async(facilityIds: Array<string>): P
   return facilitiesWithSellOnlineEnabled;
 }
 
+const updateFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacility",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   fetchFacilityOnlineGroupInformation,
-  fetchFacilities
+  fetchFacilities,
+  updateFacility
 }
