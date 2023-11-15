@@ -69,7 +69,7 @@
             </ion-card-title>
           </ion-card-header>
           <ion-list lines="none">
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Monday") }}</p>
               </ion-label>
@@ -77,7 +77,7 @@
                 {{ "7:30am - 8:00pm" }}
               </ion-label>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Tuesday") }}</p>
               </ion-label>
@@ -86,7 +86,7 @@
                 {{ translate("Add timings") }}
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Wednesday") }}</p>
               </ion-label>
@@ -95,7 +95,7 @@
                 {{ translate("Add timings") }}
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Thursday") }}</p>
               </ion-label>
@@ -104,7 +104,7 @@
                 {{ translate("Add timings") }}
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Friday") }}</p>
               </ion-label>
@@ -113,7 +113,7 @@
                 {{ translate("Add timings") }}
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Saturday") }}</p>
               </ion-label>
@@ -122,7 +122,7 @@
                 {{ translate("Add timings") }}
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item button @click="selectOperatingTime">
               <ion-label>
                 <p>{{ translate("Sunday") }}</p>
               </ion-label>
@@ -136,12 +136,13 @@
 
         <ion-card>
           <ion-card-header>
-            <ion-card-subtitle>
-              {{ "Overline" }}
-            </ion-card-subtitle>
             <ion-card-title>
               {{ translate("Product Stores") }}
             </ion-card-title>
+            <ion-button @click="addProductStore" fill="clear">
+              <ion-icon :icon="addCircleOutline" slot="start" />
+              {{ translate("Add") }}
+            </ion-button>
           </ion-card-header>
 
           <ion-item>
@@ -231,7 +232,6 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -255,6 +255,8 @@ import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import { translate } from '@hotwax/dxp-components';
 import AddAddressModal from '@/components/AddAddressModal.vue'
 import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
+import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
+import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -265,7 +267,6 @@ export default defineComponent({
     IonCard,
     IonCardContent,
     IonCardHeader,
-    IonCardSubtitle,
     IonCardTitle,
     IonChip,
     IonContent,
@@ -281,6 +282,11 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
+  },
+  data() {
+    return {
+      isTimeModalOpen: false as boolean
+    }
   },
   methods: {
     async openStorePopover(ev: Event) {
@@ -304,7 +310,20 @@ export default defineComponent({
       })
 
       addGeoPointModal.present()
+    },
+    async addProductStore() {
+      const addProductStoreModal = await modalController.create({
+        component: SelectProductStoreModal
+      })
 
+      addProductStoreModal.present()
+    },
+    async selectOperatingTime() {
+      const selectOperatingTimeModal = await modalController.create({
+        component: SelectOperatingTimeModal
+      })
+  
+      selectOperatingTimeModal.present()
     }
   },
   setup() {
@@ -324,5 +343,16 @@ section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start;
+}
+ion-modal.date-time-modal {
+  --width: 290px;
+  --height: 440px;
+  --border-radius: 8px;
+}
+
+ion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 </style>
