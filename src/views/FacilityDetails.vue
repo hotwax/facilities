@@ -49,10 +49,10 @@
             <ion-item lines="full">
               <ion-label>{{ translate("Latitude") }}</ion-label>
               <p>{{ "<latitude>" }}</p>
-              </ion-item>
-              <ion-item lines="full">
-                <ion-label>{{ translate("Longitude") }}</ion-label>
-                <p>{{ "<longitude>" }}</p>
+            </ion-item>
+            <ion-item lines="full">
+              <ion-label>{{ translate("Longitude") }}</ion-label>
+              <p>{{ "<longitude>" }}</p>
             </ion-item>
             <ion-button fill="clear" @click="addGeoPoint">{{ translate("Edit") }}</ion-button>
             <ion-button expand="block" fill="outline" @click="addGeoPoint">

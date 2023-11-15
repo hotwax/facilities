@@ -65,7 +65,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonTitle,
-    IonToolbar,
+    IonToolbar
   },
   methods: {
     closeModal() {

@@ -13,15 +13,11 @@
   <ion-content>
     <ion-list>
       <ion-item lines="none">
-        <ion-label>
-          {{ translate("Opening Time") }}
-        </ion-label>
+        <ion-label>{{ translate("Opening Time") }}</ion-label>
         <ion-button color="medium" @click="selectTime">{{ "10:45 am" }}</ion-button>
       </ion-item>
       <ion-item lines="none">
-        <ion-label>
-          {{ translate("Closing Time") }}
-        </ion-label>
+        <ion-label>{{ translate("Closing Time") }}</ion-label>
         <ion-button color="medium" @click="selectTime">{{ "10:45 am" }}</ion-button>
       </ion-item>
     </ion-list>
