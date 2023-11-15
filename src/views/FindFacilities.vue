@@ -19,7 +19,7 @@
               <ion-label>{{ translate("Product Store") }}</ion-label>
               <ion-select interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <!-- <ion-select-option :value="securityGroup.groupId" :key="index" v-for="(securityGroup, index) in securityGroups">{{ securityGroup.groupName }}</ion-select-option> -->
+                <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName }}</ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item lines="none">
@@ -27,6 +27,7 @@
               <ion-label>{{ translate("Type") }}</ion-label>
               <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                <ion-select-option :value="facilityType.facilityId" :key="index" v-for="(facilityType, index) in facilityTypes">{{ facilityType.description }}</ion-select-option>
               </ion-select>
             </ion-item>
           </ion-list>
@@ -126,14 +127,16 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      facilities: 'facility/getFacilities',
-      query: 'facility/getQuery',
-      isScrollable: "facility/isScrollable"
+      facilities: "facility/getFacilities",
+      query: "facility/getQuery",
+      isScrollable: "facility/isScrollable",
+      facilityTypes: "util/getFacilityTypes",
+      productStores: "util/getProductStores"
     })
   },
   async mounted() {
     await this.fetchFacilities();
-    await this.store.dispatch('util/fetchFacilityTypes')
+    await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY' }), this.store.dispatch('util/fetchProductStores')])
   },
   methods: {
     async updateQuery() {

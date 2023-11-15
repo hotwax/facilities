@@ -9,7 +9,7 @@ import { translate } from '@hotwax/dxp-components'
 import logger from '@/logger'
 
 const actions: ActionTree<UtilState, RootState> = {
-  async getProductStores({ commit }) {
+  async fetchProductStores({ commit }) {
     let productStores = []
     const params = {
       viewSize: 100,
@@ -50,8 +50,8 @@ const actions: ActionTree<UtilState, RootState> = {
 
     if(payload?.parentTypeId) {
       params['inputFields'] = {
-        parentTypeId: ['VIRTUAL_FACILITY', ''],
-        parentTypeId_op: 'OR',
+        parentTypeId: payload.parentTypeId,
+        parentTypeId_op: 'notEqual',
       }
     }
 
@@ -66,6 +66,7 @@ const actions: ActionTree<UtilState, RootState> = {
       showToast(translate('Something went wrong.'));
       logger.error(error)
     }
+
     commit(types.UTIL_FACILITY_TYPES_UPDATED, facilityTypes)
   },
 
