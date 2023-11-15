@@ -5,14 +5,23 @@ import { Module } from 'vuex'
 import FacilityState from './FacilityState'
 import RootState from '@/store/RootState'
 
-const userModule: Module<FacilityState, RootState> = {
-    namespaced: true,
-    state: {
-      query: {}
+const facilityModule: Module<FacilityState, RootState> = {
+  namespaced: true,
+  state: {
+    query: {
+      queryString: '',
+      productStoreId: '',
+      facilityTypeId: ''
     },
-    getters,
-    actions,
-    mutations,
+    selectedFacility: {},
+    facilities: {
+      list: [],
+      total: 0
+    }
+  },
+  getters,
+  actions,
+  mutations,
 }
 
-export default userModule;
+export default facilityModule;

@@ -1,3 +1,12 @@
 export default interface FacilityState {
-  query: object
+  query: {
+    queryString: string,
+    productStoreId: string,
+    facilityTypeId: string
+  };
+  selectedFacility: object;
+  facilities: {
+    list: Array<object>,
+    total: number
+  };
 }
