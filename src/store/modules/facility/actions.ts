@@ -70,7 +70,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         throw resp.data
       }
     } catch(error) {
-      console.error(error)
+      logger.error(error)
     }
 
     emitter.emit("dismissLoader");
@@ -79,6 +79,15 @@ const actions: ActionTree<FacilityState, RootState> = {
 
   updateQuery({ commit }, query) {
     commit(types.FACILITY_QUERY_UPDATED, query)
+  },
+
+  clearFacilites({ commit }) {
+    commit(types.FACILITY_QUERY_UPDATED, {
+      queryString: '',
+      productStoreId: '',
+      facilityTypeId: ''
+    })
+    commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
   }
 }
 

@@ -141,6 +141,9 @@ const actions: ActionTree<UserState, RootState> = {
     resetConfig();
     resetPermissions();
 
+    this.dispatch('util/clearUtilState')
+    this.dispatch('facility/clearFacilityState')
+
     // reset plugin state on logout
     authStore.$reset()
     userStore.$reset()
