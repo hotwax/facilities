@@ -9,6 +9,9 @@ const mutations: MutationTree <FacilityState> = {
   },
   [types.FACILITY_QUERY_UPDATED](state, payload) {
     state.query = payload
+  },
+  [types.FACILITY_CURRENT_UPDATED](state, payload) {
+    state.current = payload
   }
 }
 export default mutations;
