@@ -12,23 +12,19 @@
 
   <ion-content>
     <ion-list>
-      <ion-list-header>
-        {{ translate("Facility details") }}
-      </ion-list-header>
+      <ion-list-header>{{ translate("Facility details") }}</ion-list-header>
       <ion-item>
         <ion-label>{{ translate("Facility ID") }}</ion-label>
         <p>{{ "<facility-id>" }}</p>
       </ion-item>
-      <ion-item>
+      <ion-item lines="none">
         <ion-label>{{ translate("Facility name") }}</ion-label>
         <p>{{ "<facility-name>" }}</p>
       </ion-item>
     </ion-list>
 
     <ion-list>
-      <ion-list-header>
-        {{ translate("Custom mapping") }}
-      </ion-list-header>
+      <ion-list-header>{{ translate("Custom mapping") }}</ion-list-header>
       <ion-item>
         <ion-label>{{ translate("Mapping ID") }}</ion-label>
         <ion-input placeholder="Mapping ID" />

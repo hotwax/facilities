@@ -18,9 +18,9 @@
 <script lang="ts">
 import {
   IonContent,
+  IonItem,
   IonList,
   IonListHeader,
-  IonItem,
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
@@ -28,12 +28,12 @@ import { translate } from "@hotwax/dxp-components";
 import CustomMappingModal from "./CustomMappingModal.vue";
 
 export default defineComponent({
-  name: "ExternalSystemPopover",
+  name: "AddExternalMappingPopover",
   components: {
     IonContent,
+    IonItem,
     IonList,
-    IonListHeader,
-    IonItem
+    IonListHeader
   },
   methods: {
     async openCustomMappingModal() {

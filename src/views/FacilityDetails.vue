@@ -238,7 +238,7 @@
           </ion-segment>
   
           <div v-if="segment === 'external-mappings'">
-            <ion-button fill="outline" @click="openExternalSystemPopover">
+            <ion-button fill="outline" @click="openExternalMappingPopover">
               <ion-icon :icon="addCircleOutline" slot="start" />
               {{ translate("Map facility to an external system") }}
             </ion-button>
@@ -295,18 +295,13 @@
               </ion-item>
   
               <ion-label class="tablet">
-                <ion-chip>{{ "fulfillment" }}</ion-chip>
+                <ion-chip outline>{{ "fulfillment" }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
   
               <ion-label class="tablet">
-                <ion-chip>{{ "3rd June 2023" }}</ion-chip>
+                <ion-chip outline>{{ "3rd June 2023" }}</ion-chip>
                 <p>{{ "added" }}</p>
-              </ion-label>
-  
-              <ion-label class="tablet">
-                <ion-chip>{{ "10th June 2023" }}</ion-chip>
-                <p>{{ "validity" }}</p>
               </ion-label>
   
               <ion-button fill="clear" color="medium">
@@ -369,7 +364,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent } from 'vue';
 import {
   IonBackButton,
   IonBadge,
@@ -410,7 +405,7 @@ import {
   personOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
-import ExternalSystemPopover from '@/components/ExternalSystemPopover.vue'
+import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
 import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
@@ -450,7 +445,7 @@ export default defineComponent({
   },
   data() {
     return {
-      isTimeModalOpen: false as boolean,
+      isTimeModalOpen: false,
       segment: 'external-mappings'
     }
   },
@@ -513,13 +508,13 @@ export default defineComponent({
       });
       return locationDetailsPopover.present()
     },
-    async openExternalSystemPopover(ev: Event) {
-      const externalSystemPopover = await popoverController.create({
-        component: ExternalSystemPopover,
+    async openExternalMappingPopover(ev: Event) {
+      const externalMappingPopover = await popoverController.create({
+        component: AddExternalMappingPopover,
         event: ev,
         showBackdrop: false
       });
-      return externalSystemPopover.present()
+      return externalMappingPopover.present()
     }
   },
   setup() {

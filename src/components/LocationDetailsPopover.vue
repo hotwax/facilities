@@ -15,9 +15,9 @@
 <script lang="ts">
 import {
   IonContent,
+  IonItem,
   IonList,
   IonListHeader,
-  IonItem,
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
@@ -28,9 +28,9 @@ export default defineComponent({
   name: "LocationDetailsPopover",
   components: {
     IonContent,
+    IonItem,
     IonList,
-    IonListHeader,
-    IonItem
+    IonListHeader
   },
   methods: {
     async addLocationModal() {
