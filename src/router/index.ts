@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import Settings from "@/views/Settings.vue"
+import FacilityDetails from '@/views/FacilityDetails.vue';
 import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
@@ -45,6 +46,13 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Login',
     component: DxpLogin,
     beforeEnter: loginGuard
+  },
+  {
+    path: "/facility-details/:facilityId",
+    props: true,
+    name: "Facility Details",
+    component: FacilityDetails,
+    beforeEnter: authGuard
   },
   {
     path: "/settings",

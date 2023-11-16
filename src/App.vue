@@ -1,7 +1,6 @@
 <template>
   <ion-app>
     <ion-split-pane content-id="main-content" when="lg">
-      <Menu />
       <ion-router-outlet id="main-content" />
     </ion-split-pane>
   </ion-app>
@@ -10,7 +9,6 @@
 <script lang="ts">
 import { IonApp, IonRouterOutlet, IonSplitPane } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import Menu from '@/components/Menu.vue';
 import { loadingController } from '@ionic/vue';
 import emitter from "@/event-bus";
 import { mapGetters, useStore } from 'vuex';
@@ -24,8 +22,7 @@ export default defineComponent({
   components: {
     IonApp,
     IonRouterOutlet,
-    IonSplitPane,
-    Menu
+    IonSplitPane
   },
   data() {
     return {
