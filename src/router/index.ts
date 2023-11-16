@@ -48,7 +48,8 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: loginGuard
   },
   {
-    path: "/facility-details",
+    path: "/facility-details/:facilityId",
+    props: true,
     name: "Facility Details",
     component: FacilityDetails,
     beforeEnter: authGuard

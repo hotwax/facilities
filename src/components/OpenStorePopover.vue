@@ -19,8 +19,8 @@ import {
   IonContent,
   IonList,
   IonListHeader,
-  IonItem,
-  IonIcon
+  IonIcon,
+  IonItem
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { starOutline, removeCircleOutline } from "ionicons/icons";
@@ -32,8 +32,8 @@ export default defineComponent({
     IonContent,
     IonList,
     IonListHeader,
-    IonItem,
-    IonIcon
+    IonIcon,
+    IonItem
   },
   setup() {
     return {
