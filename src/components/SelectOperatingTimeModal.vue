@@ -48,8 +48,8 @@
   
 <script lang="ts">
 import { 
-  IonButtons,
   IonButton,
+  IonButtons,
   IonContent,
   IonDatetime,
   IonFooter,
@@ -70,8 +70,8 @@ import { translate } from '@hotwax/dxp-components'
 export default defineComponent({
   name: "SelectOperatingTimeModal",
   components: { 
-    IonButtons,
     IonButton,
+    IonButtons,
     IonContent,
     IonDatetime,
     IonFooter,
@@ -86,7 +86,7 @@ export default defineComponent({
   },
   data() {
     return {
-      isTimeModalOpen: false as boolean
+      isTimeModalOpen: false
     }
   },
   methods: {

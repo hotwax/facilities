@@ -247,10 +247,10 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
-  popoverController,
-  modalController
+  modalController,
+  popoverController
 } from '@ionic/vue'
-import { addOutline, addCircleOutline, closeOutline, ellipsisVerticalOutline } from 'ionicons/icons'
+import { addCircleOutline, addOutline, closeOutline, ellipsisVerticalOutline } from 'ionicons/icons'
 import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import { translate } from '@hotwax/dxp-components';
 import AddAddressModal from '@/components/AddAddressModal.vue'
@@ -328,8 +328,8 @@ export default defineComponent({
   },
   setup() {
     return {
-      addOutline,
       addCircleOutline,
+      addOutline,
       closeOutline,
       ellipsisVerticalOutline,
       translate

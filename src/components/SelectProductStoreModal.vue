@@ -31,8 +31,8 @@
   
 <script lang="ts">
 import { 
-  IonButtons,
   IonButton,
+  IonButtons,
   IonCheckbox,
   IonContent,
   IonFab,
@@ -53,8 +53,8 @@ import { translate } from '@hotwax/dxp-components'
 export default defineComponent({
   name: "SelectProductStoreModal",
   components: { 
-    IonButtons,
     IonButton,
+    IonButtons,
     IonCheckbox,
     IonContent,
     IonFab,
