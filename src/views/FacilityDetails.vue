@@ -219,12 +219,155 @@
           </ion-item>
         </ion-card>
       </section>
+
+      <div class="segments">
+        <ion-segment scrollable @ionChange="segmentChanged($event)" v-model="segment">
+          <ion-segment-button value="external-mappings" layout="icon-start">
+            <ion-icon :icon="globeOutline" />
+            <ion-label>{{ translate("External Mappings") }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="staff" layout="icon-start">
+            <ion-icon :icon="personOutline" />
+            <ion-label>{{ translate("Staff") }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="locations" layout="icon-start">
+            <ion-icon :icon="locationOutline" />
+            <ion-label>{{ translate("Locations") }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+
+        <div v-if="segment == 'locations'">
+          <ion-button fill="outline">
+            <ion-icon :icon="addCircleOutline" slot="start" />
+            {{ translate("Add locations to facility") }}
+          </ion-button>
+
+          <div class="list-item">
+            <ion-item lines="none">
+              <ion-icon :icon="locationOutline" slot="start" />
+              <ion-label>
+                {{ "locations id" }}
+                <p>{{ "pick/primary" }}</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-label class="tablet">
+              AI
+              <p>{{ "area" }}</p>
+            </ion-label>
+
+            <ion-label>
+              AL
+              <p>{{ "aisle" }}</p>
+            </ion-label>
+
+            <ion-label class="tablet">
+              SI
+              <p>{{ "level" }}</p>
+            </ion-label>
+
+            <ion-label>
+              1
+              <p>{{ "sequence" }}</p>
+            </ion-label>
+            
+            <ion-button fill="clear" color="medium">
+              <ion-icon slot="icon-only" :icon="reorderTwoOutline" />
+            </ion-button>
+            
+            <ion-button fill="clear" color="medium">
+              <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+            </ion-button>
+          </div>
+          <hr />
+        </div>
+
+        <div v-if="segment == 'staff'">
+          <ion-button fill="outline">
+            <ion-icon :icon="addCircleOutline" slot="start" />
+            {{ translate("Add staff member to facility") }}
+          </ion-button>
+
+          <div class="list-item purchase-orders">
+            <ion-item lines="none">
+              <ion-icon :icon="personOutline" slot="start" />
+              <ion-label>
+                {{ "party name" }}
+                <p>{{ "user id" }}</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-label class="tablet">
+              <ion-chip>{{ "fulfillment" }}</ion-chip>
+              <p>{{ "role" }}</p>
+            </ion-label>
+
+            <ion-label class="tablet">
+              <ion-chip>{{ "3rd June 2023" }}</ion-chip>
+              <p>{{ "added" }}</p>
+            </ion-label>
+
+            <ion-label class="tablet">
+              <ion-chip>{{ "10th June 2023" }}</ion-chip>
+              <p>{{ "validity" }}</p>
+            </ion-label>
+
+            <ion-button fill="clear" color="medium">
+              <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+            </ion-button>
+          </div>
+          <hr />
+        </div>
+
+        <div v-if="segment == 'external-mappings'">
+          <ion-button fill="outline">
+            <ion-icon :icon="addCircleOutline" slot="start" />
+            {{ translate("Map facility to an external system") }}
+          </ion-button>
+          <div class="external-mappings">
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>
+                  {{ translate("Shopify facility") }}
+                </ion-card-title>
+              </ion-card-header>
+              <ion-item lines="full">
+                <ion-label>
+                  {{ "shop name" }}
+                  <p>Shop Id</p>
+                </ion-label>
+                <ion-note slot="end">{{"note"}}</ion-note>
+              </ion-item>
+              <ion-item lines="full">
+                <ion-label>{{ "shopify location id" }}</ion-label>
+                <ion-note slot="end">{{"note"}}</ion-note>
+              </ion-item>
+              <ion-item lines="full">
+                <ion-label>{{ "admin link" }}</ion-label>
+                <ion-button color="medium" fill="clear">
+                  <ion-icon :icon="openOutline" />
+                </ion-button>
+              </ion-item>
+              <ion-item lines="full">
+                <ion-label>{{ "shopify link" }}</ion-label>
+                <ion-button color="medium" fill="clear">
+                  <ion-icon :icon="openOutline" />
+                </ion-button>
+              </ion-item>
+              <ion-button fill="clear" @click="addAddress">{{ translate("Edit") }}</ion-button>
+              <ion-button fill="clear" color="danger" @click="addAddress">{{ translate("Remove") }}</ion-button>
+            </ion-card>
+          </div>
+          
+          <hr />
+        </div>
+      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import {
   IonBackButton,
   IonBadge,
@@ -247,10 +390,23 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  IonSegment,
+  IonSegmentButton,
   popoverController,
   modalController
 } from '@ionic/vue'
-import { addOutline, addCircleOutline, closeOutline, ellipsisVerticalOutline } from 'ionicons/icons'
+import { 
+  addOutline,
+  addCircleOutline,
+  closeOutline,
+  closeCircleOutline,
+  ellipsisVerticalOutline,
+  globeOutline,
+  openOutline,
+  personOutline,
+  reorderTwoOutline,
+  locationOutline
+} from 'ionicons/icons'
 import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import { translate } from '@hotwax/dxp-components';
 import AddAddressModal from '@/components/AddAddressModal.vue'
@@ -276,6 +432,8 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonSegment,
+    IonSegmentButton,
     IonPage,
     IonProgressBar,
     IonText,
@@ -285,7 +443,7 @@ export default defineComponent({
   },
   data() {
     return {
-      isTimeModalOpen: false as boolean
+      isTimeModalOpen: false as boolean,
     }
   },
   methods: {
@@ -324,15 +482,28 @@ export default defineComponent({
       })
   
       selectOperatingTimeModal.present()
+    },
+    segmentChanged(ev: CustomEvent) {
+      console.log(ev);
+      
     }
   },
   setup() {
+    const segment = ref("external-mappings");
+
     return {
       addOutline,
       addCircleOutline,
+      closeCircleOutline,
       closeOutline,
       ellipsisVerticalOutline,
-      translate
+      globeOutline,
+      openOutline,
+      personOutline,
+      reorderTwoOutline,
+      locationOutline,
+      translate,
+      segment
     }
   }
 });
@@ -354,5 +525,50 @@ ion-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+div {
+  margin-top: var(--spacer-lg)
+}
+
+.product {
+  display: grid;
+  grid-template-columns: minmax(254px, auto) 1fr;
+  gap: var(--spacer-xl);
+  justify-items: start;
+  margin: 0 0 var(--spacer-base);
+}
+
+.product > ion-card {
+  height: 360px;
+  border-radius: 20px;
+  padding: var(--spacer-base);
+}
+
+/*Height of segment is defined now since their are less list items. Will remove it later */
+.segments {
+  height: 400px;
+  margin-top: var(--spacer-2xl);
+}
+
+ion-segment {
+  justify-content: start;
+}
+
+.purchase-orders {
+  --columns-desktop: 5;
+}
+
+.external-mappings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: start; 
+}
+
+@media (min-width: 991px) {
+  .orders {
+    display: grid;
+    grid-template-columns: 343px 570px;
+  }
 }
 </style>
