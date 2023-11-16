@@ -221,10 +221,10 @@
       </section>
 
       <div class="segments">
-        <ion-segment scrollable @ionChange="segmentChanged($event)" v-model="segment">
+        <ion-segment scrollable v-model="segment">
           <ion-segment-button value="external-mappings" layout="icon-start">
             <ion-icon :icon="globeOutline" />
-            <ion-label>{{ translate("External Mappings") }}</ion-label>
+            <ion-label>{{ translate("External mappings") }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="staff" layout="icon-start">
             <ion-icon :icon="personOutline" />
@@ -275,7 +275,7 @@
               <ion-icon slot="icon-only" :icon="reorderTwoOutline" />
             </ion-button>
             
-            <ion-button fill="clear" color="medium">
+            <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover">
               <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
             </ion-button>
           </div>
@@ -384,31 +384,33 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonNote,
   IonPage,
   IonProgressBar,
+  IonSegment,
+  IonSegmentButton,
   IonText,
   IonTitle,
   IonToggle,
   IonToolbar,
-  IonSegment,
-  IonSegmentButton,
-  popoverController,
-  modalController
+  modalController,
+  popoverController
 } from '@ionic/vue'
 import { 
-  addOutline,
   addCircleOutline,
-  closeOutline,
+  addOutline,
   closeCircleOutline,
+  closeOutline,
   ellipsisVerticalOutline,
   globeOutline,
+  locationOutline,
   openOutline,
   personOutline,
-  reorderTwoOutline,
-  locationOutline
+  reorderTwoOutline
 } from 'ionicons/icons'
-import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import { translate } from '@hotwax/dxp-components';
+import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
+import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
 import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
@@ -432,10 +434,11 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
-    IonSegment,
-    IonSegmentButton,
+    IonNote,
     IonPage,
     IonProgressBar,
+    IonSegment,
+    IonSegmentButton,
     IonText,
     IonTitle,
     IonToggle,
@@ -444,6 +447,7 @@ export default defineComponent({
   data() {
     return {
       isTimeModalOpen: false as boolean,
+      segment: 'locations'
     }
   },
   methods: {
@@ -483,27 +487,28 @@ export default defineComponent({
   
       selectOperatingTimeModal.present()
     },
-    segmentChanged(ev: CustomEvent) {
-      console.log(ev);
-      
+    async openLocationDetailsPopover(ev: Event) {
+      const locationDetailsPopover = await popoverController.create({
+        component: LocationDetailsPopover,
+        event: ev,
+        showBackdrop: false
+      });
+      return locationDetailsPopover.present()
     }
   },
   setup() {
-    const segment = ref("external-mappings");
-
     return {
-      addOutline,
       addCircleOutline,
+      addOutline,
       closeCircleOutline,
       closeOutline,
       ellipsisVerticalOutline,
       globeOutline,
+      locationOutline,
       openOutline,
       personOutline,
       reorderTwoOutline,
-      locationOutline,
-      translate,
-      segment
+      translate
     }
   }
 });
