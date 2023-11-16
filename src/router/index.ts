@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
+import FacilityDetails from '@/views/FacilityDetails.vue';
 import store from '@/store'
 import { hasPermission } from '@/authorization';
 import { showToast } from '@/utils'
@@ -58,6 +59,13 @@ const routes: Array<RouteRecordRaw> = [
     path: '/find-facilities',
     name: 'FindFacilities',
     component: FindFacilities,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/facility-details/:facilityId",
+    name: "Facility Details",
+    component: FacilityDetails,
+    props: true,
     beforeEnter: authGuard
   },
   {
