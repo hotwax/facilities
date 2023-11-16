@@ -2,6 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
+        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Find Facilities") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -88,6 +89,7 @@
 
 <script lang="ts">
 import {
+  IonBackButton,
   IonChip,
   IonContent,
   IonHeader,
@@ -126,6 +128,7 @@ import logger from '@/logger';
 export default defineComponent({
   name: 'FindFacilities',
   components: {
+    IonBackButton,
     IonChip,
     IonContent,
     IonHeader,
@@ -153,6 +156,7 @@ export default defineComponent({
   },
   async mounted() {
     await this.fetchFacilities();
+    // We only need to fetch those types whose parent is not virtual facility
     await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY' }), this.store.dispatch('util/fetchProductStores')])
   },
   methods: {
