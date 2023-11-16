@@ -57,7 +57,11 @@ const actions: ActionTree<FacilityState, RootState> = {
         if(payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.facilities.list)).concat(resp.data.docs)
         total = resp.data.count
 
+        // make api calls in parallel
         const facilityOnlineGroupInformation = await FacilityService.fetchFacilityOnlineGroupInformation(facilities.map((facility: any) => facility.facilityId))
+        const facilitiesOrderCount = await FacilityService.fetchFacilitiesOrderCount(facilities.map((facility: any) => facility.facilityId))
+
+        console.log('facilitiesOrderCount', facilitiesOrderCount)
 
         facilities.map((facility: any) => {
           const fulfillmentOrderLimit = facility.maximumOrderLimit
@@ -68,6 +72,8 @@ const actions: ActionTree<FacilityState, RootState> = {
           } else {
             facility.orderLimitType = 'unlimited'
           }
+
+          facility.orderCount = facilitiesOrderCount[facility.facilityId] ? facilitiesOrderCount[facility.facilityId] : 0;
 
           if(facilityOnlineGroupInformation.includes(facility.facilityId)) {
             facility.sellOnline = true

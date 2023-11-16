@@ -52,22 +52,18 @@
             </div>
 
             <div class="tablet">
-              <ion-item lines="none" v-if="facility.orderLimitType === 'custom'">
-                <ion-text>{{ facility?.orderCount }}</ion-text>
-                <ion-chip :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">{{ facility?.maximumOrderLimit }}</ion-chip>
-              </ion-item>
-              <ion-item lines="none" v-else-if="facility.orderLimitType === 'unlimited'">
-                <ion-chip :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
-                  {{ translate("Unlimited orders") }}
-                  <ion-icon :icon="lockOpenOutline"/>
-                </ion-chip>
-              </ion-item>
-              <ion-item lines="none" v-else>
-                <ion-chip :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
-                  <ion-label>{{ translate("No capacity") }}</ion-label>
-                  <ion-icon :icon="lockClosedOutline"/>
-                </ion-chip>
-              </ion-item>
+              <ion-label class="ion-text-center" v-if="facility.orderLimitType === 'custom'" @click.stop="changeOrderLimitPopover($event, facility)">
+                {{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}
+                <p>{{ translate('threshold consumed') }}</p>
+              </ion-label>
+              <ion-chip v-else-if="facility.orderLimitType === 'unlimited'" :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
+                {{ translate("Unlimited orders") }}
+                <ion-icon :icon="lockOpenOutline"/>
+              </ion-chip>
+              <ion-chip v-else :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
+                <ion-label>{{ translate("No capacity") }}</ion-label>
+                <ion-icon :icon="lockClosedOutline"/>
+              </ion-chip>
             </div>
           </div>
         </main>
@@ -105,7 +101,6 @@ import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
-  IonText,
   IonTitle,
   IonToolbar,
   popoverController
@@ -144,7 +139,6 @@ export default defineComponent({
     IonSearchbar,
     IonSelect,
     IonSelectOption,
-    IonText,
     IonTitle,
     IonToolbar
   },

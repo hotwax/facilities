@@ -42,6 +42,7 @@
   "store name": "store name",
   "Time zone updated successfully": "Time zone updated successfully",
   "Type": "Type",
+  "threshold consumed": "threshold consumed",
   "Unlimited Capacity": "Unlimited Capacity",
   "Unlimited capacity removes the fulfillment capacity limit entirely. To add a fulfillment capacity to this facility, use the custom option.": "Unlimited capacity removes the fulfillment capacity limit entirely. To add a fulfillment capacity to this facility, use the custom option.",
   "Unlimited fulfillment capacity": "Unlimited fulfillment capacity",
