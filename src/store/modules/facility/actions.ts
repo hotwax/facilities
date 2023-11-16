@@ -8,7 +8,7 @@ import * as types from './mutation-types'
 import logger from '@/logger'
 
 const actions: ActionTree<FacilityState, RootState> = {
-  async fetchFacilities({ commit, dispatch, state }, payload) {
+  async fetchFacilities({ commit, state }, payload) {
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
     const filters = {
       'parentFacilityTypeId': 'VIRTUAL_FACILITY',
