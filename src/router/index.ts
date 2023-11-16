@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
-import Settings from "@/views/Settings.vue"
 import FacilityDetails from '@/views/FacilityDetails.vue';
 import store from '@/store'
 import { hasPermission } from '@/authorization';
@@ -8,6 +7,9 @@ import { showToast } from '@/utils'
 import 'vue-router'
 import { useAuthStore, DxpLogin, translate } from '@hotwax/dxp-components'
 import { loader } from '@/utils/user';
+import FacilityManagement from '@/views/FacilityManagement.vue'
+import Settings from '@/views/Settings.vue';
+import FindFacilities from '@/views/FindFacilities.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -39,7 +41,7 @@ const loginGuard = (to: any, from: any, next: any) => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/settings'
+    redirect: '/facility-management'
   },
   {
     path: '/login',
@@ -48,15 +50,27 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: loginGuard
   },
   {
-    path: "/facility-details/:facilityId",
-    props: true,
-    name: "Facility Details",
-    component: FacilityDetails,
+    path: '/facility-management',
+    name: 'FacilityManagement',
+    component: FacilityManagement,
     beforeEnter: authGuard
   },
   {
-    path: "/settings",
-    name: "Settings",
+    path: '/find-facilities',
+    name: 'FindFacilities',
+    component: FindFacilities,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/facility-details/:facilityId",
+    name: "Facility Details",
+    component: FacilityDetails,
+    props: true,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
     component: Settings,
     beforeEnter: authGuard
   }
