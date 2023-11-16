@@ -9,4 +9,5 @@ export default interface FacilityState {
     list: Array<object>,
     total: number
   };
+  current: any;
 }

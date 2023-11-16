@@ -14,5 +14,8 @@ const getters: GetterTree <FacilityState, RootState> = {
       state.facilities.list?.length > 0 && state.facilities.list?.length < state.facilities.total
     );
   },
+  getCurrent(state) {
+    return state.current ? JSON.parse(JSON.stringify(state.current)) : {}
+  }
 }
 export default getters;

@@ -17,7 +17,8 @@ const facilityModule: Module<FacilityState, RootState> = {
     facilities: {
       list: [],
       total: 0
-    }
+    },
+    current: {}
   },
   getters,
   actions,
