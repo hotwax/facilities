@@ -53,15 +53,17 @@
             </div>
 
             <div class="tablet">
-              <ion-label class="ion-text-center" v-if="facility.orderLimitType === 'custom'" @click.stop="changeOrderLimitPopover($event, facility)">
-                {{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}
+              <div class="ion-text-center" v-if="facility.orderLimitType === 'custom'">
+                <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
+                  <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
+                </ion-chip>
                 <p>{{ translate('threshold consumed') }}</p>
-              </ion-label>
-              <ion-chip v-else-if="facility.orderLimitType === 'unlimited'" :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
-                {{ translate("Unlimited orders") }}
+              </div>
+              <ion-chip outline v-else-if="facility.orderLimitType === 'unlimited'" @click.stop="changeOrderLimitPopover($event, facility)">
+                <ion-label>{{ translate("Unlimited orders") }}</ion-label>
                 <ion-icon :icon="lockOpenOutline"/>
               </ion-chip>
-              <ion-chip v-else :outline="true" @click.stop="changeOrderLimitPopover($event, facility)">
+              <ion-chip outline v-else @click.stop="changeOrderLimitPopover($event, facility)">
                 <ion-label>{{ translate("No capacity") }}</ion-label>
                 <ion-icon :icon="lockClosedOutline"/>
               </ion-chip>
@@ -157,7 +159,7 @@ export default defineComponent({
   async mounted() {
     await this.fetchFacilities();
     // We only need to fetch those types whose parent is not virtual facility
-    await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY' }), this.store.dispatch('util/fetchProductStores')])
+    await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY', parentTypeId_op: 'notEqual', facilityTypeId: 'VIRTUAL_FACILITY', facilityTypeId_op: 'notEqual' }), this.store.dispatch('util/fetchProductStores')])
   },
   methods: {
     async updateQuery() {

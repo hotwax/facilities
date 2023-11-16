@@ -61,8 +61,6 @@ const actions: ActionTree<FacilityState, RootState> = {
         const facilityOnlineGroupInformation = await FacilityService.fetchFacilityOnlineGroupInformation(facilities.map((facility: any) => facility.facilityId))
         const facilitiesOrderCount = await FacilityService.fetchFacilitiesOrderCount(facilities.map((facility: any) => facility.facilityId))
 
-        console.log('facilitiesOrderCount', facilitiesOrderCount)
-
         facilities.map((facility: any) => {
           const fulfillmentOrderLimit = facility.maximumOrderLimit
           if (fulfillmentOrderLimit === 0) {

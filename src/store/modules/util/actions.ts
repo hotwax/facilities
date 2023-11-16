@@ -39,18 +39,14 @@ const actions: ActionTree<UtilState, RootState> = {
 
     let facilityTypes = []
     const params = {
+      inputFields: {
+        ...payload
+      },
       viewSize: 100,
       noConditionFind: 'Y',
       entityName: 'FacilityType',
       fieldList: ['facilityTypeId', 'description']
     } as any
-
-    if(payload?.parentTypeId) {
-      params['inputFields'] = {
-        parentTypeId: payload.parentTypeId,
-        parentTypeId_op: 'notEqual',
-      }
-    }
 
     try {
       const resp = await UtilService.fetchFacilityTypes(params)
