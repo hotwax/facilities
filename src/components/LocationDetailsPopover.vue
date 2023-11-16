@@ -2,7 +2,7 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ translate("Location details") }}</ion-list-header>
-      <ion-item button>
+      <ion-item button @click="addLocationModal">
         {{ translate("Edit location") }}
       </ion-item>
       <ion-item button lines="none">
@@ -17,10 +17,12 @@ import {
   IonContent,
   IonList,
   IonListHeader,
-  IonItem
+  IonItem,
+  modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
+import AddLocationModal from "./AddLocationModal.vue";
 
 export default defineComponent({
   name: "LocationDetailsPopover",
@@ -29,6 +31,15 @@ export default defineComponent({
     IonList,
     IonListHeader,
     IonItem
+  },
+  methods: {
+    async addLocationModal() {
+      const addLocationModal = await modalController.create({
+        component: AddLocationModal
+      })
+
+      addLocationModal.present()
+    }
   },
   setup() {
     return {
