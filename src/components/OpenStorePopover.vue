@@ -32,7 +32,7 @@ import { hasError } from "@hotwax/oms-api";
 import { showToast } from "@/utils";
 
 export default defineComponent({
-  name: "CreateMappingModal",
+  name: "OpenStorePopover",
   components: {
     IonContent,
     IonList,

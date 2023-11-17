@@ -2,12 +2,12 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/"/>
+        <ion-back-button slot="start" default-href="/find-facilities"/>
         <ion-title>{{ translate("Facility details") }}</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content>
-      <div v-if="current?.facilityId">
+      <main v-if="current?.facilityId">
         <ion-item lines="none" class="ion-margin-top">
           <ion-label>
             <h1>{{ current.facilityName }}</h1>
@@ -211,10 +211,148 @@
             </ion-item>
           </ion-card>
         </section>
-      </div>
-      <div v-else-if="!isLoading" class="ion-text-center ion-padding-top">
+
+        <div class="segments">
+          <ion-segment scrollable v-model="segment">
+            <ion-segment-button value="external-mappings" layout="icon-start">
+              <ion-icon :icon="globeOutline" />
+              <ion-label>{{ translate("External mappings") }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="staff" layout="icon-start">
+              <ion-icon :icon="personOutline" />
+              <ion-label>{{ translate("Staff") }}</ion-label>
+            </ion-segment-button>
+            <ion-segment-button value="locations" layout="icon-start">
+              <ion-icon :icon="locationOutline" />
+              <ion-label>{{ translate("Locations") }}</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+
+          <div v-if="segment === 'external-mappings'">
+            <ion-button fill="outline" @click="openExternalMappingPopover">
+              <ion-icon :icon="addCircleOutline" slot="start" />
+              {{ translate("Map facility to an external system") }}
+            </ion-button>
+            <div class="external-mappings">
+              <ion-card>
+                <ion-card-header>
+                  <ion-card-title>
+                    {{ translate("Shopify facility") }}
+                  </ion-card-title>
+                </ion-card-header>
+                <ion-item lines="full">
+                  <ion-label>
+                    {{ "shop name" }}
+                    <p>{{ "<Shop Id>" }}</p>
+                  </ion-label>
+                  <ion-note slot="end">{{"note"}}</ion-note>
+                </ion-item>
+                <ion-item lines="full">
+                  <ion-label>{{ "<shopify location id>" }}</ion-label>
+                  <ion-note slot="end">{{"note"}}</ion-note>
+                </ion-item>
+                <ion-item lines="full">
+                  <ion-label>{{ "<admin link>" }}</ion-label>
+                  <ion-button color="medium" fill="clear">
+                    <ion-icon :icon="openOutline" />
+                  </ion-button>
+                </ion-item>
+                <ion-item lines="full">
+                  <ion-label>{{ "<shopify link>" }}</ion-label>
+                  <ion-button color="medium" fill="clear">
+                    <ion-icon :icon="openOutline" />
+                  </ion-button>
+                </ion-item>
+                <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger">{{ translate("Remove") }}</ion-button>
+              </ion-card>
+            </div>          
+            <hr />
+          </div>
+
+          <div v-else-if="segment === 'staff'">
+            <ion-button fill="outline" @click="addStaffMemberModal">
+              <ion-icon :icon="addCircleOutline" slot="start" />
+              {{ translate("Add staff member to facility") }}
+            </ion-button>
+
+            <div class="list-item staff">
+              <ion-item lines="none">
+                <ion-icon :icon="personOutline" slot="start" />
+                <ion-label>
+                  {{ "party name" }}
+                  <p>{{ translate("party id") }}</p>
+                </ion-label>
+              </ion-item>
+
+              <ion-label class="tablet">
+                <ion-chip outline>{{ "fulfillment" }}</ion-chip>
+                <p>{{ translate("role") }}</p>
+              </ion-label>
+
+              <ion-label class="tablet">
+                <ion-chip outline>{{ "3rd June 2023" }}</ion-chip>
+                <p>{{ "added" }}</p>
+              </ion-label>
+
+              <ion-button fill="clear" color="medium">
+                <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+              </ion-button>
+            </div>
+            <hr />
+          </div>
+
+          <div v-else-if="segment == 'locations'">
+            <ion-button fill="outline" @click="addLocationModal">
+              <ion-icon :icon="addCircleOutline" slot="start" />
+              {{ translate("Add locations to facility") }}
+            </ion-button>
+
+            <div class="list-item">
+              <ion-item lines="none">
+                <ion-icon :icon="locationOutline" slot="start" />
+                <ion-label>
+                  {{ "locations id" }}
+                  <p>{{ "pick/primary" }}</p>
+                </ion-label>
+              </ion-item>
+
+              <ion-label class="tablet">
+                AI
+                <p>{{ translate("area") }}</p>
+              </ion-label>
+
+              <ion-label>
+                AL
+                <p>{{ translate("aisle") }}</p>
+              </ion-label>
+
+              <ion-label>
+                SI
+                <p>{{ translate("section") }}</p>
+              </ion-label>
+
+              <ion-label class="tablet">
+                SI
+                <p>{{ translate("level") }}</p>
+              </ion-label>
+
+              <ion-label>
+                1
+                <p>{{ translate("sequence") }}</p>
+              </ion-label>
+              
+              <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover">
+                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+              </ion-button>
+            </div>
+            <hr />
+          </div>
+        </div>
+      </main>
+      <main v-else-if="!isLoading" class="ion-text-center ion-padding-top">
         {{ translate("Failed to fetch facility information") }}
-      </div>
+      </main>
     </ion-content>
   </ion-page>
 </template>
@@ -237,8 +375,11 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonNote,
   IonPage,
   IonProgressBar,
+  IonSegment,
+  IonSegmentButton,
   IonText,
   IonTitle,
   IonToggle,
@@ -246,13 +387,27 @@ import {
   modalController,
   popoverController
 } from '@ionic/vue'
-import { addCircleOutline, addOutline, closeOutline, ellipsisVerticalOutline } from 'ionicons/icons'
-import OpenStorePopover from '@/components/OpenStorePopover.vue';
+import { 
+  addCircleOutline,
+  addOutline,
+  closeCircleOutline,
+  closeOutline,
+  ellipsisVerticalOutline,
+  globeOutline,
+  locationOutline,
+  openOutline,
+  personOutline
+} from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
+import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
+import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
+import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
 import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
+import AddLocationModal from '@/components/AddLocationModal.vue';
+import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
 import { mapGetters, useStore } from 'vuex';
 import { showToast } from '@/utils';
 import { FacilityService } from '@/services/FacilityService';
@@ -276,8 +431,11 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonNote,
     IonPage,
     IonProgressBar,
+    IonSegment,
+    IonSegmentButton,
     IonText,
     IonTitle,
     IonToggle,
@@ -286,7 +444,8 @@ export default defineComponent({
   data() {
     return {
       isTimeModalOpen: false as boolean,
-      isLoading: true // shows whether the facility information fetching is completed or not
+      isLoading: true, // shows whether the facility information fetching is completed or not
+      segment: 'external-mappings'
     }
   },
   computed: {
@@ -371,12 +530,42 @@ export default defineComponent({
 
       selectProductStoreModal.present()
     },
+    async addLocationModal() {
+      const addLocationModal = await modalController.create({
+        component: AddLocationModal
+      })
+
+      addLocationModal.present()
+    },
+    async addStaffMemberModal() {
+      const addStaffModal = await modalController.create({
+        component: AddStaffMemberModal
+      })
+
+      addStaffModal.present()
+    },
     async selectOperatingTime() {
       const selectOperatingTimeModal = await modalController.create({
         component: SelectOperatingTimeModal
       })
   
       selectOperatingTimeModal.present()
+    },
+    async openLocationDetailsPopover(ev: Event) {
+      const locationDetailsPopover = await popoverController.create({
+        component: LocationDetailsPopover,
+        event: ev,
+        showBackdrop: false
+      });
+      return locationDetailsPopover.present()
+    },
+    async openExternalMappingPopover(ev: Event) {
+      const externalMappingPopover = await popoverController.create({
+        component: AddExternalMappingPopover,
+        event: ev,
+        showBackdrop: false
+      });
+      return externalMappingPopover.present()
     },
     getStoreDetail(productStoreId: any) {
       return this.productStores.find((store: any) => store.productStoreId === productStoreId)
@@ -388,8 +577,13 @@ export default defineComponent({
     return {
       addCircleOutline,
       addOutline,
+      closeCircleOutline,
       closeOutline,
       ellipsisVerticalOutline,
+      globeOutline,
+      locationOutline,
+      openOutline,
+      personOutline,
       store,
       translate
     }
@@ -398,11 +592,17 @@ export default defineComponent({
 </script>
 
 <style scoped>
+
+ion-content > main {
+  margin: var(--spacer-lg)
+}
+
 section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start;
 }
+
 ion-modal.date-time-modal {
   --width: 290px;
   --height: 440px;
@@ -413,5 +613,30 @@ ion-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+
+/*Height of segment is defined now since their are less list items. Will remove it later */
+.segments {
+  height: 400px;
+  margin-top: var(--spacer-2xl);
+}
+
+.segments > div {
+  margin-top: var(--spacer-lg)
+}
+
+ion-segment {
+  justify-content: start;
+}
+
+.staff {
+  --columns-desktop: 5;
+}
+
+.external-mappings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  align-items: start; 
 }
 </style>
