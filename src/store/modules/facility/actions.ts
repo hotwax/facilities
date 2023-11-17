@@ -98,7 +98,6 @@ const actions: ActionTree<FacilityState, RootState> = {
       commit(types.FACILITY_CURRENT_UPDATED, current);
       return;
     }
-
     emitter.emit("presentLoader");
 
     const params = {
@@ -152,7 +151,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       viewSize: 100,
       entityName: 'ProductStoreFacility',
       filterByDate: 'Y',
-      fieldList: ['productStoreId']
+      fieldList: ['productStoreId', 'fromDate']
     }
 
     try {

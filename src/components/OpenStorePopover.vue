@@ -1,7 +1,7 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>{{ "NotNaked" }}</ion-list-header>
+      <ion-list-header>{{ store.storeName }}</ion-list-header>
       <ion-item button>
         {{ translate("Make primary") }}
         <ion-icon slot="end" :icon="starOutline" />
@@ -35,6 +35,7 @@ export default defineComponent({
     IonIcon,
     IonItem
   },
+  props: ['store'],
   setup() {
     return {
       removeCircleOutline,

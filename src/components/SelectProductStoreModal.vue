@@ -17,11 +17,11 @@
           {{ productStore.storeName }}
           <p>{{ productStore.productStoreId }}</p>
         </ion-label>
-        <ion-checkbox slot="end" :checked="isSelected(productStore.productStoreId)" />
+        <ion-checkbox slot="end" :checked="isSelected(productStore.productStoreId)" @ionChange="toggleProductStoreSelection(productStore)" />
       </ion-item>
     </ion-list>
 
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab @click="saveProductStores()" vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button>
         <ion-icon :icon="saveOutline" />  
       </ion-fab-button>
@@ -74,12 +74,38 @@ export default defineComponent({
     })
   },
   props: ["selectedProductStores"],
+  data() {
+    return {
+      selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),
+    }
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
     },
+    saveProductStores() {
+      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedFacility: any) => !this.selectedProductStores.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
+      const productStoresToRemove = this.selectedProductStores.filter((facility: any) => !this.selectedProductStoreValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
+
+      modalController.dismiss({
+        dismissed: true,
+        value: {
+          selectedProductStores: this.selectedProductStoreValues,
+          productStoresToCreate,
+          productStoresToRemove
+        }
+      });
+    },
+    toggleProductStoreSelection(updatedStore: any) {
+      let selectedStore = this.selectedProductStoreValues.some((store: any) => store.productStoreId === updatedStore.productStoreId);
+      if (selectedStore) {
+        this.selectedProductStoreValues = this.selectedProductStoreValues.filter((store: any) => store.productStoreId !== updatedStore.productStoreId);
+      } else {
+        this.selectedProductStoreValues.push(updatedStore);
+      }
+    },
     isSelected (productStoreId: any) {
-      return this.selectedProductStores.some((productStore :any) => productStore.productStoreId === productStoreId);
+      return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
     }
   },
   setup() {

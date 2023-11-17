@@ -101,10 +101,28 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
   }) as any
 }
 
+const createProductStoreFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/createProductStoreFacility",
+    method: "post",
+    data: payload
+  });
+}
+
+const updateProductStoreFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/updateProductStoreFacility",
+    method: "post",
+    data: payload
+  });
+}
+
 export const FacilityService = {
+  createProductStoreFacility,
   fetchFacilityOnlineGroupInformation,
   fetchFacilitiesOrderCount,
   fetchFacilities,
   getFacilityProductStores,
-  updateFacility
+  updateFacility,
+  updateProductStoreFacility
 }

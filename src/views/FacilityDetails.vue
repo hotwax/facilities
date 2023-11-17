@@ -146,21 +146,12 @@
               </ion-button>
             </ion-card-header>
 
-            <ion-item>
+            <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>
-                {{ "NotNaked" }}
+                <h2>{{ getStoreDetail(store.productStoreId).storeName }}</h2>
               </ion-label>
               <ion-badge>{{ translate("primary store") }}</ion-badge>
-              <ion-button color="medium" fill="clear" slot="end" @click="openStorePopover">
-                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
-              </ion-button>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label>
-                {{ "Wasatch Ski company" }}
-              </ion-label>
-              <ion-button color="medium" fill="clear" slot="end" @click="openStorePopover">
+              <ion-button slot="end" fill="clear" color="medium" @click="openStorePopover($event, getStoreDetail(store.productStoreId))">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
@@ -263,7 +254,9 @@ import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
 import { mapGetters, useStore } from 'vuex';
+import { showToast } from '@/utils';
 import { FacilityService } from '@/services/FacilityService';
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -299,7 +292,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       current: 'facility/getCurrent',
-      facilityProductStores: 'facility/getFacilityProductStores'
+      facilityProductStores: 'facility/getFacilityProductStores',
+      productStores: 'util/getProductStores'
     })
   },
   props: ["facilityId"],
@@ -309,9 +303,10 @@ export default defineComponent({
     await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
   },
   methods: {
-    async openStorePopover(ev: Event) {
+    async openStorePopover(ev: Event, store: any) {
       const popover = await popoverController.create({
         component: OpenStorePopover,
+        componentProps: { store },
         event: ev,
         showBackdrop: false
       });
@@ -337,6 +332,40 @@ export default defineComponent({
         componentProps: { selectedProductStores: this.facilityProductStores }
       })
 
+      addProductStoreModal.onDidDismiss().then(async (result) => {
+        if (result.data && result.data.value) {
+          const productStoresToCreate = result.data.value.productStoresToCreate
+          const productStoresToRemove = result.data.value.productStoresToRemove
+
+          const updateResponses = await Promise.allSettled(productStoresToRemove
+            .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
+              facilityId: this.facilityId,
+              productStoreId: payload.productStoreId,
+              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+              thruDate: DateTime.now().toMillis()
+            }))
+          )
+
+          const createResponses = await Promise.allSettled(productStoresToCreate
+            .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+              productStoreId: payload.productStoreId,
+              facilityId: this.facilityId,
+              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+            }))
+          )
+
+          const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
+          if (hasFailedResponse) {
+            showToast(translate('Failed to update some role(s).'))
+          } else {
+            showToast(translate('Role(s) updated successfully.'))
+          }
+
+          // refetching product stores with updated roles
+          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+        }
+      })
+
       addProductStoreModal.present()
     },
     async selectOperatingTime() {
@@ -345,6 +374,9 @@ export default defineComponent({
       })
   
       selectOperatingTimeModal.present()
+    },
+    getStoreDetail(productStoreId: any) {
+      return this.productStores.find((store: any) => store.productStoreId === productStoreId)
     }
   },
   setup() {

@@ -7,7 +7,7 @@ const getters: GetterTree <FacilityState, RootState> = {
     return JSON.parse(JSON.stringify(state.facilities.list))
   },
   getFacilityProductStores(state) {
-    return JSON.parse(JSON.stringify(state.current.productStores))
+    return state.current.productStores
   },
   getQuery(state) {
     return JSON.parse(JSON.stringify(state.query))
