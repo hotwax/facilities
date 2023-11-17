@@ -141,6 +141,34 @@ const actions: ActionTree<FacilityState, RootState> = {
       facilityTypeId: ''
     })
     commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
+  },
+
+  async getFacilityParties({ commit, state }, payload) {
+    let parties = []
+    const params = {
+      inputFields: {
+        facilityId: payload.facilityId
+      },
+      entityName: "FacilityAndParty",
+      filterByDate: 'Y',
+      orderBy: 'partyId DESC',
+      fieldList: ['facilityId', 'firstName', 'fromDate', 'lastName', 'groupName', 'partyId', 'roleTypeId'],
+      viewSize: 100
+    }
+
+    try {
+      const resp = await FacilityService.getFacilityParties(params)
+
+      if(!hasError(resp) && resp.data.count){
+        parties = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error
+    }
+
+    commit(types.FACILITY_PARTIES_UPDATED, parties)
   }
 }
 

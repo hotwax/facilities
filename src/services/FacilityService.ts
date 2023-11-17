@@ -84,6 +84,22 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
   return facilitiesOrderCount;
 }
 
+const getFacilityParties = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const removePartyFromFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/removePartyFromFacility",
+    method: "post",
+    data: payload
+  });
+}
+
 const updateFacility = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacility",
@@ -96,5 +112,7 @@ export const FacilityService = {
   fetchFacilityOnlineGroupInformation,
   fetchFacilitiesOrderCount,
   fetchFacilities,
-  updateFacility
+  getFacilityParties,
+  removePartyFromFacility,
+  updateFacility,
 }

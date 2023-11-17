@@ -285,30 +285,29 @@
               {{ translate("Add staff member to facility") }}
             </ion-button>
 
-            <div class="list-item staff">
+            <div v-for="party in facilityParties" class="list-item staff" :key="party.partyId">
               <ion-item lines="none">
                 <ion-icon :icon="personOutline" slot="start" />
                 <ion-label>
-                  {{ "party name" }}
-                  <p>{{ translate("party id") }}</p>
+                  {{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}
+                  <p>{{ party.partyId }}</p>
                 </ion-label>
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ "fulfillment" }}</ion-chip>
+                <ion-chip outline>{{ party.roleTypeId }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ "3rd June 2023" }}</ion-chip>
+                <ion-chip outline>{{ getDate(party.fromDate) }}</ion-chip>
                 <p>{{ "added" }}</p>
               </ion-label>
 
-              <ion-button fill="clear" color="medium">
+              <ion-button @click="removePartyFromFacility(party)" fill="clear" color="medium">
                 <ion-icon slot="icon-only" :icon="closeCircleOutline" />
               </ion-button>
             </div>
-            <hr />
           </div>
 
           <div v-else-if="segment == 'locations'">
@@ -418,6 +417,11 @@ import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue'
 import AddLocationModal from '@/components/AddLocationModal.vue';
 import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
 import { mapGetters, useStore } from 'vuex';
+import { DateTime } from 'luxon';
+import { FacilityService } from '@/services/FacilityService';
+import { hasError } from '@/adapter';
+import logger from '@/logger';
+import { showToast } from '@/utils';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -456,12 +460,14 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      facilityParties: 'facility/getFacilityParties'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+    await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
     this.isLoading = false
   },
   methods: {
@@ -530,6 +536,33 @@ export default defineComponent({
         showBackdrop: false
       });
       return externalMappingPopover.present()
+    },
+    getDate(date: any) {
+      return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
+    },
+    async removePartyFromFacility(party: any) {
+      console.log(party)
+      try {
+        const resp = FacilityService.removePartyFromFacility({
+          facilityId: party.facilityId,
+          fromDate: party.fromDate,
+          thruDate: DateTime.now().toMillis(),
+          partyId: party.partyId,
+          roleTypeId: party.roleTypeId
+        })
+
+        if(!hasError(resp)){
+          showToast("Party successfully removed from facility.")
+
+          // Refreshes the parties in facility
+          await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
+        } else {
+          throw resp
+        }
+      } catch(err) {
+        showToast("Failed to remove party from facility.")
+        logger.error(err)
+      }
     }
   },
   setup() {
@@ -592,7 +625,7 @@ ion-segment {
 }
 
 .staff {
-  --columns-desktop: 5;
+  --columns-desktop: 4;
 }
 
 .external-mappings {

@@ -73,7 +73,7 @@ export default defineComponent({
     IonToolbar
   },
   methods: {
-    closeModal() {
+    async closeModal() {
       modalController.dismiss()
     }
   },
