@@ -453,7 +453,7 @@ export default defineComponent({
     return {
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
-      segment: 'external-mappings'
+      segment: 'staff'
     }
   },
   computed: {

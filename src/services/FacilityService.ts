@@ -92,6 +92,14 @@ const getFacilityParties = async(payload: any): Promise <any> => {
   });
 }
 
+const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const removePartyFromFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/removePartyFromFacility",
@@ -113,6 +121,7 @@ export const FacilityService = {
   fetchFacilitiesOrderCount,
   fetchFacilities,
   getFacilityParties,
+  getPartyRoleAndPartyDetails,
   removePartyFromFacility,
   updateFacility,
 }
