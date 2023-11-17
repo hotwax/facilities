@@ -275,8 +275,7 @@
                 <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
                 <ion-button fill="clear" color="danger">{{ translate("Remove") }}</ion-button>
               </ion-card>
-            </div>          
-            <hr />
+            </div>
           </div>
 
           <div v-else-if="segment === 'staff'">
@@ -354,7 +353,6 @@
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </div>
-            <hr />
           </div>
         </div>
       </main>

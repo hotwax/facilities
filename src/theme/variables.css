@@ -334,6 +334,7 @@ hr {
   grid-template-columns: repeat(var(--implicit-columns), 1fr) max-content;
   justify-items: center;
   align-items: center;
+  border-bottom: var(--border-medium);
 }
 
 .list-item > * {
@@ -343,6 +344,7 @@ hr {
 .list-item > *:last-child {
   display: unset;
   justify-self: end;
+  border-bottom: none;
 }
 
 .list-item > ion-label {
