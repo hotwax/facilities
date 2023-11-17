@@ -98,13 +98,13 @@ export default defineComponent({
     },
     toggleProductStoreSelection(updatedStore: any) {
       let selectedStore = this.selectedProductStoreValues.some((store: any) => store.productStoreId === updatedStore.productStoreId);
-      if (selectedStore) {
+      if(selectedStore) {
         this.selectedProductStoreValues = this.selectedProductStoreValues.filter((store: any) => store.productStoreId !== updatedStore.productStoreId);
       } else {
         this.selectedProductStoreValues.push(updatedStore);
       }
     },
-    isSelected (productStoreId: any) {
+    isSelected(productStoreId: any) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
     }
   },

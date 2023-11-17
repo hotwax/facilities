@@ -151,7 +151,7 @@
                 <h2>{{ getStoreDetail(store.productStoreId).storeName }}</h2>
               </ion-label>
               <ion-badge>{{ translate("primary store") }}</ion-badge>
-              <ion-button slot="end" fill="clear" color="medium" @click="openStorePopover($event, getStoreDetail(store.productStoreId))">
+              <ion-button slot="end" fill="clear" color="medium" @click="openStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
@@ -306,7 +306,10 @@ export default defineComponent({
     async openStorePopover(ev: Event, store: any) {
       const popover = await popoverController.create({
         component: OpenStorePopover,
-        componentProps: { store },
+        componentProps: {
+          facilityId: this.facilityId,
+          currentProductStore: store
+        },
         event: ev,
         showBackdrop: false
       });
@@ -340,8 +343,8 @@ export default defineComponent({
           const updateResponses = await Promise.allSettled(productStoresToRemove
             .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
               facilityId: this.facilityId,
-              productStoreId: payload.productStoreId,
               fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+              productStoreId: payload.productStoreId,
               thruDate: DateTime.now().toMillis()
             }))
           )
@@ -356,9 +359,9 @@ export default defineComponent({
 
           const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
           if (hasFailedResponse) {
-            showToast(translate('Failed to update some role(s).'))
+            showToast(translate('Failed to update some facility stores'))
           } else {
-            showToast(translate('Role(s) updated successfully.'))
+            showToast(translate('Facility stores updated successfully.'))
           }
 
           // refetching product stores with updated roles

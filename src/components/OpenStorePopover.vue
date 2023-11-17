@@ -1,12 +1,12 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>{{ store.storeName }}</ion-list-header>
+      <ion-list-header>{{ getStoreDetail(currentProductStore.productStoreId).storeName }}</ion-list-header>
       <ion-item button>
         {{ translate("Make primary") }}
         <ion-icon slot="end" :icon="starOutline" />
       </ion-item>
-      <ion-item button lines="none">
+      <ion-item button lines="none" @click="removeStore">
         {{ translate("Unlink") }}
         <ion-icon slot="end" :icon="removeCircleOutline" />
       </ion-item>
@@ -25,6 +25,11 @@ import {
 import { defineComponent } from "vue";
 import { starOutline, removeCircleOutline } from "ionicons/icons";
 import { translate } from "@hotwax/dxp-components";
+import { mapGetters, useStore } from "vuex";
+import { FacilityService } from "@/services/FacilityService";
+import { DateTime } from "luxon";
+import { hasError } from "@hotwax/oms-api";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "CreateMappingModal",
@@ -35,11 +40,45 @@ export default defineComponent({
     IonIcon,
     IonItem
   },
-  props: ['store'],
+  props: ['facilityId', 'currentProductStore'],
+  computed: {
+    ...mapGetters({
+      facilityProductStores: 'facility/getFacilityProductStores',
+      productStores: 'util/getProductStores'
+    })
+  },
+  methods: {
+    async removeStore() {
+      try {
+        const resp = await FacilityService.updateProductStoreFacility({
+          facilityId: this.facilityId,
+          productStoreId: this.currentProductStore.productStoreId,
+          fromDate: this.currentProductStore.fromDate,
+          thruDate: DateTime.now().toMillis()
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate('Store unlinked successfully.'))
+
+          // refetching product stores with updated roles
+          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+        }
+      } catch(err) {
+        console.error(err)
+        showToast(translate('Store unlink failed.'))
+      }
+    },
+    getStoreDetail(productStoreId: any) {
+      return this.productStores.find((store: any) => store.productStoreId === productStoreId)
+    }
+  },
   setup() {
+    const store = useStore();
+
     return {
       removeCircleOutline,
       starOutline,
+      store,
       translate
     };
   }
