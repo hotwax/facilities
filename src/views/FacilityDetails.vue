@@ -210,12 +210,20 @@
               <br/><br/>
               {{ translate("Setting fulfillment capacity to 0 disables new order from being allocated to this facility. Leave this empty if this facility's fulfillment capacity is unrestricted.") }}
             </ion-card-content>
-            <ion-item lines="none">
-              <ion-text>{{ 10 }}</ion-text>
-              <ion-progress-bar class="ion-margin" :value="10/20"></ion-progress-bar>
-              <ion-chip :outline="true">{{ 20 }}</ion-chip>
+            <ion-item lines="none" v-if="current.orderLimitType === 'custom'">
+              <ion-text>{{ current.orderCount }}</ion-text>
+              <ion-progress-bar class="ion-margin" :value="current.orderCount / current.maximumOrderLimit" />
+              <ion-chip outline @click="changeOrderLimitPopover">{{ current.maximumOrderLimit }}</ion-chip>
+            </ion-item>      
+            <ion-item lines="none" v-else-if="current.orderLimitType === 'unlimited'">
+              <ion-label>{{ translate("orders allocated today", { orderCount: current.orderCount }) }}</ion-label>
+              <ion-chip outline @click="changeOrderLimitPopover">{{ translate("Unlimited") }}</ion-chip>
+            </ion-item>      
+            <ion-item lines="none" v-else>
+              <ion-label>{{ translate("orders in fulfillment queue", { orderCount: current.orderCount }) }}</ion-label>
+              <ion-chip outline @click="changeOrderLimitPopover" color="danger" fill="outline">{{ current.maximumOrderLimit }}</ion-chip>
             </ion-item>
-            <ion-item lines="none" class="ion-margin-horizontal" detail button>
+            <ion-item lines="none" detail button @click="openFacilityOrderCountModal">
               <ion-label>{{ translate("View order count history") }}</ion-label>
             </ion-item>
           </ion-card>
@@ -418,6 +426,12 @@ import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue'
 import AddLocationModal from '@/components/AddLocationModal.vue';
 import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
 import { mapGetters, useStore } from 'vuex';
+import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
+import { FacilityService } from '@/services/FacilityService';
+import { hasError } from '@/adapter';
+import { showToast } from '@/utils';
+import logger from '@/logger';
+import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -530,6 +544,49 @@ export default defineComponent({
         showBackdrop: false
       });
       return externalMappingPopover.present()
+    },
+    async changeOrderLimitPopover(ev: Event) {
+      const popover = await popoverController.create({
+        component: OrderLimitPopover,
+        event: ev,
+        showBackdrop: false,
+        componentProps: { fulfillmentOrderLimit: this.current.maximumOrderLimit }
+      });
+      popover.present();
+
+      const result = await popover.onDidDismiss();
+      // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
+      if(result.data != undefined && result.data !== this.current.maximumOrderLimit) {
+        await this.updateFacility(result.data, this.current)
+      }
+    },
+    async updateFacility(maximumOrderLimit: number | string, facility: any) {
+      let resp;
+
+      try {
+        resp = await FacilityService.updateFacility({
+          "facilityId": facility.facilityId,
+          maximumOrderLimit
+        })
+
+        if(!hasError(resp)) {
+          facility.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+          showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }))
+        logger.error('Failed to update facility', err)
+      }
+    },
+    async openFacilityOrderCountModal() {
+      const facilityOrderCountModal = await modalController.create({
+        component: ViewFacilityOrderCountModal,
+        componentProps: { facilityId: this.facilityId }
+      })
+  
+      facilityOrderCountModal.present()
     }
   },
   setup() {
