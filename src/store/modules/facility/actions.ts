@@ -141,6 +141,37 @@ const actions: ActionTree<FacilityState, RootState> = {
       facilityTypeId: ''
     })
     commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
+  },
+
+  async getFacilityProductStores({ commit, state }, params) {
+    let productStores = []
+    const payload = {
+      inputFields: {
+        facilityId: params.facilityId
+      },
+      viewSize: 100,
+      entityName: 'ProductStoreFacility',
+      filterByDate: 'Y',
+      fieldList: ['productStoreId']
+    }
+
+    try {
+      const resp = await FacilityService.getFacilityProductStores(payload)
+
+      // fetching stores and roles first as storeName and role description
+      // are required in the UI
+      // store.dispatch('util/getProductStores')
+
+      if (!hasError(resp) || resp.data.error === 'No record found') {
+        productStores = resp.data.docs ? resp.data.docs : []
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      console.error('Failed to fetch user associated product stores.', error)
+    }
+
+    commit(types.FACILITY_PRODUCT_STORES_UPDATED , productStores);
   }
 }
 

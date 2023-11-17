@@ -12,12 +12,12 @@
 
   <ion-content>
     <ion-list>
-      <ion-item>
+      <ion-item v-for="productStore in productStores" :key="productStore.productStoreId">
         <ion-label>
-          {{ "Demo Store" }}
-          <p>{{ "STORE_ID" }}</p>
+          {{ productStore.storeName }}
+          <p>{{ productStore.productStoreId }}</p>
         </ion-label>
-        <ion-checkbox slot="end" :checked="true" />
+        <ion-checkbox slot="end" :checked="isSelected(productStore.productStoreId)" />
       </ion-item>
     </ion-list>
 
@@ -49,6 +49,7 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "SelectProductStoreModal",
@@ -67,9 +68,18 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  computed: {
+    ...mapGetters({
+      productStores: 'util/getProductStores'
+    })
+  },
+  props: ["selectedProductStores"],
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
+    },
+    isSelected (productStoreId: any) {
+      return this.selectedProductStores.some((productStore :any) => productStore.productStoreId === productStoreId);
     }
   },
   setup() {

@@ -1,6 +1,7 @@
 import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
+import store from '@/store';
 
 const fetchFacilities = async(query: any): Promise <any> => {
   return api({
@@ -92,9 +93,18 @@ const updateFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const getFacilityProductStores = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload
+  }) as any
+}
+
 export const FacilityService = {
   fetchFacilityOnlineGroupInformation,
   fetchFacilitiesOrderCount,
   fetchFacilities,
+  getFacilityProductStores,
   updateFacility
 }

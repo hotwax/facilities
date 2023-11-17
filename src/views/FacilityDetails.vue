@@ -263,6 +263,7 @@ import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
 import { mapGetters, useStore } from 'vuex';
+import { FacilityService } from '@/services/FacilityService';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -297,13 +298,15 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      facilityProductStores: 'facility/getFacilityProductStores'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    this.isLoading = false
+    await this.store.dispatch('util/fetchProductStores')
+    await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
   },
   methods: {
     async openStorePopover(ev: Event) {
@@ -330,7 +333,8 @@ export default defineComponent({
     },
     async addProductStore() {
       const addProductStoreModal = await modalController.create({
-        component: SelectProductStoreModal
+        component: SelectProductStoreModal,
+        componentProps: { selectedProductStores: this.facilityProductStores }
       })
 
       addProductStoreModal.present()
