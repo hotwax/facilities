@@ -143,7 +143,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
   },
 
-  async getFacilityProductStores({ commit, state }, params) {
+  async getFacilityProductStores({ commit }, params) {
     let productStores = []
     const payload = {
       inputFields: {
@@ -158,13 +158,13 @@ const actions: ActionTree<FacilityState, RootState> = {
     try {
       const resp = await FacilityService.getFacilityProductStores(payload)
 
-      if (!hasError(resp) || resp.data.error === 'No record found') {
-        productStores = resp.data.docs ? resp.data.docs : []
+      if(!hasError(resp) && resp.data.count) {
+        productStores = resp.data.docs
       } else {
         throw resp.data
       }
-    } catch (error) {
-      console.error('Failed to fetch user associated product stores.', error)
+    } catch(error) {
+      logger.error(error)
     }
 
     commit(types.FACILITY_PRODUCT_STORES_UPDATED , productStores);

@@ -28,11 +28,12 @@ import { translate } from "@hotwax/dxp-components";
 import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
-import { hasError } from "@hotwax/oms-api";
+import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
+import logger from "@/logger";
 
 export default defineComponent({
-  name: "OpenStorePopover",
+  name: "ProductStorePopover",
   components: {
     IonContent,
     IonList,
@@ -62,9 +63,11 @@ export default defineComponent({
 
           // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
         }
       } catch(err) {
-        console.error(err)
+        logger.error(err)
         showToast(translate('Store unlink failed.'))
       }
     },

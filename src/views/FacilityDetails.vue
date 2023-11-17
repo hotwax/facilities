@@ -151,7 +151,7 @@
                 <h2>{{ getStoreDetail(store.productStoreId).storeName }}</h2>
               </ion-label>
               <ion-badge>{{ translate("primary store") }}</ion-badge>
-              <ion-button slot="end" fill="clear" color="medium" @click="openStorePopover($event, store)">
+              <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
@@ -401,7 +401,7 @@ import {
 import { translate } from '@hotwax/dxp-components';
 import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
-import OpenStorePopover from '@/components/OpenStorePopover.vue';
+import ProductStorePopover from '@/components/ProductStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
 import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
@@ -462,9 +462,9 @@ export default defineComponent({
     await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
   },
   methods: {
-    async openStorePopover(ev: Event, store: any) {
+    async productStorePopover(ev: Event, store: any) {
       const popover = await popoverController.create({
-        component: OpenStorePopover,
+        component: ProductStorePopover,
         componentProps: {
           facilityId: this.facilityId,
           currentProductStore: store
