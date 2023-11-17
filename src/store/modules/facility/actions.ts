@@ -98,6 +98,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       commit(types.FACILITY_CURRENT_UPDATED, current);
       return;
     }
+
     emitter.emit("presentLoader");
 
     const params = {
@@ -151,15 +152,11 @@ const actions: ActionTree<FacilityState, RootState> = {
       viewSize: 100,
       entityName: 'ProductStoreFacility',
       filterByDate: 'Y',
-      fieldList: ['productStoreId', 'fromDate']
+      fieldList: ['fromDate', 'productStoreId']
     }
 
     try {
       const resp = await FacilityService.getFacilityProductStores(payload)
-
-      // fetching stores and roles first as storeName and role description
-      // are required in the UI
-      // store.dispatch('util/getProductStores')
 
       if (!hasError(resp) || resp.data.error === 'No record found') {
         productStores = resp.data.docs ? resp.data.docs : []

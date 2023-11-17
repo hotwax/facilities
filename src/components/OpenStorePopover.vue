@@ -40,7 +40,7 @@ export default defineComponent({
     IonIcon,
     IonItem
   },
-  props: ['facilityId', 'currentProductStore'],
+  props: ['currentProductStore', 'facilityId'],
   computed: {
     ...mapGetters({
       facilityProductStores: 'facility/getFacilityProductStores',

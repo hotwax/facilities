@@ -140,7 +140,7 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button @click="addProductStore" fill="clear">
+              <ion-button @click="selectProductStore" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="start" />
                 {{ translate("Add") }}
               </ion-button>
@@ -329,13 +329,13 @@ export default defineComponent({
 
       addGeoPointModal.present()
     },
-    async addProductStore() {
-      const addProductStoreModal = await modalController.create({
+    async selectProductStore() {
+      const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
         componentProps: { selectedProductStores: this.facilityProductStores }
       })
 
-      addProductStoreModal.onDidDismiss().then(async (result) => {
+      selectProductStoreModal.onDidDismiss().then(async (result) => {
         if (result.data && result.data.value) {
           const productStoresToCreate = result.data.value.productStoresToCreate
           const productStoresToRemove = result.data.value.productStoresToRemove
@@ -369,7 +369,7 @@ export default defineComponent({
         }
       })
 
-      addProductStoreModal.present()
+      selectProductStoreModal.present()
     },
     async selectOperatingTime() {
       const selectOperatingTimeModal = await modalController.create({
