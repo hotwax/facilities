@@ -43,7 +43,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "entityName": "FacilityAndProductStore",
       "noConditionFind": "Y",
       "distinct": "Y",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit'],
+      "fieldList": ['defaultDaysToShip', 'facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit'],
       ...payload
     }
 
@@ -88,6 +88,46 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     emitter.emit("dismissLoader");
     commit(types.FACILITY_LIST_UPDATED , { facilities, total });
+  },
+
+  async fetchCurrentFacility({ commit, state }, payload) {
+    // checking that if the list contains basic information for facility then not fetching the same information again
+    const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
+    const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
+    if(current?.facilityId) {
+      commit(types.FACILITY_CURRENT_UPDATED, current);
+      return;
+    }
+
+    emitter.emit("presentLoader");
+
+    const params = {
+      inputFields: {
+        facilityId: payload.facilityId
+      },
+      entityName: "FacilityAndProductStore",
+      noConditionFind: "Y",
+      distinct: "Y",
+      fieldList: ['defaultDaysToShip', 'facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit'],
+      viewSize: 1
+    }
+
+    let facility = {};
+
+    try {
+      const resp = await FacilityService.fetchFacilities(params)
+
+      if(!hasError(resp) && resp.data.count > 0) {
+        facility = resp.data.docs[0]
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    emitter.emit("dismissLoader");
+    commit(types.FACILITY_CURRENT_UPDATED, facility);
   },
 
   updateQuery({ commit }, query) {

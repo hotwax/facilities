@@ -3,10 +3,10 @@ import mutations  from './mutations'
 import getters  from './getters'
 import actions from './actions'
 import RootState from './RootState'
-import createPersistedState from "vuex-persistedstate";
+import createPersistedState from 'vuex-persistedstate';
 import userModule from './modules/user';
 import { setPermissions } from '@/authorization'
-import facilityModule from "./modules/facility"
+import facilityModule from './modules/facility'
 import utilModule from "./modules/util"
 
 
