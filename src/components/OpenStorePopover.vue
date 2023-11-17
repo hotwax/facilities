@@ -27,7 +27,7 @@ import { starOutline, removeCircleOutline } from "ionicons/icons";
 import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
-  name: "CreateMappingModal",
+  name: "OpenStorePopover",
   components: {
     IonContent,
     IonList,

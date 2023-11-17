@@ -14,36 +14,32 @@
     <ion-list>
       <ion-item lines="none">
         <ion-label>{{ translate("Opening Time") }}</ion-label>
-        <ion-button color="medium" @click="selectTime">{{ "10:45 am" }}</ion-button>
+        <ion-datetime-button datetime="opentime" />
       </ion-item>
       <ion-item lines="none">
         <ion-label>{{ translate("Closing Time") }}</ion-label>
-        <ion-button color="medium" @click="selectTime">{{ "10:45 am" }}</ion-button>
+        <ion-datetime-button datetime="endtime" />
+      </ion-item>
+      <ion-item lines="none">
+        <ion-button color="danger">{{ translate("Reset") }}</ion-button>
       </ion-item>
     </ion-list>
   </ion-content>
 
-  <ion-modal class="date-time-modal" :is-open="isTimeModalOpen" @didDismiss="() => isTimeModalOpen = false">
-    <ion-content>
-      <ion-datetime
-        presentation="time"  
-        show-default-buttons
-        hour-cycle="h12"
-      />
-    </ion-content>
+
+  <ion-modal :keep-contents-mounted="true">
+    <ion-datetime id="opentime" presentation="time" show-default-buttons hour-cycle="h23" />
   </ion-modal>
 
-  <ion-footer>
-    <ion-toolbar>
-      <ion-item lines="none">
-        <ion-button color="danger">{{ translate("Reset") }}</ion-button>
-      </ion-item>
-      <ion-item slot="end" lines="none">
-        <ion-button class="ion-margin-end" fill="outline">{{ translate("Cancel") }}</ion-button>
-        <ion-button >{{ translate("Save") }}</ion-button>
-      </ion-item>
-    </ion-toolbar>
-  </ion-footer>
+  <ion-modal :keep-contents-mounted="true">
+    <ion-datetime id="endtime" presentation="time" show-default-buttons hour-cycle="h23" />
+  </ion-modal>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button>
+      <ion-icon :icon="saveOutline" />
+    </ion-fab-button>
+  </ion-fab>
 </template>
   
 <script lang="ts">
@@ -52,7 +48,9 @@ import {
   IonButtons,
   IonContent,
   IonDatetime,
-  IonFooter,
+  IonDatetimeButton,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
   IonItem,
@@ -64,7 +62,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 
 export default defineComponent({
@@ -74,7 +72,9 @@ export default defineComponent({
     IonButtons,
     IonContent,
     IonDatetime,
-    IonFooter,
+    IonDatetimeButton,
+    IonFab,
+    IonFabButton,
     IonHeader,
     IonIcon,
     IonItem,
@@ -100,6 +100,7 @@ export default defineComponent({
   setup() {
     return {
       closeOutline,
+      saveOutline,
       translate
     };
   },
