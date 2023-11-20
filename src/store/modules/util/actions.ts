@@ -96,7 +96,7 @@ const actions: ActionTree<UtilState, RootState> = {
         throw resp.data
       }
     } catch (error) {
-      showToast(translate('Something went wrong.'));
+      showToast(translate('Something went wrong'));
       console.error(error)
     }
 

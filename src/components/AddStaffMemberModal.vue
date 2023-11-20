@@ -21,9 +21,6 @@
 
     <ion-list>
       <ion-list-header>{{ translate("Staff") }}</ion-list-header>
-      <!-- TODO: added click event on the item as when using the ionChange event then it's getting
-      called every time the v-for loop runs and then removes or adds the currently rendered picker
-      -->
       <div class="ion-padding" v-if="!parties.length">{{ translate("No party found") }}</div>
       <div v-else>
         <ion-item v-for="(party, index) in parties" :key="index">
@@ -31,15 +28,15 @@
             {{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}
             <p>{{ party.partyId }}</p>
           </ion-label>
-          <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
-            <ion-select-option v-for="role in roles" :key='role.roleTypeId' :value="role.roleTypeId">{{ role.description }}</ion-select-option>
+          <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
+            <ion-select-option v-for="(role, index) in roles" :key='index' :value="role.roleTypeId">{{ role.description }}</ion-select-option>
         </ion-select>
         </ion-item>
       </div>
     </ion-list>
   </ion-content>
 
-  <ion-fab @click="saveParties" vertical="bottom"  horizontal="end" slot="fixed">
+  <ion-fab @click="saveParties" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button>
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
@@ -102,9 +99,9 @@ export default defineComponent({
   props: ['selectedParties'],
   data () {
     return {
-      selectedPartyValues: JSON.parse(JSON.stringify(this.selectedParties)),
+      parties: [],
       queryString: '',
-      parties: []
+      selectedPartyValues: JSON.parse(JSON.stringify(this.selectedParties))
     }
   },
   computed: {
@@ -150,6 +147,7 @@ export default defineComponent({
         const resp = await FacilityService.getPartyRoleAndPartyDetails(payload)
         if(!hasError(resp)) {
           this.parties = resp.data.docs
+
         } else {
           throw resp.data
         }
@@ -157,16 +155,16 @@ export default defineComponent({
         logger.error(err)
       }
     },
-    removeSelectedParty(id: string) {
-      this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== id)
+    removeSelectedParty(partyId: string) {
+      this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== partyId)
     },
     saveParties() {
-      const partiesToCreate = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
+      const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
       const partiesToRemove = this.selectedParties.filter((party: any) => !this.selectedPartyValues.some((selectedParty: any) => party.partyId === selectedParty.partyId))
       const partiesRoleChanged = this.selectedParties.filter((party: any) => this.selectedPartyValues.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId))
       partiesRoleChanged.map((party: any) => partiesToRemove.push(party))
 
-      if(!(partiesToCreate.length > 0 || partiesToRemove.length > 0)) {
+      if(!(partiesToAdd.length > 0 || partiesToRemove.length > 0)) {
         showToast(translate("Please update atleast one party role."))
         return;
       }
@@ -174,30 +172,33 @@ export default defineComponent({
       modalController.dismiss({
         dismissed: true,
         value: {
-          partiesToCreate,
+          partiesToAdd,
           partiesToRemove
         }
       });
     },
-    updateSelectedParties(event: CustomEvent, id: string) {
+    updateSelectedParties(event: CustomEvent, selectedPartyId: string) {
       let party = {} as any
-      if(this.isPartySelected(id)){
-        party = this.selectedPartyValues.find((party: any) => party.partyId === id)
-        if(event.detail.value === 'none') {
-          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== id)
-        } else if(event.detail.value !== party.roleTypeId) {
-          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== id)
-          this.selectedPartyValues.push({...party, roleTypeId: event.detail.value})
+      const selectedRoleTypeId = event.detail.value
+
+      if(this.isPartySelected(selectedPartyId)) {
+        party = this.selectedPartyValues.find((party: any) => party.partyId === selectedPartyId)
+
+        if(selectedRoleTypeId === 'none') {
+          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
+        } else if(selectedPartyId !== party.roleTypeId) {
+          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
+          this.selectedPartyValues.push({...party, roleTypeId: selectedRoleTypeId})
         }
       } else {
-        party = this.parties.find((party: any) => party.partyId === id)
-        this.selectedPartyValues.push({...party, roleTypeId: event.detail.value})
+        party = this.parties.find((party: any) => party.partyId === selectedPartyId)
+        this.selectedPartyValues.push({...party, roleTypeId: selectedRoleTypeId})
       }
     },
-    isPartySelected(partyId: any) {
+    isPartySelected(partyId: string) {
       return this.selectedPartyValues.find((party: any) => party.partyId === partyId)
     },
-    getPartyRoleId(partyId: any) {
+    getPartyRoleTypeId(partyId: string) {
       return this.selectedPartyValues.find((party: any) => party.partyId === partyId) ? this.selectedPartyValues.find((party: any) => party.partyId === partyId).roleTypeId : 'none'
     }
   },

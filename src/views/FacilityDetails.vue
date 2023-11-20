@@ -284,7 +284,7 @@
               {{ translate("Add staff member to facility") }}
             </ion-button>
 
-            <div v-for="party in facilityParties" class="list-item staff" :key="party.partyId">
+            <div v-for="(party, index) in facilityParties" class="list-item staff" :key="index">
               <ion-item lines="none">
                 <ion-icon :icon="personOutline" slot="start" />
                 <ion-label>
@@ -453,7 +453,7 @@ export default defineComponent({
     return {
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
-      segment: 'staff'
+      segment: 'external-mappings'
     }
   },
   computed: {
@@ -515,7 +515,7 @@ export default defineComponent({
 
       addStaffModal.onDidDismiss().then(async (result: any) => {
         if (result.data && result.data.value) {
-          const partiesToAdd = result.data.value.partiesToCreate
+          const partiesToAdd = result.data.value.partiesToAdd
           const partiesToRemove = result.data.value.partiesToRemove
 
           const removeResponses = await Promise.allSettled(partiesToRemove
@@ -662,7 +662,7 @@ ion-segment {
 }
 
 .staff {
-  --columns-desktop: 4;
+  --columns-desktop: 5;
 }
 
 .external-mappings {

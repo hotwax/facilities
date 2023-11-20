@@ -6,6 +6,8 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilities({ commit, state }, payload) {
@@ -143,7 +145,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
   },
 
-  async getFacilityParties({ commit, state }, payload) {
+  async getFacilityParties({ commit }, payload) {
     let parties = []
     const params = {
       inputFields: {
@@ -159,12 +161,13 @@ const actions: ActionTree<FacilityState, RootState> = {
     try {
       const resp = await FacilityService.getFacilityParties(params)
 
-      if(!hasError(resp) && resp.data.count){
+      if(!hasError(resp) && resp.data.count) {
         parties = resp.data.docs
       } else {
         throw resp.data
       }
     } catch(err) {
+      showToast(translate("Something went wrong"))
       logger.error
     }
 
