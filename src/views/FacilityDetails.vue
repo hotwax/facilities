@@ -192,9 +192,9 @@
             </ion-item>
             <ion-item lines="full">
               <ion-label>{{ translate("Days to ship") }}</ion-label>
-              <ion-input :value="current.defaultDaysToShip" type="number" min="0" :placeholder="translate('days to ship')"/>
+              <ion-input v-model="defaultDaysToShip" type="number" min="0" :placeholder="translate('days to ship')"/>
             </ion-item>
-            <ion-button fill="outline" expand="block">
+            <ion-button fill="outline" expand="block" @click="updateDefaultDaysToShip">
               {{ translate("Update days to ship") }}
             </ion-button>
           </ion-card>
@@ -466,7 +466,8 @@ export default defineComponent({
     return {
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
-      segment: 'external-mappings'
+      segment: 'external-mappings',
+      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
     }
   },
   computed: {
@@ -477,6 +478,7 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+    this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
   methods: {
@@ -642,6 +644,25 @@ export default defineComponent({
         logger.error('Failed to update fulfillment setting', err)
       }
     },
+    async updateDefaultDaysToShip() {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          defaultDaysToShip: this.defaultDaysToShip
+        }
+
+        const resp = await FacilityService.updateFacility(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Updated default days to ship'))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to update default days to ship', err)
+        showToast(translate('Failed to update default days to ship'))
+      }
+    }
   },
   setup() {
     const store = useStore();
