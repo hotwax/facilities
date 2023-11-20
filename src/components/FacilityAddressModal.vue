@@ -6,25 +6,34 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate("Latitude & Longitude") }}</ion-title>
+      <ion-title>{{ translate("Address") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
+    <ion-item>
+      <ion-label>{{ translate("Address line 1") }}</ion-label>
+      <ion-input v-model="postalAddress.address1" slot="end" />
+    </ion-item>
     <ion-item class="ion-margin-bottom">
-      <ion-label>{{ "<postal code value>" }}</ion-label>
-      <ion-button fill="outline">
-        {{ translate("Generate") }}
-        <ion-icon slot="end" :icon="colorWandOutline" />
-      </ion-button>
+      <ion-label>{{ translate("Address line 2") }}</ion-label>
+      <ion-input v-model="postalAddress.address2" slot="end" />
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("Latitude") }}</ion-label>
-      <ion-input />
+      <ion-label>{{ translate("City") }}</ion-label>
+      <ion-input v-model="postalAddress.city" slot="end" />
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("Longitude") }}</ion-label>
-      <ion-input />
+      <ion-label>{{ translate("Country") }}</ion-label>
+      <ion-input v-model="postalAddress.country" slot="end" />
+    </ion-item>
+    <ion-item>
+      <ion-label>{{ translate("State") }}</ion-label>
+      <ion-input v-model="postalAddress.state" slot="end" />
+    </ion-item>
+    <ion-item>
+      <ion-label>{{ translate("Zipcode") }}</ion-label>
+      <ion-input v-model="postalAddress.zipcode" slot="end" />
     </ion-item>
   </ion-content>
 
@@ -52,11 +61,12 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
+import { mapGetters } from "vuex";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
   
 export default defineComponent({
-  name: "AddGeoPointModal",
+  name: "FacilityAddressModal",
   components: {
     IonButton,
     IonButtons,
@@ -69,7 +79,12 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonTitle,
-    IonToolbar,
+    IonToolbar
+  },
+  computed: {
+    ...mapGetters({
+      postalAddress: 'facility/getPostalAddress'
+    })
   },
   methods: {
     closeModal() {
@@ -79,7 +94,6 @@ export default defineComponent({
   setup() {
     return {
       closeOutline,
-      colorWandOutline,
       saveOutline,
       translate
     };

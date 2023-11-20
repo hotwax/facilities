@@ -23,16 +23,18 @@
                   {{ translate("Address") }}
                 </ion-card-title>
               </ion-card-header>
-              <ion-item lines="full">
-                <ion-label>
-                  <h3>{{ "Address line 1" }}</h3>
-                  <h3>{{ "Address line 2" }}</h3>
-                  <p class="ion-text-wrap">{{ "City," }} {{ "Zipcode" }}</p>
-                  <p class="ion-text-wrap">{{ "State," }} {{ "Country" }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-button fill="clear" @click="addAddress">{{ translate("Edit") }}</ion-button>
-              <ion-button expand="block" fill="outline" @click="addAddress">
+              <div v-if="postalAddress?.address1">
+                <ion-item lines="full">
+                  <ion-label>
+                    <h3>{{ postalAddress.address1 }}</h3>
+                    <h3>{{ postalAddress.address2 }}</h3>
+                    <p class="ion-text-wrap">{{ postalAddress.zipcode ? `${postalAddress.city}, ${postalAddress.zipcode}` : postalAddress.city }}</p>
+                    <p class="ion-text-wrap">{{ postalAddress.country ? `${postalAddress.state}, ${postalAddress.country}` : postalAddress.state }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-button fill="clear" @click="addAddress">{{ translate("Edit") }}</ion-button>
+              </div>
+              <ion-button v-else expand="block" fill="outline" @click="addAddress">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
@@ -47,16 +49,18 @@
               <ion-card-content>
                 {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
               </ion-card-content>
-              <ion-item lines="full">
-                <ion-label>{{ translate("Latitude") }}</ion-label>
-                <p>{{ "<latitude>" }}</p>
-              </ion-item>
-              <ion-item lines="full">
-                <ion-label>{{ translate("Longitude") }}</ion-label>
-                <p>{{ "<longitude>" }}</p>
-              </ion-item>
-              <ion-button fill="clear" @click="addGeoPoint">{{ translate("Edit") }}</ion-button>
-              <ion-button expand="block" fill="outline" @click="addGeoPoint">
+              <div v-if="geoPoint?.latitude">
+                <ion-item lines="full">
+                  <ion-label>{{ translate("Latitude") }}</ion-label>
+                  <p>{{ "<latitude>" }}</p>
+                </ion-item>
+                <ion-item lines="full">
+                  <ion-label>{{ translate("Longitude") }}</ion-label>
+                  <p>{{ "<longitude>" }}</p>
+                </ion-item>
+                <ion-button fill="clear" @click="addGeoPoint">{{ translate("Edit") }}</ion-button>
+              </div>
+              <ion-button v-else expand="block" fill="outline" @click="addGeoPoint">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
@@ -419,8 +423,8 @@ import { translate } from '@hotwax/dxp-components';
 import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
 import OpenStorePopover from '@/components/OpenStorePopover.vue';
-import AddAddressModal from '@/components/AddAddressModal.vue'
-import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
+import FacilityAddressModal from '@/components/FacilityAddressModal.vue'
+import FacilityGeoPointModal from '@/components/FacilityGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
 import AddLocationModal from '@/components/AddLocationModal.vue';
@@ -492,14 +496,14 @@ export default defineComponent({
     },
     async addAddress() {
       const addAddressModal = await modalController.create({
-        component: AddAddressModal
+        component: FacilityAddressModal
       })
 
       addAddressModal.present()
     },
     async addGeoPoint() {
       const addGeoPointModal = await modalController.create({
-        component: AddGeoPointModal
+        component: FacilityGeoPointModal
       })
 
       addGeoPointModal.present()

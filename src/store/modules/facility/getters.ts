@@ -18,10 +18,10 @@ const getters: GetterTree <FacilityState, RootState> = {
     return state.current ? JSON.parse(JSON.stringify(state.current)) : {}
   },
   getGeoPoint(state) {
-    return state.current?.geoPoint
+    return state.current?.geoPoint ? JSON.parse(JSON.stringify(state.current.geoPoint)) : {}
   },
   getPostalAddress(state) {
-    return state.current?.postalAddress
+    return state.current?.postalAddress ? JSON.parse(JSON.stringify(state.current.postalAddress)) : {}
   },
 }
 export default getters;

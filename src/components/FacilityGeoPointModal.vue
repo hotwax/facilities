@@ -6,34 +6,25 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate("Address") }}</ion-title>
+      <ion-title>{{ translate("Latitude & Longitude") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
-    <ion-item>
-      <ion-label>{{ translate("Address line 1") }}</ion-label>
-      <ion-input />
-    </ion-item>
     <ion-item class="ion-margin-bottom">
-      <ion-label>{{ translate("Address line 2") }}</ion-label>
-      <ion-input />
+      <ion-label>{{ "<postal code value>" }}</ion-label>
+      <ion-button fill="outline">
+        {{ translate("Generate") }}
+        <ion-icon slot="end" :icon="colorWandOutline" />
+      </ion-button>
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("City") }}</ion-label>
-      <ion-input />
+      <ion-label>{{ translate("Latitude") }}</ion-label>
+      <ion-input v-model="geoPoint.latitude" slot="end"/>
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("Country") }}</ion-label>
-      <ion-input />
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("State") }}</ion-label>
-      <ion-input />
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Zipcode") }}</ion-label>
-      <ion-input />
+      <ion-label>{{ translate("Longitude") }}</ion-label>
+      <ion-input v-model="geoPoint.longitude" slot="end" />
     </ion-item>
   </ion-content>
 
@@ -61,11 +52,12 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, saveOutline } from "ionicons/icons";
+import { mapGetters } from "vuex";
+import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
   
 export default defineComponent({
-  name: "AddAddressModal",
+  name: "FacilityGeoPointModal",
   components: {
     IonButton,
     IonButtons,
@@ -78,7 +70,12 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+  },
+  computed: {
+    ...mapGetters({
+      geoPoint: 'facility/getGeoPoint',
+    })
   },
   methods: {
     closeModal() {
@@ -88,6 +85,7 @@ export default defineComponent({
   setup() {
     return {
       closeOutline,
+      colorWandOutline,
       saveOutline,
       translate
     };
