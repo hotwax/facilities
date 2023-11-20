@@ -176,23 +176,23 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ translate("Sell Inventory Online") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.sellOnline" slot="end" @click="updateFulfillmentSetting($event, 'FAC_GRP')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.useOMSFulfillment" slot="end" @click="updateFulfillmentSetting($event, 'OMS_FULFILLMENT')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Generate shipping labels") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.generateShippingLabel" slot="end" @click="updateFulfillmentSetting($event, 'AUTO_SHIPPING_LABEL')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.allowPickup" slot="end" @click="updateFulfillmentSetting($event, 'PICKUP')"/>
             </ion-item>
             <ion-item lines="full">
               <ion-label>{{ translate("Days to ship") }}</ion-label>
-              <ion-input :value="current.defaultDaysToShip" type="number" min="0" placeholder="0"/>
+              <ion-input :value="current.defaultDaysToShip" type="number" min="0" :placeholder="translate('days to ship')"/>
             </ion-item>
             <ion-button fill="outline" expand="block">
               {{ translate("Update days to ship") }}
@@ -432,6 +432,7 @@ import { hasError } from '@/adapter';
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -587,7 +588,60 @@ export default defineComponent({
       })
   
       facilityOrderCountModal.present()
-    }
+    },
+    async addFacilityToGroup(facilityGroupId: string) {
+      let resp;
+      try {
+        resp = await FacilityService.addFacilityToGroup({
+          "facilityId": this.current.facilityId,
+          "facilityGroupId": facilityGroupId
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate('Fulfillment setting updated successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', err)
+      }
+    },
+    async updateFulfillmentSetting(event: any, facilityGroupId: string) {
+      event.stopImmediatePropagation();
+
+      // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
+      const isChecked = !event.target.checked;
+
+      if(isChecked) {
+        this.addFacilityToGroup(facilityGroupId)
+      } else {
+        this.updateFacilityToGroup(facilityGroupId)
+      }
+    },
+    async updateFacilityToGroup(facilityGroupId: string) {
+      let resp;
+
+      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
+
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.current.facilityId,
+          "facilityGroupId": facilityGroupId,
+          "fromDate": groupInformation.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+
+        if (!hasError(resp)) {
+          showToast(translate('Fulfillment setting updated successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', err)
+      }
+    },
   },
   setup() {
     const store = useStore();
