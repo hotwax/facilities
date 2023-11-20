@@ -470,12 +470,15 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      geoPoint: 'facility/getGeoPoint',
+      postalAddress: 'facility/getPostalAddress'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+    await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
     this.isLoading = false
   },
   methods: {

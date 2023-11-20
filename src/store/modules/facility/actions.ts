@@ -6,6 +6,8 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilities({ commit, state }, payload) {
@@ -147,6 +149,50 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     emitter.emit("dismissLoader");
     commit(types.FACILITY_CURRENT_UPDATED, facility);
+  },
+
+  async fetchFacilityContactDetails({ commit }, payload) {
+    let postalAddress = {}
+    let geoPoint = {}
+    const params = {
+      inputFields: {
+        facilityId: payload.facilityId,
+        contactMechTypeId: 'POSTAL_ADDRESS',
+        contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+      },
+      entityName: "FacilityContactDetailByPurpose",
+      orderBy: 'fromDate DESC',
+      filterByDate: 'Y'
+    }
+
+    try {
+      const resp = await FacilityService.fetchFacilityContactDetails(params)
+      if(!hasError(resp)) {
+        const contactInfo = resp.data.docs[0]
+
+        postalAddress = {
+          address1: contactInfo.address1,
+          address2: contactInfo.address2,
+          city: contactInfo.city,
+          country: contactInfo.countryGeoName,
+          state: contactInfo.stateGeoName,
+          zipcode: contactInfo.zipcode,
+          postalCode: contactInfo.postalCode
+        }
+
+        geoPoint = {
+          latitude: contactInfo.latitude,
+          longitude: contactInfo.longitude
+        }
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error(err)
+    }
+
+    commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
+    commit(types.FACILITY_GEO_POINT_UPDATED , geoPoint);
   },
 
   updateQuery({ commit }, query) {
