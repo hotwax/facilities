@@ -13,9 +13,9 @@
   <ion-content class="ion-padding">
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findParties()"/>
     <ion-row>
-      <ion-chip v-for="party in selectedParties" :key="party.partyId">
-        <ion-label>{{ party.groupName ? party.groupName : `${party.firstName} : ${party.lastName}` }}</ion-label>
-        <ion-icon :icon="closeCircle" />
+      <ion-chip v-for="party in selectedPartyValues" :key="party.partyId">
+        <ion-label>{{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}</ion-label>
+        <ion-icon :icon="closeCircle" @click="removeSelectedParty(party.partyId)" />
       </ion-chip>
     </ion-row>
 
@@ -31,17 +31,15 @@
             {{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}
             <p>{{ party.partyId }}</p>
           </ion-label>
-          <ion-select interface="popover" :placeholder="translate('Select')" value="" @ion-change="updateSelectedParties($event, party.partyId)" required>
-            <ion-select-option value="">{{ "None" }}</ion-select-option>
-            <ion-select-option value="fulfillment">{{ "Fulfillment" }}</ion-select-option>
-            <ion-select-option>{{ "WAREHOUSE_MANAGER" }}</ion-select-option>
+          <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
+            <ion-select-option v-for="role in roles" :key='role.roleTypeId' :value="role.roleTypeId">{{ role.description }}</ion-select-option>
         </ion-select>
         </ion-item>
       </div>
     </ion-list>
   </ion-content>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab @click="saveParties" vertical="bottom"  horizontal="end" slot="fixed">
     <ion-fab-button>
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
@@ -76,6 +74,8 @@ import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import { mapGetters, useStore } from "vuex";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "AddStaffMemberModal",
@@ -99,12 +99,18 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  props: ['selectedParties'],
   data () {
     return {
-      selectedParties: [] as any,
+      selectedPartyValues: JSON.parse(JSON.stringify(this.selectedParties)),
       queryString: '',
       parties: []
     }
+  },
+  computed: {
+    ...mapGetters({
+      roles: 'util/getRoles',
+    })
   },
   methods: {
     async closeModal() {
@@ -151,31 +157,69 @@ export default defineComponent({
         logger.error(err)
       }
     },
-    updateSelectedParties(event: CustomEvent, id: string) {
-      if(event.detail.value !== ''){
-        if (!this.isPartySelected(id)) this.selectedParties.push(this.parties.find((party: any) => party.partyId === id))
-      } else {
-        if(this.isPartySelected(id)) {
-          // if party is already selected then removing that party from the list on click
-          this.selectedParties = this.selectedParties.filter((party: any) => party.partyId !== id)
+    removeSelectedParty(id: string) {
+      this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== id)
+    },
+    saveParties() {
+      const partiesToCreate = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
+      const partiesToRemove = this.selectedParties.filter((party: any) => !this.selectedPartyValues.some((selectedParty: any) => party.partyId === selectedParty.partyId))
+      const partiesRoleChanged = this.selectedParties.filter((party: any) => this.selectedPartyValues.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId))
+      partiesRoleChanged.map((party: any) => partiesToRemove.push(party))
+
+      if(!(partiesToCreate.length > 0 || partiesToRemove.length > 0)) {
+        showToast(translate("Please update atleast one party role."))
+        return;
+      }
+
+      modalController.dismiss({
+        dismissed: true,
+        value: {
+          partiesToCreate,
+          partiesToRemove
         }
+      });
+    },
+    updateSelectedParties(event: CustomEvent, id: string) {
+      let party = {} as any
+      if(this.isPartySelected(id)){
+        party = this.selectedPartyValues.find((party: any) => party.partyId === id)
+        if(event.detail.value === 'none') {
+          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== id)
+        } else if(event.detail.value !== party.roleTypeId) {
+          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== id)
+          this.selectedPartyValues.push({...party, roleTypeId: event.detail.value})
+        }
+      } else {
+        party = this.parties.find((party: any) => party.partyId === id)
+        this.selectedPartyValues.push({...party, roleTypeId: event.detail.value})
       }
     },
     isPartySelected(partyId: any) {
-      return this.selectedParties.find((party: any) => party.partyId === partyId)
+      return this.selectedPartyValues.find((party: any) => party.partyId === partyId)
+    },
+    getPartyRoleId(partyId: any) {
+      return this.selectedPartyValues.find((party: any) => party.partyId === partyId) ? this.selectedPartyValues.find((party: any) => party.partyId === partyId).roleTypeId : 'none'
     }
   },
   async mounted() {
-    // getting picker information on initial load
     await this.findParties()
   },
   setup() {
+    const store = useStore()
+
     return {
       closeCircle,
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },
 });
 </script>
+
+<style scoped>
+ion-content {
+  --padding-bottom: 80px;
+}
+</style>

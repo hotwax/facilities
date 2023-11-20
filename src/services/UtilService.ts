@@ -18,8 +18,18 @@ const fetchProductStores = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchRoles = async (payload: any): Promise<any> => {
+  return api({
+    url: 'performFind',
+    method: 'POST',
+    data: payload,
+    cache: true
+  })
+}
+
 export const UtilService = {
   fetchFacilityTypes,
-  fetchProductStores
+  fetchProductStores,
+  fetchRoles
 }
 

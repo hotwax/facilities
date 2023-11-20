@@ -5,6 +5,8 @@ import UtilState from './UtilState'
 import * as types from './mutation-types'
 import { hasError } from '@/adapter'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<UtilState, RootState> = {
   async fetchProductStores({ commit }) {
@@ -60,6 +62,45 @@ const actions: ActionTree<UtilState, RootState> = {
     }
 
     commit(types.UTIL_FACILITY_TYPES_UPDATED, facilityTypes)
+  },
+
+  async fetchRoles({ commit, state }) {
+    if (state.roles.length) {
+      return
+    }
+
+    let roles = []
+    const params = {
+      inputFields: {
+        roleTypeGroupId: 'FACILITY_PARTY_ROLE'
+      },
+      viewSize: 100,
+      entityName: 'RoleTypeGroupMemberAndRoleType',
+      orderBy: 'sequenceNum',
+      filterByDate: 'Y',
+      fieldList: ['roleTypeId', 'description']
+    }
+
+    try {
+      const resp = await UtilService.fetchRoles(params)
+      if (!hasError(resp)) {
+        roles = resp.data.docs
+
+        // pushing none explicitly to show on UI
+        roles.push({
+          roleTypeId: 'none',
+          parentTypeId: 'none',
+          description: 'None',
+        })
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      showToast(translate('Something went wrong.'));
+      console.error(error)
+    }
+
+    commit(types.UTIL_ROLES_UPDATED, roles)
   },
 
   clearUtilState({ commit }) {

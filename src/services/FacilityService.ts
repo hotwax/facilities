@@ -100,6 +100,14 @@ const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
   });
 }
 
+const addPartyToFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/addPartyToFacility",
+    method: "post",
+    data: payload
+  });
+}
+
 const removePartyFromFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/removePartyFromFacility",
@@ -117,6 +125,7 @@ const updateFacility = async (payload: any): Promise<any> => {
 }
 
 export const FacilityService = {
+  addPartyToFacility,
   fetchFacilityOnlineGroupInformation,
   fetchFacilitiesOrderCount,
   fetchFacilities,

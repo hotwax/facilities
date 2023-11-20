@@ -6,6 +6,9 @@ const getters: GetterTree<UtilState, RootState> = {
   getProductStores(state) {
     return state.productStores;
   },
+  getRoles(state) {
+    return state.roles;
+  },
   getFacilityTypes(state) {
     return state.facilityTypes
   }

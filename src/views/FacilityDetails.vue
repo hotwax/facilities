@@ -294,7 +294,7 @@
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ party.roleTypeId }}</ion-chip>
+                <ion-chip outline>{{ getRoleTypeDesc(party.roleTypeId) }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
@@ -459,13 +459,15 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       current: 'facility/getCurrent',
-      facilityParties: 'facility/getFacilityParties'
+      facilityParties: 'facility/getFacilityParties',
+      roles: 'util/getRoles',
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
     await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
+    await this.store.dispatch('util/fetchRoles')
     this.isLoading = false
   },
   methods: {
@@ -507,7 +509,42 @@ export default defineComponent({
     },
     async addStaffMemberModal() {
       const addStaffModal = await modalController.create({
-        component: AddStaffMemberModal
+        component: AddStaffMemberModal,
+        componentProps: { selectedParties: this.facilityParties }
+      })
+
+      addStaffModal.onDidDismiss().then(async (result: any) => {
+        if (result.data && result.data.value) {
+          const partiesToAdd = result.data.value.partiesToCreate
+          const partiesToRemove = result.data.value.partiesToRemove
+
+          const removeResponses = await Promise.allSettled(partiesToRemove
+            .map(async (party: any) => await FacilityService.removePartyFromFacility({
+              facilityId: this.facilityId,
+              fromDate: party.fromDate,
+              thruDate: DateTime.now().toMillis(),
+              partyId: party.partyId,
+              roleTypeId: party.roleTypeId
+            }))
+          )
+
+          const addResponses = await Promise.allSettled(partiesToAdd
+            .map(async (party: any) => await FacilityService.addPartyToFacility({
+              facilityId: this.facilityId,
+              partyId: party.partyId,
+              roleTypeId: party.roleTypeId
+            }))
+          )
+
+          const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
+          if (hasFailedResponse) {
+            showToast(translate("Failed to update some role(s)."))
+          } else {
+            showToast(translate("Role(s) updated successfully."))
+          }
+          // refetching parties with updated roles
+          await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
+        }
       })
 
       addStaffModal.present()
@@ -539,9 +576,8 @@ export default defineComponent({
       return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
     },
     async removePartyFromFacility(party: any) {
-      console.log(party)
       try {
-        const resp = FacilityService.removePartyFromFacility({
+        const resp = await FacilityService.removePartyFromFacility({
           facilityId: party.facilityId,
           fromDate: party.fromDate,
           thruDate: DateTime.now().toMillis(),
@@ -561,6 +597,9 @@ export default defineComponent({
         showToast("Failed to remove party from facility.")
         logger.error(err)
       }
+    },
+    getRoleTypeDesc(id: any) {
+      return this.roles.find((role: any) => role.roleTypeId === id)?.description
     }
   },
   setup() {
