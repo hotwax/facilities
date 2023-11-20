@@ -66,10 +66,7 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
       data: params
     })
 
-    if (!hasError(resp) && resp.data.count) {          
-      // using index 0 as we will only get a single record
-      // this.currentFacilityDetails.orderCount = resp.data.docs[0].lastOrderCount
-
+    if (!hasError(resp) && resp.data.count > 0) {
       facilitiesOrderCount = resp.data.docs.reduce((facilitiesCount: any, facilityCount: any) => {
         facilitiesCount[facilityCount.facilityId] = facilityCount.lastOrderCount
         return facilitiesCount
@@ -100,6 +97,40 @@ const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
   });
 }
 
+const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
+  let facilityOrderCounts = {}, resp: any;
+  try {
+    const params = {
+      entityName: "FacilityOrderCount",
+      inputFields: {
+        facilityId: facilityId
+      },
+      viewSize: 10, // only fetching last 10 order consumed information for facility
+      fieldList: ["entryDate", "facilityId", "lastOrderCount"],
+      orderBy: "entryDate DESC"
+    }
+    
+    resp = await api({
+      url: "performFind",
+      method: "post",
+      data: params
+    })
+    
+    if (!hasError(resp) && resp.data.count > 0) {
+      facilityOrderCounts = resp.data.docs.map((facilityOrderCount: any) => {
+        facilityOrderCount.entryDate = DateTime.fromMillis(facilityOrderCount.entryDate).toFormat('MMM dd yyyy')
+        return facilityOrderCount
+      })
+    } else {
+      throw resp.data
+    }
+  } catch(err) {
+    logger.error("Failed to fetch order consumed history for this facility", err);
+  }
+  
+  return facilityOrderCounts;
+}
+
 const addPartyToFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/addPartyToFacility",
@@ -127,6 +158,7 @@ const updateFacility = async (payload: any): Promise<any> => {
 export const FacilityService = {
   addPartyToFacility,
   fetchFacilityOnlineGroupInformation,
+  fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
   fetchFacilities,
   getFacilityParties,

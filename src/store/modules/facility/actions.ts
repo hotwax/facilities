@@ -114,13 +114,32 @@ const actions: ActionTree<FacilityState, RootState> = {
       viewSize: 1
     }
 
-    let facility = {};
+    let facility = {} as any;
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
         facility = resp.data.docs[0]
+
+        const [facilityOnlineGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityOnlineGroupInformation(facility.facilityId), FacilityService.fetchFacilitiesOrderCount(facility.facilityId)])
+
+        const fulfillmentOrderLimit = facility.maximumOrderLimit
+        if (fulfillmentOrderLimit === 0) {
+          facility.orderLimitType = 'no-capacity'
+        } else if (fulfillmentOrderLimit) {
+          facility.orderLimitType = 'custom'
+        } else {
+          facility.orderLimitType = 'unlimited'
+        }
+
+        facility.orderCount = facilityOrderCount[facility.facilityId] ? facilityOrderCount[facility.facilityId] : 0;
+
+        if(facilityOnlineGroupInformation.includes(facility.facilityId)) {
+          facility.sellOnline = true
+        } else {
+          facility.sellOnline = false
+        }
       } else {
         throw resp.data
       }
