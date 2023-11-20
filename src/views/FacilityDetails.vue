@@ -330,7 +330,7 @@
                 <ion-icon :icon="locationOutline" slot="start" />
                 <ion-label>
                   {{ location.locationSeqId }}
-                  <p>{{ "pick/primary" }}</p>
+                  <p>{{ locationTypes[location.locationTypeEnumId] }}</p>
                 </ion-label>
               </ion-item>
 
@@ -470,13 +470,14 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      locationTypes: 'util/getLocationTypes'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId })
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes')])
     this.isLoading = false
   },
   methods: {

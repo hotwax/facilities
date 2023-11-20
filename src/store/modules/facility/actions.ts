@@ -163,21 +163,21 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_CURRENT_UPDATED, {});
   },
 
-  async fetchFacilityLocations({ state }, payload) {
+  async fetchFacilityLocations({ commit }, payload) {
     try {
       const params = {
         inputFields: {
           facilityId: payload.facilityId
         },
         entityName: "FacilityLocation",
-        fieldList: ["facilityId", "locationSeqId", "areaId", "aisleId", "sectionId", "levelId", "positionId"],
+        fieldList: ["facilityId", "locationSeqId", "locationTypeEnumId", "areaId", "aisleId", "sectionId", "levelId", "positionId"],
         viewSize: 100
       }
 
       const resp = await FacilityService.fetchFacilityLocations(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        state.current.locations = resp.data.docs
+        commit(types.FACILITY_CURRENT_LOCATION_UPDATED, resp.data.docs)
       } else {
         throw resp.data
       }

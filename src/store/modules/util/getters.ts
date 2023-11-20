@@ -8,6 +8,9 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getFacilityTypes(state) {
     return state.facilityTypes
+  },
+  getLocationTypes(state) {
+    return state.locationTypes
   }
 }
 export default getters;
