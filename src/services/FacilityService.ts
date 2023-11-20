@@ -109,13 +109,13 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
       fieldList: ["entryDate", "facilityId", "lastOrderCount"],
       orderBy: "entryDate DESC"
     }
-    
+
     resp = await api({
       url: "performFind",
       method: "post",
       data: params
     })
-    
+
     if (!hasError(resp) && resp.data.count > 0) {
       facilityOrderCounts = resp.data.docs.map((facilityOrderCount: any) => {
         facilityOrderCount.entryDate = DateTime.fromMillis(facilityOrderCount.entryDate).toFormat('MMM dd yyyy')
@@ -127,7 +127,7 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   } catch(err) {
     logger.error("Failed to fetch order consumed history for this facility", err);
   }
-  
+
   return facilityOrderCounts;
 }
 
