@@ -325,37 +325,37 @@
               {{ translate("Add locations to facility") }}
             </ion-button>
 
-            <div class="list-item">
+            <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
               <ion-item lines="none">
                 <ion-icon :icon="locationOutline" slot="start" />
                 <ion-label>
-                  {{ "locations id" }}
+                  {{ location.locationSeqId }}
                   <p>{{ "pick/primary" }}</p>
                 </ion-label>
               </ion-item>
 
               <ion-label class="tablet">
-                AI
+                {{ location.areaId }}
                 <p>{{ translate("area") }}</p>
               </ion-label>
 
               <ion-label>
-                AL
+                {{ location.aisleId }}
                 <p>{{ translate("aisle") }}</p>
               </ion-label>
 
               <ion-label>
-                SI
+                {{ location.sectionId }}
                 <p>{{ translate("section") }}</p>
               </ion-label>
 
               <ion-label class="tablet">
-                SI
+                {{ location.levelId }}
                 <p>{{ translate("level") }}</p>
               </ion-label>
 
               <ion-label>
-                1
+                {{ location.positionId }}
                 <p>{{ translate("sequence") }}</p>
               </ion-label>
               
@@ -476,6 +476,7 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+    await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId })
     this.isLoading = false
   },
   methods: {

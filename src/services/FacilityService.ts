@@ -123,7 +123,16 @@ const updateFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchFacilityLocations = async(payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
+  fetchFacilityLocations,
   fetchFacilityOnlineGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
