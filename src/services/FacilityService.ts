@@ -131,11 +131,38 @@ const fetchFacilityLocations = async(payload: any): Promise<any> => {
   })
 }
 
+const createFacilityLocation = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityLocation = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const deleteFacilityLocation = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/deleteFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
+  createFacilityLocation,
+  deleteFacilityLocation,
   fetchFacilityLocations,
   fetchFacilityOnlineGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
   fetchFacilities,
-  updateFacility
+  updateFacility,
+  updateFacilityLocation
 }

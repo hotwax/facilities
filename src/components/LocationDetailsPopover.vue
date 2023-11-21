@@ -5,7 +5,7 @@
       <ion-item button @click="addLocationModal">
         {{ translate("Edit location") }}
       </ion-item>
-      <ion-item button lines="none">
+      <ion-item button lines="none" @click="removeLocation">
         {{ translate("Remove location") }}
       </ion-item>
     </ion-list>
@@ -18,11 +18,13 @@ import {
   IonItem,
   IonList,
   IonListHeader,
-  modalController
+  modalController,
+popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
 import AddLocationModal from "./AddLocationModal.vue";
+import { useStore } from "vuex";
 
 export default defineComponent({
   name: "LocationDetailsPopover",
@@ -32,17 +34,31 @@ export default defineComponent({
     IonList,
     IonListHeader
   },
+  props: ["location"],
   methods: {
     async addLocationModal() {
       const addLocationModal = await modalController.create({
-        component: AddLocationModal
+        component: AddLocationModal,
+        componentProps: { location: this.location }
       })
 
       addLocationModal.present()
+
+      addLocationModal.onDidDismiss().then((result: any) => {
+        if(result.data.result) {
+          popoverController.dismiss();
+        }
+      })
+    },
+    removeLocation() {
+      this.store.dispatch('facility/deleteFacilityLocation', this.location)
     }
   },
   setup() {
+    const store = useStore();
+
     return {
+      store,
       translate
     };
   }

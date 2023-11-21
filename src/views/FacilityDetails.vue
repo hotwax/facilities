@@ -359,7 +359,7 @@
                 <p>{{ translate("sequence") }}</p>
               </ion-label>
               
-              <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover">
+              <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover($event, location)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </div>
@@ -531,9 +531,10 @@ export default defineComponent({
   
       selectOperatingTimeModal.present()
     },
-    async openLocationDetailsPopover(ev: Event) {
+    async openLocationDetailsPopover(ev: Event, location: any) {
       const locationDetailsPopover = await popoverController.create({
         component: LocationDetailsPopover,
+        componentProps: { location },
         event: ev,
         showBackdrop: false
       });

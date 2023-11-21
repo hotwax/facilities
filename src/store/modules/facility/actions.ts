@@ -6,6 +6,8 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilities({ commit, state }, payload) {
@@ -183,6 +185,26 @@ const actions: ActionTree<FacilityState, RootState> = {
       }
     } catch(err) {
       logger.error('Failed to find the facility locations', err)
+    }
+  },
+
+  async deleteFacilityLocation({ dispatch }, payload) {
+    const params = {
+      facilityId: payload.facilityId,
+      locationSeqId: payload.locationSeqId
+    }
+
+    try {
+      const resp = await FacilityService.deleteFacilityLocation(params)
+
+      if(!hasError(resp)) {
+        dispatch('fetchFacilityLocation')
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      showToast(translate('Failed to remove facility location'))
+      logger.error('Failed to remove facility location', err)
     }
   }
 }
