@@ -32,9 +32,9 @@
                     <p class="ion-text-wrap">{{ postalAddress.country ? `${postalAddress.state}, ${postalAddress.country}` : postalAddress.state }}</p>
                   </ion-label>
                 </ion-item>
-                <ion-button fill="clear" @click="addAddress">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
               </div>
-              <ion-button v-else expand="block" fill="outline" @click="addAddress">
+              <ion-button v-else expand="block" fill="outline" @click="openAddressModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
@@ -58,9 +58,9 @@
                   <ion-label>{{ translate("Longitude") }}</ion-label>
                   <p>{{ "<longitude>" }}</p>
                 </ion-item>
-                <ion-button fill="clear" @click="addGeoPoint">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
               </div>
-              <ion-button v-else expand="block" fill="outline" @click="addGeoPoint">
+              <ion-button v-else expand="block" fill="outline" @click="openGeoPointModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
@@ -494,15 +494,15 @@ export default defineComponent({
       });
       return popover.present()
     },
-    async addAddress() {
-      const addAddressModal = await modalController.create({
+    async openAddressModal() {
+      const addressModal = await modalController.create({
         component: FacilityAddressModal,
         componentProps: { facilityId: this.facilityId }
       })
 
-      addAddressModal.present()
+      addressModal.present()
     },
-    async addGeoPoint() {
+    async openGeoPointModal() {
       const addGeoPointModal = await modalController.create({
         component: FacilityGeoPointModal
       })

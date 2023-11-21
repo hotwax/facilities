@@ -12,7 +12,7 @@
 
   <ion-content>
     <ion-item class="ion-margin-bottom">
-      <ion-input placeholder="Postal Code" v-model="postalAddress.postalCode" />
+      <ion-input placeholder="Zipcode" v-model="geoPoint.postalCode" />
       <ion-button fill="outline" @click="generateLatLong">
         {{ translate("Generate") }}
         <ion-icon slot="end" :icon="colorWandOutline" />
@@ -20,15 +20,15 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Latitude") }}</ion-label>
-      <ion-input v-model="postalAddress.latitude" slot="end"/>
+      <ion-input v-model="geoPoint.latitude" slot="end"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Longitude") }}</ion-label>
-      <ion-input v-model="postalAddress.longitude" slot="end" />
+      <ion-input v-model="geoPoint.longitude" slot="end" />
     </ion-item>
   </ion-content>
 
-  <ion-fab @click="saveGeoPoint" vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button>
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
@@ -56,7 +56,6 @@ import { mapGetters, useStore } from "vuex";
 import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { showToast, hasError } from "@/utils";
-import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
   
@@ -82,6 +81,14 @@ export default defineComponent({
     })
   },
   props: ['facilityId'],
+  data() {
+    return {
+      geoPoint: {} as any
+    }
+  },
+  mounted() {
+    this.geoPoint = this.postalAddress
+  },
   methods: {
     closeModal() {
       modalController.dismiss()
@@ -99,50 +106,17 @@ export default defineComponent({
         const resp = await UtilService.generateLatLong(payload)
 
         if(!hasError(resp)) {
-          const geoPoint = resp.data.response.docs[0]
-          this.postalAddress.latitude = geoPoint.latitude
-          this.postalAddress.longitude = geoPoint.longitude
+          const result = resp.data.response.docs[0]
+          this.geoPoint.latitude = result.latitude
+          this.geoPoint.longitude = result.longitude
           return;
         } else {
           throw resp.data
         }
       } catch(err) {
+        showToast(translate("Invalied Zipcode, GeoPoints can't be generated."))
         logger.error(err)
       }
-    },
-    async saveGeoPoint() {
-      let resp;
-      
-      if(!this.postalAddress?.address1 || !this.postalAddress?.city) {
-        showToast("Please fill required fields.")
-        return
-      }
-
-      const payload = {
-        facilityId: this.facilityId,
-        latitude: this.postalAddress.latitude,
-        longitude: this.postalAddress.longitude
-      }
-
-      try {
-        if(this.postalAddress.contactMechId) {
-          resp = await FacilityService.updateFacilityPostalAddress({...payload, contactMechId: this.postalAddress.contactMechId})
-        } else {
-          resp = await FacilityService.createFacilityPostalAddress(payload)
-        }
-
-        if(!hasError(resp)) {
-          showToast(translate("Facility geoPoint updated successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate("Failed to update facility geoPoint."))
-        logger.error(err)
-      }
-
-      modalController.dismiss()
     }
   },
   setup() {

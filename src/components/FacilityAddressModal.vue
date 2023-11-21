@@ -32,7 +32,7 @@
       <ion-input v-model="postalAddress.state" slot="end" />
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("ZipCode") }}</ion-label>
+      <ion-label>{{ translate("Zipcode") }}</ion-label>
       <ion-input v-model="postalAddress.postalCode" slot="end" />
     </ion-item>
   </ion-content>
@@ -56,6 +56,7 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonText,
   IonTitle,
   IonToolbar,
   modalController
@@ -83,6 +84,7 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonLabel,
+    IonText,
     IonTitle,
     IonToolbar
   },
