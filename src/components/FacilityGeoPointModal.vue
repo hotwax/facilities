@@ -28,8 +28,8 @@
     </ion-item>
   </ion-content>
 
-  <ion-fab @click="saveGeoPoint" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button @click="saveGeoPoint">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>

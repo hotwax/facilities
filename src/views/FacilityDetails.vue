@@ -28,7 +28,7 @@
                   <ion-label>
                     <h3>{{ postalAddress.address1 }}</h3>
                     <h3>{{ postalAddress.address2 }}</h3>
-                    <p class="ion-text-wrap">{{ postalAddress.zipCode ? `${postalAddress.city}, ${postalAddress.zipCode}` : postalAddress.city }}</p>
+                    <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.country ? `${postalAddress.state}, ${postalAddress.country}` : postalAddress.state }}</p>
                   </ion-label>
                 </ion-item>
@@ -49,14 +49,14 @@
               <ion-card-content>
                 {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
               </ion-card-content>
-              <div v-if="geoPoint?.latitude">
+              <div v-if="postalAddress?.latitude">
                 <ion-item lines="full">
                   <ion-label>{{ translate("Latitude") }}</ion-label>
-                  <p>{{ "<latitude>" }}</p>
+                  <p>{{ postalAddress.latitude }}</p>
                 </ion-item>
                 <ion-item lines="full">
                   <ion-label>{{ translate("Longitude") }}</ion-label>
-                  <p>{{ "<longitude>" }}</p>
+                  <p>{{ postalAddress.longitude }}</p>
                 </ion-item>
                 <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
               </div>
@@ -477,7 +477,6 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       current: 'facility/getCurrent',
-      geoPoint: 'facility/getGeoPoint',
       locationTypes: 'util/getLocationTypes',
       postalAddress: 'facility/getPostalAddress'
     })

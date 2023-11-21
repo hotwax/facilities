@@ -37,8 +37,8 @@
     </ion-item>
   </ion-content>
 
-  <ion-fab @click="saveAddress" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button @click="saveAddress">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>

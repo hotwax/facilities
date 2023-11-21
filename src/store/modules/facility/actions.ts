@@ -169,7 +169,8 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoName']
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoName'],
+      viewSize: 1
     }
 
     try {
@@ -192,7 +193,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         throw resp.data
       }
     } catch(err) {
-      logger.error(err)
+      logger.error('Failed to fetch the postal address for the facility', err)
     }
 
     commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
