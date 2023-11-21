@@ -13,9 +13,8 @@
   <ion-content>
     <ion-item>
       <ion-label>{{ translate("Type") }}</ion-label>
-      <ion-select interface="popover" :placeholder="translate('Select')" value="bulk" required>
-        <ion-select-option>{{ "pick/primary" }}</ion-select-option>
-        <ion-select-option>{{ "bulk" }}</ion-select-option>
+      <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
+        <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
       </ion-select>
     </ion-item>
     <ion-item>
@@ -105,7 +104,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      locationTypes: 'util/getLocationTypes'
     })
   },
   methods: {
