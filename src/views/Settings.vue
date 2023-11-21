@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-menu-button slot="start" />
+        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Settings") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -38,43 +38,6 @@
 
       <section>
         <OmsInstanceNavigator />
-
-        <ion-card>
-          <ion-card-header>
-            <ion-card-subtitle>
-              {{ translate("Product Store") }}
-            </ion-card-subtitle>
-            <ion-card-title>
-              {{ translate("Store") }}
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            {{ translate('A store represents a company or a unique catalog of products. If your OMS is connected to multiple eCommerce stores selling different collections of products, you may have multiple Product Stores set up in HotWax Commerce.') }}
-          </ion-card-content>
-          <ion-item lines="none">
-            <ion-label> {{ translate("Select store") }} </ion-label>
-            <ion-select interface="popover" :value="currentEComStore.productStoreId" @ionChange="setEComStore($event)">
-              <ion-select-option v-for="store in (userProfile ? userProfile.stores : [])" :key="store.productStoreId" :value="store.productStoreId" >{{ store.storeName }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-card>
-
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>
-              {{ translate("Facility") }}
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            {{ translate('Specify which facility you want to operate from. Order, inventory and other configuration data will be specific to the facility you select.') }}
-          </ion-card-content>
-          <ion-item lines="none">
-            <ion-label>{{ translate("Select facility") }}</ion-label>
-            <ion-select interface="popover" :value="currentFacility?.facilityId" @ionChange="setFacility($event)">
-              <ion-select-option v-for="facility in (userProfile ? userProfile.facilities : [])" :key="facility.facilityId" :value="facility.facilityId" >{{ facility.facilityName }}</ion-select-option>
-            </ion-select>
-          </ion-item>
-        </ion-card>
       </section>
 
       <hr />
@@ -108,22 +71,20 @@
 <script lang="ts">
 import { 
   IonAvatar,
+  IonBackButton,
   IonButton, 
   IonCard, 
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
   IonCardSubtitle,
-  IonContent, 
+  IonContent,
   IonHeader,
-  IonIcon, 
-  IonItem, 
-  IonLabel, 
-  IonMenuButton,
-  IonPage, 
-  IonSelect, 
-  IonSelectOption, 
-  IonTitle, 
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonPage,
+  IonTitle,
   IonToolbar,
   modalController
 } from '@ionic/vue';
@@ -141,6 +102,7 @@ export default defineComponent({
   name: 'Settings',
   components: {
     IonAvatar,
+    IonBackButton,
     IonButton,
     IonCard,
     IonCardContent,
@@ -152,10 +114,7 @@ export default defineComponent({
     IonIcon,
     IonItem,
     IonLabel,
-    IonMenuButton,
     IonPage,
-    IonSelect,
-    IonSelectOption,
     IonTitle,
     IonToolbar,
     Image
@@ -171,10 +130,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile',
-      currentFacility: 'user/getCurrentFacility',
       instanceUrl: 'user/getInstanceUrl',
-      currentEComStore: 'user/getCurrentEComStore',
-      userPreference: 'user/getUserPreference',
       locale: 'user/getLocale'
     })
   },
@@ -196,38 +152,11 @@ export default defineComponent({
     goToLaunchpad() {
       window.location.href = `${process.env.VUE_APP_LOGIN_URL}`
     },
-    async setFacility (event: any) {
-      // not updating the facility when the current facility in vuex state and the selected facility are same
-      // or when an empty value is given (on logout)
-      if (this.currentFacility.facilityId === event.detail.value || !event.detail.value) {
-        return;
-      }
-
-      if (this.userProfile){
-        await this.store.dispatch('user/setFacility', {
-          'facility': this.userProfile.facilities.find((fac: any) => fac.facilityId == event.detail.value)
-        });
-        this.store.dispatch('order/clearOrders')
-      }
-    },
     async changeTimeZone() {
       const timeZoneModal = await modalController.create({
         component: TimezoneModal,
       });
       return timeZoneModal.present();
-    },
-    async setEComStore(event: any) {
-      // not updating the ecomstore when the current value in vuex state and selected value are same
-      // or when an empty value is given (on logout)
-      if (this.currentEComStore.productStoreId === event.detail.value || !event.detail.value) {
-        return;
-      }
-
-      if(this.userProfile) {
-        await this.store.dispatch('user/setEComStore', {
-          'eComStore': this.userProfile.stores.find((str: any) => str.productStoreId == event.detail.value)
-        })
-      }
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

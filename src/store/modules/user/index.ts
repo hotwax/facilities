@@ -11,20 +11,7 @@ const userModule: Module<UserState, RootState> = {
       token: '',
       permissions: [],
       current: {},
-      currentFacility: {},
       instanceUrl: '',
-      currentEComStore: {},
-      preference: {
-        printShippingLabel: false,
-        printPackingSlip: false
-      },
-      fieldMappings: {},
-      currentMapping: {
-        id: '',
-        mappingType: '',
-        name: '',
-        value: {}
-      },
       pwaState: {
         updateExists: false,
         registration: null,
