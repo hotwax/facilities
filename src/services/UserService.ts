@@ -28,66 +28,6 @@ const setUserTimeZone = async (payload: any): Promise <any>  => {
   });
 }
 
-const getEComStores = async (token: any, facilityId: any): Promise<any> => {
-  try {
-    const params = {
-      "inputFields": {
-        "storeName_op": "not-empty",
-        facilityId
-      },
-      "fieldList": ["productStoreId", "storeName"],
-      "entityName": "ProductStoreFacilityDetail",
-      "distinct": "Y",
-      "noConditionFind": "Y",
-      "filterByDate": 'Y',
-    }
-    const baseURL = store.getters['user/getBaseUrl'];
-    const resp = await client({
-      url: "performFind",
-      method: "get",
-      baseURL,
-      params,
-      headers: {
-        Authorization:  'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (hasError(resp)) {
-      return Promise.reject(resp.data);
-    } else {
-      return Promise.resolve(resp.data.docs);
-    }
-  } catch(error: any) {
-    return Promise.reject(error)
-  }
-}
-
-const getPreferredStore = async (token: any): Promise<any> => {
-  const baseURL = store.getters['user/getBaseUrl'];
-  try {
-    const resp = await client({
-      url: "service/getUserPreference",
-      //TODO Due to security reasons service model of OMS 1.0 does not support sending parameters in get request that's why we use post here
-      method: "post",
-      baseURL,
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/json'
-      },
-      data: {
-        'userPrefTypeId': 'SELECTED_BRAND'
-      },
-    });
-    if (hasError(resp)) {
-      return Promise.reject(resp.data);
-    } else {
-      return Promise.resolve(resp.data.userPrefValue);
-    }
-  } catch (error: any) {
-    return Promise.reject(error)
-  }
-}
-
 const getUserPermissions = async (payload: any, token: any): Promise<any> => {
   const baseURL = store.getters['user/getBaseUrl'];
   let serverPermissions = [] as any;
@@ -196,21 +136,10 @@ const getUserProfile = async (token: any): Promise<any> => {
   }
 }
 
-const setUserPreference = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/setUserPreference",
-    method: "post",
-    data: payload
-  });
-}
-
 export const UserService = {
-    login,
-    getAvailableTimeZones,
-    getEComStores,
-    getUserProfile,
-    getPreferredStore,
-    setUserPreference,
-    setUserTimeZone,
-    getUserPermissions
+  login,
+  getAvailableTimeZones,
+  getUserProfile,
+  setUserTimeZone,
+  getUserPermissions
 }

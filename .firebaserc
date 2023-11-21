@@ -7,10 +7,10 @@
     "hotwax-digital-commerce": {
       "hosting": {
         "dev": [
-          "dev-facilities"
+          "hotwax-facilities-dev"
         ],
         "uat": [
-          "uat-facilities"
+          "hotwax-facilities-uat"
         ]
       }
     },
