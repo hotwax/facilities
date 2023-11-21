@@ -13,35 +13,34 @@
   <ion-content>
     <ion-item>
       <ion-label>{{ translate("Type") }}</ion-label>
-      <ion-select interface="popover" :placeholder="translate('Select')" value="bulk" required>
-        <ion-select-option>{{ "pick/primary" }}</ion-select-option>
-        <ion-select-option>{{ "bulk" }}</ion-select-option>
+      <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
+        <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
       </ion-select>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="area"/>
+      <ion-input :placeholder="translate('area')" v-model="locationInfo.areaId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="aisle" />
+      <ion-input :placeholder="translate('aisle')" v-model="locationInfo.aisleId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="section"/>
+      <ion-input :placeholder="translate('section')" v-model="locationInfo.sectionId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="level"/>
+      <ion-input :placeholder="translate('level')" v-model="locationInfo.levelId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Sequence") }}</ion-label>
-      <ion-input placeholder="sequence"/>
+      <ion-input :placeholder="translate('sequence')" v-model="locationInfo.positionId"/>
     </ion-item>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button>
+    <ion-fab-button @click="saveFacilityLocation">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -69,6 +68,11 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
+import { FacilityService } from "@/services/FacilityService";
+import { mapGetters } from 'vuex'
+import { hasError } from "@/adapter";
+import { showToast } from "@/utils";
+import logger from "@/logger";
 
 export default defineComponent({
   name: "AddLocationModal",
@@ -89,10 +93,79 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
+  props: ["location"],
+  data() {
+    return {
+      locationInfo: {} as any
     }
+  },
+  mounted() {
+    this.locationInfo = this.location ? JSON.parse(JSON.stringify(this.location)) : {}
+  },
+  computed: {
+    ...mapGetters({
+      current: 'facility/getCurrent',
+      locationTypes: 'util/getLocationTypes'
+    })
+  },
+  methods: {
+    closeModal(result?: string) {
+      modalController.dismiss({ result });
+    },
+    saveFacilityLocation() {
+      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.positionId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
+        showToast(translate('Please fill all the required fields'))
+        return;
+      }
+
+      // checking for locationSeqId as when adding new facility we won't be having locationSeqId
+      if(this.location.locationSeqId) {
+        this.updateFacilityLocation()
+      } else {
+        this.addFacilityLocation()
+      }
+    },
+    async addFacilityLocation() {
+      const params = {
+        facilityId: this.current.facilityId,
+        ...this.locationInfo
+      }
+
+      try {
+        const resp = await FacilityService.createFacilityLocation(params)
+
+        if(!hasError(resp)) {
+          showToast(translate('Facility location created successfully'))
+          this.closeModal('success');
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to create facility location'))
+        logger.error('Failed to create facility location', err)
+      }
+    },
+
+    async updateFacilityLocation() {
+      const params = {
+        facilityId: this.current.facilityId,
+        ...this.locationInfo
+      }
+
+      try {
+        const resp = await FacilityService.updateFacilityLocation(params)
+
+        if(!hasError(resp)) {
+          showToast(translate('Facility location updated successfully'))
+          this.closeModal('success');
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update facility location'))
+        logger.error('Failed to update facility location', err)
+      }
+    },
   },
   setup() {
     return {

@@ -4,7 +4,6 @@ export default interface FacilityState {
     productStoreId: string,
     facilityTypeId: string
   };
-  selectedFacility: object;
   facilities: {
     list: Array<object>,
     total: number

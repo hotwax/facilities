@@ -62,6 +62,43 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_FACILITY_TYPES_UPDATED, facilityTypes)
   },
 
+  async fetchLocationTypes({ commit, state }) {
+    const cachedLocationTypes = JSON.parse(JSON.stringify(state.locationTypes))
+
+    // not fetching location type information again if already present, as it will not be changed so frequently
+    if(cachedLocationTypes.length) {
+      return;
+    }
+
+    let locationTypes = []
+    const params = {
+      inputFields: {
+        enumTypeId: 'FACLOC_TYPE'
+      },
+      viewSize: 100,
+      noConditionFind: 'Y',
+      entityName: 'Enumeration',
+      fieldList: ['enumId', 'description']
+    } as any
+
+    try {
+      const resp = await UtilService.fetchLocationTypes(params)
+      if (!hasError(resp)) {
+        locationTypes = resp.data.docs.reduce((locationType: any, type: any) => {
+          locationType[type.enumId] = type.description
+
+          return locationType
+        }, {})
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+
+    commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
+  },
+
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
     commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
