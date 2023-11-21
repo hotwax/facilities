@@ -28,7 +28,7 @@
                   <ion-label>
                     <h3>{{ postalAddress.address1 }}</h3>
                     <h3>{{ postalAddress.address2 }}</h3>
-                    <p class="ion-text-wrap">{{ postalAddress.zipcode ? `${postalAddress.city}, ${postalAddress.zipcode}` : postalAddress.city }}</p>
+                    <p class="ion-text-wrap">{{ postalAddress.zipCode ? `${postalAddress.city}, ${postalAddress.zipCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.country ? `${postalAddress.state}, ${postalAddress.country}` : postalAddress.state }}</p>
                   </ion-label>
                 </ion-item>
@@ -496,7 +496,8 @@ export default defineComponent({
     },
     async addAddress() {
       const addAddressModal = await modalController.create({
-        component: FacilityAddressModal
+        component: FacilityAddressModal,
+        componentProps: { facilityId: this.facilityId }
       })
 
       addAddressModal.present()

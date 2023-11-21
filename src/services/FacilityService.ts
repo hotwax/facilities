@@ -131,11 +131,29 @@ const updateFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
+  createFacilityPostalAddress,
   fetchFacilityContactDetails,
   fetchFacilityOnlineGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
   fetchFacilities,
-  updateFacility
+  updateFacility,
+  updateFacilityPostalAddress
 }

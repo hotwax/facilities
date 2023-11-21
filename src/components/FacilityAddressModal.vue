@@ -12,7 +12,7 @@
 
   <ion-content>
     <ion-item>
-      <ion-label>{{ translate("Address line 1") }}</ion-label>
+      <ion-label>{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
       <ion-input v-model="postalAddress.address1" slot="end" />
     </ion-item>
     <ion-item class="ion-margin-bottom">
@@ -20,7 +20,7 @@
       <ion-input v-model="postalAddress.address2" slot="end" />
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("City") }}</ion-label>
+      <ion-label>{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
       <ion-input v-model="postalAddress.city" slot="end" />
     </ion-item>
     <ion-item>
@@ -32,12 +32,12 @@
       <ion-input v-model="postalAddress.state" slot="end" />
     </ion-item>
     <ion-item>
-      <ion-label>{{ translate("Zipcode") }}</ion-label>
-      <ion-input v-model="postalAddress.zipcode" slot="end" />
+      <ion-label>{{ translate("ZipCode") }}</ion-label>
+      <ion-input v-model="postalAddress.postalCode" slot="end" />
     </ion-item>
   </ion-content>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab @click="saveAddress" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button>
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
@@ -61,9 +61,14 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { mapGetters } from "vuex";
+import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
+import { FacilityService } from '@/services/FacilityService';
+import { hasError } from "@/adapter";
+import logger from "@/logger";
+import { showToast } from "@/utils";
+
   
 export default defineComponent({
   name: "FacilityAddressModal",
@@ -86,15 +91,57 @@ export default defineComponent({
       postalAddress: 'facility/getPostalAddress'
     })
   },
+  props: ['facilityId'],
   methods: {
     closeModal() {
+      modalController.dismiss()
+    },
+    async saveAddress() {
+      let resp;
+
+      if(!this.postalAddress?.address1 || !this.postalAddress?.city) {
+        showToast("Please fill required fields.")
+        return
+      }
+
+      const payload = {
+        facilityId: this.facilityId,
+        address1: this.postalAddress.address1,
+        address2: this.postalAddress.address2,
+        city: this.postalAddress.city,
+        country: this.postalAddress.country,
+        state: this.postalAddress.state,
+        postalCode: this.postalAddress.postalCode
+      }
+
+      try {
+        if(this.postalAddress.contactMechId) {
+          resp = await FacilityService.updateFacilityPostalAddress({...payload, contactMechId: this.postalAddress.contactMechId})
+        } else {
+          resp = await FacilityService.createFacilityPostalAddress(payload)
+        }
+
+        if(!hasError(resp)) {
+          showToast(translate("Facility address updated successfully."))
+          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate("Failed to update facility address."))
+        logger.error(err)
+      }
+
       modalController.dismiss()
     }
   },
   setup() {
+    const store = useStore()
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },

@@ -18,8 +18,18 @@ const fetchProductStores = async (payload: any): Promise<any> => {
   })
 }
 
+const generateLatLong = async (payload: any): Promise<any> => {
+  return api({
+    url: "postcodeLookup",
+    method: "POST",
+    data: payload,
+    cache: true
+  })
+}
+
 export const UtilService = {
   fetchFacilityTypes,
-  fetchProductStores
+  fetchProductStores,
+  generateLatLong
 }
 

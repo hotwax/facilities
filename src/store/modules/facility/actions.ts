@@ -153,7 +153,6 @@ const actions: ActionTree<FacilityState, RootState> = {
 
   async fetchFacilityContactDetails({ commit }, payload) {
     let postalAddress = {}
-    let geoPoint = {}
     const params = {
       inputFields: {
         facilityId: payload.facilityId,
@@ -176,11 +175,8 @@ const actions: ActionTree<FacilityState, RootState> = {
           city: contactInfo.city,
           country: contactInfo.countryGeoName,
           state: contactInfo.stateGeoName,
-          zipcode: contactInfo.zipcode,
-          postalCode: contactInfo.postalCode
-        }
-
-        geoPoint = {
+          postalCode: contactInfo.postalCode,
+          contactMechId: contactInfo.contactMechId,
           latitude: contactInfo.latitude,
           longitude: contactInfo.longitude
         }
@@ -192,7 +188,6 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
-    commit(types.FACILITY_GEO_POINT_UPDATED , geoPoint);
   },
 
   updateQuery({ commit }, query) {
