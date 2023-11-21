@@ -101,7 +101,7 @@ export default defineComponent({
       let resp;
 
       if(!this.postalAddress?.address1 || !this.postalAddress?.city) {
-        showToast("Please fill required fields.")
+        showToast("Please fill all the required fields.")
         return
       }
 
