@@ -10,21 +10,19 @@ const fetchFacilities = async(query: any): Promise <any> => {
   });
 }
 
-const fetchFacilityOnlineGroupInformation = async(facilityIds: Array<string>): Promise<any> => {
-  let facilitiesWithSellOnlineEnabled = []
+const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise<any> => {
+  let facilitiesGroupInformation = []
   
   const params = {
     inputFields: {
       facilityId: facilityIds,
-      facilityId_op: "in",
-      facilityGroupTypeId: 'SHOPIFY_GROUP_FAC',
-      facilityGroupTypeId_op: 'equals'
+      facilityId_op: "in"
     },
-    fieldList: ['facilityId', 'facilityGroupTypeId'],
+    fieldList: ['facilityId', 'facilityGroupId', 'facilityGroupTypeId', "fromDate"],
     entityName: "FacilityGroupAndMember",
     distinct: 'Y',
     filterByDate: 'Y',
-    viewSize: facilityIds.length
+    viewSize: facilityIds.length * 10 // multiplying the id by 10, as one facility at max will be in 10 groups
   }
 
   try {
@@ -35,7 +33,20 @@ const fetchFacilityOnlineGroupInformation = async(facilityIds: Array<string>): P
     }) as any;
 
     if(!hasError(resp) && resp.data.count > 0) {
-      facilitiesWithSellOnlineEnabled = resp.data.docs.map((facility: any) => facility.facilityId)
+      facilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
+
+        if(facilityGroups[facilityGroup.facilityId]) {
+          facilityGroups[facilityGroup.facilityId].push({
+            ...facilityGroup
+          })
+        } else {
+          facilityGroups[facilityGroup.facilityId] = [{
+            ...facilityGroup
+          }]
+        }
+
+        return facilityGroups
+      }, {})
     } else {
       throw resp.data;
     }
@@ -43,7 +54,7 @@ const fetchFacilityOnlineGroupInformation = async(facilityIds: Array<string>): P
     logger.error(err)
   }
 
-  return facilitiesWithSellOnlineEnabled;
+  return facilitiesGroupInformation;
 }
 
 const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any> => {
@@ -155,14 +166,68 @@ const updateFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchFacilityLocations = async(payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const addFacilityToGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/addFacilityToGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+const createFacilityLocation = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityLocation = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const deleteFacilityLocation = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/deleteFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityToGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityToGroup",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
+  addFacilityToGroup,
   addPartyToFacility,
-  fetchFacilityOnlineGroupInformation,
-  fetchFacilityOrderCounts,
+  deleteFacilityLocation,
+  createFacilityLocation,
   fetchFacilitiesOrderCount,
   fetchFacilities,
+  fetchFacilityGroupInformation,
+  fetchFacilityLocations,
+  fetchFacilityOrderCounts,
   getFacilityParties,
   getPartyRoleAndPartyDetails,
   removePartyFromFacility,
   updateFacility,
+  updateFacilityLocation,
+  updateFacilityToGroup
 }

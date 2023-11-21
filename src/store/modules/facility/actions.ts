@@ -56,11 +56,10 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       if(!hasError(resp) && resp.data.count) {
         facilities = resp.data.docs
-        if(payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.facilities.list)).concat(resp.data.docs)
         total = resp.data.count
 
         // make api calls in parallel
-        const facilityOnlineGroupInformation = await FacilityService.fetchFacilityOnlineGroupInformation(facilities.map((facility: any) => facility.facilityId))
+        const facilitiesGroupInformation = await FacilityService.fetchFacilityGroupInformation(facilities.map((facility: any) => facility.facilityId))
         const facilitiesOrderCount = await FacilityService.fetchFacilitiesOrderCount(facilities.map((facility: any) => facility.facilityId))
 
         facilities.map((facility: any) => {
@@ -75,12 +74,18 @@ const actions: ActionTree<FacilityState, RootState> = {
 
           facility.orderCount = facilitiesOrderCount[facility.facilityId] ? facilitiesOrderCount[facility.facilityId] : 0;
 
-          if(facilityOnlineGroupInformation.includes(facility.facilityId)) {
-            facility.sellOnline = true
-          } else {
-            facility.sellOnline = false
+          const facilityGroupInformation = facilitiesGroupInformation[facility.facilityId]
+
+          if(facilityGroupInformation.length) {
+            facility.groupInformation = facilityGroupInformation
+            facility.sellOnline = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
+            facility.useOMSFulfillment = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
+            facility.generateShippingLabel = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
+            facility.allowPickup = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
           }
         })
+
+        if(payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.facilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -122,7 +127,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       if(!hasError(resp) && resp.data.count > 0) {
         facility = resp.data.docs[0]
 
-        const [facilityOnlineGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityOnlineGroupInformation(facility.facilityId), FacilityService.fetchFacilitiesOrderCount(facility.facilityId)])
+        const [facilityGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation([facility.facilityId]), FacilityService.fetchFacilitiesOrderCount([facility.facilityId])])
 
         const fulfillmentOrderLimit = facility.maximumOrderLimit
         if (fulfillmentOrderLimit === 0) {
@@ -135,10 +140,14 @@ const actions: ActionTree<FacilityState, RootState> = {
 
         facility.orderCount = facilityOrderCount[facility.facilityId] ? facilityOrderCount[facility.facilityId] : 0;
 
-        if(facilityOnlineGroupInformation.includes(facility.facilityId)) {
-          facility.sellOnline = true
-        } else {
-          facility.sellOnline = false
+        const facilityGroupInfo = facilityGroupInformation[facility.facilityId]
+
+        if(facilityGroupInfo.length) {
+          facility.groupInformation = facilityGroupInfo
+          facility.sellOnline = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
+          facility.useOMSFulfillment = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
+          facility.generateShippingLabel = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
+          facility.allowPickup = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
         }
       } else {
         throw resp.data
@@ -162,6 +171,30 @@ const actions: ActionTree<FacilityState, RootState> = {
       facilityTypeId: ''
     })
     commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
+    commit(types.FACILITY_CURRENT_UPDATED, {});
+  },
+
+  async fetchFacilityLocations({ commit }, payload) {
+    try {
+      const params = {
+        inputFields: {
+          facilityId: payload.facilityId
+        },
+        entityName: "FacilityLocation",
+        fieldList: ["facilityId", "locationSeqId", "locationTypeEnumId", "areaId", "aisleId", "sectionId", "levelId", "positionId"],
+        viewSize: 100
+      }
+
+      const resp = await FacilityService.fetchFacilityLocations(params)
+
+      if(!hasError(resp) && resp.data.count > 0) {
+        commit(types.FACILITY_CURRENT_LOCATION_UPDATED, resp.data.docs)
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to find the facility locations', err)
+    }
   },
 
   async getFacilityParties({ commit }, payload) {

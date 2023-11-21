@@ -9,8 +9,11 @@ const mutations: MutationTree<UtilState> = {
   [types.UTIL_FACILITY_TYPES_UPDATED](state, payload) {
     state.facilityTypes = payload
   },
+  [types.UTIL_LOCATION_TYPES_UPDATED](state, payload) {
+    state.locationTypes = payload
+  },
   [types.UTIL_ROLES_UPDATED](state, payload) {
     state.roles = payload
-  },
+  }
 }
 export default mutations;
