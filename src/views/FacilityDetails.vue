@@ -176,25 +176,25 @@
             </ion-card-header>
             <ion-item>
               <ion-label>{{ translate("Sell Inventory Online") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.sellOnline" slot="end" @click="updateFulfillmentSetting($event, 'FAC_GRP')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.useOMSFulfillment" slot="end" @click="updateFulfillmentSetting($event, 'OMS_FULFILLMENT')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Generate shipping labels") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.generateShippingLabel" slot="end" @click="updateFulfillmentSetting($event, 'AUTO_SHIPPING_LABEL')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle :checked="true" slot="end" />
+              <ion-toggle :checked="current.allowPickup" slot="end" @click="updateFulfillmentSetting($event, 'PICKUP')"/>
             </ion-item>
             <ion-item lines="full">
               <ion-label>{{ translate("Days to ship") }}</ion-label>
-              <ion-input :value="current.defaultDaysToShip" type="number" min="0" placeholder="0"/>
+              <ion-input v-model="defaultDaysToShip" type="number" min="0" :placeholder="translate('days to ship')"/>
             </ion-item>
-            <ion-button fill="outline" expand="block">
+            <ion-button fill="outline" expand="block" @click="updateDefaultDaysToShip">
               {{ translate("Update days to ship") }}
             </ion-button>
           </ion-card>
@@ -432,6 +432,7 @@ import { hasError } from '@/adapter';
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -465,7 +466,8 @@ export default defineComponent({
     return {
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
-      segment: 'external-mappings'
+      segment: 'external-mappings',
+      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
     }
   },
   computed: {
@@ -476,6 +478,7 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+    this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
   methods: {
@@ -587,6 +590,78 @@ export default defineComponent({
       })
   
       facilityOrderCountModal.present()
+    },
+    async addFacilityToGroup(facilityGroupId: string) {
+      let resp;
+      try {
+        resp = await FacilityService.addFacilityToGroup({
+          "facilityId": this.current.facilityId,
+          "facilityGroupId": facilityGroupId
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate('Fulfillment setting updated successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', err)
+      }
+    },
+    async updateFulfillmentSetting(event: any, facilityGroupId: string) {
+      event.stopImmediatePropagation();
+
+      // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
+      const isChecked = !event.target.checked;
+
+      if(isChecked) {
+        this.addFacilityToGroup(facilityGroupId)
+      } else {
+        this.updateFacilityToGroup(facilityGroupId)
+      }
+    },
+    async updateFacilityToGroup(facilityGroupId: string) {
+      let resp;
+
+      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
+
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.current.facilityId,
+          "facilityGroupId": facilityGroupId,
+          "fromDate": groupInformation.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+
+        if (!hasError(resp)) {
+          showToast(translate('Fulfillment setting updated successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', err)
+      }
+    },
+    async updateDefaultDaysToShip() {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          defaultDaysToShip: this.defaultDaysToShip
+        }
+
+        const resp = await FacilityService.updateFacility(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Updated default days to ship'))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to update default days to ship', err)
+        showToast(translate('Failed to update default days to ship'))
+      }
     }
   },
   setup() {
