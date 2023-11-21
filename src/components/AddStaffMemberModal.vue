@@ -14,7 +14,7 @@
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findParties()"/>
     <ion-row>
       <ion-chip v-for="party in selectedPartyValues" :key="party.partyId">
-        <ion-label>{{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}</ion-label>
+        <ion-label>{{ party.fullName }}</ion-label>
         <ion-icon :icon="closeCircle" @click="removeSelectedParty(party.partyId)" />
       </ion-chip>
     </ion-row>
@@ -25,11 +25,11 @@
       <div v-else>
         <ion-item v-for="(party, index) in parties" :key="index">
           <ion-label>
-            {{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}
+            {{ party.fullName }}
             <p>{{ party.partyId }}</p>
           </ion-label>
           <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
-            <ion-select-option v-for="(role, index) in roles" :key='index' :value="role.roleTypeId">{{ role.description }}</ion-select-option>
+            <ion-select-option v-for="[roleTypeId, description] in Object.entries(roles)" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
         </ion-select>
         </ion-item>
       </div>
@@ -146,8 +146,12 @@ export default defineComponent({
       try {
         const resp = await FacilityService.getPartyRoleAndPartyDetails(payload)
         if(!hasError(resp)) {
-          this.parties = resp.data.docs
+          let parties = resp.data.docs
 
+          parties.map((party: any) => {
+            party.fullName = party.groupName ? party.groupName : `${party.firstName} ${party.lastName}`
+          })
+          this.parties = parties
         } else {
           throw resp.data
         }
@@ -184,7 +188,7 @@ export default defineComponent({
       if(this.isPartySelected(selectedPartyId)) {
         party = this.selectedPartyValues.find((party: any) => party.partyId === selectedPartyId)
 
-        if(selectedRoleTypeId === 'none') {
+        if(selectedRoleTypeId === '') {
           this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
         } else if(selectedPartyId !== party.roleTypeId) {
           this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
@@ -199,7 +203,7 @@ export default defineComponent({
       return this.selectedPartyValues.find((party: any) => party.partyId === partyId)
     },
     getPartyRoleTypeId(partyId: string) {
-      return this.selectedPartyValues.find((party: any) => party.partyId === partyId) ? this.selectedPartyValues.find((party: any) => party.partyId === partyId).roleTypeId : 'none'
+      return this.selectedPartyValues.find((party: any) => party.partyId === partyId) ? this.selectedPartyValues.find((party: any) => party.partyId === partyId).roleTypeId : ''
     }
   },
   async mounted() {

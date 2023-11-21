@@ -296,13 +296,13 @@
               <ion-item lines="none">
                 <ion-icon :icon="personOutline" slot="start" />
                 <ion-label>
-                  {{ party.groupName ? party.groupName : `${party.firstName} ${party.lastName}` }}
+                  {{ party.fullName }}
                   <p>{{ party.partyId }}</p>
                 </ion-label>
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ getRoleTypeDesc(party.roleTypeId) }}</ion-chip>
+                <ion-chip outline>{{ roles[party.roleTypeId] }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
@@ -476,8 +476,7 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
-    await this.store.dispatch('util/fetchRoles')
+    await Promise.all([ this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('util/fetchRoles')])
     this.isLoading = false
   },
   methods: {
@@ -607,9 +606,6 @@ export default defineComponent({
         showToast("Failed to remove party from facility.")
         logger.error(err)
       }
-    },
-    getRoleTypeDesc(id: any) {
-      return this.roles.find((role: any) => role.roleTypeId === id)?.description
     },
     async changeOrderLimitPopover(ev: Event) {
       const popover = await popoverController.create({

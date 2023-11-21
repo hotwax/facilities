@@ -182,6 +182,10 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       if(!hasError(resp) && resp.data.count) {
         parties = resp.data.docs
+
+        parties.map((party: any) => {
+          party.fullName = party.groupName ? party.groupName : `${party.firstName} ${party.lastName}`
+        });
       } else {
         throw resp.data
       }
