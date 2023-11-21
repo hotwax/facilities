@@ -24,7 +24,11 @@ popoverController
 import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
 import AddLocationModal from "./AddLocationModal.vue";
-import { useStore } from "vuex";
+import { mapGetters, useStore } from "vuex";
+import { FacilityService } from "@/services/FacilityService";
+import { hasError } from "@/adapter";
+import { showToast } from "@/utils";
+import logger from "@/logger";
 
 export default defineComponent({
   name: "LocationDetailsPopover",
@@ -33,6 +37,11 @@ export default defineComponent({
     IonItem,
     IonList,
     IonListHeader
+  },
+  computed: {
+    ...mapGetters({
+      current: 'facility/getCurrent'
+    })
   },
   props: ["location"],
   methods: {
@@ -51,8 +60,24 @@ export default defineComponent({
       })
     },
     async removeLocation() {
-      await this.store.dispatch('facility/deleteFacilityLocation', this.location)
-      popoverController.dismiss();
+      const params = {
+        facilityId: this.location.facilityId,
+        locationSeqId: this.location.locationSeqId
+      }
+
+      try {
+        const resp = await FacilityService.deleteFacilityLocation(params)
+
+        if(!hasError(resp)) {
+          this.store.dispatch('facility/fetchFacilityLocation')
+          popoverController.dismiss();
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to remove facility location'))
+        logger.error('Failed to remove facility location', err)
+      }
     }
   },
   setup() {
