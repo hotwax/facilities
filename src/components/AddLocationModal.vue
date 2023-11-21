@@ -19,23 +19,23 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="area" v-model="locationInfo.areaId"/>
+      <ion-input :placeholder="translate('area')" v-model="locationInfo.areaId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="aisle" v-model="locationInfo.aisleId"/>
+      <ion-input :placeholder="translate('aisle')" v-model="locationInfo.aisleId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="section" v-model="locationInfo.sectionId"/>
+      <ion-input :placeholder="translate('section')" v-model="locationInfo.sectionId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input placeholder="level" v-model="locationInfo.levelId"/>
+      <ion-input :placeholder="translate('level')" v-model="locationInfo.levelId"/>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Sequence") }}</ion-label>
-      <ion-input placeholder="sequence" v-model="locationInfo.positionId"/>
+      <ion-input :placeholder="translate('sequence')" v-model="locationInfo.positionId"/>
     </ion-item>
   </ion-content>
 
