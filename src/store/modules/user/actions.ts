@@ -1,12 +1,11 @@
 import { UserService } from '@/services/UserService'
 import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
-import store from '@/store';
 import UserState from './UserState'
 import * as types from './mutation-types'
 import { showToast } from '@/utils'
 import { Settings } from 'luxon'
-import { hasError, logout, updateInstanceUrl, updateToken, resetConfig, getUserFacilities } from '@/adapter'
+import { hasError, logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 import logger from '@/logger'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { translate, useAuthStore, useUserStore } from '@hotwax/dxp-components'
