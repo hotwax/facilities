@@ -58,9 +58,9 @@
                   <ion-label>{{ translate("Longitude") }}</ion-label>
                   <p>{{ "<longitude>" }}</p>
                 </ion-item>
-                <ion-button fill="clear" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
               </div>
-              <ion-button v-else expand="block" fill="outline" @click="openGeoPointModal">
+              <ion-button v-else expand="block" fill="outline" :disabled="!postalAddress.address1" @click="openGeoPointModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>

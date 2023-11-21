@@ -28,7 +28,7 @@
     </ion-item>
   </ion-content>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+  <ion-fab @click="saveGeoPoint" vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button>
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
@@ -58,6 +58,7 @@ import { translate } from '@hotwax/dxp-components'
 import { showToast, hasError } from "@/utils";
 import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
+import { FacilityService } from '@/services/FacilityService'
   
 export default defineComponent({
   name: "FacilityGeoPointModal",
@@ -87,7 +88,7 @@ export default defineComponent({
     }
   },
   mounted() {
-    this.geoPoint = this.postalAddress
+    this.geoPoint = JSON.parse(JSON.stringify(this.postalAddress))
   },
   methods: {
     closeModal() {
@@ -116,6 +117,35 @@ export default defineComponent({
         showToast(translate("Invalid Zipcode, GeoPoints can't be generated."))
         logger.error(err)
       }
+    },
+    async saveGeoPoint() {
+      let resp;
+
+      const payload = {
+        address1: this.geoPoint.address1,
+        city: this.geoPoint.city,
+        latitude: this.geoPoint.latitude,
+        longitude: this.geoPoint.latitude
+      }
+
+      try {
+        if(this.postalAddress.latitude) {
+          resp = await FacilityService.updateFacilityPostalAddress({...payload, contactMechId: this.geoPoint.contactMechId})
+        } else {
+          resp = await FacilityService.createFacilityPostalAddress(payload)
+        }
+
+        if(!hasError(resp)) {
+          showToast(translate("Facility geoPoint updated successfully."))
+          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate("Failed to update facility geoPoint."))
+        logger.error(err)
+      }
+      modalController.dismiss()
     }
   },
   setup() {
