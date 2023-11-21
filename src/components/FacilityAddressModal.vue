@@ -70,7 +70,6 @@ import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
 
-  
 export default defineComponent({
   name: "FacilityAddressModal",
   components: {
@@ -107,13 +106,13 @@ export default defineComponent({
       }
 
       const payload = {
-        facilityId: this.facilityId,
         address1: this.postalAddress.address1,
         address2: this.postalAddress.address2,
         city: this.postalAddress.city,
         country: this.postalAddress.country,
-        state: this.postalAddress.state,
-        postalCode: this.postalAddress.postalCode
+        facilityId: this.facilityId,
+        postalCode: this.postalAddress.postalCode,
+        state: this.postalAddress.state
       }
 
       try {
@@ -133,7 +132,6 @@ export default defineComponent({
         showToast(translate("Failed to update facility address."))
         logger.error(err)
       }
-
       modalController.dismiss()
     }
   },

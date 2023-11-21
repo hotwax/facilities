@@ -2,6 +2,14 @@ import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
 
+const createFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 const fetchFacilities = async(query: any): Promise <any> => {
   return api({
     url: "performFind", 
@@ -126,14 +134,6 @@ const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
 const updateFacility = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacility",
-    method: "post",
-    data: payload
-  })
-}
-
-const createFacilityPostalAddress = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/createFacilityPostalAddress",
     method: "post",
     data: payload
   })

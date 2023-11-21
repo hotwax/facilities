@@ -6,8 +6,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
-import { showToast } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilities({ commit, state }, payload) {
@@ -155,13 +153,14 @@ const actions: ActionTree<FacilityState, RootState> = {
     let postalAddress = {}
     const params = {
       inputFields: {
-        facilityId: payload.facilityId,
+        contactMechPurposeTypeId: 'PRIMARY_LOCATION',
         contactMechTypeId: 'POSTAL_ADDRESS',
-        contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+        facilityId: payload.facilityId
       },
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
-      filterByDate: 'Y'
+      filterByDate: 'Y',
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoName']
     }
 
     try {
@@ -173,12 +172,12 @@ const actions: ActionTree<FacilityState, RootState> = {
           address1: contactInfo.address1,
           address2: contactInfo.address2,
           city: contactInfo.city,
-          country: contactInfo.countryGeoName,
-          state: contactInfo.stateGeoName,
-          postalCode: contactInfo.postalCode,
           contactMechId: contactInfo.contactMechId,
+          country: contactInfo.countryGeoName,
           latitude: contactInfo.latitude,
-          longitude: contactInfo.longitude
+          longitude: contactInfo.longitude,
+          postalCode: contactInfo.postalCode,
+          state: contactInfo.stateGeoName
         }
       } else {
         throw resp.data

@@ -109,12 +109,11 @@ export default defineComponent({
           const result = resp.data.response.docs[0]
           this.geoPoint.latitude = result.latitude
           this.geoPoint.longitude = result.longitude
-          return;
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Invalied Zipcode, GeoPoints can't be generated."))
+        showToast(translate("Invalid Zipcode, GeoPoints can't be generated."))
         logger.error(err)
       }
     }
