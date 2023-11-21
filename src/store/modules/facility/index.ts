@@ -13,7 +13,6 @@ const facilityModule: Module<FacilityState, RootState> = {
       productStoreId: '',
       facilityTypeId: ''
     },
-    selectedFacility: {},
     facilities: {
       list: [],
       total: 0

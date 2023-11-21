@@ -325,41 +325,41 @@
               {{ translate("Add locations to facility") }}
             </ion-button>
 
-            <div class="list-item">
+            <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
               <ion-item lines="none">
                 <ion-icon :icon="locationOutline" slot="start" />
                 <ion-label>
-                  {{ "locations id" }}
-                  <p>{{ "pick/primary" }}</p>
+                  {{ location.locationSeqId }}
+                  <p>{{ locationTypes[location.locationTypeEnumId] }}</p>
                 </ion-label>
               </ion-item>
 
               <ion-label class="tablet">
-                AI
+                {{ location.areaId }}
                 <p>{{ translate("area") }}</p>
               </ion-label>
 
               <ion-label>
-                AL
+                {{ location.aisleId }}
                 <p>{{ translate("aisle") }}</p>
               </ion-label>
 
               <ion-label>
-                SI
+                {{ location.sectionId }}
                 <p>{{ translate("section") }}</p>
               </ion-label>
 
               <ion-label class="tablet">
-                SI
+                {{ location.levelId }}
                 <p>{{ translate("level") }}</p>
               </ion-label>
 
               <ion-label>
-                1
+                {{ location.positionId }}
                 <p>{{ translate("sequence") }}</p>
               </ion-label>
               
-              <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover">
+              <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover($event, location)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </div>
@@ -472,12 +472,14 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      locationTypes: 'util/getLocationTypes'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes')])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
@@ -532,9 +534,10 @@ export default defineComponent({
   
       selectOperatingTimeModal.present()
     },
-    async openLocationDetailsPopover(ev: Event) {
+    async openLocationDetailsPopover(ev: Event, location: any) {
       const locationDetailsPopover = await popoverController.create({
         component: LocationDetailsPopover,
+        componentProps: { location },
         event: ev,
         showBackdrop: false
       });

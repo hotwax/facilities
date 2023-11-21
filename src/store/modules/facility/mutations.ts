@@ -12,6 +12,9 @@ const mutations: MutationTree <FacilityState> = {
   },
   [types.FACILITY_CURRENT_UPDATED](state, payload) {
     state.current = payload
+  },
+  [types.FACILITY_CURRENT_LOCATION_UPDATED](state, payload) {
+    state.current.locations = payload
   }
 }
 export default mutations;
