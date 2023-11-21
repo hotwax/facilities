@@ -148,7 +148,7 @@
 
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>
-                <h2>{{ getStoreDetail(store.productStoreId).storeName }}</h2>
+                <h2>{{ getStoreDetail(store.productStoreId)?.storeName }}</h2>
               </ion-label>
               <ion-badge>{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
@@ -472,7 +472,7 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores')])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },

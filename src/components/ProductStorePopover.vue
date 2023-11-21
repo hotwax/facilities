@@ -2,7 +2,7 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ getStoreDetail(currentProductStore.productStoreId).storeName }}</ion-list-header>
-      <ion-item button>
+      <ion-item button @click="makePrimary">
         {{ translate("Make primary") }}
         <ion-icon slot="end" :icon="starOutline" />
       </ion-item>
@@ -73,6 +73,36 @@ export default defineComponent({
     },
     getStoreDetail(productStoreId: any) {
       return this.productStores.find((store: any) => store.productStoreId === productStoreId)
+    },
+    async makePrimary() {
+      let resp = {} as any
+      const productStoreId = this.currentProductStore.productStoreId
+
+      try {
+        resp = FacilityService.fetchFacilityGroup({
+          inputFields: {
+            facilityGroupId: productStoreId
+          },
+          entityName: 'FacilityGroup'
+        })
+
+        if(!hasError(resp)) {
+          console.log(resp);
+          
+        } else {
+          resp = FacilityService.createFacilityGroup({
+            facilityGroupTypeId: productStoreId,
+            facilityGroupName: this.getStoreDetail(productStoreId).storeName
+          })
+
+          resp = FacilityService.addFacilityToGroup({
+            facilityId: this.facilityId,
+            facilityGroupId: productStoreId
+          })
+        }
+      } catch(err) {
+        logger.error(err)
+      }
     }
   },
   setup() {

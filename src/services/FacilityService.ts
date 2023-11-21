@@ -127,6 +127,14 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   return facilityOrderCounts;
 }
 
+const fetchFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload
+  }) as any
+}
+
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
   return api({
     url: "performFind",
@@ -146,6 +154,16 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
 const addFacilityToGroup = async (payload: any): Promise<any> => {
   return api({
     url: "service/addFacilityToGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+
+
+const createFacilityGroup = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityGroup",
     method: "post",
     data: payload
   })
@@ -209,10 +227,12 @@ const updateProductStoreFacility = async (payload: any): Promise <any> => {
 
 export const FacilityService = {
   addFacilityToGroup,
+  createFacilityGroup,
   createFacilityLocation,
   createProductStoreFacility,
   deleteFacilityLocation,
   fetchFacilityLocations,
+  fetchFacilityGroup,
   fetchFacilityGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
