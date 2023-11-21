@@ -113,7 +113,7 @@ export default defineComponent({
       modalController.dismiss({ result });
     },
     saveFacilityLocation() {
-      if(!this.locationInfo.aisleId.trim() || !this.locationInfo.areaId.trim() || !this.locationInfo.positionId.trim() || !this.locationInfo.sectionId.trim() || !this.locationInfo.levelId.trim()) {
+      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.positionId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
       }

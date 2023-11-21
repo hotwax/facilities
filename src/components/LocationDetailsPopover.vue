@@ -45,13 +45,14 @@ export default defineComponent({
       addLocationModal.present()
 
       addLocationModal.onDidDismiss().then((result: any) => {
-        if(result.data.result) {
+        if(result.data?.result) {
           popoverController.dismiss();
         }
       })
     },
-    removeLocation() {
-      this.store.dispatch('facility/deleteFacilityLocation', this.location)
+    async removeLocation() {
+      await this.store.dispatch('facility/deleteFacilityLocation', this.location)
+      popoverController.dismiss();
     }
   },
   setup() {
