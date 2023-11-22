@@ -24,13 +24,13 @@
         <ion-label>{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
         <ion-input v-model="address.city" slot="end" />
       </ion-item>
-      <ion-item>
+      <ion-item @keyup.enter.stop>
         <ion-label>{{ translate("Country") }}</ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
           <ion-select-option v-for="(country, index) in countries" :key="index" :value="country.geoId">{{ country.geoName }}</ion-select-option>
         </ion-select>
       </ion-item>
-      <ion-item>
+      <ion-item @keyup.enter.stop>
         <ion-label>{{ translate("State") }}</ion-label>
         {{ address.countryGeoId }}
         <ion-select interface="popover" :placeholder="translate('Select')" v-model="address.stateGeoId">

@@ -11,21 +11,23 @@
   </ion-header>
 
   <ion-content>
-    <ion-item class="ion-margin-bottom">
-      <ion-input placeholder="Zipcode" v-model="geoPoint.postalCode" />
-      <ion-button fill="outline" @click="generateLatLong">
-        {{ translate("Generate") }}
-        <ion-icon slot="end" :icon="colorWandOutline" />
-      </ion-button>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Latitude") }}</ion-label>
-      <ion-input v-model="geoPoint.latitude" slot="end"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Longitude") }}</ion-label>
-      <ion-input v-model="geoPoint.longitude" slot="end" />
-    </ion-item>
+    <form @keyup.enter="saveGeoPoint">
+      <ion-item class="ion-margin-bottom">
+        <ion-input placeholder="Zipcode" v-model="geoPoint.postalCode" />
+        <ion-button fill="outline" @click="generateLatLong">
+          {{ translate("Generate") }}
+          <ion-icon slot="end" :icon="colorWandOutline" />
+        </ion-button>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Latitude") }}</ion-label>
+        <ion-input v-model="geoPoint.latitude" slot="end"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Longitude") }}</ion-label>
+        <ion-input v-model="geoPoint.longitude" slot="end" />
+      </ion-item>
+    </form>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
