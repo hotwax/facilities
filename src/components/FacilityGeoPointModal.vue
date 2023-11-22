@@ -134,7 +134,7 @@ export default defineComponent({
       }
 
       try {
-        resp = await FacilityService.updateFacilityPostalAddress({...payload})
+        resp = await FacilityService.updateFacilityPostalAddress(payload)
 
         if(!hasError(resp)) {
           showToast(translate("Facility latitude & longitude updated successfully."))

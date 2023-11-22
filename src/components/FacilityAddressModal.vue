@@ -32,7 +32,6 @@
       </ion-item>
       <ion-item @keyup.enter.stop>
         <ion-label>{{ translate("State") }}</ion-label>
-        {{ address.countryGeoId }}
         <ion-select interface="popover" :placeholder="translate('Select')" v-model="address.stateGeoId">
           <ion-select-option v-for="(state, index) in states[address.countryGeoId]" :key="index" :value="state.geoId">{{ state.geoName }}</ion-select-option>
         </ion-select>

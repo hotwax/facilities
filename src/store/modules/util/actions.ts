@@ -107,6 +107,7 @@ const actions: ActionTree<UtilState, RootState> = {
         geoIdTo: "DBIC"
       },
       entityName: 'GeoAssocAndGeoFrom',
+      fieldList: ['geoName', 'geoId'],
       noConditionFind: 'Y',
     } as any
 
@@ -138,6 +139,7 @@ const actions: ActionTree<UtilState, RootState> = {
         geoIdFrom: payload.geoId
       },
       entityName: 'GeoAssocAndGeoTo',
+      fieldList: ['geoName', 'geoId'],
       noConditionFind: 'Y',
       viewSize: 100
     } as any
@@ -147,6 +149,7 @@ const actions: ActionTree<UtilState, RootState> = {
 
       if(!hasError(resp)) {
         states = resp.data.docs
+
       } else {
         throw resp.data
       }
