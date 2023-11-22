@@ -11,39 +11,43 @@
   </ion-header>
 
   <ion-content>
-    <ion-item>
-      <ion-label>{{ translate("Type") }}</ion-label>
-      <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
-        <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('area')" v-model="locationInfo.areaId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('aisle')" v-model="locationInfo.aisleId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('section')" v-model="locationInfo.sectionId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('level')" v-model="locationInfo.levelId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Sequence") }}</ion-label>
-      <ion-input :placeholder="translate('sequence')" v-model="locationInfo.positionId"/>
-    </ion-item>
-  </ion-content>
+    <form @keyup.enter="saveFacilityLocation">
+      <!-- Using stop for enter key as when using keyboard for opening the select we need to use enter and the same key submits the form
+      so to prevent form submission on using enter key on select used stop -->
+      <ion-item @keyup.enter.stop>
+        <ion-label>{{ translate("Type") }}</ion-label>
+        <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
+          <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('area')" v-model="locationInfo.areaId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('aisle')" v-model="locationInfo.aisleId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('section')" v-model="locationInfo.sectionId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('level')" v-model="locationInfo.levelId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Sequence") }}</ion-label>
+        <ion-input :placeholder="translate('sequence')" v-model="locationInfo.positionId"/>
+      </ion-item>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveFacilityLocation">
-      <ion-icon :icon="saveOutline" />
-    </ion-fab-button>
-  </ion-fab>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="saveFacilityLocation" @keyup.enter.stop>
+          <ion-icon :icon="saveOutline" />
+        </ion-fab-button>
+      </ion-fab>
+    </form>
+  </ion-content>
 </template>
 
 <script lang="ts">
@@ -69,7 +73,7 @@ import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { mapGetters } from 'vuex'
+import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
@@ -109,21 +113,24 @@ export default defineComponent({
     })
   },
   methods: {
-    closeModal(result?: string) {
-      modalController.dismiss({ result });
+    closeModal() {
+      modalController.dismiss();
     },
-    saveFacilityLocation() {
-      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.positionId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
+    async saveFacilityLocation() {
+      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
       }
 
       // checking for locationSeqId as when adding new facility we won't be having locationSeqId
-      if(this.location.locationSeqId) {
-        this.updateFacilityLocation()
+      if(this.location?.locationSeqId) {
+        await this.updateFacilityLocation()
       } else {
-        this.addFacilityLocation()
+        await this.addFacilityLocation()
       }
+
+      // fetching facility locations after updating/creating a location
+      await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
     },
     async addFacilityLocation() {
       const params = {
@@ -136,7 +143,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Facility location created successfully'))
-          this.closeModal('success');
+          this.closeModal();
         } else {
           throw resp.data
         }
@@ -157,7 +164,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Facility location updated successfully'))
-          this.closeModal('success');
+          this.closeModal();
         } else {
           throw resp.data
         }
@@ -168,9 +175,12 @@ export default defineComponent({
     },
   },
   setup() {
+    const store = useStore();
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },
