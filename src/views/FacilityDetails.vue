@@ -506,12 +506,12 @@ export default defineComponent({
       addressModal.present()
     },
     async openGeoPointModal() {
-      const addGeoPointModal = await modalController.create({
+      const geoPointModal = await modalController.create({
         component: FacilityGeoPointModal,
         componentProps: { facilityId: this.facilityId }
       })
 
-      addGeoPointModal.present()
+      geoPointModal.present()
     },
     async addProductStore() {
       const addProductStoreModal = await modalController.create({
