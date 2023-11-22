@@ -126,7 +126,11 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_COUNTRIES_UPDATED, countries)
   },
 
-  async fetchStates({ commit, dispatch }, payload) {
+  async fetchStates({ commit, state }, payload) {
+    if(payload.geoId in state.states){
+      commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states: state.states[payload.geoId] })
+      return;
+    }
     let states = [] as any
 
     const params = {
@@ -150,7 +154,7 @@ const actions: ActionTree<UtilState, RootState> = {
       logger.error(err)
     }
 
-    commit(types.UTIL_STATES_UPDATED, states)
+    commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states })
   },
 
   clearUtilState({ commit }) {

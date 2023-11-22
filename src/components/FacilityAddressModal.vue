@@ -11,34 +11,37 @@
   </ion-header>
 
   <ion-content>
-    <ion-item>
-      <ion-label>{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input v-model="postalAddress.address1" slot="end" />
-    </ion-item>
-    <ion-item class="ion-margin-bottom">
-      <ion-label>{{ translate("Address line 2") }}</ion-label>
-      <ion-input v-model="postalAddress.address2" slot="end" />
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input v-model="postalAddress.city" slot="end" />
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Country") }}</ion-label>
-      <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="postalAddress.countryGeoId">
-        <ion-select-option v-for="(country, index) in countries" :key="index" :value="country.geoId">{{ country.geoName }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("State") }}</ion-label>
-      <ion-select interface="popover" :placeholder="translate('Select')" v-model="postalAddress.stateGeoId">
-        <ion-select-option v-for="(state, index) in states" :key="index" :value="state.geoId">{{ state.geoName }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Zipcode") }}</ion-label>
-      <ion-input v-model="postalAddress.postalCode" slot="end" />
-    </ion-item>
+    <form @keyup.enter="saveAddress">
+      <ion-item>
+        <ion-label>{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input v-model="address.address1" slot="end" />
+      </ion-item>
+      <ion-item class="ion-margin-bottom">
+        <ion-label>{{ translate("Address line 2") }}</ion-label>
+        <ion-input v-model="address.address2" slot="end" />
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input v-model="address.city" slot="end" />
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Country") }}</ion-label>
+        <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
+          <ion-select-option v-for="(country, index) in countries" :key="index" :value="country.geoId">{{ country.geoName }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("State") }}</ion-label>
+        {{ address.countryGeoId }}
+        <ion-select interface="popover" :placeholder="translate('Select')" v-model="address.stateGeoId">
+          <ion-select-option v-for="(state, index) in states[address.countryGeoId]" :key="index" :value="state.geoId">{{ state.geoName }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Zipcode") }}</ion-label>
+        <ion-input v-model="address.postalCode" slot="end" />
+      </ion-item>
+    </form>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -102,9 +105,15 @@ export default defineComponent({
       states: 'util/getStates'
     })
   },
+  data() {
+    return {
+      address: {} as any
+    }
+  },
   props: ['facilityId'],
   async mounted() {
-    await this.store.dispatch('util/fetchCountries', { countryGeoId: this.postalAddress?.countryGeoId })
+    this.address = JSON.parse(JSON.stringify(this.postalAddress))
+    await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
   },
   methods: {
     closeModal() {
@@ -113,26 +122,26 @@ export default defineComponent({
     async saveAddress() {
       let resp;
 
-      if(!this.postalAddress?.address1 || !this.postalAddress?.city) {
+      if(!this.address?.address1 || !this.address?.city) {
         showToast("Please fill all the required fields.")
         return
       }
 
       const payload = {
-        address1: this.postalAddress.address1,
-        address2: this.postalAddress.address2,
-        city: this.postalAddress.city,
-        countryGeoId: this.postalAddress.countryGeoId,
-        countryGeoName: this.postalAddress.countryGeoName,
+        address1: this.address.address1,
+        address2: this.address.address2,
+        city: this.address.city,
+        countryGeoId: this.address.countryGeoId,
+        countryGeoName: this.address.countryGeoName,
         facilityId: this.facilityId,
-        postalCode: this.postalAddress.postalCode,
-        stateGeoName: this.postalAddress.stateGeoName,
-        stateProvinceGeoId: this.postalAddress.stateGeoId
+        postalCode: this.address.postalCode,
+        stateGeoName: this.address.stateGeoName,
+        stateProvinceGeoId: this.address.stateGeoId
       }
 
       try {
-        if(this.postalAddress.contactMechId) {
-          resp = await FacilityService.updateFacilityPostalAddress({...payload, contactMechId: this.postalAddress.contactMechId})
+        if(this.address.contactMechId) {
+          resp = await FacilityService.updateFacilityPostalAddress({...payload, contactMechId: this.address.contactMechId})
         } else {
           resp = await FacilityService.createFacilityPostalAddress(payload)
         }

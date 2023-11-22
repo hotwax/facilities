@@ -16,7 +16,7 @@ const mutations: MutationTree<UtilState> = {
     state.countries = payload
   },
   [types.UTIL_STATES_UPDATED](state, payload) {
-    state.states = payload
+    state.states[payload.countryGeoId] = payload.states
   }
 }
 export default mutations;
