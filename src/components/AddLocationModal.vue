@@ -12,7 +12,9 @@
 
   <ion-content>
     <form @keyup.enter="saveFacilityLocation">
-      <ion-item>
+      <!-- Using stop for enter key as when using keyboard for opening the select we need to use enter and the same key submits the form
+      so to prevent form submission on using enter key on select used stop -->
+      <ion-item @keyup.enter.stop>
         <ion-label>{{ translate("Type") }}</ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
           <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
@@ -114,7 +116,7 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss();
     },
-    saveFacilityLocation() {
+    async saveFacilityLocation() {
       if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
@@ -122,10 +124,13 @@ export default defineComponent({
 
       // checking for locationSeqId as when adding new facility we won't be having locationSeqId
       if(this.location?.locationSeqId) {
-        this.updateFacilityLocation()
+        await this.updateFacilityLocation()
       } else {
-        this.addFacilityLocation()
+        await this.addFacilityLocation()
       }
+
+      // fetching facility locations after updating/creating a location
+      await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
     },
     async addFacilityLocation() {
       const params = {
@@ -139,7 +144,6 @@ export default defineComponent({
         if(!hasError(resp)) {
           showToast(translate('Facility location created successfully'))
           this.closeModal();
-          await this.store.dispatch('facility/fetchFacilityLocations')
         } else {
           throw resp.data
         }
@@ -161,7 +165,6 @@ export default defineComponent({
         if(!hasError(resp)) {
           showToast(translate('Facility location updated successfully'))
           this.closeModal();
-          await this.store.dispatch('facility/fetchFacilityLocations')
         } else {
           throw resp.data
         }

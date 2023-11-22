@@ -68,7 +68,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Facility location removed successfully'))
-          await this.store.dispatch('facility/fetchFacilityLocations')
+          await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
         } else {
           throw resp.data
         }
