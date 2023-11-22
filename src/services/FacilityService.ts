@@ -159,8 +159,6 @@ const addFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
-
-
 const createFacilityGroup = async(payload: any): Promise<any> => {
   return api({
     url: "service/createFacilityGroup",
@@ -180,6 +178,14 @@ const createFacilityLocation = async(payload: any): Promise<any> => {
 const createProductStoreFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/createProductStoreFacility",
+    method: "post",
+    data: payload
+  });
+}
+
+const fetchFacilityPrimaryMember = async (payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
     method: "post",
     data: payload
   });
@@ -235,6 +241,7 @@ export const FacilityService = {
   fetchFacilityGroup,
   fetchFacilityGroupInformation,
   fetchFacilityOrderCounts,
+  fetchFacilityPrimaryMember,
   fetchFacilitiesOrderCount,
   fetchFacilities,
   getFacilityProductStores,

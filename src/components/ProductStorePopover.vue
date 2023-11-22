@@ -20,7 +20,8 @@ import {
   IonList,
   IonListHeader,
   IonIcon,
-  IonItem
+  IonItem,
+  popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { starOutline, removeCircleOutline } from "ionicons/icons";
@@ -41,7 +42,7 @@ export default defineComponent({
     IonIcon,
     IonItem
   },
-  props: ['currentProductStore', 'facilityId'],
+  props: ['currentProductStore', 'facilityId', 'primaryMember'],
   computed: {
     ...mapGetters({
       facilityProductStores: 'facility/getFacilityProductStores',
@@ -50,6 +51,10 @@ export default defineComponent({
   },
   methods: {
     async removeStore() {
+      if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupName){
+        await this.removeProductFromPrimaryMember()
+      }
+
       try {
         const resp = await FacilityService.updateProductStoreFacility({
           facilityId: this.facilityId,
@@ -70,6 +75,7 @@ export default defineComponent({
         logger.error(err)
         showToast(translate('Store unlink failed.'))
       }
+      popoverController.dismiss()
     },
     getStoreDetail(productStoreId: any) {
       return this.productStores.find((store: any) => store.productStoreId === productStoreId)
@@ -78,30 +84,82 @@ export default defineComponent({
       let resp = {} as any
       const productStoreId = this.currentProductStore.productStoreId
 
+      let facilityGroupId = '' as any
+      facilityGroupId = await this.fetchFacilityGroup(productStoreId)
+
+      if(!facilityGroupId) {
+        facilityGroupId = await this.createFacilityGroup(productStoreId)
+      } 
+
       try {
-        resp = FacilityService.fetchFacilityGroup({
-          inputFields: {
-            facilityGroupId: productStoreId
-          },
-          entityName: 'FacilityGroup'
+        resp = await FacilityService.addFacilityToGroup({
+          facilityId: this.facilityId,
+          facilityGroupId: facilityGroupId
         })
 
         if(!hasError(resp)) {
-          console.log(resp);
-          
+          // Remove old primary store
+          await this.removeProductFromPrimaryMember()
         } else {
-          resp = FacilityService.createFacilityGroup({
-            facilityGroupTypeId: productStoreId,
-            facilityGroupName: this.getStoreDetail(productStoreId).storeName
-          })
-
-          resp = FacilityService.addFacilityToGroup({
-            facilityId: this.facilityId,
-            facilityGroupId: productStoreId
-          })
+          throw resp.data
         }
       } catch(err) {
         logger.error(err)
+      }
+      popoverController.dismiss()
+    },
+    async fetchFacilityGroup(productStoreId: any) {
+      let resp = {} as any
+      let facilityGroupId = ''
+      try {
+        resp = await FacilityService.fetchFacilityGroup({
+          inputFields: {
+            facilityGroupName: productStoreId
+          },
+          entityName: 'FacilityGroup',
+          viewSize: 100
+        })
+
+        if(!hasError(resp)) {
+          facilityGroupId = resp.data.facilityGroupId
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+      return facilityGroupId
+    },
+    async createFacilityGroup(productStoreId: string) {
+      let facilityGroupId = ''
+      try {
+        const resp = await FacilityService.createFacilityGroup({
+          facilityGroupTypeId: 'FEATURING',
+          facilityGroupName: productStoreId
+        })
+  
+        if(!hasError(resp)) {
+          facilityGroupId = resp.data.facilityGroupId
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+
+      return facilityGroupId
+    },
+    async removeProductFromPrimaryMember() {
+      let resp;
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": this.primaryMember.facilityGroupId,
+          "fromDate": this.primaryMember.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+      } catch (err) {
+        logger.error('Failed to update fulfillment setting', err)
       }
     }
   },

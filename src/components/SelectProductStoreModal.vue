@@ -49,7 +49,10 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters } from "vuex";
+import { mapGetters, useStore } from "vuex";
+import { FacilityService } from "@/services/FacilityService";
+import { DateTime } from "luxon";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "SelectProductStoreModal",
@@ -70,10 +73,11 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      productStores: 'util/getProductStores'
+      productStores: 'util/getProductStores',
+      facilityProductStores: 'facility/getFacilityProductStores',
     })
   },
-  props: ["selectedProductStores"],
+  props: ["facilityId", "selectedProductStores", "primaryMember"],
   data() {
     return {
       selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),
@@ -83,18 +87,37 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true});
     },
-    saveProductStores() {
+    async saveProductStores() {
       const productStoresToCreate = this.selectedProductStoreValues.filter((selectedFacility: any) => !this.selectedProductStores.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
       const productStoresToRemove = this.selectedProductStores.filter((facility: any) => !this.selectedProductStoreValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
 
-      modalController.dismiss({
-        dismissed: true,
-        value: {
-          selectedProductStores: this.selectedProductStoreValues,
-          productStoresToCreate,
-          productStoresToRemove
-        }
-      });
+      const updateResponses = await Promise.allSettled(productStoresToRemove
+        .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
+          facilityId: this.facilityId,
+          fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+          productStoreId: payload.productStoreId,
+          thruDate: DateTime.now().toMillis()
+        }))
+      )
+
+      const createResponses = await Promise.allSettled(productStoresToCreate
+        .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+          productStoreId: payload.productStoreId,
+          facilityId: this.facilityId,
+          fromDate: DateTime.now().toMillis(),
+        }))
+      )
+          
+      const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
+      if (hasFailedResponse) {
+        showToast(translate('Failed to update some facility stores'))
+      } else {
+        showToast(translate('Facility stores updated successfully.'))
+      }
+
+      // refetching product stores with updated roles
+      await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+      modalController.dismiss()
     },
     toggleProductStoreSelection(updatedStore: any) {
       let selectedStore = this.selectedProductStoreValues.some((store: any) => store.productStoreId === updatedStore.productStoreId);
@@ -106,12 +129,35 @@ export default defineComponent({
     },
     isSelected(productStoreId: any) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
-    }
+    },
+    // async removeProductFromPrimaryMember() {
+    //   let resp;
+    //   try {
+    //     resp = await FacilityService.updateFacilityToGroup({
+    //       "facilityId": this.facilityId,
+    //       "facilityGroupId": facilityGroupId,
+    //       "fromDate": groupInformation.fromDate,
+    //       "thruDate": DateTime.now().toMillis()
+    //     })
+
+    //     if (!hasError(resp)) {
+    //       showToast(translate('Fulfillment setting updated successfully'))
+    //     } else {
+    //       throw resp.data
+    //     }
+    //   } catch (err) {
+    //     showToast(translate('Failed to update fulfillment setting'))
+    //     logger.error('Failed to update fulfillment setting', err)
+    //   }
+    // }
   },
   setup() {
+    const store = useStore()
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },

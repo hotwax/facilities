@@ -150,7 +150,7 @@
               <ion-label>
                 <h2>{{ getStoreDetail(store.productStoreId)?.storeName }}</h2>
               </ion-label>
-              <ion-badge>{{ translate("primary store") }}</ion-badge>
+              <ion-badge v-if="store.productStoreId === primaryMember.facilityGroupName">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
@@ -458,7 +458,8 @@ export default defineComponent({
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
-      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
+      defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
+      primaryMember: {} as any
     }
   },
   computed: {
@@ -475,6 +476,7 @@ export default defineComponent({
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores')])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
+    this.fetchFacilityPrimaryMember()
   },
   methods: {
     async productStorePopover(ev: Event, store: any) {
@@ -482,11 +484,17 @@ export default defineComponent({
         component: ProductStorePopover,
         componentProps: {
           facilityId: this.facilityId,
-          currentProductStore: store
+          currentProductStore: store,
+          primaryMember: this.primaryMember
         },
         event: ev,
         showBackdrop: false
       });
+
+      popover.onDidDismiss().then(async() => {
+        await this.fetchFacilityPrimaryMember()
+      })
+
       return popover.present()
     },
     async addAddress() {
@@ -506,41 +514,12 @@ export default defineComponent({
     async selectProductStore() {
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
-        componentProps: { selectedProductStores: this.facilityProductStores }
+        componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores, primaryMember: this.primaryMember }
       })
 
-      selectProductStoreModal.onDidDismiss().then(async (result) => {
-        if (result.data && result.data.value) {
-          const productStoresToCreate = result.data.value.productStoresToCreate
-          const productStoresToRemove = result.data.value.productStoresToRemove
 
-          const updateResponses = await Promise.allSettled(productStoresToRemove
-            .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
-              facilityId: this.facilityId,
-              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
-              productStoreId: payload.productStoreId,
-              thruDate: DateTime.now().toMillis()
-            }))
-          )
-
-          const createResponses = await Promise.allSettled(productStoresToCreate
-            .map(async (payload: any) => await FacilityService.createProductStoreFacility({
-              productStoreId: payload.productStoreId,
-              facilityId: this.facilityId,
-              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
-            }))
-          )
-
-          const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
-          if (hasFailedResponse) {
-            showToast(translate('Failed to update some facility stores'))
-          } else {
-            showToast(translate('Facility stores updated successfully.'))
-          }
-
-          // refetching product stores with updated roles
-          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
-        }
+      selectProductStoreModal.onDidDismiss().then(async() => {
+        await this.fetchFacilityPrimaryMember()
       })
 
       selectProductStoreModal.present()
@@ -699,6 +678,29 @@ export default defineComponent({
       } catch(err) {
         logger.error('Failed to update default days to ship', err)
         showToast(translate('Failed to update default days to ship'))
+      }
+    },
+    async fetchFacilityPrimaryMember() {
+      const payload = {
+        inputFields: {
+          facilityId: this.facilityId,
+          facilityGroupTypeId: 'FEATURING'
+        },
+        entityName: 'FacilityGroupAndMember',
+        filterByDate: 'Y',
+        viewSize: 1,
+      }
+
+      try {
+        const resp = await FacilityService.fetchFacilityPrimaryMember(payload)
+
+        if(!hasError(resp)) {
+          this.primaryMember = resp.data.docs[0]
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
       }
     }
   },
