@@ -169,7 +169,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoName'],
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName'],
       viewSize: 1
     }
 
@@ -183,11 +183,13 @@ const actions: ActionTree<FacilityState, RootState> = {
           address2: contactInfo.address2,
           city: contactInfo.city,
           contactMechId: contactInfo.contactMechId,
-          country: contactInfo.countryGeoName,
+          countryGeoId: contactInfo.countryGeoId,
+          countryGeoName: contactInfo.countryGeoName,
           latitude: contactInfo.latitude,
           longitude: contactInfo.longitude,
           postalCode: contactInfo.postalCode,
-          state: contactInfo.stateGeoName
+          stateGeoId: contactInfo.stateGeoId,
+          stateGeoName: contactInfo.stateGeoName
         }
       } else {
         throw resp.data

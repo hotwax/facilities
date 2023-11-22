@@ -114,7 +114,7 @@ export default defineComponent({
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Invalid Zipcode, GeoPoints can't be generated."))
+        showToast(translate("Failed to generate latitude & Longitude."))
         logger.error(err)
       }
     },
@@ -124,25 +124,24 @@ export default defineComponent({
       const payload = {
         address1: this.geoPoint.address1,
         city: this.geoPoint.city,
+        contactMechId: this.geoPoint.contactMechId,
+        facilityId: this.facilityId,
         latitude: this.geoPoint.latitude,
-        longitude: this.geoPoint.latitude
+        longitude: this.geoPoint.longitude,
+        postalCode: this.geoPoint.postalCode
       }
 
       try {
-        if(this.postalAddress.latitude) {
-          resp = await FacilityService.updateFacilityPostalAddress({...payload, contactMechId: this.geoPoint.contactMechId})
-        } else {
-          resp = await FacilityService.createFacilityPostalAddress(payload)
-        }
+        resp = await FacilityService.updateFacilityPostalAddress({...payload})
 
         if(!hasError(resp)) {
-          showToast(translate("Facility geoPoint updated successfully."))
+          showToast(translate("Facility latitude & longitude updated successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to update facility geoPoint."))
+        showToast(translate("Failed to update facility latitude & longitude."))
         logger.error(err)
       }
       modalController.dismiss()

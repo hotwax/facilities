@@ -29,7 +29,7 @@
                     <h3>{{ postalAddress.address1 }}</h3>
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
-                    <p class="ion-text-wrap">{{ postalAddress.country ? `${postalAddress.state}, ${postalAddress.country}` : postalAddress.state }}</p>
+                    <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
@@ -507,7 +507,8 @@ export default defineComponent({
     },
     async openGeoPointModal() {
       const addGeoPointModal = await modalController.create({
-        component: FacilityGeoPointModal
+        component: FacilityGeoPointModal,
+        componentProps: { facilityId: this.facilityId }
       })
 
       addGeoPointModal.present()

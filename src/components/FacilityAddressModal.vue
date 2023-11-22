@@ -25,11 +25,15 @@
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Country") }}</ion-label>
-      <ion-input v-model="postalAddress.country" slot="end" />
+      <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="postalAddress.countryGeoId">
+        <ion-select-option v-for="(country, index) in countries" :key="index" :value="country.geoId">{{ country.geoName }}</ion-select-option>
+      </ion-select>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("State") }}</ion-label>
-      <ion-input v-model="postalAddress.state" slot="end" />
+      <ion-select interface="popover" :placeholder="translate('Select')" v-model="postalAddress.stateGeoId">
+        <ion-select-option v-for="(state, index) in states" :key="index" :value="state.geoId">{{ state.geoName }}</ion-select-option>
+      </ion-select>
     </ion-item>
     <ion-item>
       <ion-label>{{ translate("Zipcode") }}</ion-label>
@@ -56,6 +60,8 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToolbar,
@@ -83,16 +89,23 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonLabel,
+    IonSelect,
+    IonSelectOption,
     IonText,
     IonTitle,
     IonToolbar
   },
   computed: {
     ...mapGetters({
-      postalAddress: 'facility/getPostalAddress'
+      postalAddress: 'facility/getPostalAddress',
+      countries: 'util/getCountries',
+      states: 'util/getStates'
     })
   },
   props: ['facilityId'],
+  async mounted() {
+    await this.store.dispatch('util/fetchCountries', { countryGeoId: this.postalAddress?.countryGeoId })
+  },
   methods: {
     closeModal() {
       modalController.dismiss()
@@ -109,10 +122,12 @@ export default defineComponent({
         address1: this.postalAddress.address1,
         address2: this.postalAddress.address2,
         city: this.postalAddress.city,
-        country: this.postalAddress.country,
+        countryGeoId: this.postalAddress.countryGeoId,
+        countryGeoName: this.postalAddress.countryGeoName,
         facilityId: this.facilityId,
         postalCode: this.postalAddress.postalCode,
-        state: this.postalAddress.state
+        stateGeoName: this.postalAddress.stateGeoName,
+        stateProvinceGeoId: this.postalAddress.stateGeoId
       }
 
       try {
@@ -133,6 +148,9 @@ export default defineComponent({
         logger.error(err)
       }
       modalController.dismiss()
+    },
+    updateState(ev: CustomEvent) {
+      this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
     }
   },
   setup() {

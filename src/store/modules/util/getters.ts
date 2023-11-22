@@ -11,6 +11,12 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getLocationTypes(state) {
     return state.locationTypes
+  },
+  getCountries(state) {
+    return state.countries
+  },
+  getStates(state) {
+    return state.states
   }
 }
 export default getters;
