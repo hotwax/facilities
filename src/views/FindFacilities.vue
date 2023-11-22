@@ -1,13 +1,20 @@
 <template>
   <ion-page>
+    <Filters content-id="filter-content" />
+
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Find Facilities") }}</ion-title>
+        <ion-buttons slot="end" class="mobile-only">
+          <ion-menu-button menu="end">
+            <ion-icon :icon="filterOutline" />
+          </ion-menu-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
+    <ion-content id="filter-content">
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search facilities')" v-model="query.queryString" @keyup.enter="updateQuery()" />
@@ -92,6 +99,7 @@
 <script lang="ts">
 import {
   IonBackButton,
+  IonButtons,
   IonChip,
   IonContent,
   IonHeader,
@@ -101,6 +109,7 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonMenuButton,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -112,6 +121,7 @@ import {
 import { defineComponent } from 'vue';
 import {
   businessOutline,
+  filterOutline,
   globeOutline,
   lockClosedOutline,
   lockOpenOutline,
@@ -126,11 +136,14 @@ import { hasError } from '@/adapter';
 import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
+import Filters from '@/components/Filters.vue'
 
 export default defineComponent({
   name: 'FindFacilities',
   components: {
+    Filters,
     IonBackButton,
+    IonButtons,
     IonChip,
     IonContent,
     IonHeader,
@@ -140,6 +153,7 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonMenuButton,
     IonPage,
     IonSearchbar,
     IonSelect,
@@ -230,6 +244,7 @@ export default defineComponent({
 
     return {
       businessOutline,
+      filterOutline,
       globeOutline,
       lockClosedOutline,
       lockOpenOutline,

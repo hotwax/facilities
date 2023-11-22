@@ -53,10 +53,8 @@ export default defineComponent({
 
       addLocationModal.present()
 
-      addLocationModal.onDidDismiss().then((result: any) => {
-        if(result.data?.result) {
-          popoverController.dismiss();
-        }
+      addLocationModal.onDidDismiss().then(() => {
+        popoverController.dismiss();
       })
     },
     async removeLocation() {
@@ -69,8 +67,8 @@ export default defineComponent({
         const resp = await FacilityService.deleteFacilityLocation(params)
 
         if(!hasError(resp)) {
-          this.store.dispatch('facility/fetchFacilityLocation')
-          popoverController.dismiss();
+          showToast(translate('Facility location removed successfully'))
+          await this.store.dispatch('facility/fetchFacilityLocations')
         } else {
           throw resp.data
         }
@@ -78,6 +76,7 @@ export default defineComponent({
         showToast(translate('Failed to remove facility location'))
         logger.error('Failed to remove facility location', err)
       }
+      popoverController.dismiss();
     }
   },
   setup() {

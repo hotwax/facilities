@@ -69,7 +69,7 @@ import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { mapGetters } from 'vuex'
+import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
@@ -109,17 +109,17 @@ export default defineComponent({
     })
   },
   methods: {
-    closeModal(result?: string) {
-      modalController.dismiss({ result });
+    closeModal() {
+      modalController.dismiss();
     },
     saveFacilityLocation() {
-      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.positionId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
+      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
       }
 
       // checking for locationSeqId as when adding new facility we won't be having locationSeqId
-      if(this.location.locationSeqId) {
+      if(this.location?.locationSeqId) {
         this.updateFacilityLocation()
       } else {
         this.addFacilityLocation()
@@ -136,7 +136,8 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Facility location created successfully'))
-          this.closeModal('success');
+          this.closeModal();
+          await this.store.dispatch('facility/fetchFacilityLocations')
         } else {
           throw resp.data
         }
@@ -157,7 +158,8 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Facility location updated successfully'))
-          this.closeModal('success');
+          this.closeModal();
+          await this.store.dispatch('facility/fetchFacilityLocations')
         } else {
           throw resp.data
         }
@@ -168,9 +170,12 @@ export default defineComponent({
     },
   },
   setup() {
+    const store = useStore();
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },
