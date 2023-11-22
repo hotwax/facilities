@@ -191,6 +191,55 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(err) {
       logger.error('Failed to find the facility locations', err)
     }
+  },
+
+  async fetchFacilityIdentification({ commit }, payload) {
+    try {
+      const params = {
+        inputFields: {
+          facilityId: payload.facilityId,
+          facilityIdenTypeId: payload.facilityIdenTypeIds,
+          facilityIdenTypeId_op: "in"
+        },
+        entityName: "FacilityIdentification",
+        filterByDate: "Y",
+        fieldList: ["facilityIdenTypeId", "idValue", "fromDate"],
+        viewSize: 100
+      }
+
+      const resp = await FacilityService.fetchFacilityIdentifications(params)
+
+      if(!hasError(resp) && resp.data.count > 0) {
+        commit(types.FACILITY_IDENTIFICATIONS_UPDATED, resp.data.docs)
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch facility identifications', err)
+    }
+  },
+
+  async fetchShopifyShopIdentifications({ commit }, payload) {
+    try {
+      const params = {
+        inputFields: {
+          facilityId: payload.facilityId
+        },
+        entityName: "ShopifyShopLocationView",
+        fieldList: ["domain", "name", "myshopifyDomain", "shopId", "shopifyLocationId"],
+        viewSize: 100
+      }
+
+      const resp = await FacilityService.fetchShopifyShopIdentifications(params)
+
+      if(!hasError(resp) && resp.data.count > 0) {
+        commit(types.FACILITY_SHOPIFY_IDENTIFICATION_UPDATED, resp.data.docs)
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch shopify shop identifications', err)
+    }
   }
 }
 

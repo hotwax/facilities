@@ -10,7 +10,8 @@ const utilModule: Module<UtilState, RootState> = {
   state: {
     productStores: [],
     facilityTypes: {},
-    locationTypes: {}
+    locationTypes: {},
+    externalMappingTypes: {}
   },
   getters,
   actions,

@@ -182,16 +182,88 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchFacilityIdentifications = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const fetchShopifyShopIdentifications = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const createFacilityIdentification = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityIdentification",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityIdentification = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityIdentification",
+    method: "post",
+    data: payload
+  })
+}
+
+const createShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const deleteShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/deleteShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const createEnumeration = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createEnumeration",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
-  createFacilityLocation,
-  deleteFacilityLocation,
-  fetchFacilityLocations,
   addFacilityToGroup,
+  createEnumeration,
+  createFacilityIdentification,
+  createFacilityLocation,
+  createShopifyShopLocation,
+  deleteFacilityLocation,
+  deleteShopifyShopLocation,
+  fetchFacilityIdentifications,
+  fetchFacilityLocations,
+  fetchShopifyShopIdentifications,
   fetchFacilityGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
   fetchFacilities,
   updateFacility,
+  updateFacilityIdentification,
   updateFacilityLocation,
-  updateFacilityToGroup
+  updateFacilityToGroup,
+  updateShopifyShopLocation
 }

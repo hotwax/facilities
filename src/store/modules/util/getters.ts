@@ -11,6 +11,9 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getLocationTypes(state) {
     return state.locationTypes
+  },
+  getExternalMappingTypes(state) {
+    return state.externalMappingTypes
   }
 }
 export default getters;

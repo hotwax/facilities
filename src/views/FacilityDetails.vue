@@ -251,7 +251,7 @@
               {{ translate("Map facility to an external system") }}
             </ion-button>
             <div class="external-mappings">
-              <ion-card>
+              <ion-card v-for="(shopifyShopIdentification, index) in current.shopifyShopIdentifications" :key="index">
                 <ion-card-header>
                   <ion-card-title>
                     {{ translate("Shopify facility") }}
@@ -259,29 +259,40 @@
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>
-                    {{ "shop name" }}
-                    <p>{{ "<Shop Id>" }}</p>
+                    {{ shopifyShopIdentification.name }}
+                    <p>{{ shopifyShopIdentification.shopId }}</p>
                   </ion-label>
-                  <ion-note slot="end">{{"note"}}</ion-note>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ "<shopify location id>" }}</ion-label>
-                  <ion-note slot="end">{{"note"}}</ion-note>
+                  <ion-label>{{ shopifyShopIdentification.shopifyLocationId }}</ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ "<admin link>" }}</ion-label>
-                  <ion-button color="medium" fill="clear">
+                  <ion-label>{{ shopifyShopIdentification.myshopifyDomain + '/admin' }}</ion-label>
+                  <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyShopIdentification.myshopifyDomain + '/admin'}`)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ "<shopify link>" }}</ion-label>
-                  <ion-button color="medium" fill="clear">
+                  <ion-label>{{ shopifyShopIdentification.myshopifyDomain }}</ion-label>
+                  <ion-button color="medium" fill="clear" @click="goToLink(shopifyShopIdentification.myshopifyDomain)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
                 <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger">{{ translate("Remove") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeShopifyShopLocation(shopifyShopIdentification)">{{ translate("Remove") }}</ion-button>
+              </ion-card>
+              <ion-card v-for="(identification, index) in current.facilityIdentifications" :key="index">
+                <ion-card-header>
+                  <ion-card-title>
+                    {{ externalMappingTypes[identification.facilityIdenTypeId] }}
+                  </ion-card-title>
+                </ion-card-header>
+                <ion-item lines="full">
+                  <ion-label>{{ translate('Identification') }}</ion-label>
+                  <ion-note slot="end">{{ identification.idValue }}</ion-note>
+                </ion-item>
+                <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeFacilityIdentification(identification)">{{ translate("Remove") }}</ion-button>
               </ion-card>
             </div>          
             <hr />
@@ -467,23 +478,32 @@ export default defineComponent({
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
-      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
+      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
     }
   },
   computed: {
     ...mapGetters({
       current: 'facility/getCurrent',
-      locationTypes: 'util/getLocationTypes'
+      locationTypes: 'util/getLocationTypes',
+      externalMappingTypes: 'util/getExternalMappingTypes'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes')])
+    await this.store.dispatch('util/fetchExternalMappingTypes')
+    await this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
+    await this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.facilityId })
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
   methods: {
+    goToLink(link: string) {
+      const url = link.startsWith('http') ? link : `https://${link}`
+      // opening link in new tab without passing any reference
+      window.open(url, '_blank', 'noopener, noreferrer')
+    },
     async openStorePopover(ev: Event) {
       const popover = await popoverController.create({
         component: OpenStorePopover,
@@ -664,6 +684,47 @@ export default defineComponent({
       } catch(err) {
         logger.error('Failed to update default days to ship', err)
         showToast(translate('Failed to update default days to ship'))
+      }
+    },
+    async removeFacilityIdentification(identification: any) {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          facilityIdenTypeId: identification.facilityIdenTypeId,
+          fromDate: identification.fromDate,
+          thruDate: DateTime.now().toMillis()
+        }
+
+        const resp = await FacilityService.updateFacilityIdentification(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Removed facility identification successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to remove facility identification', err)
+        showToast(translate('Failed to remove facility identification'))
+      }
+    },
+    async removeShopifyShopLocation(shopifyShopIdentification: any) {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          shopId: shopifyShopIdentification.shopId,
+          shopifyLocationId: shopifyShopIdentification.shopifyLocationId,
+        }
+
+        const resp = await FacilityService.deleteShopifyShopLocation(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Removed shopify location successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to remove shopify location', err)
+        showToast(translate('Failed to remove shopify location'))
       }
     }
   },

@@ -99,6 +99,45 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
   },
 
+  async fetchExternalMappingTypes({ commit, state }) {
+    const cachedExternalMappingTypes = JSON.parse(JSON.stringify(state.externalMappingTypes))
+
+    // not fetching external mapping type information again if already present, as it will not be changed so frequently
+    if(cachedExternalMappingTypes.length) {
+      return;
+    }
+
+    let externalMappingTypes = []
+    const params = {
+      inputFields: {
+        enumTypeId: 'FACILITY_IDENTITY',
+        enumId: 'SHOPIFY_FAC_ID',
+        enumId_op: 'notEqual' // excluding shopify enum as we have included shopify as an hardcoded option
+      },
+      viewSize: 100,
+      noConditionFind: 'Y',
+      entityName: 'Enumeration',
+      fieldList: ['enumId', 'description']
+    } as any
+
+    try {
+      const resp = await UtilService.fetchExternalMappingTypes(params)
+      if (!hasError(resp)) {
+        externalMappingTypes = resp.data.docs.reduce((externalMappingType: any, type: any) => {
+          externalMappingType[type.enumId] = type.description
+
+          return externalMappingType
+        }, {})
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+
+    commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
+  },
+
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
     commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
