@@ -522,41 +522,7 @@ export default defineComponent({
     async addStaffMemberModal() {
       const addStaffModal = await modalController.create({
         component: AddStaffMemberModal,
-        componentProps: { selectedParties: this.facilityParties }
-      })
-
-      addStaffModal.onDidDismiss().then(async (result: any) => {
-        if (result.data && result.data.value) {
-          const partiesToAdd = result.data.value.partiesToAdd
-          const partiesToRemove = result.data.value.partiesToRemove
-
-          const removeResponses = await Promise.allSettled(partiesToRemove
-            .map(async (party: any) => await FacilityService.removePartyFromFacility({
-              facilityId: this.facilityId,
-              fromDate: party.fromDate,
-              thruDate: DateTime.now().toMillis(),
-              partyId: party.partyId,
-              roleTypeId: party.roleTypeId
-            }))
-          )
-
-          const addResponses = await Promise.allSettled(partiesToAdd
-            .map(async (party: any) => await FacilityService.addPartyToFacility({
-              facilityId: this.facilityId,
-              partyId: party.partyId,
-              roleTypeId: party.roleTypeId
-            }))
-          )
-
-          const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
-          if (hasFailedResponse) {
-            showToast(translate("Failed to update some role(s)."))
-          } else {
-            showToast(translate("Role(s) updated successfully."))
-          }
-          // refetching parties with updated roles
-          await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
-        }
+        componentProps: { facilityId: this.facilityId, selectedParties: this.facilityParties }
       })
 
       addStaffModal.present()

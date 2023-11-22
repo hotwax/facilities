@@ -73,6 +73,7 @@ import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { mapGetters, useStore } from "vuex";
 import { showToast } from "@/utils";
+import { DateTime } from "luxon";
 
 export default defineComponent({
   name: "AddStaffMemberModal",
@@ -96,7 +97,7 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
-  props: ['selectedParties'],
+  props: ['facilityId', 'selectedParties'],
   data () {
     return {
       parties: [],
@@ -162,7 +163,7 @@ export default defineComponent({
     removeSelectedParty(partyId: string) {
       this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== partyId)
     },
-    saveParties() {
+    async saveParties() {
       const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
       const partiesToRemove = this.selectedParties.filter((party: any) => !this.selectedPartyValues.some((selectedParty: any) => party.partyId === selectedParty.partyId))
       const partiesRoleChanged = this.selectedParties.filter((party: any) => this.selectedPartyValues.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId))
@@ -173,13 +174,34 @@ export default defineComponent({
         return;
       }
 
-      modalController.dismiss({
-        dismissed: true,
-        value: {
-          partiesToAdd,
-          partiesToRemove
-        }
-      });
+      const removeResponses = await Promise.allSettled(partiesToRemove
+        .map(async (party: any) => await FacilityService.removePartyFromFacility({
+          facilityId: this.facilityId,
+          fromDate: party.fromDate,
+          thruDate: DateTime.now().toMillis(),
+          partyId: party.partyId,
+          roleTypeId: party.roleTypeId
+        }))
+      )
+
+      const addResponses = await Promise.allSettled(partiesToAdd
+        .map(async (party: any) => await FacilityService.addPartyToFacility({
+          facilityId: this.facilityId,
+          partyId: party.partyId,
+          roleTypeId: party.roleTypeId
+        }))
+      )
+
+      const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
+      if (hasFailedResponse) {
+        showToast(translate("Failed to update some role(s)."))
+      } else {
+        showToast(translate("Role(s) updated successfully."))
+      }
+
+      // refetching parties with updated roles
+      await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
+      modalController.dismiss()
     },
     updateSelectedParties(event: CustomEvent, selectedPartyId: string) {
       let party = {} as any
