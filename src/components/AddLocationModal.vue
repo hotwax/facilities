@@ -11,39 +11,41 @@
   </ion-header>
 
   <ion-content>
-    <ion-item>
-      <ion-label>{{ translate("Type") }}</ion-label>
-      <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
-        <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
-      </ion-select>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('area')" v-model="locationInfo.areaId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('aisle')" v-model="locationInfo.aisleId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('section')" v-model="locationInfo.sectionId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
-      <ion-input :placeholder="translate('level')" v-model="locationInfo.levelId"/>
-    </ion-item>
-    <ion-item>
-      <ion-label>{{ translate("Sequence") }}</ion-label>
-      <ion-input :placeholder="translate('sequence')" v-model="locationInfo.positionId"/>
-    </ion-item>
-  </ion-content>
+    <form @keyup.enter="saveFacilityLocation">
+      <ion-item>
+        <ion-label>{{ translate("Type") }}</ion-label>
+        <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
+          <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('area')" v-model="locationInfo.areaId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('aisle')" v-model="locationInfo.aisleId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('section')" v-model="locationInfo.sectionId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
+        <ion-input :placeholder="translate('level')" v-model="locationInfo.levelId"/>
+      </ion-item>
+      <ion-item>
+        <ion-label>{{ translate("Sequence") }}</ion-label>
+        <ion-input :placeholder="translate('sequence')" v-model="locationInfo.positionId"/>
+      </ion-item>
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveFacilityLocation">
-      <ion-icon :icon="saveOutline" />
-    </ion-fab-button>
-  </ion-fab>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="saveFacilityLocation" @keyup.enter.stop>
+          <ion-icon :icon="saveOutline" />
+        </ion-fab-button>
+      </ion-fab>
+    </form>
+  </ion-content>
 </template>
 
 <script lang="ts">
