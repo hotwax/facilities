@@ -27,13 +27,13 @@
       <ion-item @keyup.enter.stop>
         <ion-label>{{ translate("Country") }}</ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
-          <ion-select-option v-for="(country, index) in countries" :key="index" :value="country.geoId">{{ country.geoName }}</ion-select-option>
+          <ion-select-option v-for="country in countries" :key="country.geoId" :value="country.geoId">{{ country.geoName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item @keyup.enter.stop>
         <ion-label>{{ translate("State") }}</ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" v-model="address.stateGeoId">
-          <ion-select-option v-for="(state, index) in states[address.countryGeoId]" :key="index" :value="state.geoId">{{ state.geoName }}</ion-select-option>
+          <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">{{ state.geoName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
@@ -131,10 +131,8 @@ export default defineComponent({
         address2: this.address.address2,
         city: this.address.city,
         countryGeoId: this.address.countryGeoId,
-        countryGeoName: this.address.countryGeoName,
         facilityId: this.facilityId,
         postalCode: this.address.postalCode,
-        stateGeoName: this.address.stateGeoName,
         stateProvinceGeoId: this.address.stateGeoId
       }
 

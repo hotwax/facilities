@@ -12,7 +12,7 @@ const utilModule: Module<UtilState, RootState> = {
     facilityTypes: {},
     locationTypes: {},
     countries: [],
-    states: []
+    states: {}
   },
   getters,
   actions,

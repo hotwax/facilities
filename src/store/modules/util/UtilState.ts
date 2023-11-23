@@ -3,5 +3,5 @@ export default interface UtilState {
   facilityTypes: object;
   locationTypes: object;
   countries: any[];
-  states: any[];
+  states: any;
 }
