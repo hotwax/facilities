@@ -53,6 +53,7 @@ import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
 import { showToast } from "@/utils";
+import logger from "@/logger";
 
 export default defineComponent({
   name: "SelectProductStoreModal",
@@ -112,6 +113,11 @@ export default defineComponent({
       if (hasFailedResponse) {
         showToast(translate('Failed to update some facility stores'))
       } else {
+        productStoresToRemove.map((store: any) => {
+          if(store.productStoreId === this.primaryMember.facilityGroupId) {
+            this.removeProductFromPrimaryMember()
+          }
+        })
         showToast(translate('Facility stores updated successfully.'))
       }
 
@@ -130,26 +136,19 @@ export default defineComponent({
     isSelected(productStoreId: any) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
     },
-    // async removeProductFromPrimaryMember() {
-    //   let resp;
-    //   try {
-    //     resp = await FacilityService.updateFacilityToGroup({
-    //       "facilityId": this.facilityId,
-    //       "facilityGroupId": facilityGroupId,
-    //       "fromDate": groupInformation.fromDate,
-    //       "thruDate": DateTime.now().toMillis()
-    //     })
-
-    //     if (!hasError(resp)) {
-    //       showToast(translate('Fulfillment setting updated successfully'))
-    //     } else {
-    //       throw resp.data
-    //     }
-    //   } catch (err) {
-    //     showToast(translate('Failed to update fulfillment setting'))
-    //     logger.error('Failed to update fulfillment setting', err)
-    //   }
-    // }
+    async removeProductFromPrimaryMember() {
+      let resp;
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": this.primaryMember.facilityGroupId,
+          "fromDate": this.primaryMember.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+      } catch (err) {
+        logger.error(err)
+      }
+    }
   },
   setup() {
     const store = useStore()

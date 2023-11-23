@@ -51,7 +51,7 @@ export default defineComponent({
   },
   methods: {
     async removeStore() {
-      if(this.getStoreDetail(this.currentProductStore.productStoreId).storeName === this.primaryMember.facilityGroupName){
+      if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupId){
         await this.removeProductFromPrimaryMember()
       }
 
@@ -114,14 +114,14 @@ export default defineComponent({
       try {
         resp = await FacilityService.fetchFacilityGroup({
           inputFields: {
-            facilityGroupName: productStoreId
+            facilityGroupId: productStoreId
           },
           entityName: 'FacilityGroup',
           viewSize: 100
         })
 
         if(!hasError(resp)) {
-          facilityGroupId = resp.data.facilityGroupId
+          facilityGroupId = resp.data.docs[0].facilityGroupId
         } else {
           throw resp.data
         }
@@ -160,7 +160,7 @@ export default defineComponent({
           "thruDate": DateTime.now().toMillis()
         })
       } catch (err) {
-        logger.error('Failed to update fulfillment setting', err)
+        logger.error(err)
       }
     }
   },
