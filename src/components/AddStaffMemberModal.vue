@@ -107,7 +107,7 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      roles: 'util/getRoles',
+      roles: 'util/getPartyRoles',
     })
   },
   methods: {

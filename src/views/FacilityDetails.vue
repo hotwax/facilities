@@ -472,13 +472,13 @@ export default defineComponent({
       current: 'facility/getCurrent',
       facilityParties: 'facility/getFacilityParties',
       locationTypes: 'util/getLocationTypes',
-      roles: 'util/getRoles'
+      roles: 'util/getPartyRoles'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('util/fetchRoles')])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('util/fetchPartyRoles')])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },

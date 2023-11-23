@@ -5,8 +5,6 @@ import UtilState from './UtilState'
 import * as types from './mutation-types'
 import { hasError } from '@/adapter'
 import logger from '@/logger'
-import { showToast } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<UtilState, RootState> = {
   async fetchProductStores({ commit }) {
@@ -100,7 +98,7 @@ const actions: ActionTree<UtilState, RootState> = {
 
     commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
   },
-  async fetchRoles({ commit, state }) {
+  async fetchPartyRoles({ commit, state }) {
     if (state.roles.length) {
       return
     }
@@ -118,7 +116,7 @@ const actions: ActionTree<UtilState, RootState> = {
     }
 
     try {
-      const resp = await UtilService.fetchRoles(params)
+      const resp = await UtilService.fetchPartyRoles(params)
       if (!hasError(resp)) {
         resp.data.docs.map((doc:any) => {
           roles[doc.roleTypeId] = doc.description
@@ -132,7 +130,7 @@ const actions: ActionTree<UtilState, RootState> = {
     } catch (error) {
       logger.error(error)
     }
-    commit(types.UTIL_ROLES_UPDATED, roles)
+    commit(types.UTIL_PARTY_ROLES_UPDATED, roles)
   },
 
   clearUtilState({ commit }) {

@@ -12,7 +12,7 @@ const mutations: MutationTree<UtilState> = {
   [types.UTIL_LOCATION_TYPES_UPDATED](state, payload) {
     state.locationTypes = payload
   },
-  [types.UTIL_ROLES_UPDATED](state, payload) {
+  [types.UTIL_PARTY_ROLES_UPDATED](state, payload) {
     state.roles = payload
   }
 }
