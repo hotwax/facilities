@@ -2,9 +2,9 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ getProductStore(currentProductStore.productStoreId).storeName }}</ion-list-header>
-      <ion-item button :disabled="currentProductStore.productStoreId === primaryMember.facilityGroupId" @click="makePrimary()">
-        {{ translate("Make primary") }}
-        <ion-icon slot="end" :icon="starOutline" />
+      <ion-item button @click="makePrimary()">
+        {{ translate("Primary") }}
+        <ion-icon slot="end" :icon="primaryMember.facilityGroupId === currentProductStore.productStoreId ? star : starOutline" />
       </ion-item>
       <ion-item button lines="none" @click="removeStoreFromFacility()">
         {{ translate("Unlink") }}
@@ -24,7 +24,7 @@ import {
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { starOutline, removeCircleOutline } from "ionicons/icons";
+import { removeCircleOutline, star, starOutline } from "ionicons/icons";
 import { translate } from "@hotwax/dxp-components";
 import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
@@ -80,9 +80,15 @@ export default defineComponent({
       popoverController.dismiss()
     },
     async makePrimary() {
+      const productStoreId = this.currentProductStore.productStoreId
+      if(this.primaryMember.facilityGroupId === productStoreId) {
+        this.removeProductFromPrimaryMember()
+        popoverController.dismiss()
+        return;
+      }
+
       let resp;
       let facilityGroupId;
-      const productStoreId = this.currentProductStore.productStoreId
 
       facilityGroupId = await this.fetchFacilityGroup(productStoreId)
 
@@ -98,8 +104,6 @@ export default defineComponent({
           })
 
           if(!hasError(resp)) {
-            showToast(translate("Product Store made primary successfully."))
-
             // Remove old primary store
             if(this.primaryMember.facilityGroupId) {
               await this.removeProductFromPrimaryMember()
@@ -108,11 +112,11 @@ export default defineComponent({
             throw resp.data
           }
         } catch(err) {
-          showToast(translate("Failed to make store primary."))
+          showToast(translate("Failed to make product store primary."))
           logger.error(err)
         }
       } else {
-        showToast(translate("Failed to make store primary."))
+        showToast(translate("Failed to make product store primary."))
       }
       popoverController.dismiss()
     },
@@ -177,6 +181,7 @@ export default defineComponent({
 
     return {
       removeCircleOutline,
+      star,
       starOutline,
       store,
       translate
