@@ -58,9 +58,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         facilities = resp.data.docs
         total = resp.data.count
 
-        // make api calls in parallel
-        const facilitiesGroupInformation = await FacilityService.fetchFacilityGroupInformation(facilities.map((facility: any) => facility.facilityId))
-        const facilitiesOrderCount = await FacilityService.fetchFacilitiesOrderCount(facilities.map((facility: any) => facility.facilityId))
+        const [facilitiesGroupInformation, facilitiesOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation(facilities.map((facility: any) => facility.facilityId)), FacilityService.fetchFacilitiesOrderCount(facilities.map((facility: any) => facility.facilityId))])
 
         facilities.map((facility: any) => {
           const fulfillmentOrderLimit = facility.maximumOrderLimit
@@ -188,7 +186,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityLocations(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_CURRENT_LOCATION_UPDATED, resp.data.docs)
+        commit(types.FACILITY_LOCATIONS_UPDATED, resp.data.docs)
       } else {
         throw resp.data
       }

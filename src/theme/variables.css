@@ -326,7 +326,7 @@ hr {
 
 .list-item {
   --columns-mobile: 2;
-  --columns-tablet: 5;
+  --columns-tablet: 4;
   --columns-desktop: 7;
   --col-calc: var(--columns-mobile);
   --implicit-columns: calc(var(--col-calc) - 1);
