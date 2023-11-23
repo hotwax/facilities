@@ -99,7 +99,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
   },
   async fetchPartyRoles({ commit, state }) {
-    if (state.roles.length) {
+    if (state.partyRoles.length) {
       return
     }
 

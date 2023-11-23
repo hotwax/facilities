@@ -302,7 +302,7 @@
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ roles[party.roleTypeId] }}</ion-chip>
+                <ion-chip outline>{{ partyRoles[party.roleTypeId] }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
@@ -472,7 +472,7 @@ export default defineComponent({
       current: 'facility/getCurrent',
       facilityParties: 'facility/getFacilityParties',
       locationTypes: 'util/getLocationTypes',
-      roles: 'util/getPartyRoles'
+      partyRoles: 'util/getPartyRoles'
     })
   },
   props: ["facilityId"],

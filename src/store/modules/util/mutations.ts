@@ -13,7 +13,7 @@ const mutations: MutationTree<UtilState> = {
     state.locationTypes = payload
   },
   [types.UTIL_PARTY_ROLES_UPDATED](state, payload) {
-    state.roles = payload
+    state.partyRoles = payload
   }
 }
 export default mutations;

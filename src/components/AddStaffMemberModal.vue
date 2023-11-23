@@ -29,7 +29,7 @@
             <p>{{ party.partyId }}</p>
           </ion-label>
           <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
-            <ion-select-option v-for="(description, roleTypeId) in roles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
+            <ion-select-option v-for="(description, roleTypeId) in partyRoles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
         </ion-select>
         </ion-item>
       </div>
@@ -107,7 +107,7 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      roles: 'util/getPartyRoles',
+      partyRoles: 'util/getPartyRoles',
     })
   },
   methods: {

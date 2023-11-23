@@ -8,7 +8,7 @@ import RootState from '@/store/RootState'
 const utilModule: Module<UtilState, RootState> = {
   namespaced: true,
   state: {
-    roles: [],
+    partyRoles: [],
     productStores: [],
     facilityTypes: {},
     locationTypes: {}
