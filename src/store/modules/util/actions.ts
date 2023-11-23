@@ -103,7 +103,7 @@ const actions: ActionTree<UtilState, RootState> = {
       return
     }
 
-    const roles = {} as any
+    const partyRoles = {} as any
     const params = {
       inputFields: {
         roleTypeGroupId: 'FACILITY_PARTY_ROLE'
@@ -118,19 +118,19 @@ const actions: ActionTree<UtilState, RootState> = {
     try {
       const resp = await UtilService.fetchPartyRoles(params)
       if (!hasError(resp)) {
-        resp.data.docs.map((doc:any) => {
-          roles[doc.roleTypeId] = doc.description
+        resp.data.docs.map((role: any) => {
+          partyRoles[role.roleTypeId] = role.description
         })
 
         // pushing none explicitly to show on UI
-        roles[''] = 'none'
+        partyRoles[''] = 'none'
       } else {
         throw resp.data
       }
     } catch (error) {
       logger.error(error)
     }
-    commit(types.UTIL_PARTY_ROLES_UPDATED, roles)
+    commit(types.UTIL_PARTY_ROLES_UPDATED, partyRoles)
   },
 
   clearUtilState({ commit }) {

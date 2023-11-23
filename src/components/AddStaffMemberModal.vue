@@ -30,14 +30,14 @@
           </ion-label>
           <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
             <ion-select-option v-for="(description, roleTypeId) in partyRoles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
-        </ion-select>
+          </ion-select>
         </ion-item>
       </div>
     </ion-list>
   </ion-content>
 
-  <ion-fab @click="saveParties" vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button @click="saveParties">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -98,7 +98,7 @@ export default defineComponent({
     IonToolbar
   },
   props: ['facilityId', 'selectedParties'],
-  data () {
+  data() {
     return {
       parties: [],
       queryString: '',
@@ -207,13 +207,12 @@ export default defineComponent({
       let party = {} as any
       const selectedRoleTypeId = event.detail.value
 
-      if(this.isPartySelected(selectedPartyId)) {
+      party = this.getParty(selectedPartyId)
+      if(party?.partyId) {
         party = this.selectedPartyValues.find((party: any) => party.partyId === selectedPartyId)
+        this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
 
-        if(selectedRoleTypeId === '') {
-          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
-        } else if(selectedPartyId !== party.roleTypeId) {
-          this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
+        if(selectedRoleTypeId) {
           this.selectedPartyValues.push({...party, roleTypeId: selectedRoleTypeId})
         }
       } else {
@@ -221,11 +220,11 @@ export default defineComponent({
         this.selectedPartyValues.push({...party, roleTypeId: selectedRoleTypeId})
       }
     },
-    isPartySelected(partyId: string) {
+    getParty(partyId: string) {
       return this.selectedPartyValues.find((party: any) => party.partyId === partyId)
     },
     getPartyRoleTypeId(partyId: string) {
-      return this.selectedPartyValues.find((party: any) => party.partyId === partyId) ? this.selectedPartyValues.find((party: any) => party.partyId === partyId).roleTypeId : ''
+      return this.getParty(partyId) ? this.getParty(partyId).roleTypeId : ''
     }
   },
   async mounted() {
