@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ externalMappingTypes[mappingType] }}</ion-title>
+      <ion-title>{{ externalMappingTypes[mappingId] }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -25,7 +25,7 @@
       </ion-list>
 
       <ion-list>
-        <ion-list-header>{{ externalMappingTypes[mappingType] }}</ion-list-header>
+        <ion-list-header>{{ externalMappingTypes[mappingId] }}</ion-list-header>
         <ion-item>
           <ion-label>{{ translate("Identification") }}</ion-label>
           <ion-input v-model="mappingValue" placeholder="Mapping Value" />
@@ -33,7 +33,7 @@
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="saveMapping" @keyup.enter.stop>
+        <ion-fab-button @click="type && type === 'update' ? updateMapping() : saveMapping()" @keyup.enter.stop>
           <ion-icon :icon="saveOutline" />
         </ion-fab-button>
       </ion-fab>
@@ -97,7 +97,7 @@ export default defineComponent({
       mappingValue: ''
     }
   },
-  props: ["mappingType", "identification", "type"],
+  props: ["mappingId", "identification", "type"],
   mounted() {
     if(this.type) {
       this.mappingValue = this.identification?.idValue
@@ -108,7 +108,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async saveMapping() {
-      if(!this.mappingType.trim()) {
+      if(!this.mappingValue.trim()) {
         showToast(translate('Please enter a valid value'))
         return;
       }
@@ -118,7 +118,7 @@ export default defineComponent({
       try {
         resp = await FacilityService.createFacilityIdentification({
           "facilityId": this.currentFacility.facilityId,
-          "facilityIdenTypeId": this.mappingType,
+          "facilityIdenTypeId": this.mappingId,
           "idValue": this.mappingValue
         })
 
@@ -132,6 +132,34 @@ export default defineComponent({
       } catch(err) {
         showToast(translate('Failed to create external mapping'))
         logger.error('Failed to create external mapping', err)
+      }
+    },
+    async updateMapping() {
+      if(!this.mappingValue.trim()) {
+        showToast(translate('Please enter a valid value'))
+        return;
+      }
+
+      let resp;
+
+      try {
+        resp = await FacilityService.updateFacilityIdentification({
+          "facilityId": this.currentFacility.facilityId,
+          "facilityIdenTypeId": this.mappingId,
+          "fromDate": this.identification.fromDate,
+          "idValue": this.mappingValue
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate('External mapping updated successfully'))
+          this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.currentFacility.facilityId })
+          this.closeModal();
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update external mapping'))
+        logger.error('Failed to update external mapping', err)
       }
     }
   },

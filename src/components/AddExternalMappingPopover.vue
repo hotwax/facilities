@@ -59,7 +59,7 @@ export default defineComponent({
     async addMappingModal(type: any) {
       const addMappingModal = await modalController.create({
         component: FacilityMappingModal,
-        componentProps: { mappingType: type }
+        componentProps: { mappingId: type }
       })
   
       addMappingModal.present()

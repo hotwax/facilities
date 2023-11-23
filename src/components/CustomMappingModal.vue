@@ -122,10 +122,10 @@ export default defineComponent({
           "description": this.mappingName
         })
 
-        if(!hasError(resp)) {
+        if(!hasError(resp) && resp.data.enumId) {
           resp = await FacilityService.createFacilityIdentification({
             "facilityId": this.currentFacility.facilityId,
-            "facilityIdenTypeId": this.mappingId,
+            "facilityIdenTypeId": resp.data.enumId,
             "idValue": this.mappingValue
           })
   

@@ -698,6 +698,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Removed facility identification successfully'))
+          await this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
         } else {
           throw resp.data
         }
@@ -718,6 +719,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Removed shopify location successfully'))
+          await this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
@@ -729,7 +731,7 @@ export default defineComponent({
     async editFacilityIdentification(identification: any) {
       const customMappingModal = await modalController.create({
         component: FacilityMappingModal,
-        componentProps: { identification, type: 'update' }
+        componentProps: { mappingId: identification.facilityIdenTypeId, identification, type: 'update' }
       })
 
       customMappingModal.present()
