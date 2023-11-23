@@ -1,7 +1,7 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>{{ getStoreDetail(currentProductStore.productStoreId).storeName }}</ion-list-header>
+      <ion-list-header>{{ getProductStore(currentProductStore.productStoreId).storeName }}</ion-list-header>
       <ion-item button :disabled="currentProductStore.productStoreId === primaryMember.facilityGroupId" @click="makePrimary()">
         {{ translate("Make primary") }}
         <ion-icon slot="end" :icon="starOutline" />
@@ -46,7 +46,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       facilityProductStores: 'facility/getFacilityProductStores',
-      productStores: 'util/getProductStores'
+      productStores: 'util/getProductStores',
+      getProductStore: 'util/getProductStore'
     })
   },
   methods: {
@@ -77,9 +78,6 @@ export default defineComponent({
         showToast(translate('Store unlink failed.'))
       }
       popoverController.dismiss()
-    },
-    getStoreDetail(productStoreId: string) {
-      return this.productStores.find((store: any) => store.productStoreId === productStoreId)
     },
     async makePrimary() {
       let resp;
@@ -145,7 +143,7 @@ export default defineComponent({
       try {
         const resp = await FacilityService.createFacilityGroup({
           facilityGroupTypeId: 'FEATURING',
-          facilityGroupName: this.getStoreDetail(productStoreId).storeName,
+          facilityGroupName: this.getProductStore(productStoreId).storeName,
           facilityGroupId: productStoreId
         })
   

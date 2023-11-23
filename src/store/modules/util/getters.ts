@@ -11,6 +11,10 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getLocationTypes(state) {
     return state.locationTypes
-  }
+  },
+
+  getProductStore: (state) => (productStoreId: string) => {
+    return state.productStores.find((store: any) => store.productStoreId === productStoreId)
+  },
 }
 export default getters;

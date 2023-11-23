@@ -147,7 +147,7 @@
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>
-                <h2>{{ getStoreDetail(store.productStoreId)?.storeName }}</h2>
+                <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
               </ion-label>
               <ion-badge v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
@@ -466,7 +466,8 @@ export default defineComponent({
       current: 'facility/getCurrent',
       facilityProductStores: 'facility/getFacilityProductStores',
       locationTypes: 'util/getLocationTypes',
-      productStores: 'util/getProductStores'
+      productStores: 'util/getProductStores',
+      getProductStore: 'util/getProductStore'
     })
   },
   props: ["facilityId"],
@@ -595,9 +596,6 @@ export default defineComponent({
         showBackdrop: false
       });
       return externalMappingPopover.present()
-    },
-    getStoreDetail(productStoreId: string) {
-      return this.productStores.find((store: any) => store.productStoreId === productStoreId)
     },
     async changeOrderLimitPopover(ev: Event) {
       const popover = await popoverController.create({
