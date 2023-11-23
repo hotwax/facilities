@@ -2,7 +2,7 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ translate("Choose system") }}</ion-list-header>
-      <ion-item @click="createShopifyShopLocationModal" button>
+      <ion-item @click="createShopifyFacilityMappingModal" button>
         {{ translate('Shopify') }}
       </ion-item>
       <ion-item v-for="(desc, type) in externalMappingTypes" :key="type" @click="addMappingModal(type)" button>
@@ -68,14 +68,14 @@ export default defineComponent({
         popoverController.dismiss();
       })
     },
-    async createShopifyShopLocationModal() {
-      const shopifyShopLocationModal = await modalController.create({
+    async createShopifyFacilityMappingModal() {
+      const facilityShopifyMappingModal = await modalController.create({
         component: FacilityShopifyMappingModal
       })
   
-      shopifyShopLocationModal.present()
+      facilityShopifyMappingModal.present()
 
-      shopifyShopLocationModal.onDidDismiss().then(() => {
+      facilityShopifyMappingModal.onDidDismiss().then(() => {
         popoverController.dismiss();
       })
     }

@@ -113,7 +113,7 @@ export default defineComponent({
     },
     async saveMapping() {
       if(!this.shopId.trim() || !this.shopifyLocationId) {
-        showToast(translate('Please fill all the fields'))
+        showToast(translate('Please fill all the required fields'))
         return;
       }
 
@@ -127,20 +127,20 @@ export default defineComponent({
         })
 
         if(!hasError(resp)) {
-          showToast(translate('Shopify location created successfully'))
+          showToast(translate('Shopify mapping created successfully'))
           this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.currentFacility.facilityId })
           this.closeModal();
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate('Failed to create shopify location'))
-        logger.error('Failed to create shopify location', err)
+        showToast(translate('Failed to create shopify mapping'))
+        logger.error('Failed to create shopify mapping', err)
       }
     },
     async updateMapping() {
       if(!this.shopifyLocationId) {
-        showToast(translate('Please fill all the fields'))
+        showToast(translate('Please fill all the required fields'))
         return;
       }
 
@@ -154,7 +154,7 @@ export default defineComponent({
         })
 
         if(!hasError(resp)) {
-          showToast(translate('Shopify location updated successfully'))
+          showToast(translate('Shopify mapping updated successfully'))
           this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.currentFacility.facilityId })
           // TODO: overlay does not exist error, fix this
           this.closeModal();
@@ -162,8 +162,8 @@ export default defineComponent({
           throw resp.data
         }
       } catch(err) {
-        showToast(translate('Failed to update shopify location'))
-        logger.error('Failed to update shopify location', err)
+        showToast(translate('Failed to update shopify mapping'))
+        logger.error('Failed to update shopify mapping', err)
       }
     }
   },
