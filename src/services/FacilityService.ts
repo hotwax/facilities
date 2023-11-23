@@ -92,6 +92,22 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
   return facilitiesOrderCount;
 }
 
+const getFacilityParties = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   let facilityOrderCounts = {}, resp: any;
   try {
@@ -124,6 +140,22 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   }
 
   return facilityOrderCounts;
+}
+
+const addPartyToFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/addPartyToFacility",
+    method: "post",
+    data: payload
+  });
+}
+
+const removePartyFromFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/removePartyFromFacility",
+    method: "post",
+    data: payload
+  });
 }
 
 const updateFacility = async (payload: any): Promise<any> => {
@@ -183,14 +215,18 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
 }
 
 export const FacilityService = {
-  createFacilityLocation,
-  deleteFacilityLocation,
-  fetchFacilityLocations,
   addFacilityToGroup,
-  fetchFacilityGroupInformation,
-  fetchFacilityOrderCounts,
+  addPartyToFacility,
+  deleteFacilityLocation,
+  createFacilityLocation,
   fetchFacilitiesOrderCount,
   fetchFacilities,
+  fetchFacilityGroupInformation,
+  fetchFacilityLocations,
+  fetchFacilityOrderCounts,
+  getFacilityParties,
+  getPartyRoleAndPartyDetails,
+  removePartyFromFacility,
   updateFacility,
   updateFacilityLocation,
   updateFacilityToGroup

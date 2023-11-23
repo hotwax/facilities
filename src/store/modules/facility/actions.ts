@@ -6,6 +6,8 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilities({ commit, state }, payload) {
@@ -191,6 +193,39 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(err) {
       logger.error('Failed to find the facility locations', err)
     }
+  },
+
+  async getFacilityParties({ commit }, payload) {
+    let parties = []
+    const params = {
+      inputFields: {
+        facilityId: payload.facilityId
+      },
+      entityName: "FacilityAndParty",
+      filterByDate: 'Y',
+      orderBy: 'partyId DESC',
+      fieldList: ['facilityId', 'firstName', 'fromDate', 'lastName', 'groupName', 'partyId', 'roleTypeId'],
+      viewSize: 100
+    }
+
+    try {
+      const resp = await FacilityService.getFacilityParties(params)
+
+      if(!hasError(resp) && resp.data.count) {
+        parties = resp.data.docs
+
+        parties.map((party: any) => {
+          party.fullName = party.groupName ? party.groupName : `${party.firstName} ${party.lastName}`
+        });
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      showToast(translate("Something went wrong"))
+      logger.error
+    }
+
+    commit(types.FACILITY_PARTIES_UPDATED, parties)
   }
 }
 
