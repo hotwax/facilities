@@ -51,7 +51,7 @@ export default defineComponent({
   },
   methods: {
     async removeStore() {
-      if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupName){
+      if(this.getStoreDetail(this.currentProductStore.productStoreId).storeName === this.primaryMember.facilityGroupName){
         await this.removeProductFromPrimaryMember()
       }
 
@@ -135,7 +135,8 @@ export default defineComponent({
       try {
         const resp = await FacilityService.createFacilityGroup({
           facilityGroupTypeId: 'FEATURING',
-          facilityGroupName: productStoreId
+          facilityGroupName: this.getStoreDetail(productStoreId).storeName,
+          facilityGroupId: productStoreId
         })
   
         if(!hasError(resp)) {

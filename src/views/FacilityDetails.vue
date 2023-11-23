@@ -150,7 +150,7 @@
               <ion-label>
                 <h2>{{ getStoreDetail(store.productStoreId)?.storeName }}</h2>
               </ion-label>
-              <ion-badge v-if="store.productStoreId === primaryMember.facilityGroupName">{{ translate("primary store") }}</ion-badge>
+              <ion-badge v-if="getStoreDetail(store.productStoreId)?.storeName === primaryMember.facilityGroupName">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
