@@ -145,7 +145,6 @@
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
-
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>
                 <h2>{{ getStoreDetail(store.productStoreId)?.storeName }}</h2>
@@ -681,6 +680,7 @@ export default defineComponent({
       }
     },
     async fetchFacilityPrimaryMember() {
+      let primaryMember = {}
       const payload = {
         inputFields: {
           facilityId: this.facilityId,
@@ -695,13 +695,14 @@ export default defineComponent({
         const resp = await FacilityService.fetchFacilityPrimaryMember(payload)
 
         if(!hasError(resp)) {
-          this.primaryMember = resp.data.docs[0]
+          primaryMember = resp.data.docs[0]
         } else {
           throw resp.data
         }
       } catch(err) {
         logger.error(err)
       }
+      this.primaryMember = primaryMember
     }
   },
   setup() {

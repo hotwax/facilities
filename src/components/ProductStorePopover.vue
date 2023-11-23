@@ -2,11 +2,11 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ getStoreDetail(currentProductStore.productStoreId).storeName }}</ion-list-header>
-      <ion-item button @click="makePrimary">
+      <ion-item button :disabled="currentProductStore.productStoreId === primaryMember.facilityGroupId" @click="makePrimary()">
         {{ translate("Make primary") }}
         <ion-icon slot="end" :icon="starOutline" />
       </ion-item>
-      <ion-item button lines="none" @click="removeStore">
+      <ion-item button lines="none" @click="removeStoreFromFacility()">
         {{ translate("Unlink") }}
         <ion-icon slot="end" :icon="removeCircleOutline" />
       </ion-item>
@@ -50,11 +50,7 @@ export default defineComponent({
     })
   },
   methods: {
-    async removeStore() {
-      if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupId){
-        await this.removeProductFromPrimaryMember()
-      }
-
+    async removeStoreFromFacility() {
       try {
         const resp = await FacilityService.updateProductStoreFacility({
           facilityId: this.facilityId,
@@ -65,6 +61,11 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Store unlinked successfully.'))
+
+          // Removing store from primary Member group if primary.
+          if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupId){
+            await this.removeProductFromPrimaryMember()
+          }
 
           // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
@@ -81,36 +82,45 @@ export default defineComponent({
       return this.productStores.find((store: any) => store.productStoreId === productStoreId)
     },
     async makePrimary() {
-      let resp = {} as any
+      let resp;
+      let facilityGroupId;
       const productStoreId = this.currentProductStore.productStoreId
 
-      let facilityGroupId = '' as any
       facilityGroupId = await this.fetchFacilityGroup(productStoreId)
 
       if(!facilityGroupId) {
         facilityGroupId = await this.createFacilityGroup(productStoreId)
       } 
 
-      try {
-        resp = await FacilityService.addFacilityToGroup({
-          facilityId: this.facilityId,
-          facilityGroupId: facilityGroupId
-        })
+      if(facilityGroupId) {
+        try {
+          resp = await FacilityService.addFacilityToGroup({
+            facilityId: this.facilityId,
+            facilityGroupId: facilityGroupId
+          })
 
-        if(!hasError(resp)) {
-          // Remove old primary store
-          await this.removeProductFromPrimaryMember()
-        } else {
-          throw resp.data
+          if(!hasError(resp)) {
+            showToast(translate("Product Store made primary successfully."))
+
+            // Remove old primary store
+            if(this.primaryMember.facilityGroupId) {
+              await this.removeProductFromPrimaryMember()
+            }
+          } else {
+            throw resp.data
+          }
+        } catch(err) {
+          showToast(translate("Failed to make store primary."))
+          logger.error(err)
         }
-      } catch(err) {
-        logger.error(err)
+      } else {
+        showToast(translate("Failed to make store primary."))
       }
       popoverController.dismiss()
     },
     async fetchFacilityGroup(productStoreId: any) {
-      let resp = {} as any
-      let facilityGroupId = ''
+      let facilityGroupId;
+      let resp;
       try {
         resp = await FacilityService.fetchFacilityGroup({
           inputFields: {
@@ -131,7 +141,7 @@ export default defineComponent({
       return facilityGroupId
     },
     async createFacilityGroup(productStoreId: string) {
-      let facilityGroupId = ''
+      let facilityGroupId;
       try {
         const resp = await FacilityService.createFacilityGroup({
           facilityGroupTypeId: 'FEATURING',
