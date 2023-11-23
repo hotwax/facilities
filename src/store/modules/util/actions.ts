@@ -37,7 +37,7 @@ const actions: ActionTree<UtilState, RootState> = {
       return;
     }
 
-    let facilityTypes = []
+    let facilityTypes = {}
     const params = {
       inputFields: {
         ...payload
@@ -51,7 +51,11 @@ const actions: ActionTree<UtilState, RootState> = {
     try {
       const resp = await UtilService.fetchFacilityTypes(params)
       if (!hasError(resp)) {
-        facilityTypes = resp.data.docs
+        facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
+          facilityType[type.facilityTypeId] = type.description
+
+          return facilityType
+        }, {})
       } else {
         throw resp.data
       }
