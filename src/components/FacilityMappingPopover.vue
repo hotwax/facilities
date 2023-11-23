@@ -49,12 +49,9 @@ export default defineComponent({
       const customMappingModal = await modalController.create({
         component: CustomMappingModal
       })
-  
-      customMappingModal.present()
 
-      customMappingModal.onDidDismiss().then(() => {
-        popoverController.dismiss();
-      })
+      await popoverController.dismiss()
+      customMappingModal.present()
     },
     async addMappingModal(type: any) {
       const addMappingModal = await modalController.create({
@@ -62,22 +59,16 @@ export default defineComponent({
         componentProps: { mappingId: type }
       })
   
+      await popoverController.dismiss()
       addMappingModal.present()
-
-      addMappingModal.onDidDismiss().then(() => {
-        popoverController.dismiss();
-      })
     },
     async createShopifyFacilityMappingModal() {
       const facilityShopifyMappingModal = await modalController.create({
         component: FacilityShopifyMappingModal
       })
   
+      await popoverController.dismiss()
       facilityShopifyMappingModal.present()
-
-      facilityShopifyMappingModal.onDidDismiss().then(() => {
-        popoverController.dismiss();
-      })
     }
   },
   setup() {

@@ -758,11 +758,8 @@ export default defineComponent({
         componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
       })
 
+      await popoverController.dismiss()
       customMappingModal.present()
-
-      customMappingModal.onDidDismiss().then(() => {
-        popoverController.dismiss();
-      })
     },
     async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
       const customMappingModal = await modalController.create({
@@ -770,11 +767,8 @@ export default defineComponent({
         componentProps: { shopifyFacilityMapping, type: 'update' }
       })
 
+      await popoverController.dismiss()
       customMappingModal.present()
-
-      customMappingModal.onDidDismiss().then(() => {
-        popoverController.dismiss();
-      })
     }
   },
   setup() {

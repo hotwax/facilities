@@ -164,7 +164,9 @@ export default defineComponent({
       }
     },
     removeSelectedParty(partyId: string) {
+      console.log('removing party', partyId)
       this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== partyId)
+      console.log('this.selectedPartyValues', this.selectedPartyValues)
     },
     async saveParties() {
       const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
@@ -207,6 +209,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     updateSelectedParties(event: CustomEvent, selectedPartyId: string) {
+      console.log('updating selected parties')
       let party = {} as any
       const selectedRoleTypeId = event.detail.value
 
