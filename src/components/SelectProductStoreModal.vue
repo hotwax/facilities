@@ -50,10 +50,6 @@ import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { mapGetters, useStore } from "vuex";
-import { FacilityService } from "@/services/FacilityService";
-import { DateTime } from "luxon";
-import { showToast } from "@/utils";
-import logger from "@/logger";
 
 export default defineComponent({
   name: "SelectProductStoreModal",
@@ -78,7 +74,7 @@ export default defineComponent({
       facilityProductStores: 'facility/getFacilityProductStores',
     })
   },
-  props: ["facilityId", "selectedProductStores", "primaryMember"],
+  props: ["facilityId", "selectedProductStores"],
   data() {
     return {
       selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),
@@ -92,37 +88,15 @@ export default defineComponent({
       const productStoresToCreate = this.selectedProductStoreValues.filter((selectedFacility: any) => !this.selectedProductStores.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
       const productStoresToRemove = this.selectedProductStores.filter((facility: any) => !this.selectedProductStoreValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
 
-      const updateResponses = await Promise.allSettled(productStoresToRemove
-        .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
-          facilityId: this.facilityId,
-          fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
-          productStoreId: payload.productStoreId,
-          thruDate: DateTime.now().toMillis()
-        }))
-      )
+      modalController.dismiss({
+        dismissed: true,
+        value: {
+          selectedProductStores: this.selectedProductStoreValues,
+          productStoresToCreate,
+          productStoresToRemove
+        }
+      });
 
-      const createResponses = await Promise.allSettled(productStoresToCreate
-        .map(async (payload: any) => await FacilityService.createProductStoreFacility({
-          productStoreId: payload.productStoreId,
-          facilityId: this.facilityId,
-          fromDate: DateTime.now().toMillis(),
-        }))
-      )
-          
-      const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
-      if (hasFailedResponse) {
-        showToast(translate('Failed to update some facility stores'))
-      } else {
-        productStoresToRemove.map((store: any) => {
-          if(store.productStoreId === this.primaryMember.facilityGroupId) {
-            this.removeProductFromPrimaryMember()
-          }
-        })
-        showToast(translate('Facility stores updated successfully.'))
-      }
-
-      // refetching product stores with updated roles
-      await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
       modalController.dismiss()
     },
     toggleProductStoreSelection(updatedStore: any) {
@@ -135,19 +109,6 @@ export default defineComponent({
     },
     isSelected(productStoreId: string) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
-    },
-    async removeProductFromPrimaryMember() {
-      let resp;
-      try {
-        resp = await FacilityService.updateFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": this.primaryMember.facilityGroupId,
-          "fromDate": this.primaryMember.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-      } catch (err) {
-        logger.error(err)
-      }
     }
   },
   setup() {

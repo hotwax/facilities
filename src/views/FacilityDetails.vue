@@ -513,11 +513,47 @@ export default defineComponent({
     async selectProductStore() {
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
-        componentProps: { facilityId: this.facilityId, primaryMember: this.primaryMember, selectedProductStores: this.facilityProductStores }
+        componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores }
       })
 
-      selectProductStoreModal.onDidDismiss().then(async() => {
-        await this.fetchFacilityPrimaryMember()
+      selectProductStoreModal.onDidDismiss().then(async(result: any) => {
+        if (result.data && result.data.value) {
+          const productStoresToCreate = result.data.value.productStoresToCreate
+          const productStoresToRemove = result.data.value.productStoresToRemove
+
+          const updateResponses = await Promise.allSettled(productStoresToRemove
+            .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
+              facilityId: this.facilityId,
+              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+              productStoreId: payload.productStoreId,
+              thruDate: DateTime.now().toMillis()
+            }))
+          )
+
+          const createResponses = await Promise.allSettled(productStoresToCreate
+            .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+              productStoreId: payload.productStoreId,
+              facilityId: this.facilityId,
+              fromDate: DateTime.now().toMillis(),
+            }))
+          )
+
+          const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
+          if(hasFailedResponse) {
+            showToast(translate('Failed to update some facility stores'))
+          } else {
+            productStoresToRemove.map((store: any) => {
+              if(store.productStoreId === this.primaryMember.facilityGroupId) {
+                this.removeProductFromPrimaryMember()
+              }
+            })
+            showToast(translate('Facility stores updated successfully.'))
+          }
+
+          // refetching product stores with updated roles and primary Member
+          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+          await this.fetchFacilityPrimaryMember()
+        }
       })
 
       selectProductStoreModal.present()
@@ -622,6 +658,19 @@ export default defineComponent({
       } catch (err) {
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
+      }
+    },
+    async removeProductFromPrimaryMember() {
+      let resp;
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": this.primaryMember.facilityGroupId,
+          "fromDate": this.primaryMember.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+      } catch (err) {
+        logger.error(err)
       }
     },
     async updateFulfillmentSetting(event: any, facilityGroupId: string) {
