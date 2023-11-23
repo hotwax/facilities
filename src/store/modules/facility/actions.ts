@@ -195,6 +195,34 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
   },
 
+  async fetchFacilityMappings({ commit }, payload) {
+    let mappings = []
+    try {
+      const params = {
+        inputFields: {
+          facilityId: payload.facilityId,
+          facilityIdenTypeId: payload.facilityIdenTypeIds,
+          facilityIdenTypeId_op: "in"
+        },
+        entityName: "FacilityIdentification",
+        filterByDate: "Y",
+        fieldList: ["facilityIdenTypeId", "idValue", "fromDate"],
+        viewSize: 100
+      }
+
+      const resp = await FacilityService.fetchFacilityMappings(params)
+
+      if(!hasError(resp) && resp.data.count > 0) {
+        mappings = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch facility mappings', err)
+    }
+    commit(types.FACILITY_MAPPINGS_UPDATED, mappings)
+  },
+
   async getFacilityParties({ commit }, payload) {
     let parties = []
     const params = {
@@ -222,10 +250,35 @@ const actions: ActionTree<FacilityState, RootState> = {
       }
     } catch(err) {
       showToast(translate("Something went wrong"))
-      logger.error
+      logger.error('Failed to fetch facility parties', err)
     }
 
     commit(types.FACILITY_PARTIES_UPDATED, parties)
+  },
+
+  async fetchShopifyFacilityMappings({ commit }, payload) {
+    let shopifyFacilityMappings = []
+    try {
+      const params = {
+        inputFields: {
+          facilityId: payload.facilityId
+        },
+        entityName: "ShopifyShopLocationView",
+        fieldList: ["shopifyShopId", "domain", "name", "myshopifyDomain", "shopId", "shopifyLocationId"],
+        viewSize: 100
+      }
+
+      const resp = await FacilityService.fetchShopifyFacilityMappings(params)
+
+      if(!hasError(resp) && resp.data.count > 0) {
+        shopifyFacilityMappings = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch shopify facility mappings', err)
+    }
+    commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, shopifyFacilityMappings)
   }
 }
 

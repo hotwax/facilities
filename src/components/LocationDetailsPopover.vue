@@ -19,7 +19,7 @@ import {
   IonList,
   IonListHeader,
   modalController,
-popoverController
+  popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
@@ -51,11 +51,8 @@ export default defineComponent({
         componentProps: { location: this.location }
       })
 
+      await popoverController.dismiss();
       addLocationModal.present()
-
-      addLocationModal.onDidDismiss().then(() => {
-        popoverController.dismiss();
-      })
     },
     async removeLocation() {
       const params = {

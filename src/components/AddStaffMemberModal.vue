@@ -135,13 +135,16 @@ export default defineComponent({
       }
 
       const payload = {
-        inputFields,
+        inputFields: {
+          ...inputFields,
+          roleTypeId: 'APPLICATION_USER'
+        },
         viewSize: 10,
         entityName: 'PartyRoleAndPartyDetail',
         noConditionFind: 'Y',
         distinct: 'Y',
         orderBy: "firstName ASC",
-        fieldList: ['firstName', 'groupName', 'lastName', 'partyId']
+        fieldList: ['partyId', 'firstName', 'groupName', 'lastName']
       }
 
       try {

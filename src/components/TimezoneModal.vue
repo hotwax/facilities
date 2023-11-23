@@ -71,7 +71,7 @@ import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { useStore } from "@/store";
 import { UserService } from "@/services/UserService";
-import { hasError } from '@/utils'
+import { hasError } from '@/adapter'
 import { DateTime } from 'luxon';
 import logger from "@/logger";
 
