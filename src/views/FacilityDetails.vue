@@ -565,7 +565,7 @@ export default defineComponent({
         })
 
         if(!hasError(resp)){
-          showToast("Party successfully removed from facility.")
+          showToast(translate("Party successfully removed from facility."))
 
           // Refreshes the parties in facility
           await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
@@ -573,7 +573,7 @@ export default defineComponent({
           throw resp
         }
       } catch(err) {
-        showToast("Failed to remove party from facility.")
+        showToast(translate("Failed to remove party from facility."))
         logger.error(err)
       }
     },
