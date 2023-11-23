@@ -1,7 +1,6 @@
 import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
-import store from '@/store';
 
 const fetchFacilities = async(query: any): Promise <any> => {
   return api({

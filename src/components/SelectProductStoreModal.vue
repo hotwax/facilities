@@ -133,7 +133,7 @@ export default defineComponent({
         this.selectedProductStoreValues.push(updatedStore);
       }
     },
-    isSelected(productStoreId: any) {
+    isSelected(productStoreId: string) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
     },
     async removeProductFromPrimaryMember() {

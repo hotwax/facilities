@@ -140,7 +140,7 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button @click="selectProductStore" fill="clear">
+              <ion-button @click="selectProductStore()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="start" />
                 {{ translate("Add") }}
               </ion-button>
@@ -420,9 +420,9 @@ import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import { showToast } from '@/utils';
-import { DateTime } from 'luxon';
 import logger from '@/logger';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -482,8 +482,8 @@ export default defineComponent({
       const popover = await popoverController.create({
         component: ProductStorePopover,
         componentProps: {
-          facilityId: this.facilityId,
           currentProductStore: store,
+          facilityId: this.facilityId,
           primaryMember: this.primaryMember
         },
         event: ev,
@@ -513,9 +513,8 @@ export default defineComponent({
     async selectProductStore() {
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
-        componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores, primaryMember: this.primaryMember }
+        componentProps: { facilityId: this.facilityId, primaryMember: this.primaryMember, selectedProductStores: this.facilityProductStores }
       })
-
 
       selectProductStoreModal.onDidDismiss().then(async() => {
         await this.fetchFacilityPrimaryMember()
@@ -561,7 +560,7 @@ export default defineComponent({
       });
       return externalMappingPopover.present()
     },
-    getStoreDetail(productStoreId: any) {
+    getStoreDetail(productStoreId: string) {
       return this.productStores.find((store: any) => store.productStoreId === productStoreId)
     },
     async changeOrderLimitPopover(ev: Event) {

@@ -13,7 +13,7 @@ const actions: ActionTree<UtilState, RootState> = {
       viewSize: 100,
       noConditionFind: 'Y',
       entityName: 'ProductStore',
-      // fieldList: ['productStoreId', 'storeName']
+      fieldList: ['productStoreId', 'storeName']
     }
 
     try {

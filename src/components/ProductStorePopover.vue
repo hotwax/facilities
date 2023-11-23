@@ -78,7 +78,7 @@ export default defineComponent({
       }
       popoverController.dismiss()
     },
-    getStoreDetail(productStoreId: any) {
+    getStoreDetail(productStoreId: string) {
       return this.productStores.find((store: any) => store.productStoreId === productStoreId)
     },
     async makePrimary() {
@@ -118,7 +118,7 @@ export default defineComponent({
       }
       popoverController.dismiss()
     },
-    async fetchFacilityGroup(productStoreId: any) {
+    async fetchFacilityGroup(productStoreId: string) {
       let facilityGroupId;
       let resp;
       try {
