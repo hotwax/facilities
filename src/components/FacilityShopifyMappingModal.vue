@@ -28,7 +28,7 @@
         <ion-list-header>{{ translate('Shopify location') }}</ion-list-header>
         <ion-item>
           <ion-label>{{ translate("Shopify store") }}</ion-label>
-          <ion-label slot="end" v-if="type && type === 'update'">{{ shopifyShopIdentification.shopId }}</ion-label>
+          <ion-label slot="end" v-if="type && type === 'update'">{{ shopifyFacilityMapping.shopId }}</ion-label>
           <!-- TODO: change field to select -->
           <ion-input slot="end" v-else v-model="shopId" />
         </ion-item>
@@ -75,7 +75,7 @@ import { hasError } from "@/adapter";
 import logger from "@/logger";
 
 export default defineComponent({
-  name: "FacilityShopifyLocationModal",
+  name: "FacilityShopifyMappingModal",
   components: {
     IonButton,
     IonButtons,
@@ -103,9 +103,9 @@ export default defineComponent({
       shopifyLocationId: ''
     }
   },
-  props: ["shopifyShopIdentification", "type"],
+  props: ["shopifyFacilityMapping", "type"],
   mounted() {
-    this.shopifyLocationId = this.shopifyShopIdentification?.shopifyLocationId
+    this.shopifyLocationId = this.shopifyFacilityMapping?.shopifyLocationId
   },
   methods: {
     closeModal() {
@@ -128,7 +128,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Shopify location created successfully'))
-          this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.currentFacility.facilityId })
+          this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.currentFacility.facilityId })
           this.closeModal();
         } else {
           throw resp.data
@@ -149,13 +149,13 @@ export default defineComponent({
       try {
         resp = await FacilityService.updateShopifyShopLocation({
           "facilityId": this.currentFacility.facilityId,
-          "shopId": this.shopifyShopIdentification.shopId,
+          "shopId": this.shopifyFacilityMapping.shopId,
           "shopifyLocationId": this.shopifyLocationId
         })
 
         if(!hasError(resp)) {
           showToast(translate('Shopify location updated successfully'))
-          this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.currentFacility.facilityId })
+          this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.currentFacility.facilityId })
           // TODO: overlay does not exist error, fix this
           this.closeModal();
         } else {

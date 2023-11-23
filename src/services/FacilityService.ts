@@ -182,7 +182,7 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchFacilityIdentifications = async (payload: any): Promise<any> => {
+const fetchFacilityMappings = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
@@ -190,7 +190,7 @@ const fetchFacilityIdentifications = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchShopifyShopIdentifications = async (payload: any): Promise<any> => {
+const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
@@ -254,9 +254,9 @@ export const FacilityService = {
   createShopifyShopLocation,
   deleteFacilityLocation,
   deleteShopifyShopLocation,
-  fetchFacilityIdentifications,
+  fetchFacilityMappings,
   fetchFacilityLocations,
-  fetchShopifyShopIdentifications,
+  fetchShopifyFacilityMappings,
   fetchFacilityGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,

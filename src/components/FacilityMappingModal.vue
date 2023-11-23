@@ -97,10 +97,10 @@ export default defineComponent({
       mappingValue: ''
     }
   },
-  props: ["mappingId", "identification", "type"],
+  props: ["mappingId", "mapping", "type"],
   mounted() {
     if(this.type) {
-      this.mappingValue = this.identification?.idValue
+      this.mappingValue = this.mapping?.idValue
     }
   },
   methods: {
@@ -124,7 +124,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('External mapping created successfully'))
-          this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.currentFacility.facilityId })
+          this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.currentFacility.facilityId })
           this.closeModal();
         } else {
           throw resp.data
@@ -146,13 +146,13 @@ export default defineComponent({
         resp = await FacilityService.updateFacilityIdentification({
           "facilityId": this.currentFacility.facilityId,
           "facilityIdenTypeId": this.mappingId,
-          "fromDate": this.identification.fromDate,
+          "fromDate": this.mapping.fromDate,
           "idValue": this.mappingValue
         })
 
         if(!hasError(resp)) {
           showToast(translate('External mapping updated successfully'))
-          this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.currentFacility.facilityId })
+          this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.currentFacility.facilityId })
           this.closeModal();
         } else {
           throw resp.data

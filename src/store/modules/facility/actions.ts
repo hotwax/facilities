@@ -193,7 +193,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
   },
 
-  async fetchFacilityIdentification({ commit }, payload) {
+  async fetchFacilityMappings({ commit }, payload) {
     try {
       const params = {
         inputFields: {
@@ -207,19 +207,19 @@ const actions: ActionTree<FacilityState, RootState> = {
         viewSize: 100
       }
 
-      const resp = await FacilityService.fetchFacilityIdentifications(params)
+      const resp = await FacilityService.fetchFacilityMappings(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_IDENTIFICATIONS_UPDATED, resp.data.docs)
+        commit(types.FACILITY_MAPPINGS_UPDATED, resp.data.docs)
       } else {
         throw resp.data
       }
     } catch(err) {
-      logger.error('Failed to fetch facility identifications', err)
+      logger.error('Failed to fetch facility mappings', err)
     }
   },
 
-  async fetchShopifyShopIdentifications({ commit }, payload) {
+  async fetchShopifyFacilityMappings({ commit }, payload) {
     try {
       const params = {
         inputFields: {
@@ -230,15 +230,15 @@ const actions: ActionTree<FacilityState, RootState> = {
         viewSize: 100
       }
 
-      const resp = await FacilityService.fetchShopifyShopIdentifications(params)
+      const resp = await FacilityService.fetchShopifyFacilityMappings(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_SHOPIFY_IDENTIFICATION_UPDATED, resp.data.docs)
+        commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, resp.data.docs)
       } else {
         throw resp.data
       }
     } catch(err) {
-      logger.error('Failed to fetch shopify shop identifications', err)
+      logger.error('Failed to fetch shopify facility mappings', err)
     }
   }
 }

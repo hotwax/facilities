@@ -134,7 +134,7 @@ export default defineComponent({
             // fetching external mapping types again, as we have created a new mapping type that needs to be included in popover
             // added skipState property to not check for cached type and always make an api call
             await this.store.dispatch('util/fetchExternalMappingTypes', { skipState: true })
-            this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.currentFacility.facilityId })
+            this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.currentFacility.facilityId })
             this.closeModal();
           } else {
             throw resp.data

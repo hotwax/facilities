@@ -251,7 +251,7 @@
               {{ translate("Map facility to an external system") }}
             </ion-button>
             <div class="external-mappings">
-              <ion-card v-for="(shopifyShopIdentification, index) in current.shopifyShopIdentifications" :key="index">
+              <ion-card v-for="(shopifyFacilityMapping, index) in current.shopifyFacilityMappings" :key="index">
                 <ion-card-header>
                   <ion-card-title>
                     {{ translate("Shopify facility") }}
@@ -259,40 +259,40 @@
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>
-                    {{ shopifyShopIdentification.name }}
-                    <p>{{ shopifyShopIdentification.shopId }}</p>
+                    {{ shopifyFacilityMapping.name }}
+                    <p>{{ shopifyFacilityMapping.shopId }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ shopifyShopIdentification.shopifyLocationId }}</ion-label>
+                  <ion-label>{{ shopifyFacilityMapping.shopifyLocationId }}</ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ shopifyShopIdentification.myshopifyDomain + '/admin' }}</ion-label>
-                  <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyShopIdentification.myshopifyDomain + '/admin'}`)">
+                  <ion-label>{{ shopifyFacilityMapping.myshopifyDomain + '/admin' }}</ion-label>
+                  <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyFacilityMapping.myshopifyDomain + '/admin'}`)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ shopifyShopIdentification.myshopifyDomain }}</ion-label>
-                  <ion-button color="medium" fill="clear" @click="goToLink(shopifyShopIdentification.myshopifyDomain)">
+                  <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
+                  <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
-                <ion-button fill="clear" @click="editShopifyShopLocation(shopifyShopIdentification)" >{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger" @click="removeShopifyShopLocation(shopifyShopIdentification)">{{ translate("Remove") }}</ion-button>
+                <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
               </ion-card>
-              <ion-card v-for="(identification, index) in current.facilityIdentifications" :key="index">
+              <ion-card v-for="(mapping, index) in current.facilityMappings" :key="index">
                 <ion-card-header>
                   <ion-card-title>
-                    {{ externalMappingTypes[identification.facilityIdenTypeId] }}
+                    {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
                   </ion-card-title>
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>{{ translate('Identification') }}</ion-label>
-                  <ion-label slot="end">{{ identification.idValue }}</ion-label>
+                  <ion-label slot="end">{{ mapping.idValue }}</ion-label>
                 </ion-item>
-                <ion-button fill="clear" @click="editFacilityIdentification(identification)">{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger" @click="removeFacilityIdentification(identification)">{{ translate("Remove") }}</ion-button>
+                <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeFacilityMapping(mapping)">{{ translate("Remove") }}</ion-button>
               </ion-card>
             </div>
           </div>
@@ -425,7 +425,7 @@ import {
   personOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
-import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
+import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
 import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
@@ -442,7 +442,7 @@ import { showToast } from '@/utils';
 import logger from '@/logger';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
 import { DateTime } from 'luxon';
-import FacilityShopifyLocationModal from '@/components/FacilityShopifyLocationModal.vue'
+import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 
 export default defineComponent({
@@ -492,8 +492,8 @@ export default defineComponent({
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes')])
     await this.store.dispatch('util/fetchExternalMappingTypes')
-    await this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
-    await this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.facilityId })
+    await this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
+    await this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
@@ -564,7 +564,7 @@ export default defineComponent({
     },
     async openExternalMappingPopover(ev: Event) {
       const externalMappingPopover = await popoverController.create({
-        component: AddExternalMappingPopover,
+        component: FacilityMappingPopover,
         event: ev,
         showBackdrop: false
       });
@@ -685,53 +685,53 @@ export default defineComponent({
         showToast(translate('Failed to update default days to ship'))
       }
     },
-    async removeFacilityIdentification(identification: any) {
+    async removeFacilityMapping(mapping: any) {
       try {
         const payload = {
           facilityId: this.current.facilityId,
-          facilityIdenTypeId: identification.facilityIdenTypeId,
-          fromDate: identification.fromDate,
+          facilityIdenTypeId: mapping.facilityIdenTypeId,
+          fromDate: mapping.fromDate,
           thruDate: DateTime.now().toMillis()
         }
 
         const resp = await FacilityService.updateFacilityIdentification(payload)
 
         if(!hasError(resp)) {
-          showToast(translate('Removed facility identification successfully'))
-          await this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
+          showToast(translate('Removed facility mapping successfully'))
+          await this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
         } else {
           throw resp.data
         }
       } catch(err) {
-        logger.error('Failed to remove facility identification', err)
-        showToast(translate('Failed to remove facility identification'))
+        logger.error('Failed to remove facility mapping', err)
+        showToast(translate('Failed to remove facility mapping'))
       }
     },
-    async removeShopifyShopLocation(shopifyShopIdentification: any) {
+    async removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
       try {
         const payload = {
           facilityId: this.current.facilityId,
-          shopId: shopifyShopIdentification.shopId,
-          shopifyLocationId: shopifyShopIdentification.shopifyLocationId,
+          shopId: shopifyFacilityMapping.shopId,
+          shopifyLocationId: shopifyFacilityMapping.shopifyLocationId,
         }
 
         const resp = await FacilityService.deleteShopifyShopLocation(payload)
 
         if(!hasError(resp)) {
-          showToast(translate('Removed shopify location successfully'))
-          await this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.facilityId })
+          showToast(translate('Removed shopify mapping successfully'))
+          await this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
       } catch(err) {
-        logger.error('Failed to remove shopify location', err)
-        showToast(translate('Failed to remove shopify location'))
+        logger.error('Failed to remove shopify mapping', err)
+        showToast(translate('Failed to remove shopify mapping'))
       }
     },
-    async editFacilityIdentification(identification: any) {
+    async editFacilityMapping(mapping: any) {
       const customMappingModal = await modalController.create({
         component: FacilityMappingModal,
-        componentProps: { mappingId: identification.facilityIdenTypeId, identification, type: 'update' }
+        componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
       })
 
       customMappingModal.present()
@@ -740,10 +740,10 @@ export default defineComponent({
         popoverController.dismiss();
       })
     },
-    async editShopifyShopLocation(shopifyShopIdentification: any) {
+    async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
       const customMappingModal = await modalController.create({
-        component: FacilityShopifyLocationModal,
-        componentProps: { shopifyShopIdentification, type: 'update' }
+        component: FacilityShopifyMappingModal,
+        componentProps: { shopifyFacilityMapping, type: 'update' }
       })
 
       customMappingModal.present()

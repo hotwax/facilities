@@ -29,10 +29,10 @@ import { translate } from "@hotwax/dxp-components";
 import CustomMappingModal from "./CustomMappingModal.vue";
 import FacilityMappingModal from "./FacilityMappingModal.vue";
 import { mapGetters } from "vuex";
-import FacilityShopifyLocationModal from "./FacilityShopifyLocationModal.vue";
+import FacilityShopifyMappingModal from "./FacilityShopifyMappingModal.vue";
 
 export default defineComponent({
-  name: "AddExternalMappingPopover",
+  name: "FacilityMappingPopover",
   components: {
     IonContent,
     IonItem,
@@ -70,7 +70,7 @@ export default defineComponent({
     },
     async createShopifyShopLocationModal() {
       const shopifyShopLocationModal = await modalController.create({
-        component: FacilityShopifyLocationModal
+        component: FacilityShopifyMappingModal
       })
   
       shopifyShopLocationModal.present()
