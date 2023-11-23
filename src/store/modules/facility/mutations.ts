@@ -21,6 +21,9 @@ const mutations: MutationTree <FacilityState> = {
   },
   [types.FACILITY_SHOPIFY_MAPPINGS_UPDATED](state, payload) {
     state.current.shopifyFacilityMappings = payload
+  },
+  [types.FACILITY_PARTIES_UPDATED](state, payload) {
+    state.current.parties = payload
   }
 }
 export default mutations;

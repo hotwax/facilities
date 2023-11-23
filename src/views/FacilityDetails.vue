@@ -303,30 +303,29 @@
               {{ translate("Add staff member to facility") }}
             </ion-button>
 
-            <div class="list-item staff">
+            <div v-for="(party, index) in facilityParties" class="list-item staff" :key="index">
               <ion-item lines="none">
                 <ion-icon :icon="personOutline" slot="start" />
                 <ion-label>
-                  {{ "party name" }}
-                  <p>{{ translate("party id") }}</p>
+                  {{ party.fullName }}
+                  <p>{{ party.partyId }}</p>
                 </ion-label>
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ "fulfillment" }}</ion-chip>
+                <ion-chip outline>{{ partyRoles[party.roleTypeId] }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ "3rd June 2023" }}</ion-chip>
+                <ion-chip outline>{{ getDate(party.fromDate) }}</ion-chip>
                 <p>{{ "added" }}</p>
               </ion-label>
 
-              <ion-button fill="clear" color="medium">
+              <ion-button @click="removePartyFromFacility(party)" fill="clear" color="medium">
                 <ion-icon slot="icon-only" :icon="closeCircleOutline" />
               </ion-button>
             </div>
-            <hr />
           </div>
 
           <div v-else-if="segment == 'locations'">
@@ -373,7 +372,6 @@
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </div>
-            <hr />
           </div>
         </div>
       </main>
@@ -434,16 +432,16 @@ import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
 import AddLocationModal from '@/components/AddLocationModal.vue';
 import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
+import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
+import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
 import { mapGetters, useStore } from 'vuex';
-import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
+import { DateTime } from 'luxon';
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
-import { showToast } from '@/utils';
 import logger from '@/logger';
-import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
-import { DateTime } from 'luxon';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
+import { showToast } from '@/utils';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -484,13 +482,15 @@ export default defineComponent({
     ...mapGetters({
       current: 'facility/getCurrent',
       locationTypes: 'util/getLocationTypes',
-      externalMappingTypes: 'util/getExternalMappingTypes'
+      externalMappingTypes: 'util/getExternalMappingTypes',
+      facilityParties: 'facility/getFacilityParties',
+      partyRoles: 'util/getPartyRoles'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
-    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes')])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
@@ -538,7 +538,8 @@ export default defineComponent({
     },
     async addStaffMemberModal() {
       const addStaffModal = await modalController.create({
-        component: AddStaffMemberModal
+        component: AddStaffMemberModal,
+        componentProps: { facilityId: this.facilityId, selectedParties: this.facilityParties }
       })
 
       addStaffModal.present()
@@ -566,6 +567,32 @@ export default defineComponent({
         showBackdrop: false
       });
       return externalMappingPopover.present()
+    },
+    getDate(date: any) {
+      return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
+    },
+    async removePartyFromFacility(party: any) {
+      try {
+        const resp = await FacilityService.removePartyFromFacility({
+          facilityId: party.facilityId,
+          fromDate: party.fromDate,
+          thruDate: DateTime.now().toMillis(),
+          partyId: party.partyId,
+          roleTypeId: party.roleTypeId
+        })
+
+        if(!hasError(resp)){
+          showToast(translate("Party successfully removed from facility."))
+
+          // Refreshes the parties in facility
+          await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
+        } else {
+          throw resp
+        }
+      } catch(err) {
+        showToast(translate("Failed to remove party from facility."))
+        logger.error(err)
+      }
     },
     async changeOrderLimitPopover(ev: Event) {
       const popover = await popoverController.create({

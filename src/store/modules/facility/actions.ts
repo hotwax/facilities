@@ -6,6 +6,8 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilities({ commit, state }, payload) {
@@ -194,6 +196,7 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchFacilityMappings({ commit }, payload) {
+    let mappings = []
     try {
       const params = {
         inputFields: {
@@ -210,16 +213,51 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityMappings(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_MAPPINGS_UPDATED, resp.data.docs)
+        mappings = resp.data.docs
       } else {
         throw resp.data
       }
     } catch(err) {
       logger.error('Failed to fetch facility mappings', err)
     }
+    commit(types.FACILITY_MAPPINGS_UPDATED, mappings)
+  },
+
+  async getFacilityParties({ commit }, payload) {
+    let parties = []
+    const params = {
+      inputFields: {
+        facilityId: payload.facilityId
+      },
+      entityName: "FacilityAndParty",
+      filterByDate: 'Y',
+      orderBy: 'partyId DESC',
+      fieldList: ['facilityId', 'firstName', 'fromDate', 'lastName', 'groupName', 'partyId', 'roleTypeId'],
+      viewSize: 100
+    }
+
+    try {
+      const resp = await FacilityService.getFacilityParties(params)
+
+      if(!hasError(resp) && resp.data.count) {
+        parties = resp.data.docs
+
+        parties.map((party: any) => {
+          party.fullName = party.groupName ? party.groupName : `${party.firstName} ${party.lastName}`
+        });
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      showToast(translate("Something went wrong"))
+      logger.error('Failed to fetch facility parties', err)
+    }
+
+    commit(types.FACILITY_PARTIES_UPDATED, parties)
   },
 
   async fetchShopifyFacilityMappings({ commit }, payload) {
+    let shopifyFacilityMappings = []
     try {
       const params = {
         inputFields: {
@@ -233,13 +271,14 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchShopifyFacilityMappings(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, resp.data.docs)
+        shopifyFacilityMappings = resp.data.docs
       } else {
         throw resp.data
       }
     } catch(err) {
       logger.error('Failed to fetch shopify facility mappings', err)
     }
+    commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, shopifyFacilityMappings)
   }
 }
 

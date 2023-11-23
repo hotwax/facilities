@@ -102,6 +102,40 @@ const actions: ActionTree<UtilState, RootState> = {
 
     commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
   },
+  async fetchPartyRoles({ commit, state }) {
+    if (state.partyRoles.length) {
+      return
+    }
+
+    const partyRoles = {} as any
+    const params = {
+      inputFields: {
+        roleTypeGroupId: 'FACILITY_PARTY_ROLE'
+      },
+      viewSize: 100,
+      entityName: 'RoleTypeGroupMemberAndRoleType',
+      orderBy: 'sequenceNum',
+      filterByDate: 'Y',
+      fieldList: ['roleTypeId', 'description']
+    }
+
+    try {
+      const resp = await UtilService.fetchPartyRoles(params)
+      if (!hasError(resp)) {
+        resp.data.docs.map((role: any) => {
+          partyRoles[role.roleTypeId] = role.description
+        })
+
+        // pushing none explicitly to show on UI
+        partyRoles[''] = 'none'
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+    commit(types.UTIL_PARTY_ROLES_UPDATED, partyRoles)
+  },
 
   async fetchExternalMappingTypes({ commit, state }, payload) {
     const cachedExternalMappingTypes = JSON.parse(JSON.stringify(state.externalMappingTypes))
