@@ -31,7 +31,7 @@ const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise
       url: "performFind", 
       method: "post",
       data: params
-    }) as any;
+    }) as any
 
     if(!hasError(resp) && resp.data.count > 0) {
       facilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
@@ -132,7 +132,7 @@ const fetchFacilityGroup = async (payload: any): Promise<any> => {
     url: "performFind",
     method: "POST",
     data: payload
-  }) as any
+  })
 }
 
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
@@ -148,7 +148,7 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
     url: "performFind",
     method: "POST",
     data: payload
-  }) as any
+  })
 }
 
 const addFacilityToGroup = async (payload: any): Promise<any> => {
