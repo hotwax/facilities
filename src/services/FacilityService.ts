@@ -92,6 +92,22 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
   return facilitiesOrderCount;
 }
 
+const getFacilityParties = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   let facilityOrderCounts = {}, resp: any;
   try {
@@ -126,12 +142,28 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   return facilityOrderCounts;
 }
 
+const addPartyToFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/addPartyToFacility",
+    method: "post",
+    data: payload
+  });
+}
+
 const fetchFacilityGroup = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "POST",
     data: payload
   })
+}
+
+const removePartyFromFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/removePartyFromFacility",
+    method: "post",
+    data: payload
+  });
 }
 
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
@@ -232,8 +264,9 @@ const updateProductStoreFacility = async (payload: any): Promise <any> => {
 
 export const FacilityService = {
   addFacilityToGroup,
-  createFacilityGroup,
+  addPartyToFacility,
   createFacilityLocation,
+  createFacilityGroup,
   createProductStoreFacility,
   deleteFacilityLocation,
   fetchFacilityLocations,
@@ -241,9 +274,12 @@ export const FacilityService = {
   fetchFacilityGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilityPrimaryMember,
-  fetchFacilitiesOrderCount,
   fetchFacilities,
+  fetchFacilitiesOrderCount,
+  getFacilityParties,
   getFacilityProductStores,
+  getPartyRoleAndPartyDetails,
+  removePartyFromFacility,
   updateFacility,
   updateFacilityLocation,
   updateFacilityToGroup,

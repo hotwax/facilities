@@ -1,12 +1,11 @@
 import { UserService } from '@/services/UserService'
 import { ActionTree } from 'vuex'
 import RootState from '@/store/RootState'
-import store from '@/store';
 import UserState from './UserState'
 import * as types from './mutation-types'
 import { showToast } from '@/utils'
 import { Settings } from 'luxon'
-import { hasError, logout, updateInstanceUrl, updateToken, resetConfig, getUserFacilities } from '@/adapter'
+import { hasError, logout, updateInstanceUrl, updateToken, resetConfig } from '@/adapter'
 import logger from '@/logger'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { translate, useAuthStore, useUserStore } from '@hotwax/dxp-components'
@@ -49,44 +48,6 @@ const actions: ActionTree<UserState, RootState> = {
       }
 
       const userProfile = await UserService.getUserProfile(token);
-      
-      //fetching user facilities
-      const baseURL = store.getters['user/getBaseUrl'];
-
-      try {
-        const facilities = await getUserFacilities(token, baseURL, userProfile?.partyId, "");
-
-        // if (!facilities.length) throw 'Unable to login. User is not assocaited with any facility'
-
-        userProfile.facilities = facilities;
-        userProfile.facilities.reduce((uniqueFacilities: any, facility: any, index: number) => {
-          if (uniqueFacilities.includes(facility.facilityId)) userProfile.facilities.splice(index, 1);
-          else uniqueFacilities.push(facility.facilityId);
-          return uniqueFacilities
-        }, []);
-        const currentFacility = userProfile.facilities[0];
-        userProfile.stores = await UserService.getEComStores(token, currentFacility.facilityId);
-
-        // In Job Manager application, we have jobs which may not be associated with any product store
-        userProfile.stores.push({
-          productStoreId: "",
-          storeName: "None"
-        })
-        let preferredStore = userProfile.stores[0]
-
-        const preferredStoreId =  await UserService.getPreferredStore(token);
-        if (preferredStoreId) {
-          const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
-          store && (preferredStore = store)
-        }
-        commit(types.USER_CURRENT_ECOM_STORE_UPDATED, preferredStore);
-        commit(types.USER_CURRENT_FACILITY_UPDATED, currentFacility);
-      } catch(err) {
-        logger.error(err)
-      }
-      // Getting unique facilities
-
-      // TODO Use a separate API for getting facilities, this should handle user like admin accessing the app
 
       /*  ---- Guard clauses ends here --- */
 
@@ -160,25 +121,6 @@ const actions: ActionTree<UserState, RootState> = {
     emitter.emit('dismissLoader')
     return redirectionUrl;
   },
-
-  /**
-   * update current facility information
-   */
-  async setFacility ({ commit, state }, payload) {
-    const userProfile = JSON.parse(JSON.stringify(state.current as any));
-    userProfile.stores = await UserService.getEComStores(undefined, payload.facility.facilityId);
-
-    let preferredStore = userProfile.stores[0];
-    const preferredStoreId =  await UserService.getPreferredStore(undefined);
-
-    if (preferredStoreId) {
-      const store = userProfile.stores.find((store: any) => store.productStoreId === preferredStoreId);
-      store && (preferredStore = store)
-    }
-    commit(types.USER_INFO_UPDATED, userProfile);
-    commit(types.USER_CURRENT_FACILITY_UPDATED, payload.facility);
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, preferredStore);
-  },
   
   /**
    * Update user timeZone
@@ -205,21 +147,6 @@ const actions: ActionTree<UserState, RootState> = {
   setUserInstanceUrl ({ commit }, payload){
     commit(types.USER_INSTANCE_URL_UPDATED, payload)
     updateInstanceUrl(payload)
-  },
-
-  /**
-   *  update current eComStore information
-  */
-  async setEComStore({ commit }, payload) {
-    commit(types.USER_CURRENT_ECOM_STORE_UPDATED, payload.eComStore);
-    await UserService.setUserPreference({
-      'userPrefTypeId': 'SELECTED_BRAND',
-      'userPrefValue': payload.eComStore.productStoreId
-    });
-  },
-
-  setUserPreference({ commit }, payload){
-    commit(types.USER_PREFERENCE_UPDATED, payload)
   },
 
   updatePwaState({commit}, payload) {

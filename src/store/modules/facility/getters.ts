@@ -19,6 +19,9 @@ const getters: GetterTree <FacilityState, RootState> = {
   },
   getCurrent(state) {
     return state.current ? JSON.parse(JSON.stringify(state.current)) : {}
+  },
+  getFacilityParties(state) {
+    return state.current.parties
   }
 }
 export default getters;
