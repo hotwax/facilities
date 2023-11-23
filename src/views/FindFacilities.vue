@@ -35,7 +35,7 @@
               <ion-label>{{ translate("Type") }}</ion-label>
               <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option :value="facilityType.facilityTypeId" :key="index" v-for="(facilityType, index) in facilityTypes">{{ facilityType.description }}</ion-select-option>
+                <ion-select-option :value="facilityType" :key="facilityType" v-for="(description, facilityType) in facilityTypes">{{ description }}</ion-select-option>
               </ion-select>
             </ion-item>
           </ion-list>
@@ -46,7 +46,7 @@
             <ion-item lines="none">
               <ion-icon slot="start" :icon="storefrontOutline" />
               <ion-label>
-                <p class="overline">{{ facility.facilityTypeId ? facility.facilityTypeId : '' }}</p>
+                <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId] : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
                 <p>{{ facility.facilityId }}</p>
               </ion-label>

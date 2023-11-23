@@ -11,7 +11,8 @@ const utilModule: Module<UtilState, RootState> = {
     partyRoles: [],
     productStores: [],
     facilityTypes: {},
-    locationTypes: {}
+    locationTypes: {},
+    externalMappingTypes: {}
   },
   getters,
   actions,
