@@ -144,7 +144,9 @@ const actions: ActionTree<UtilState, RootState> = {
 
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
-    commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
+    commit(types.UTIL_FACILITY_TYPES_UPDATED, {})
+    commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
+    commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
   }
 }
 
