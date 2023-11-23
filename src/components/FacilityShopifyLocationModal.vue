@@ -28,17 +28,18 @@
         <ion-list-header>{{ translate('Shopify location') }}</ion-list-header>
         <ion-item>
           <ion-label>{{ translate("Shopify store") }}</ion-label>
+          <ion-label slot="end" v-if="type && type === 'update'">{{ shopifyShopIdentification.shopId }}</ion-label>
           <!-- TODO: change field to select -->
-          <ion-input v-model="shopId" />
+          <ion-input slot="end" v-else v-model="shopId" />
         </ion-item>
         <ion-item>
           <ion-label>{{ translate("Location ID") }}</ion-label>
-          <ion-input :placeholder="translate('add your location ID from Shopify')" v-model="shopifyLocationId" />
+          <ion-input slot="end" :placeholder="translate('add your location ID from Shopify')" v-model="shopifyLocationId" />
         </ion-item>
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="saveMapping" @keyup.enter.stop>
+        <ion-fab-button @click="type && type === 'update' ? updateMapping : saveMapping" @keyup.enter.stop>
           <ion-icon :icon="saveOutline" />
         </ion-fab-button>
       </ion-fab>
@@ -102,6 +103,10 @@ export default defineComponent({
       shopifyLocationId: ''
     }
   },
+  props: ["shopifyShopIdentification", "type"],
+  mounted() {
+    this.shopifyLocationId = this.shopifyShopIdentification?.shopifyLocationId
+  },
   methods: {
     closeModal() {
       modalController.dismiss()
@@ -131,6 +136,34 @@ export default defineComponent({
       } catch(err) {
         showToast(translate('Failed to create shopify location'))
         logger.error('Failed to create shopify location', err)
+      }
+    },
+    async updateMapping() {
+      if(!this.shopifyLocationId) {
+        showToast(translate('Please fill all the fields'))
+        return;
+      }
+
+      let resp;
+
+      try {
+        resp = await FacilityService.updateShopifyShopLocation({
+          "facilityId": this.currentFacility.facilityId,
+          "shopId": this.shopifyShopIdentification.shopId,
+          "shopifyLocationId": this.shopifyLocationId
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate('Shopify location updated successfully'))
+          this.store.dispatch('facility/fetchShopifyShopIdentifications', { facilityId: this.currentFacility.facilityId })
+          // TODO: overlay does not exist error, fix this
+          this.closeModal();
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update shopify location'))
+        logger.error('Failed to update shopify location', err)
       }
     }
   },

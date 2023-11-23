@@ -278,7 +278,7 @@
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
-                <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" @click="editShopifyShopLocation(shopifyShopIdentification)" >{{ translate("Edit") }}</ion-button>
                 <ion-button fill="clear" color="danger" @click="removeShopifyShopLocation(shopifyShopIdentification)">{{ translate("Remove") }}</ion-button>
               </ion-card>
               <ion-card v-for="(identification, index) in current.facilityIdentifications" :key="index">
@@ -289,13 +289,12 @@
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>{{ translate('Identification') }}</ion-label>
-                  <ion-note slot="end">{{ identification.idValue }}</ion-note>
+                  <ion-label slot="end">{{ identification.idValue }}</ion-label>
                 </ion-item>
-                <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" @click="editFacilityIdentification(identification)">{{ translate("Edit") }}</ion-button>
                 <ion-button fill="clear" color="danger" @click="removeFacilityIdentification(identification)">{{ translate("Remove") }}</ion-button>
               </ion-card>
-            </div>          
-            <hr />
+            </div>
           </div>
 
           <div v-else-if="segment === 'staff'">
@@ -403,7 +402,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonNote,
   IonPage,
   IonProgressBar,
   IonSegment,
@@ -444,6 +442,8 @@ import { showToast } from '@/utils';
 import logger from '@/logger';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
 import { DateTime } from 'luxon';
+import FacilityShopifyLocationModal from '@/components/FacilityShopifyLocationModal.vue'
+import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -463,7 +463,6 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
-    IonNote,
     IonPage,
     IonProgressBar,
     IonSegment,
@@ -726,6 +725,30 @@ export default defineComponent({
         logger.error('Failed to remove shopify location', err)
         showToast(translate('Failed to remove shopify location'))
       }
+    },
+    async editFacilityIdentification(identification: any) {
+      const customMappingModal = await modalController.create({
+        component: FacilityMappingModal,
+        componentProps: { identification, type: 'update' }
+      })
+
+      customMappingModal.present()
+
+      customMappingModal.onDidDismiss().then(() => {
+        popoverController.dismiss();
+      })
+    },
+    async editShopifyShopLocation(shopifyShopIdentification: any) {
+      const customMappingModal = await modalController.create({
+        component: FacilityShopifyLocationModal,
+        componentProps: { shopifyShopIdentification, type: 'update' }
+      })
+
+      customMappingModal.present()
+
+      customMappingModal.onDidDismiss().then(() => {
+        popoverController.dismiss();
+      })
     }
   },
   setup() {

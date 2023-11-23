@@ -99,11 +99,11 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
   },
 
-  async fetchExternalMappingTypes({ commit, state }) {
+  async fetchExternalMappingTypes({ commit, state }, payload) {
     const cachedExternalMappingTypes = JSON.parse(JSON.stringify(state.externalMappingTypes))
 
     // not fetching external mapping type information again if already present, as it will not be changed so frequently
-    if(cachedExternalMappingTypes.length) {
+    if(cachedExternalMappingTypes.length && !payload?.skipState) {
       return;
     }
 

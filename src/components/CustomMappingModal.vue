@@ -31,11 +31,11 @@
       </ion-item>
       <ion-item>
         <ion-label>{{ translate("Mapping Name") }}</ion-label>
-        <ion-input v-modal="mappingName" placeholder="Mapping name" />
+        <ion-input v-model="mappingName" placeholder="Mapping name" />
       </ion-item>
       <ion-item>
         <ion-label>{{ translate("Identification") }}</ion-label>
-        <ion-input v-modal="mappingValue" placeholder="Mapping Value" />
+        <ion-input v-model="mappingValue" placeholder="Mapping Value" />
       </ion-item>
     </ion-list>
   </ion-content>
@@ -70,7 +70,6 @@ import { translate } from '@hotwax/dxp-components'
 import { mapGetters, useStore } from 'vuex'
 import { showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
-import { UtilService } from "@/services/UtilService"
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 
@@ -132,6 +131,9 @@ export default defineComponent({
   
           if(!hasError(resp)) {
             showToast(translate('External mapping created successfully'))
+            // fetching external mapping types again, as we have created a new mapping type that needs to be included in popover
+            // added skipState property to not check for cached type and always make an api call
+            await this.store.dispatch('util/fetchExternalMappingTypes', { skipState: true })
             this.store.dispatch('facility/fetchFacilityIdentification', { facilityId: this.currentFacility.facilityId })
             this.closeModal();
           } else {

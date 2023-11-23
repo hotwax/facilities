@@ -226,7 +226,7 @@ const actions: ActionTree<FacilityState, RootState> = {
           facilityId: payload.facilityId
         },
         entityName: "ShopifyShopLocationView",
-        fieldList: ["domain", "name", "myshopifyDomain", "shopId", "shopifyLocationId"],
+        fieldList: ["shopifyShopId", "domain", "name", "myshopifyDomain", "shopId", "shopifyLocationId"],
         viewSize: 100
       }
 

@@ -97,7 +97,12 @@ export default defineComponent({
       mappingValue: ''
     }
   },
-  props: ["mappingType"],
+  props: ["mappingType", "identification", "type"],
+  mounted() {
+    if(this.type) {
+      this.mappingValue = this.identification?.idValue
+    }
+  },
   methods: {
     closeModal() {
       modalController.dismiss()
