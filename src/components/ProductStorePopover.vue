@@ -4,7 +4,7 @@
       <ion-list-header>{{ getProductStore(currentProductStore.productStoreId).storeName }}</ion-list-header>
       <ion-item button @click="makePrimary()">
         {{ translate("Primary") }}
-        <ion-icon slot="end" :icon="primaryMember.facilityGroupId === currentProductStore.productStoreId ? star : starOutline" />
+        <ion-icon slot="end"  :color="primaryMember.facilityGroupId === currentProductStore.productStoreId ? 'warning' : ''" :icon="primaryMember.facilityGroupId === currentProductStore.productStoreId ? star : starOutline" />
       </ion-item>
       <ion-item button lines="none" @click="removeStoreFromFacility()">
         {{ translate("Unlink") }}
