@@ -119,6 +119,12 @@ export default defineComponent({
       modalController.dismiss()
     },
     async saveAddress() {
+      const isAddressUpdated = Object.entries(this.postalAddress).filter(([addressKey, addressValue]) => this.address[addressKey] !== addressValue).length
+      if(!isAddressUpdated) {
+        showToast(translate("Please fill all the required fields"))
+        return;
+      }
+
       let resp;
 
       if(!this.address?.address1 || !this.address?.city) {

@@ -121,6 +121,11 @@ export default defineComponent({
       }
     },
     async saveGeoPoint() {
+      if(!this.geoPoint.latitude || !this.geoPoint.longitude || !this.geoPoint.postalCode) {
+        showToast("Please fill all the required fields")
+        return;
+      }
+
       let resp;
 
       const payload = {
