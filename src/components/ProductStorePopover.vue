@@ -171,6 +171,10 @@ export default defineComponent({
           "fromDate": this.primaryMember.fromDate,
           "thruDate": DateTime.now().toMillis()
         })
+
+        if(hasError(resp)) {
+          throw resp.data
+        }
       } catch (err) {
         logger.error(err)
       }

@@ -140,7 +140,7 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button @click="selectProductStore()" fill="clear">
+              <ion-button @click="selectProductStores()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="start" />
                 {{ translate("Add") }}
               </ion-button>
@@ -527,7 +527,7 @@ export default defineComponent({
 
       addGeoPointModal.present()
     },
-    async selectProductStore() {
+    async selectProductStores() {
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
         componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores }
@@ -557,14 +557,14 @@ export default defineComponent({
 
           const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
           if(hasFailedResponse) {
-            showToast(translate('Failed to update some facility stores'))
+            showToast(translate("Failed to update some product stores"))
           } else {
             productStoresToRemove.map((store: any) => {
               if(store.productStoreId === this.primaryMember.facilityGroupId) {
                 this.removeProductFromPrimaryMember()
               }
             })
-            showToast(translate('Facility stores updated successfully.'))
+            showToast(translate("Product stores updated successfully."))
           }
 
           // refetching product stores with updated roles and primary Member
