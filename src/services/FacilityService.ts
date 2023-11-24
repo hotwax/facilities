@@ -18,7 +18,7 @@ const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise
       facilityId: facilityIds,
       facilityId_op: "in"
     },
-    fieldList: ['facilityId', 'facilityGroupId', 'facilityGroupTypeId', "fromDate"],
+    fieldList: ['facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
     entityName: "FacilityGroupAndMember",
     distinct: 'Y',
     filterByDate: 'Y',

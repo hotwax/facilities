@@ -647,6 +647,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
+          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
@@ -682,6 +683,7 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
+          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
