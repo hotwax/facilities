@@ -16,6 +16,15 @@ const getters: GetterTree <FacilityState, RootState> = {
   },
   getCurrent(state) {
     return state.current ? JSON.parse(JSON.stringify(state.current)) : {}
-  }
+  },
+  getCreatedFacility(state) {
+    return state.createdFacility ? JSON.parse(JSON.stringify(state.createdFacility)) : {}
+  },
+  getPostalAddress(state) {
+    return state.current?.postalAddress ? JSON.parse(JSON.stringify(state.current.postalAddress)) : {}
+  },
+  getFacilityProductStores(state) {
+    return state.current.productStores
+  },
 }
 export default getters;

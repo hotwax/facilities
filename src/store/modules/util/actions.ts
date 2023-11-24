@@ -102,7 +102,67 @@ const actions: ActionTree<UtilState, RootState> = {
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
     commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
-  }
+    commit(types.UTIL_LOCATION_TYPES_UPDATED, [])
+    commit(types.UTIL_COUNTRIES_UPDATED, [])
+    commit(types.UTIL_STATES_UPDATED, [])
+  },
+
+  async fetchCountries({ commit, dispatch, state }, payload) {
+    let countries = []
+
+    const params = {
+      inputFields: {
+        geoIdTo: "DBIC"
+      },
+      entityName: 'GeoAssocAndGeoFrom',
+      fieldList: ['geoName', 'geoId'],
+      noConditionFind: 'Y',
+    } as any
+
+    try {
+      const resp = await UtilService.fetchCountries(params)
+
+      if (!hasError(resp)) {
+        countries = resp.data.docs
+        await dispatch('fetchStates', { geoId: payload.countryGeoId ? payload.countryGeoId : 'USA' })
+      } else {
+        throw resp.data
+      }
+    } catch (err) {
+      logger.error(err)
+    }
+
+    commit(types.UTIL_COUNTRIES_UPDATED, countries)
+  },
+
+  async fetchStates({ commit, state }, payload) {
+    if (payload.geoId in state.states) {
+      return
+    }
+    let states = []
+
+    const params = {
+      inputFields: {
+        geoIdFrom: payload.geoId
+      },
+      entityName: 'GeoAssocAndGeoTo',
+      fieldList: ['geoName', 'geoId'],
+      noConditionFind: 'Y',
+      viewSize: 100
+    } as any
+
+    try {
+      const resp = await UtilService.fetchStates(params)
+      if (!hasError(resp)) {
+        states = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch (err) {
+      logger.error(err)
+    }
+    commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states })
+  },
 }
 
 export default actions;

@@ -418,7 +418,7 @@ import {
 import { translate } from '@hotwax/dxp-components';
 import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
-import OpenStorePopover from '@/components/OpenStorePopover.vue';
+import ProductStorePopover from '@/components/ProductStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
 import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
@@ -479,14 +479,14 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes')])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
   methods: {
     async openStorePopover(ev: Event) {
       const popover = await popoverController.create({
-        component: OpenStorePopover,
+        component: ProductStorePopover,
         event: ev,
         showBackdrop: false
       });

@@ -75,6 +75,12 @@
         </main>
       </div>
 
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed" @click="router.push('/create-facility')">
+        <ion-fab-button>
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
+
       <ion-infinite-scroll
         @ionInfinite="loadMoreFacilities($event)"
         threshold="100px"
@@ -111,6 +117,7 @@ import {
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import {
+  addOutline,
   businessOutline,
   globeOutline,
   lockClosedOutline,
@@ -229,6 +236,7 @@ export default defineComponent({
     const store = useStore();
 
     return {
+      addOutline,
       businessOutline,
       globeOutline,
       lockClosedOutline,

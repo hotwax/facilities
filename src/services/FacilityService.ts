@@ -126,12 +126,60 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   return facilityOrderCounts;
 }
 
+const fetchFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload
+  })
+}
+
+const getFacilityProductStores = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload
+  }) as any
+}
+
+const createFacilityGroup = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+const createProductStoreFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/createProductStoreFacility",
+    method: "post",
+    data: payload
+  });
+}
+
+const fetchFacilityPrimaryMember = async (payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const updateFacility = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacility",
     method: "post",
     data: payload
   })
+}
+
+const updateProductStoreFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/updateProductStoreFacility",
+    method: "post",
+    data: payload
+  });
 }
 
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
@@ -182,16 +230,49 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacility",
+    method: "post",
+    data: payload
+  })
+}
+
+const createFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
+const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 export const FacilityService = {
-  createFacilityLocation,
-  deleteFacilityLocation,
-  fetchFacilityLocations,
   addFacilityToGroup,
+  createFacilityGroup,
+  createFacility,
+  createFacilityLocation,
+  createProductStoreFacility,
+  createFacilityPostalAddress,
+  deleteFacilityLocation,
+  fetchFacilityGroup,
+  fetchFacilityLocations,
+  fetchFacilityContactDetails,
   fetchFacilityGroupInformation,
   fetchFacilityOrderCounts,
   fetchFacilitiesOrderCount,
+  fetchFacilityPrimaryMember,
   fetchFacilities,
+  getFacilityProductStores,
   updateFacility,
   updateFacilityLocation,
-  updateFacilityToGroup
+  updateFacilityToGroup,
+  updateProductStoreFacility
 }

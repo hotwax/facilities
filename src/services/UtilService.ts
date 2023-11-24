@@ -27,9 +27,39 @@ const fetchLocationTypes = async (payload: any): Promise<any> => {
   })
 }
 
+const generateLatLong = async (payload: any): Promise<any> => {
+  return api({
+    url: "postcodeLookup",
+    method: "POST",
+    data: payload,
+    cache: true
+  })
+}
+
+const fetchCountries = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload,
+    cache: true
+  })
+}
+
+const fetchStates = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload,
+    cache: true
+  })
+}
+
 export const UtilService = {
+  fetchCountries,
   fetchFacilityTypes,
   fetchLocationTypes,
-  fetchProductStores
+  fetchProductStores,
+  fetchStates,
+  generateLatLong
 }
 
