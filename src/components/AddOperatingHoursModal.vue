@@ -6,34 +6,34 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate("Select time") }}</ion-title>
+      <ion-title>{{ translate("Add operating hours") }}</ion-title>
     </ion-toolbar>
   </ion-header>
   
   <ion-content>
-    <ion-list>
-      <ion-item lines="none">
-        <ion-label>{{ translate("Opening Time") }}</ion-label>
-        <ion-datetime-button datetime="opentime" />
-      </ion-item>
-      <ion-item lines="none">
-        <ion-label>{{ translate("Closing Time") }}</ion-label>
-        <ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item lines="none">
-        <ion-button color="danger">{{ translate("Reset") }}</ion-button>
-      </ion-item>
-    </ion-list>
+    <ion-accordion-group :value="selectedCalendarId" @ionChange="updateSelectedCalendar($event)">
+      <ion-radio-group :value="selectedCalendarId">
+        <ion-accordion value="first">
+          <ion-item slot="header" color="light">
+            <ion-radio value="first" slot="start" />
+            <ion-label>
+              {{ "Calendar 1" }}
+            </ion-label>
+          </ion-item>
+          <div class="ion-padding" slot="content">First Content</div>
+        </ion-accordion>
+        <ion-accordion value="second">
+          <ion-item slot="header" color="light">
+            <ion-radio value="second" slot="start" />
+            <ion-label>
+              {{ "Calendar 2" }}
+            </ion-label>
+          </ion-item>
+          <div class="ion-padding" slot="content">Second Content</div>
+        </ion-accordion>
+      </ion-radio-group>
+    </ion-accordion-group>
   </ion-content>
-
-
-  <ion-modal :keep-contents-mounted="true">
-    <ion-datetime id="opentime" presentation="time" show-default-buttons hour-cycle="h23" />
-  </ion-modal>
-
-  <ion-modal :keep-contents-mounted="true">
-    <ion-datetime id="endtime" presentation="time" show-default-buttons hour-cycle="h23" />
-  </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button>
@@ -44,19 +44,19 @@
   
 <script lang="ts">
 import { 
+  IonAccordion,
+  IonAccordionGroup,
   IonButton,
   IonButtons,
   IonContent,
-  IonDatetime,
-  IonDatetimeButton,
   IonFab,
   IonFabButton,
   IonHeader,
   IonIcon,
   IonItem,
   IonLabel,
-  IonList,
-  IonModal,
+  IonRadio,
+  IonRadioGroup,
   IonTitle,
   IonToolbar,
   modalController
@@ -66,35 +66,36 @@ import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 
 export default defineComponent({
-  name: "SelectOperatingTimeModal",
+  name: "AddOperatingHoursModal",
   components: { 
+    IonAccordion,
+    IonAccordionGroup,
     IonButton,
     IonButtons,
     IonContent,
-    IonDatetime,
-    IonDatetimeButton,
     IonFab,
     IonFabButton,
     IonHeader,
     IonIcon,
     IonItem,
     IonLabel,
-    IonList,
-    IonModal,
+    IonRadio,
+    IonRadioGroup,
     IonTitle,
     IonToolbar,
   },
   data() {
     return {
-      isTimeModalOpen: false
+      selectedCalendarId:'second'
     }
   },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
     },
-    selectTime() {
-      this.isTimeModalOpen = true
+    updateSelectedCalendar(ev: CustomEvent) {
+      this.selectedCalendarId= ev.detail.value
+      
     }
   },
   setup() {
@@ -108,9 +109,7 @@ export default defineComponent({
 </script>
 
 <style scoped>
-ion-modal.date-time-modal {
-  --width: 290px;
-  --height: 440px;
-  --border-radius: 8px;
+ion-content {
+  --padding-bottom: 80px;
 }
 </style>

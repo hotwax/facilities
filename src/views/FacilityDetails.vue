@@ -63,74 +63,99 @@
             </ion-card>
           </div>
 
-          <ion-card>
+          <ion-card v-if="isCalendarFound">
             <ion-card-header>
-              <ion-card-title>
-                {{ translate("Operating hours") }}
-              </ion-card-title>
+              <div>
+                <ion-card-title>
+                  {{ translate("Operating hours") }}
+                </ion-card-title>
+                <ion-card-subtitle>
+                  {{ translate("Select a saved calendar of store hours or create a new calendar") }}
+                </ion-card-subtitle>
+              </div>
+            </ion-card-header>
+            <ion-radio-group value="first">
+              <ion-item lines="none">
+                <ion-label>calendar name</ion-label>
+                <ion-radio value="first"/>
+              </ion-item>
+              <ion-item lines="none">
+                <ion-label>calendar name</ion-label>
+                <ion-radio value="second"/>
+              </ion-item>
+              <ion-item lines="none">
+                <ion-label>calendar name</ion-label>
+                <ion-radio value="third"/>
+              </ion-item>
+            </ion-radio-group>
+            <ion-item button lines="none"  @click="addOperatingHours">
+              <ion-label>{{ "5 Others" }}</ion-label>
+              <ion-icon :icon="chevronForwardOutline" />
+            </ion-item>
+            <ion-item button lines="none" @click="addCustomSchedule">
+              <ion-label>{{ translate("Custom schedule") }}</ion-label>
+              <ion-icon color="primary" :icon="addCircleOutline" button />
+            </ion-item>
+            <ion-button fill="outline" expand="block">
+              {{ translate("Add operating hours") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
+          </ion-card>
+
+          <ion-card v-else>
+            <ion-card-header>
+              <div>
+                <ion-text>{{ "Operating Hours" }}</ion-text>
+                <ion-card-title>
+                  {{ "<calendar hours>" }}
+                </ion-card-title>
+              </div>
+              <ion-button color="medium" fill="clear" class="ion-no-padding" @click="openOperatingHoursPopover">
+                <ion-icon :icon="ellipsisVerticalOutline" />
+              </ion-button>
             </ion-card-header>
             <ion-list lines="none">
-              <ion-item button @click="selectOperatingTime">
+              <ion-item >
                 <ion-label>
                   <p>{{ translate("Monday") }}</p>
                 </ion-label>
-                <ion-label slot="end">
-                  {{ "7:30am - 8:00pm" }}
-                </ion-label>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Tuesday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Wednesday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Thursday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Friday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Saturday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Sunday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
               </ion-item>
             </ion-list>
           </ion-card>
@@ -367,7 +392,7 @@
                 {{ location.positionId }}
                 <p>{{ translate("sequence") }}</p>
               </ion-label>
-              
+
               <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover($event, location)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
@@ -391,6 +416,7 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
+  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -402,6 +428,8 @@ import {
   IonList,
   IonPage,
   IonProgressBar,
+  IonRadio,
+  IonRadioGroup,
   IonSegment,
   IonSegmentButton,
   IonText,
@@ -416,6 +444,7 @@ import {
   addOutline,
   closeCircleOutline,
   closeOutline,
+  chevronForwardOutline,
   ellipsisVerticalOutline,
   globeOutline,
   locationOutline,
@@ -429,11 +458,12 @@ import OpenStorePopover from '@/components/OpenStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
 import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
-import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
+import AddOperatingHoursModal from '@/components/AddOperatingHoursModal.vue'
 import AddLocationModal from '@/components/AddLocationModal.vue';
 import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
+import CustomScheduleModal from '@/components/CustomScheduleModal.vue';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { FacilityService } from '@/services/FacilityService';
@@ -442,6 +472,7 @@ import logger from '@/logger';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 import { showToast } from '@/utils';
+import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -452,6 +483,7 @@ export default defineComponent({
     IonCard,
     IonCardContent,
     IonCardHeader,
+    IonCardSubtitle,
     IonCardTitle,
     IonChip,
     IonContent,
@@ -463,6 +495,8 @@ export default defineComponent({
     IonList,
     IonPage,
     IonProgressBar,
+    IonRadio,
+    IonRadioGroup,
     IonSegment,
     IonSegmentButton,
     IonText,
@@ -472,10 +506,10 @@ export default defineComponent({
   },
   data() {
     return {
-      isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
-      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
+      defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
+      isCalendarFound: true 
     }
   },
   computed: {
@@ -515,6 +549,13 @@ export default defineComponent({
 
       addAddressModal.present()
     },
+    async addCustomSchedule() {
+      const customScheduleModal = await modalController.create({
+        component: CustomScheduleModal
+      })
+
+      customScheduleModal.present()
+    },
     async addGeoPoint() {
       const addGeoPointModal = await modalController.create({
         component: AddGeoPointModal
@@ -544,12 +585,12 @@ export default defineComponent({
 
       addStaffModal.present()
     },
-    async selectOperatingTime() {
-      const selectOperatingTimeModal = await modalController.create({
-        component: SelectOperatingTimeModal
+    async addOperatingHours() {
+      const addOperatingHoursModal = await modalController.create({
+        component: AddOperatingHoursModal
       })
-  
-      selectOperatingTimeModal.present()
+
+      addOperatingHoursModal.present()
     },
     async openLocationDetailsPopover(ev: Event, location: any) {
       const locationDetailsPopover = await popoverController.create({
@@ -567,6 +608,15 @@ export default defineComponent({
         showBackdrop: false
       });
       return externalMappingPopover.present()
+    },
+    async openOperatingHoursPopover(ev: Event) {
+      const operatingHoursPopover = await popoverController.create({
+        component: OperatingHoursPopover,
+        event: ev,
+        showBackdrop: false
+      });
+
+      operatingHoursPopover.present()
     },
     getDate(date: any) {
       return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
@@ -779,6 +829,7 @@ export default defineComponent({
       addOutline,
       closeCircleOutline,
       closeOutline,
+      chevronForwardOutline,
       ellipsisVerticalOutline,
       globeOutline,
       locationOutline,
