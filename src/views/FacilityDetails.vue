@@ -251,7 +251,7 @@
               {{ translate("Map facility to an external system") }}
             </ion-button>
             <div class="external-mappings">
-              <ion-card>
+              <ion-card v-for="(shopifyFacilityMapping, index) in current.shopifyFacilityMappings" :key="index">
                 <ion-card-header>
                   <ion-card-title>
                     {{ translate("Shopify facility") }}
@@ -259,32 +259,42 @@
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>
-                    {{ "shop name" }}
-                    <p>{{ "<Shop Id>" }}</p>
+                    {{ shopifyFacilityMapping.name }}
+                    <p>{{ shopifyFacilityMapping.shopId }}</p>
                   </ion-label>
-                  <ion-note slot="end">{{"note"}}</ion-note>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ "<shopify location id>" }}</ion-label>
-                  <ion-note slot="end">{{"note"}}</ion-note>
+                  <ion-label>{{ shopifyFacilityMapping.shopifyLocationId }}</ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ "<admin link>" }}</ion-label>
-                  <ion-button color="medium" fill="clear">
+                  <ion-label>{{ shopifyFacilityMapping.myshopifyDomain + '/admin' }}</ion-label>
+                  <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyFacilityMapping.myshopifyDomain + '/admin'}`)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ "<shopify link>" }}</ion-label>
-                  <ion-button color="medium" fill="clear">
+                  <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
+                  <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
-                <ion-button fill="clear">{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger">{{ translate("Remove") }}</ion-button>
+                <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
               </ion-card>
-            </div>          
-            <hr />
+              <ion-card v-for="(mapping, index) in current.facilityMappings" :key="index">
+                <ion-card-header>
+                  <ion-card-title>
+                    {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
+                  </ion-card-title>
+                </ion-card-header>
+                <ion-item lines="full">
+                  <ion-label>{{ translate('Identification') }}</ion-label>
+                  <ion-label slot="end">{{ mapping.idValue }}</ion-label>
+                </ion-item>
+                <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeFacilityMapping(mapping)">{{ translate("Remove") }}</ion-button>
+              </ion-card>
+            </div>
           </div>
 
           <div v-else-if="segment === 'staff'">
@@ -293,30 +303,29 @@
               {{ translate("Add staff member to facility") }}
             </ion-button>
 
-            <div class="list-item staff">
+            <div v-for="(party, index) in facilityParties" class="list-item staff" :key="index">
               <ion-item lines="none">
                 <ion-icon :icon="personOutline" slot="start" />
                 <ion-label>
-                  {{ "party name" }}
-                  <p>{{ translate("party id") }}</p>
+                  {{ party.fullName }}
+                  <p>{{ party.partyId }}</p>
                 </ion-label>
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ "fulfillment" }}</ion-chip>
+                <ion-chip outline>{{ partyRoles[party.roleTypeId] }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ "3rd June 2023" }}</ion-chip>
+                <ion-chip outline>{{ getDate(party.fromDate) }}</ion-chip>
                 <p>{{ "added" }}</p>
               </ion-label>
 
-              <ion-button fill="clear" color="medium">
+              <ion-button @click="removePartyFromFacility(party)" fill="clear" color="medium">
                 <ion-icon slot="icon-only" :icon="closeCircleOutline" />
               </ion-button>
             </div>
-            <hr />
           </div>
 
           <div v-else-if="segment == 'locations'">
@@ -363,7 +372,6 @@
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </div>
-            <hr />
           </div>
         </div>
       </main>
@@ -392,7 +400,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonNote,
   IonPage,
   IonProgressBar,
   IonSegment,
@@ -416,7 +423,7 @@ import {
   personOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
-import AddExternalMappingPopover from '@/components/AddExternalMappingPopover.vue'
+import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
 import ProductStorePopover from '@/components/ProductStorePopover.vue';
 import AddAddressModal from '@/components/AddAddressModal.vue'
@@ -425,14 +432,16 @@ import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
 import AddLocationModal from '@/components/AddLocationModal.vue';
 import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
+import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
+import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
 import { mapGetters, useStore } from 'vuex';
-import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
+import { DateTime } from 'luxon';
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
-import { showToast } from '@/utils';
 import logger from '@/logger';
-import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
-import { DateTime } from 'luxon';
+import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
+import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
+import { showToast } from '@/utils';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -452,7 +461,6 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
-    IonNote,
     IonPage,
     IonProgressBar,
     IonSegment,
@@ -467,23 +475,31 @@ export default defineComponent({
       isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
-      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
+      defaultDaysToShip: '' // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
     }
   },
   computed: {
     ...mapGetters({
       current: 'facility/getCurrent',
-      locationTypes: 'util/getLocationTypes'
+      locationTypes: 'util/getLocationTypes',
+      externalMappingTypes: 'util/getExternalMappingTypes',
+      facilityParties: 'facility/getFacilityParties',
+      partyRoles: 'util/getPartyRoles'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
-    await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
   },
   methods: {
+    goToLink(link: string) {
+      const url = link.startsWith('http') ? link : `https://${link}`
+      // opening link in new tab without passing any reference
+      window.open(url, '_blank', 'noopener, noreferrer')
+    },
     async openStorePopover(ev: Event) {
       const popover = await popoverController.create({
         component: ProductStorePopover,
@@ -522,7 +538,8 @@ export default defineComponent({
     },
     async addStaffMemberModal() {
       const addStaffModal = await modalController.create({
-        component: AddStaffMemberModal
+        component: AddStaffMemberModal,
+        componentProps: { facilityId: this.facilityId, selectedParties: this.facilityParties }
       })
 
       addStaffModal.present()
@@ -545,11 +562,37 @@ export default defineComponent({
     },
     async openExternalMappingPopover(ev: Event) {
       const externalMappingPopover = await popoverController.create({
-        component: AddExternalMappingPopover,
+        component: FacilityMappingPopover,
         event: ev,
         showBackdrop: false
       });
       return externalMappingPopover.present()
+    },
+    getDate(date: any) {
+      return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
+    },
+    async removePartyFromFacility(party: any) {
+      try {
+        const resp = await FacilityService.removePartyFromFacility({
+          facilityId: party.facilityId,
+          fromDate: party.fromDate,
+          thruDate: DateTime.now().toMillis(),
+          partyId: party.partyId,
+          roleTypeId: party.roleTypeId
+        })
+
+        if(!hasError(resp)){
+          showToast(translate("Party successfully removed from facility."))
+
+          // Refreshes the parties in facility
+          await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
+        } else {
+          throw resp
+        }
+      } catch(err) {
+        showToast(translate("Failed to remove party from facility."))
+        logger.error(err)
+      }
     },
     async changeOrderLimitPopover(ev: Event) {
       const popover = await popoverController.create({
@@ -665,6 +708,67 @@ export default defineComponent({
         logger.error('Failed to update default days to ship', err)
         showToast(translate('Failed to update default days to ship'))
       }
+    },
+    async removeFacilityMapping(mapping: any) {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          facilityIdenTypeId: mapping.facilityIdenTypeId,
+          fromDate: mapping.fromDate,
+          thruDate: DateTime.now().toMillis()
+        }
+
+        const resp = await FacilityService.updateFacilityIdentification(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Removed facility mapping successfully'))
+          await this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to remove facility mapping', err)
+        showToast(translate('Failed to remove facility mapping'))
+      }
+    },
+    async removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          shopId: shopifyFacilityMapping.shopId,
+          shopifyLocationId: shopifyFacilityMapping.shopifyLocationId,
+        }
+
+        const resp = await FacilityService.deleteShopifyShopLocation(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Removed shopify mapping successfully'))
+          await this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to remove shopify mapping', err)
+        showToast(translate('Failed to remove shopify mapping'))
+      }
+    },
+    async editFacilityMapping(mapping: any) {
+      const customMappingModal = await modalController.create({
+        component: FacilityMappingModal,
+        componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
+      })
+
+      await popoverController.dismiss()
+      customMappingModal.present()
+    },
+    async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
+      const customMappingModal = await modalController.create({
+        component: FacilityShopifyMappingModal,
+        componentProps: { shopifyFacilityMapping, type: 'update' }
+      })
+
+      await popoverController.dismiss()
+      customMappingModal.present()
     }
   },
   setup() {

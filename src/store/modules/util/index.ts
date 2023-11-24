@@ -8,11 +8,13 @@ import RootState from '@/store/RootState'
 const utilModule: Module<UtilState, RootState> = {
   namespaced: true,
   state: {
+    partyRoles: [],
     productStores: [],
     facilityTypes: {},
     locationTypes: {},
     countries: [],
-    states: {}
+    states: {},
+    externalMappingTypes: {}
   },
   getters,
   actions,

@@ -92,6 +92,22 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
   return facilitiesOrderCount;
 }
 
+const getFacilityParties = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   let facilityOrderCounts = {}, resp: any;
   try {
@@ -139,7 +155,7 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
     url: "performFind",
     method: "POST",
     data: payload
-  }) as any
+  })
 }
 
 const createFacilityGroup = async(payload: any): Promise<any> => {
@@ -158,9 +174,25 @@ const createProductStoreFacility = async (payload: any): Promise <any> => {
   });
 }
 
+const addPartyToFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/addPartyToFacility",
+    method: "post",
+    data: payload
+  });
+}
+
 const fetchFacilityPrimaryMember = async (payload: any): Promise <any> => {
   return api({
     url: "performFind",
+    method: "POST",
+    data: payload
+  })
+}
+
+const removePartyFromFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/removePartyFromFacility",
     method: "post",
     data: payload
   });
@@ -238,9 +270,25 @@ const createFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchFacilityMappings = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
     url: "service/createFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
+const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
     method: "post",
     data: payload
   })
@@ -254,6 +302,54 @@ const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
   });
 }
 
+const createFacilityIdentification = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityIdentification",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityIdentification = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityIdentification",
+    method: "post",
+    data: payload
+  })
+}
+
+const createShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const deleteShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/deleteShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const createEnumeration = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createEnumeration",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   createFacilityGroup,
@@ -265,14 +361,26 @@ export const FacilityService = {
   fetchFacilityGroup,
   fetchFacilityLocations,
   fetchFacilityContactDetails,
-  fetchFacilityGroupInformation,
-  fetchFacilityOrderCounts,
-  fetchFacilitiesOrderCount,
-  fetchFacilityPrimaryMember,
+  addPartyToFacility,
+  createEnumeration,
+  createFacilityIdentification,
+  createShopifyShopLocation,
+  deleteShopifyShopLocation,
   fetchFacilities,
+  fetchFacilitiesOrderCount,
+  fetchFacilityGroupInformation,
+  fetchFacilityMappings,
+  fetchFacilityOrderCounts,
+  fetchFacilityPrimaryMember,
   getFacilityProductStores,
+  fetchShopifyFacilityMappings,
+  getFacilityParties,
+  getPartyRoleAndPartyDetails,
+  removePartyFromFacility,
   updateFacility,
+  updateFacilityIdentification,
   updateFacilityLocation,
   updateFacilityToGroup,
-  updateProductStoreFacility
+  updateProductStoreFacility,
+  updateShopifyShopLocation
 }

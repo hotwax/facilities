@@ -6,6 +6,9 @@ const getters: GetterTree<UtilState, RootState> = {
   getProductStores(state) {
     return state.productStores;
   },
+  getPartyRoles(state) {
+    return state.partyRoles;
+  },
   getFacilityTypes(state) {
     return state.facilityTypes
   },
@@ -20,6 +23,9 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getStates(state) {
     return state.states
+  },
+  getExternalMappingTypes(state) {
+    return state.externalMappingTypes
   }
 }
 export default getters;

@@ -26,5 +26,8 @@ const getters: GetterTree <FacilityState, RootState> = {
   getFacilityProductStores(state) {
     return state.current.productStores
   },
+  getFacilityParties(state) {
+    return state.current.parties
+  }
 }
 export default getters;

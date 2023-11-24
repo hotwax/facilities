@@ -19,7 +19,7 @@ import {
   IonList,
   IonListHeader,
   modalController,
-popoverController
+  popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
@@ -51,13 +51,8 @@ export default defineComponent({
         componentProps: { location: this.location }
       })
 
+      await popoverController.dismiss();
       addLocationModal.present()
-
-      addLocationModal.onDidDismiss().then((result: any) => {
-        if(result.data?.result) {
-          popoverController.dismiss();
-        }
-      })
     },
     async removeLocation() {
       const params = {
@@ -69,8 +64,8 @@ export default defineComponent({
         const resp = await FacilityService.deleteFacilityLocation(params)
 
         if(!hasError(resp)) {
-          this.store.dispatch('facility/fetchFacilityLocation')
-          popoverController.dismiss();
+          showToast(translate('Facility location removed successfully'))
+          await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
         } else {
           throw resp.data
         }
@@ -78,6 +73,7 @@ export default defineComponent({
         showToast(translate('Failed to remove facility location'))
         logger.error('Failed to remove facility location', err)
       }
+      popoverController.dismiss();
     }
   },
   setup() {

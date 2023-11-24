@@ -1,13 +1,20 @@
 <template>
   <ion-page>
+    <Filters content-id="filter-content" />
+
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Find Facilities") }}</ion-title>
+        <ion-buttons slot="end" class="mobile-only">
+          <ion-menu-button menu="end">
+            <ion-icon :icon="filterOutline" />
+          </ion-menu-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content>
+    <ion-content id="filter-content">
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search facilities')" v-model="query.queryString" @keyup.enter="updateQuery()" />
@@ -28,7 +35,7 @@
               <ion-label>{{ translate("Type") }}</ion-label>
               <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option :value="facilityType.facilityId" :key="index" v-for="(facilityType, index) in facilityTypes">{{ facilityType.description }}</ion-select-option>
+                <ion-select-option :value="facilityType" :key="facilityType" v-for="(description, facilityType) in facilityTypes">{{ description }}</ion-select-option>
               </ion-select>
             </ion-item>
           </ion-list>
@@ -39,7 +46,7 @@
             <ion-item lines="none">
               <ion-icon slot="start" :icon="storefrontOutline" />
               <ion-label>
-                <p class="overline">{{ facility.facilityTypeId ? facility.facilityTypeId : '' }}</p>
+                <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId] : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
                 <p>{{ facility.facilityId }}</p>
               </ion-label>
@@ -98,6 +105,7 @@
 <script lang="ts">
 import {
   IonBackButton,
+  IonButtons,
   IonChip,
   IonContent,
   IonHeader,
@@ -107,6 +115,7 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonMenuButton,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -119,6 +128,7 @@ import { defineComponent } from 'vue';
 import {
   addOutline,
   businessOutline,
+  filterOutline,
   globeOutline,
   lockClosedOutline,
   lockOpenOutline,
@@ -133,11 +143,14 @@ import { hasError } from '@/adapter';
 import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
+import Filters from '@/components/Filters.vue'
 
 export default defineComponent({
   name: 'FindFacilities',
   components: {
+    Filters,
     IonBackButton,
+    IonButtons,
     IonChip,
     IonContent,
     IonHeader,
@@ -147,6 +160,7 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonMenuButton,
     IonPage,
     IonSearchbar,
     IonSelect,
@@ -238,6 +252,7 @@ export default defineComponent({
     return {
       addOutline,
       businessOutline,
+      filterOutline,
       globeOutline,
       lockClosedOutline,
       lockOpenOutline,
