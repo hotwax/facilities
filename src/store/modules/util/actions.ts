@@ -45,14 +45,14 @@ const actions: ActionTree<UtilState, RootState> = {
       viewSize: 100,
       noConditionFind: 'Y',
       entityName: 'FacilityType',
-      fieldList: ['facilityTypeId', 'description']
+      fieldList: ['facilityTypeId', 'description', 'parentTypeId']
     } as any
 
     try {
       const resp = await UtilService.fetchFacilityTypes(params)
       if (!hasError(resp)) {
         facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
-          facilityType[type.facilityTypeId] = type.description
+          facilityType[type.facilityTypeId] = { description: type.description, parentTypeId: type.parentTypeId }
 
           return facilityType
         }, {})

@@ -35,7 +35,9 @@
               <ion-label>{{ translate("Type") }}</ion-label>
               <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option :value="facilityType" :key="facilityType" v-for="(description, facilityType) in facilityTypes">{{ description }}</ion-select-option>
+                <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypes">
+                  {{ type.description }}
+                </ion-select-option>
               </ion-select>
             </ion-item>
           </ion-list>
@@ -46,7 +48,7 @@
             <ion-item lines="none">
               <ion-icon slot="start" :icon="storefrontOutline" />
               <ion-label>
-                <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId] : facilityTypes.facilityTypeId : '' }}</p>
+                <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId].description : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
                 <p>{{ facility.facilityId }}</p>
               </ion-label>
@@ -82,10 +84,18 @@
         </main>
       </div>
 
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed" @click="router.push('/create-facility')">
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button>
           <ion-icon :icon="addOutline" />
         </ion-fab-button>
+        <ion-fab-list side="top">
+          <ion-fab-button @click="router.push('/create-facility?type=DISTRIBUTION_CENTER')">
+            <ion-icon :icon="businessOutline" />
+          </ion-fab-button>
+          <ion-fab-button @click="router.push('/create-facility?type=PHYSICAL_STORE')">
+            <ion-icon :icon="storefrontOutline" />
+          </ion-fab-button>
+        </ion-fab-list>
       </ion-fab>
 
       <ion-infinite-scroll
@@ -108,6 +118,9 @@ import {
   IonButtons,
   IonChip,
   IonContent,
+  IonFab,
+  IonFabButton,
+  IonFabList,
   IonHeader,
   IonIcon,
   IonInfiniteScroll,
@@ -153,6 +166,9 @@ export default defineComponent({
     IonButtons,
     IonChip,
     IonContent,
+    IonFab,
+    IonFabButton,
+    IonFabList,
     IonHeader,
     IonIcon,
     IonInfiniteScroll,

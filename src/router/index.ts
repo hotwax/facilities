@@ -73,7 +73,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: "/create-facility",
-    name: "Setup Facility",
+    name: "Create Facility",
     component: CreateFacility,
     beforeEnter: authGuard
   },

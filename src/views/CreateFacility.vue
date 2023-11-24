@@ -8,42 +8,45 @@
     </ion-header>
     <ion-content>
       <main>
-        <div v-if="$route.query.type === 'WAREHOUSE' || $route.query.type === 'RETAIL_STORE'">
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>{{ translate('Setup Store') }}</ion-card-title>
-            </ion-card-header>
-            <ion-list>
-              <ion-item>
-                <ion-label position="floating">
-                  {{ translate('Name') }} <ion-text color="danger">*</ion-text>
-                </ion-label>
-                <ion-input clear-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName" />
-              </ion-item>
-              <ion-item>
-                <ion-label position="floating">
-                  {{ translate('Internal ID') }}
-                </ion-label>
-                <ion-input clear-input v-model="formData.facilityId" />
-              </ion-item>
-              <ion-item>
-                <ion-label position="floating">
-                  {{ translate('External ID') }}
-                </ion-label>
-                <ion-input clear-input v-model="formData.externalId" />
-              </ion-item>
-            </ion-list>
-          </ion-card>
+        <ion-card>
+          <ion-card-header>
+            <ion-card-title>{{ translate('Setup Store') }}</ion-card-title>
+          </ion-card-header>
+          <ion-list>
+            <ion-item lines="none">
+              <ion-label>{{ translate("Type") }}</ion-label>
+              <ion-select interface="popover" :value="selectedFacilityTypeId">
+                <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
+                  {{ type.description }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-label position="floating">
+                {{ translate('Name') }} <ion-text color="danger">*</ion-text>
+              </ion-label>
+              <ion-input clear-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName" />
+            </ion-item>
+            <ion-item>
+              <ion-label position="floating">
+                {{ translate('Internal ID') }}
+              </ion-label>
+              <ion-input clear-input v-model="formData.facilityId" />
+            </ion-item>
+            <ion-item>
+              <ion-label position="floating">
+                {{ translate('External ID') }}
+              </ion-label>
+              <ion-input clear-input v-model="formData.externalId" />
+            </ion-item>
+          </ion-list>
+        </ion-card>
 
-          <div class="ion-text-center ion-margin">
-            <ion-button @click="createFacility()">
-              <ion-icon slot="start" :icon="addOutline"/>
-              {{ translate("Create store") }}
-            </ion-button>
-          </div>
-        </div>
-        <div v-else class="ion-margin ion-text-center">
-          {{ translate('Facility type not found.') }}
+        <div class="ion-text-center ion-margin">
+          <ion-button @click="createFacility()">
+            <ion-icon slot="start" :icon="addOutline"/>
+            {{ translate("Create store") }}
+          </ion-button>
         </div>
       </main>
     </ion-content>
@@ -98,18 +101,35 @@ export default defineComponent({
     IonTitle,
     IonToolbar,
   },
+  computed: {
+    ...mapGetters({
+      facilityTypes: "util/getFacilityTypes"
+    })
+  },
   data() {
     return {
       formData: {
         facilityName: '',
         facilityId: '',
         externalId: '',
-      }
+      },
+      selectedFacilityTypeId: '' as any,
+      facilityTypesByParentTypeId: {} as any
     }
   },
-  ionViewWillEnter() {
+  async ionViewWillEnter() {
     this.clearFormData()
-    this.store.dispatch('facility/updateCreatedFacility', {})
+    await Promise.all([
+      this.store.dispatch('facility/updateCreatedFacility', {}),
+      this.store.dispatch('util/fetchFacilityTypes', {
+        parentTypeId: 'VIRTUAL_FACILITY',
+        parentTypeId_op: 'notEqual',
+        facilityTypeId: 'VIRTUAL_FACILITY',
+        facilityTypeId_op: 'notEqual'
+      })
+    ])
+    this.facilityTypesByParentTypeId = this.getFacilityTypesByParentTypeId(this.$route.query.type as string)
+    this.selectedFacilityTypeId = Object.keys(this.facilityTypesByParentTypeId)[0]
   },
   methods: {
     clearFormData() {
@@ -137,7 +157,7 @@ export default defineComponent({
       try {
         const payload = {
           ...this.formData,
-          facilityTypeId: this.$route.query.type,
+          facilityTypeId: this.selectedFacilityTypeId,
           ownerPartyId: "COMPANY"
         }
 
@@ -147,7 +167,7 @@ export default defineComponent({
           this.store.dispatch('facility/updateCreatedFacility', {
             facilityId,
             facilityName: this.formData.facilityName,
-            facilityTypeId: this.$route.query.type,
+            facilityTypeId: this.selectedFacilityTypeId
           })
           this.router.replace(`/add-facility-address/${facilityId}`)
         } else {
@@ -157,6 +177,14 @@ export default defineComponent({
         console.error(error)
         showToast(translate('Failed to create facility.'))
       }
+    },
+    getFacilityTypesByParentTypeId(parentTypeId: string) {
+      return parentTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+        if (this.facilityTypes[facilityTypeId].parentTypeId === parentTypeId) {
+          facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
+        }
+        return facilityTypesByParentTypeId
+      }, {}) : this.facilityTypes
     }
   },
   setup() {
