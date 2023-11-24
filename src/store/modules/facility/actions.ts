@@ -10,7 +10,50 @@ import { showToast } from '@/utils'
 import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
-  async fetchFacilities({ commit, state }, payload) {
+  async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
+
+    // getting all the facilties from state
+    const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list)); // maintaining cachedFacilities as to prepare the facilities payload to fetch additional information
+    let stateFacilities = JSON.parse(JSON.stringify(state.facilities.list)); // maintaining stateFacilities as to update the facility information once information in fetched
+    const total = state.facilities.total
+
+    const facilityIds: Array<string> = [];
+
+    // splitting the facilities in batches to fetch the additional facilities information
+    const facilities = cachedFacilities.splice(payload.viewIndex * (process.env.VUE_APP_VIEW_SIZE as any), process.env.VUE_APP_VIEW_SIZE)
+    facilities.map((facility: any) => facilityIds.push(facility.facilityId))
+
+    stateFacilities = stateFacilities.filter((facility: any) => !facilityIds.includes(facility.facilityId))
+
+    const [facilitiesGroupInformation, facilitiesOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation(facilityIds), FacilityService.fetchFacilitiesOrderCount(facilityIds)])
+
+    facilities.map((facility: any) => {
+      const fulfillmentOrderLimit = facility.maximumOrderLimit
+      if (fulfillmentOrderLimit === 0) {
+        facility.orderLimitType = 'no-capacity'
+      } else if (fulfillmentOrderLimit) {
+        facility.orderLimitType = 'custom'
+      } else {
+        facility.orderLimitType = 'unlimited'
+      }
+
+      facility.orderCount = facilitiesOrderCount[facility.facilityId] ? facilitiesOrderCount[facility.facilityId] : 0;
+
+      const facilityGroupInformation = facilitiesGroupInformation[facility.facilityId]
+
+      if(facilityGroupInformation.length) {
+        facility.groupInformation = facilityGroupInformation
+        facility.sellOnline = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
+        facility.useOMSFulfillment = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
+        facility.generateShippingLabel = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
+        facility.allowPickup = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
+      }
+    })
+
+    commit(types.FACILITY_LIST_UPDATED, { facilities: stateFacilities.concat(facilities), total })
+  },
+
+  async fetchFacilities({ commit, dispatch, state }, payload) {
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
     const filters = {
       'parentFacilityTypeId': 'VIRTUAL_FACILITY',
@@ -49,7 +92,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       ...payload
     }
 
-    let facilities = [], total = 0;
+    let facilities = [], total = 0, facilityList = [];
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
@@ -58,32 +101,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         facilities = resp.data.docs
         total = resp.data.count
 
-        const [facilitiesGroupInformation, facilitiesOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation(facilities.map((facility: any) => facility.facilityId)), FacilityService.fetchFacilitiesOrderCount(facilities.map((facility: any) => facility.facilityId))])
-
-        facilities.map((facility: any) => {
-          const fulfillmentOrderLimit = facility.maximumOrderLimit
-          if (fulfillmentOrderLimit === 0) {
-            facility.orderLimitType = 'no-capacity'
-          } else if (fulfillmentOrderLimit) {
-            facility.orderLimitType = 'custom'
-          } else {
-            facility.orderLimitType = 'unlimited'
-          }
-
-          facility.orderCount = facilitiesOrderCount[facility.facilityId] ? facilitiesOrderCount[facility.facilityId] : 0;
-
-          const facilityGroupInformation = facilitiesGroupInformation[facility.facilityId]
-
-          if(facilityGroupInformation.length) {
-            facility.groupInformation = facilityGroupInformation
-            facility.sellOnline = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
-            facility.useOMSFulfillment = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
-            facility.generateShippingLabel = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
-            facility.allowPickup = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
-          }
-        })
-
-        if(payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.facilities.list)).concat(facilities)
+        if(payload.viewIndex && payload.viewIndex > 0) facilityList = JSON.parse(JSON.stringify(state.facilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -92,14 +110,47 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_LIST_UPDATED , { facilities, total });
+    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList.length ? facilityList : facilities, total });
+
+    if(facilities.length) {
+      await dispatch('fetchFacilitiesAdditionalInformation', payload)
+    }
+  },
+
+  async fetchFacilityAdditionalInformation({ commit, state }) {
+    const facility = JSON.parse(JSON.stringify(state.current))
+
+    const [facilityGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation([facility.facilityId]), FacilityService.fetchFacilitiesOrderCount([facility.facilityId])])
+
+    const fulfillmentOrderLimit = facility.maximumOrderLimit
+    if (fulfillmentOrderLimit === 0) {
+      facility.orderLimitType = 'no-capacity'
+    } else if (fulfillmentOrderLimit) {
+      facility.orderLimitType = 'custom'
+    } else {
+      facility.orderLimitType = 'unlimited'
+    }
+
+    facility.orderCount = facilityOrderCount[facility.facilityId] ? facilityOrderCount[facility.facilityId] : 0;
+
+    const facilityGroupInfo = facilityGroupInformation[facility.facilityId]
+
+    if(facilityGroupInfo.length) {
+      facility.groupInformation = facilityGroupInfo
+      facility.sellOnline = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
+      facility.useOMSFulfillment = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
+      facility.generateShippingLabel = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
+      facility.allowPickup = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
+    }
+
+    commit(types.FACILITY_CURRENT_UPDATED, facility)
   },
 
   async fetchCurrentFacility({ commit, state }, payload) {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
-    if(current?.facilityId) {
+    if(current?.facilityId && !payload.skipState) {
       commit(types.FACILITY_CURRENT_UPDATED, current);
       return;
     }
