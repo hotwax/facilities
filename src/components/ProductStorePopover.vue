@@ -65,7 +65,7 @@ export default defineComponent({
 
           // Removing store from primary Member group if primary.
           if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupId){
-            await this.removeProductFromPrimaryMember()
+            await this.revokePrimaryStatusFromStore()
           }
 
           // refetching product stores with updated roles
@@ -82,7 +82,7 @@ export default defineComponent({
     async makePrimary() {
       const productStoreId = this.currentProductStore.productStoreId
       if(this.primaryMember.facilityGroupId === productStoreId) {
-        this.removeProductFromPrimaryMember()
+        this.revokePrimaryStatusFromStore()
         popoverController.dismiss()
         return;
       }
@@ -90,8 +90,12 @@ export default defineComponent({
       let resp;
       let facilityGroupId;
 
+      // Fetching the facility group corresponding to the selected product store.
+      // There should be one facility group where facilityGroupId equals to productStoreId in order
+      // to manage primary product store of a facility.
       facilityGroupId = await this.fetchFacilityGroup(productStoreId)
 
+      // Create one facility group corresponding to the selected product store if not exists.
       if(!facilityGroupId) {
         facilityGroupId = await this.createFacilityGroup(productStoreId)
       } 
@@ -106,7 +110,7 @@ export default defineComponent({
           if(!hasError(resp)) {
             // Remove old primary store
             if(this.primaryMember.facilityGroupId) {
-              await this.removeProductFromPrimaryMember()
+              await this.revokePrimaryStatusFromStore()
             }
           } else {
             throw resp.data
@@ -162,7 +166,7 @@ export default defineComponent({
 
       return facilityGroupId
     },
-    async removeProductFromPrimaryMember() {
+    async revokePrimaryStatusFromStore() {
       let resp;
       try {
         resp = await FacilityService.updateFacilityToGroup({

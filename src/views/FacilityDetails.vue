@@ -561,7 +561,7 @@ export default defineComponent({
           } else {
             productStoresToRemove.map((store: any) => {
               if(store.productStoreId === this.primaryMember.facilityGroupId) {
-                this.removeProductFromPrimaryMember()
+                this.revokePrimaryStatusFromStore()
               }
             })
             showToast(translate("Product stores updated successfully."))
@@ -701,7 +701,7 @@ export default defineComponent({
         logger.error('Failed to update fulfillment setting', err)
       }
     },
-    async removeProductFromPrimaryMember() {
+    async revokePrimaryStatusFromStore() {
       let resp;
       try {
         resp = await FacilityService.updateFacilityToGroup({
