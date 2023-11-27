@@ -30,7 +30,7 @@ const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise
       url: "performFind", 
       method: "post",
       data: params
-    }) as any
+    }) as any;
 
     if(!hasError(resp) && resp.data.count > 0) {
       facilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
@@ -334,8 +334,8 @@ export const FacilityService = {
   createFacilityIdentification,
   createFacilityLocation,
   createProductStoreFacility,
-  deleteFacilityLocation,
   createShopifyShopLocation,
+  deleteFacilityLocation,
   deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,

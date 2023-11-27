@@ -17,10 +17,10 @@
 <script lang="ts">
 import {
   IonContent,
-  IonList,
-  IonListHeader,
   IonIcon,
   IonItem,
+  IonList,
+  IonListHeader,
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
@@ -37,17 +37,17 @@ export default defineComponent({
   name: "ProductStorePopover",
   components: {
     IonContent,
-    IonList,
-    IonListHeader,
     IonIcon,
-    IonItem
+    IonItem,
+    IonList,
+    IonListHeader
   },
   props: ['currentProductStore', 'facilityId', 'primaryMember'],
   computed: {
     ...mapGetters({
       facilityProductStores: 'facility/getFacilityProductStores',
-      productStores: 'util/getProductStores',
-      getProductStore: 'util/getProductStore'
+      getProductStore: 'util/getProductStore',
+      productStores: 'util/getProductStores'
     })
   },
   methods: {
@@ -146,9 +146,9 @@ export default defineComponent({
       let facilityGroupId;
       try {
         const resp = await FacilityService.createFacilityGroup({
-          facilityGroupTypeId: 'FEATURING',
+          facilityGroupId: productStoreId,
           facilityGroupName: this.getProductStore(productStoreId).storeName,
-          facilityGroupId: productStoreId
+          facilityGroupTypeId: 'FEATURING'
         })
   
         if(!hasError(resp)) {
