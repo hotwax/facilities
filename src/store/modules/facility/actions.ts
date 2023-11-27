@@ -195,6 +195,33 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
   },
 
+  async getFacilityProductStores({ commit }, params) {
+    let productStores = []
+    const payload = {
+      inputFields: {
+        facilityId: params.facilityId
+      },
+      viewSize: 100,
+      entityName: 'ProductStoreFacility',
+      filterByDate: 'Y',
+      fieldList: ['fromDate', 'productStoreId']
+    }
+
+    try {
+      const resp = await FacilityService.getFacilityProductStores(payload)
+
+      if(!hasError(resp) && resp.data.count) {
+        productStores = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    commit(types.FACILITY_PRODUCT_STORES_UPDATED , productStores);
+  },
+
   async fetchFacilityMappings({ commit }, payload) {
     let mappings = []
     try {

@@ -12,17 +12,16 @@
 
   <ion-content>
     <ion-list>
-      <ion-item>
+      <ion-item v-for="productStore in productStores" :key="productStore.productStoreId">
         <ion-label>
-          {{ "Demo Store" }}
-          <p>{{ "STORE_ID" }}</p>
+          {{ productStore.storeName }}
+          <p>{{ productStore.productStoreId }}</p>
         </ion-label>
-        <ion-checkbox slot="end" :checked="true" />
+        <ion-checkbox slot="end" :checked="isSelected(productStore.productStoreId)" @ionChange="toggleProductStoreSelection(productStore)" />
       </ion-item>
     </ion-list>
-
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button>
+      <ion-fab-button :disabled="isProductStoreUpdated()" @click="saveProductStores()">
         <ion-icon :icon="saveOutline" />  
       </ion-fab-button>
     </ion-fab>
@@ -49,6 +48,7 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
+import { mapGetters, useStore } from "vuex";
 
 export default defineComponent({
   name: "SelectProductStoreModal",
@@ -67,15 +67,59 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  computed: {
+    ...mapGetters({
+      facilityProductStores: 'facility/getFacilityProductStores',
+      productStores: 'util/getProductStores'
+    })
+  },
+  props: ["facilityId", "selectedProductStores"],
+  data() {
+    return {
+      selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),
+    }
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
+    },
+    async saveProductStores() {
+      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedFacility: any) => !this.selectedProductStores.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
+      const productStoresToRemove = this.selectedProductStores.filter((facility: any) => !this.selectedProductStoreValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
+
+      modalController.dismiss({
+        dismissed: true,
+        value: {
+          selectedProductStores: this.selectedProductStoreValues,
+          productStoresToCreate,
+          productStoresToRemove
+        }
+      });
+
+      modalController.dismiss()
+    },
+    toggleProductStoreSelection(updatedStore: any) {
+      let selectedStore = this.selectedProductStoreValues.some((store: any) => store.productStoreId === updatedStore.productStoreId);
+      if(selectedStore) {
+        this.selectedProductStoreValues = this.selectedProductStoreValues.filter((store: any) => store.productStoreId !== updatedStore.productStoreId);
+      } else {
+        this.selectedProductStoreValues.push(updatedStore);
+      }
+    },
+    isSelected(productStoreId: string) {
+      return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
+    },
+    isProductStoreUpdated() {
+      return this.selectedProductStoreValues.some((selectedStore: any) => this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId));
     }
   },
   setup() {
+    const store = useStore()
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },
