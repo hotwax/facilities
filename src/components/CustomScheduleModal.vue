@@ -75,11 +75,11 @@
     </ion-list>
   </ion-content>
 
-  <ion-modal :keep-contents-mounted="true">
+  <ion-modal class="date-time-modal" :keep-contents-mounted="true">
     <ion-datetime id="opentime" presentation="time" show-default-buttons hour-cycle="h12" />
   </ion-modal>
 
-  <ion-modal :keep-contents-mounted="true">
+  <ion-modal class="date-time-modal" :keep-contents-mounted="true">
     <ion-datetime id="endtime" presentation="time" show-default-buttons hour-cycle="h12" />
   </ion-modal>
 
@@ -156,9 +156,13 @@ export default defineComponent({
 });
 </script>
 
-
 <style scoped>
 ion-content {
   --padding-bottom: 80px;
+}
+ion-modal.date-time-modal {
+  --width: 290px;
+  --height: 440px;
+  --border-radius: 8px;
 }
 </style>

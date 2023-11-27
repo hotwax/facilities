@@ -63,6 +63,7 @@
             </ion-card>
           </div>
 
+          <!-- Todo: add functionality to operating hours card below. -->
           <ion-card v-if="isCalendarFound">
             <ion-card-header>
               <div>
@@ -115,7 +116,7 @@
               </ion-button>
             </ion-card-header>
             <ion-list lines="none">
-              <ion-item >
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Monday") }}</p>
                 </ion-label>

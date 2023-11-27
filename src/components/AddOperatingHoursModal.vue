@@ -94,7 +94,7 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true});
     },
     updateSelectedCalendar(ev: CustomEvent) {
-      this.selectedCalendarId= ev.detail.value
+      this.selectedCalendarId = ev.detail.value
       
     }
   },
