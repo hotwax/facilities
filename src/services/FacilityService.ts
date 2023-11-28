@@ -26,7 +26,7 @@ const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise
       facilityId: facilityIds,
       facilityId_op: "in"
     },
-    fieldList: ['facilityId', 'facilityGroupId', 'facilityGroupTypeId', "fromDate"],
+    fieldList: ['facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
     entityName: "FacilityGroupAndMember",
     distinct: 'Y',
     filterByDate: 'Y',
@@ -100,6 +100,22 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
   return facilitiesOrderCount;
 }
 
+const getFacilityParties = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   let facilityOrderCounts = {}, resp: any;
   try {
@@ -142,18 +158,42 @@ const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
   });
 }
 
-const updateFacility = async (payload: any): Promise<any> => {
+const addPartyToFacility = async (payload: any): Promise <any> => {
   return api({
-    url: "service/updateFacility",
+    url: "service/addPartyToFacility",
     method: "post",
     data: payload
+  });
+}
+
+const fetchFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload
   })
+}
+
+const removePartyFromFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/removePartyFromFacility",
+    method: "post",
+    data: payload
+  });
 }
 
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
+    data: payload
+  })
+}
+
+const getFacilityProductStores = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
     data: payload
   })
 }
@@ -166,9 +206,41 @@ const addFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityGroup = async(payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityGroup",
+    method: "post",
+    data: payload
+  })
+}
+
 const createFacilityLocation = async(payload: any): Promise<any> => {
   return api({
     url: "service/createFacilityLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const createProductStoreFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/createProductStoreFacility",
+    method: "post",
+    data: payload
+  });
+}
+
+const fetchFacilityPrimaryMember = async (payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
+const updateFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacility",
     method: "post",
     data: payload
   })
@@ -206,19 +278,109 @@ const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
   })
 }
 
+const updateProductStoreFacility = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/updateProductStoreFacility",
+    method: "post",
+    data: payload
+  });
+}
+
+const fetchFacilityMappings = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const createFacilityIdentification = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityIdentification",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityIdentification = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityIdentification",
+    method: "post",
+    data: payload
+  })
+}
+
+const createShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const deleteShopifyShopLocation = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/deleteShopifyShopLocation",
+    method: "post",
+    data: payload
+  })
+}
+
+const createEnumeration = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createEnumeration",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
+  addPartyToFacility,
+  createEnumeration,
   createFacilityLocation,
+  createFacilityGroup,
+  createFacilityIdentification,
   createFacilityPostalAddress,
+  createProductStoreFacility,
+  createShopifyShopLocation,
   deleteFacilityLocation,
+  deleteShopifyShopLocation,
+  fetchFacilities,
+  fetchFacilitiesOrderCount,
   fetchFacilityContactDetails,
   fetchFacilityGroupInformation,
+  fetchFacilityGroup,
   fetchFacilityLocations,
-  fetchFacilities,
+  fetchFacilityMappings,
   fetchFacilityOrderCounts,
-  fetchFacilitiesOrderCount,
+  fetchFacilityPrimaryMember,
+  fetchShopifyFacilityMappings,
+  getFacilityParties,
+  getFacilityProductStores,
+  getPartyRoleAndPartyDetails,
+  removePartyFromFacility,
   updateFacility,
+  updateFacilityIdentification,
   updateFacilityLocation,
   updateFacilityPostalAddress,
-  updateFacilityToGroup
+  updateFacilityToGroup,
+  updateProductStoreFacility,
+  updateShopifyShopLocation
 }

@@ -57,7 +57,8 @@ import { defineComponent } from "vue";
 import { mapGetters, useStore } from "vuex";
 import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { showToast, hasError } from "@/utils";
+import { showToast } from "@/utils";
+import { hasError } from "@/adapter";
 import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
 import { FacilityService } from '@/services/FacilityService'

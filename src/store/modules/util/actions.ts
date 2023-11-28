@@ -37,7 +37,7 @@ const actions: ActionTree<UtilState, RootState> = {
       return;
     }
 
-    let facilityTypes = []
+    let facilityTypes = {}
     const params = {
       inputFields: {
         ...payload
@@ -51,7 +51,11 @@ const actions: ActionTree<UtilState, RootState> = {
     try {
       const resp = await UtilService.fetchFacilityTypes(params)
       if (!hasError(resp)) {
-        facilityTypes = resp.data.docs
+        facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
+          facilityType[type.facilityTypeId] = type.description
+
+          return facilityType
+        }, {})
       } else {
         throw resp.data
       }
@@ -97,6 +101,79 @@ const actions: ActionTree<UtilState, RootState> = {
     }
 
     commit(types.UTIL_LOCATION_TYPES_UPDATED, locationTypes)
+  },
+  async fetchPartyRoles({ commit, state }) {
+    if (state.partyRoles.length) {
+      return
+    }
+
+    const partyRoles = {} as any
+    const params = {
+      inputFields: {
+        roleTypeGroupId: 'FACILITY_PARTY_ROLE'
+      },
+      viewSize: 100,
+      entityName: 'RoleTypeGroupMemberAndRoleType',
+      orderBy: 'sequenceNum',
+      filterByDate: 'Y',
+      fieldList: ['roleTypeId', 'description']
+    }
+
+    try {
+      const resp = await UtilService.fetchPartyRoles(params)
+      if (!hasError(resp)) {
+        resp.data.docs.map((role: any) => {
+          partyRoles[role.roleTypeId] = role.description
+        })
+
+        // pushing none explicitly to show on UI
+        partyRoles[''] = 'none'
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+    commit(types.UTIL_PARTY_ROLES_UPDATED, partyRoles)
+  },
+
+  async fetchExternalMappingTypes({ commit, state }, payload) {
+    const cachedExternalMappingTypes = JSON.parse(JSON.stringify(state.externalMappingTypes))
+
+    // not fetching external mapping type information again if already present, as it will not be changed so frequently
+    if(cachedExternalMappingTypes.length && !payload?.skipState) {
+      return;
+    }
+
+    let externalMappingTypes = []
+    const params = {
+      inputFields: {
+        enumTypeId: 'FACILITY_IDENTITY',
+        enumId: 'SHOPIFY_FAC_ID',
+        enumId_op: 'notEqual' // excluding shopify enum as we have included shopify as an hardcoded option
+      },
+      viewSize: 100,
+      noConditionFind: 'Y',
+      entityName: 'Enumeration',
+      fieldList: ['enumId', 'description']
+    } as any
+
+    try {
+      const resp = await UtilService.fetchExternalMappingTypes(params)
+      if (!hasError(resp)) {
+        externalMappingTypes = resp.data.docs.reduce((externalMappingType: any, type: any) => {
+          externalMappingType[type.enumId] = type.description
+
+          return externalMappingType
+        }, {})
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+
+    commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
   },
 
   async fetchCountries({ commit, dispatch }, payload) {
@@ -162,7 +239,9 @@ const actions: ActionTree<UtilState, RootState> = {
 
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
-    commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
+    commit(types.UTIL_FACILITY_TYPES_UPDATED, {})
+    commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
+    commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
   }
 }
 

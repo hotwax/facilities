@@ -1,7 +1,9 @@
 export default interface UtilState {
-  productStores: any[];
   facilityTypes: object;
   locationTypes: object;
+  externalMappingTypes: object;
+  productStores: any[];
+  partyRoles: any[];
   countries: any[];
   states: any;
 }
