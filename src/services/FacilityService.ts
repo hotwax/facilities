@@ -2,6 +2,14 @@ import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
 
+const createFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 const fetchFacilities = async(query: any): Promise <any> => {
   return api({
     url: "performFind", 
@@ -145,9 +153,17 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
 const fetchFacilityGroup = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
-    method: "POST",
+    method: "post",
     data: payload
-  })
+  });
+}
+
+const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
 }
 
 const getFacilityProductStores = async (payload: any): Promise<any> => {
@@ -270,7 +286,15 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
 
 const createFacility = async (payload: any): Promise<any> => {
   return api({
-    url: "service/createFacility",
+    url: "service/updateFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityPostalAddress",
     method: "post",
     data: payload
   })
@@ -285,28 +309,12 @@ const fetchFacilityMappings = async (payload: any): Promise<any> => {
   })
 }
 
-const createFacilityPostalAddress = async (payload: any): Promise<any> => {
-  return api({
-    url: "service/createFacilityPostalAddress",
-    method: "post",
-    data: payload
-  })
-}
-
 const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
     data: payload
   })
-}
-
-const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
-  return api({
-    url: "performFind",
-    method: "post",
-    data: payload
-  });
 }
 
 const createFacilityIdentification = async (payload: any): Promise<any> => {
@@ -362,15 +370,15 @@ export const FacilityService = {
   createFacilityGroup,
   createFacility,
   createFacilityLocation,
-  createProductStoreFacility,
+  addPartyToFacility,
+  createEnumeration,
+  createFacilityIdentification,
   createFacilityPostalAddress,
+  createProductStoreFacility,
   deleteFacilityLocation,
   fetchFacilityGroup,
   fetchFacilityLocations,
   fetchFacilityContactDetails,
-  addPartyToFacility,
-  createEnumeration,
-  createFacilityIdentification,
   createShopifyShopLocation,
   deleteShopifyShopLocation,
   fetchFacilities,
@@ -387,6 +395,7 @@ export const FacilityService = {
   updateFacility,
   updateFacilityIdentification,
   updateFacilityLocation,
+  updateFacilityPostalAddress,
   updateFacilityToGroup,
   updateProductStoreFacility,
   updateShopifyShopLocation

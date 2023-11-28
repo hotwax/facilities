@@ -12,9 +12,9 @@ const utilModule: Module<UtilState, RootState> = {
     productStores: [],
     facilityTypes: {},
     locationTypes: {},
+    externalMappingTypes: {},
     countries: [],
-    states: {},
-    externalMappingTypes: {}
+    states: {}
   },
   getters,
   actions,

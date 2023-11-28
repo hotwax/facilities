@@ -176,17 +176,8 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
   },
 
-  clearUtilState({ commit }) {
-    commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
-    commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
-    commit(types.UTIL_COUNTRIES_UPDATED, [])
-    commit(types.UTIL_STATES_UPDATED, {})
-    commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
-    commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
-  },
-
-  async fetchCountries({ commit, dispatch, state }, payload) {
-    let countries = []
+  async fetchCountries({ commit, dispatch }, payload) {
+    let countries = [] as any
 
     const params = {
       inputFields: {
@@ -200,13 +191,13 @@ const actions: ActionTree<UtilState, RootState> = {
     try {
       const resp = await UtilService.fetchCountries(params)
 
-      if (!hasError(resp)) {
+      if(!hasError(resp)) {
         countries = resp.data.docs
-        await dispatch('fetchStates', { geoId: payload.countryGeoId ? payload.countryGeoId : 'USA' })
+        dispatch('fetchStates', { geoId:  payload.countryGeoId ? payload.countryGeoId : 'USA'})
       } else {
         throw resp.data
       }
-    } catch (err) {
+    } catch(err) {
       logger.error(err)
     }
 
@@ -214,10 +205,11 @@ const actions: ActionTree<UtilState, RootState> = {
   },
 
   async fetchStates({ commit, state }, payload) {
-    if (payload.geoId in state.states) {
-      return
+    if(payload.geoId in state.states){
+      commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states: state.states[payload.geoId] })
+      return;
     }
-    let states = []
+    let states = [] as any
 
     const params = {
       inputFields: {
@@ -231,15 +223,27 @@ const actions: ActionTree<UtilState, RootState> = {
 
     try {
       const resp = await UtilService.fetchStates(params)
-      if (!hasError(resp)) {
+
+      if(!hasError(resp)) {
         states = resp.data.docs
+
       } else {
         throw resp.data
       }
-    } catch (err) {
+    } catch(err) {
       logger.error(err)
     }
+
     commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states })
+  },
+
+  clearUtilState({ commit }) {
+    commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
+    commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
+    commit(types.UTIL_COUNTRIES_UPDATED, [])
+    commit(types.UTIL_STATES_UPDATED, {})
+    commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
+    commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
   },
 }
 

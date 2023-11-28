@@ -250,7 +250,7 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchFacilityContactDetails({ commit }, payload) {
-    let postalAddress = {}
+    let postalAddress = {} as any
     const params = {
       inputFields: {
         contactMechPurposeTypeId: 'PRIMARY_LOCATION',
@@ -260,36 +260,27 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'latitude', 'longitude', 'postalCode', 'stateGeoId'],
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName'],
       viewSize: 1
     }
 
     try {
       const resp = await FacilityService.fetchFacilityContactDetails(params)
-      if (!hasError(resp)) {
-        const contactInfo = resp.data.docs[0]
-
+      if(!hasError(resp)) {
+        postalAddress = resp.data.docs[0]
         postalAddress = {
-          address1: contactInfo.address1,
-          address2: contactInfo.address2,
-          city: contactInfo.city,
-          contactMechId: contactInfo.contactMechId,
-          countryGeoId: contactInfo.countryGeoId,
-          countryGeoName: contactInfo.countryGeoName,
-          latitude: contactInfo.latitude,
-          longitude: contactInfo.longitude,
-          postalCode: contactInfo.postalCode,
-          stateGeoId: contactInfo.stateGeoId,
-          stateGeoName: contactInfo.stateGeoName
+          ...postalAddress,
+          stateProvinceGeoId: postalAddress.stateGeoId
         }
+        delete postalAddress.stateGeoId
       } else {
         throw resp.data
       }
-    } catch (err) {
+    } catch(err) {
       logger.error('Failed to fetch the postal address for the facility', err)
     }
 
-    commit(types.FACILITY_POSTAL_ADDRESS_UPDATED, postalAddress);
+    commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
   },
 
   updateQuery({ commit }, query) {
