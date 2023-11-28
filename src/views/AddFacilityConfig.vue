@@ -206,18 +206,33 @@ export default defineComponent({
       this.fulfillmentSettings[facilityGroupId] = !event.target.checked
     },
     async saveFulfillmentSettings() {
-      const responses = await Promise.allSettled(Object.keys(this.fulfillmentSettings)
-        .map(async (facilityGroupId: string) => {
-          if (this.fulfillmentSettings[facilityGroupId]) {
-            await FacilityService.addFacilityToGroup({
-              "facilityId": this.facilityId,
-              "facilityGroupId": facilityGroupId
-            })
-          }
+      const responses = []
+      if (this.fulfillmentSettings.PICKUP) {
+        const resp = await FacilityService.addFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": 'PICKUP'
         })
-      )
-      const hasError = responses.some((response: any) => response.status === 'rejected')
-      if (hasError) {
+        responses.push(resp)
+      }
+
+      if (this.fulfillmentSettings.FAC_GRP) {
+        const resp = await FacilityService.addFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": 'FAC_GRP'
+        })
+        responses.push(resp)
+      }
+
+      if (this.fulfillmentSettings.OMS_FULFILLMENT) {
+        const resp = await FacilityService.addFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": 'OMS_FULFILLMENT'
+        })
+        responses.push(resp)
+      }
+
+      const hasFailedResponse = responses.some((response: any) => hasError(response))
+      if (hasFailedResponse) {
         throw { message: translate('Failed to update some fulfillment settings.') }
       }
     },
