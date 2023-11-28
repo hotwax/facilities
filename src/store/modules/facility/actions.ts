@@ -157,7 +157,7 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchFacilityContactDetails({ commit }, payload) {
-    let postalAddress = {}
+    let postalAddress = {} as any
     const params = {
       inputFields: {
         contactMechPurposeTypeId: 'PRIMARY_LOCATION',
@@ -174,21 +174,12 @@ const actions: ActionTree<FacilityState, RootState> = {
     try {
       const resp = await FacilityService.fetchFacilityContactDetails(params)
       if(!hasError(resp)) {
-        const contactInfo = resp.data.docs[0]
-
+        postalAddress = resp.data.docs[0]
         postalAddress = {
-          address1: contactInfo.address1,
-          address2: contactInfo.address2,
-          city: contactInfo.city,
-          contactMechId: contactInfo.contactMechId,
-          countryGeoId: contactInfo.countryGeoId,
-          countryGeoName: contactInfo.countryGeoName,
-          latitude: contactInfo.latitude,
-          longitude: contactInfo.longitude,
-          postalCode: contactInfo.postalCode,
-          stateGeoId: contactInfo.stateGeoId,
-          stateGeoName: contactInfo.stateGeoName
+          ...postalAddress,
+          stateProvinceGeoId: postalAddress.stateGeoId
         }
+        delete postalAddress.stateGeoId
       } else {
         throw resp.data
       }

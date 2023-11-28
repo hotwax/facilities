@@ -128,18 +128,8 @@ export default defineComponent({
 
       let resp;
 
-      const payload = {
-        address1: this.geoPoint.address1,
-        city: this.geoPoint.city,
-        contactMechId: this.geoPoint.contactMechId,
-        facilityId: this.facilityId,
-        latitude: this.geoPoint.latitude,
-        longitude: this.geoPoint.longitude,
-        postalCode: this.geoPoint.postalCode
-      }
-
       try {
-        resp = await FacilityService.updateFacilityPostalAddress(payload)
+        resp = await FacilityService.updateFacilityPostalAddress(this.geoPoint)
 
         if(!hasError(resp)) {
           showToast(translate("Facility latitude & longitude updated successfully."))
