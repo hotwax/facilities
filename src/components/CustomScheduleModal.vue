@@ -17,51 +17,15 @@
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
       <ion-label>{{ translate("Daily timings") }}</ion-label>
-      <ion-toggle :isChecked="isDailyTimingsChecked" @click="isDailyTimingsChecked = !isDailyTimingsChecked" slot="end"/>
+      <ion-toggle :isChecked="isDailyTimingsChecked" @click="updateDailyTimings" slot="end"/>
     </ion-item>
 
     <ion-list lines="none" v-if="isDailyTimingsChecked">
-      <ion-item >
+      <ion-item v-for="(day, index) in days" :key="index">
         <ion-label>
-          <p>{{ translate("Monday") }}</p>
+          <p>{{ translate(day) }}</p>
         </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item>
-        <ion-label>
-          <p>{{ translate("Tuesday") }}</p>
-        </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item>
-        <ion-label>
-          <p>{{ translate("Wednesday") }}</p>
-        </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item>
-        <ion-label>
-          <p>{{ translate("Thursday") }}</p>
-        </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item>
-        <ion-label>
-          <p>{{ translate("Friday") }}</p>
-        </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item>
-        <ion-label>
-          <p>{{ translate("Saturday") }}</p>
-        </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
-      </ion-item>
-      <ion-item>
-        <ion-label>
-          <p>{{ translate("Sunday") }}</p>
-        </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
+        <ion-datetime-button @click="selectedDay = 'start' + day" :datetime="'start' + day" />-<ion-datetime-button @click="selectedDay = 'end'+day" :datetime="'end' + day" />
       </ion-item>
     </ion-list>
 
@@ -70,17 +34,17 @@
         <ion-label>
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
-        <ion-datetime-button datetime="opentime" />-<ion-datetime-button datetime="endtime" />
+        <ion-datetime-button @click="selectedDay = 'startTime'" datetime="startTime" />-<ion-datetime-button @click="selectedDay = 'endTime'" datetime="endTime" />
       </ion-item>
     </ion-list>
   </ion-content>
 
-  <ion-modal class="date-time-modal" :keep-contents-mounted="true">
-    <ion-datetime id="opentime" presentation="time" show-default-buttons hour-cycle="h12" />
+  <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
+    <ion-datetime :id="'start' + day" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event)" />
   </ion-modal>
 
-  <ion-modal class="date-time-modal" :keep-contents-mounted="true">
-    <ion-datetime id="endtime" presentation="time" show-default-buttons hour-cycle="h12" />
+  <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
+    <ion-datetime :id="'end' + day" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event)" />
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -138,13 +102,22 @@ export default defineComponent({
   },
   data() {
     return {
-      isDailyTimingsChecked: false as boolean
+      isDailyTimingsChecked: false as boolean,
+      days: ['Time'],
+      selectedDay: ''
     }
   },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
-    }
+    },
+    updateDailyTimings() {
+      this.isDailyTimingsChecked = !this.isDailyTimingsChecked
+      this.days = this.isDailyTimingsChecked ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] : ['Time']
+    },
+    updateTime(ev: CustomEvent) {
+      console.log('Selected: ', this.selectedDay, " - ", ev.detail.value);
+    } 
   },
   setup() {
     return {

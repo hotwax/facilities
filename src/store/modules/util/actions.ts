@@ -5,6 +5,8 @@ import UtilState from './UtilState'
 import * as types from './mutation-types'
 import { hasError } from '@/adapter'
 import logger from '@/logger'
+import { showToast } from '@/utils'
+import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<UtilState, RootState> = {
   async fetchProductStores({ commit }) {
@@ -174,6 +176,60 @@ const actions: ActionTree<UtilState, RootState> = {
     }
 
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
+  },
+  
+  async fetchUtilCalendars({ commit, dispatch }, payload) {
+    let calendars = []
+    const params = {
+      inputFields: {
+        facilityId: payload.facilityId
+      },
+      entityName: "TechDataCalendar",
+      viewSize: 100,
+      noConditionFind: 'Y'
+    }
+    
+    try {
+      const resp = await UtilService.fetchCalendars(params)
+      
+      if(!hasError(resp) && resp.data.count) {
+        calendars = resp.data.docs
+        dispatch('fetchCalendarWeek', {calendWeekId: calendars[0].calendarWeekId})
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      showToast(translate("Something went wrong"))
+      logger.error('Failed to fetch facility calendars', err)
+    }
+    
+    commit(types.UTIL_CALENDARS_UPDATED, calendars)
+  },
+  
+  async fetchCalendarWeek({ commit }, payload) {
+    let calendars = []
+    
+    const params = {
+      inputFields: {
+        calendarWeekId: payload.calendarWeekId
+      },
+      entityName: "TechDataCalendarWeek",
+      viewSize: 100,
+      noConditionFind: 'Y'
+    }
+
+    try {
+      const resp = await UtilService.fetchCalendarWeek(params)
+      
+      if(!hasError(resp) && resp.data.count) {
+        calendars = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      showToast(translate("Something went wrong"))
+      logger.error('Failed to fetch facility calendars', err)
+    }
   },
 
   clearUtilState({ commit }) {

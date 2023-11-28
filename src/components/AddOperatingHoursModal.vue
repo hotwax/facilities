@@ -9,34 +9,24 @@
       <ion-title>{{ translate("Add operating hours") }}</ion-title>
     </ion-toolbar>
   </ion-header>
-  
   <ion-content>
-    <ion-accordion-group :value="selectedCalendarId" @ionChange="updateSelectedCalendar($event)">
-      <ion-radio-group :value="selectedCalendarId">
-        <ion-accordion value="first">
+    <ion-accordion-group v-model="selectedCalendarId" >
+      <ion-radio-group v-model="selectedCalendarId">
+        <ion-accordion v-for="calendar in calendars" :key="calendar.calendarId" :value="calendar.calendarId">
           <ion-item slot="header" color="light">
-            <ion-radio value="first" slot="start" />
-            <ion-label>
-              {{ "Calendar 1" }}
+            <ion-radio :value="calendar.calendarId" slot="start" />
+            <ion-label class="ion-text-wrap">
+              {{ calendar.description }}
             </ion-label>
           </ion-item>
           <div class="ion-padding" slot="content">First Content</div>
-        </ion-accordion>
-        <ion-accordion value="second">
-          <ion-item slot="header" color="light">
-            <ion-radio value="second" slot="start" />
-            <ion-label>
-              {{ "Calendar 2" }}
-            </ion-label>
-          </ion-item>
-          <div class="ion-padding" slot="content">Second Content</div>
         </ion-accordion>
       </ion-radio-group>
     </ion-accordion-group>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button>
+    <ion-fab-button @click="addOperatingHours">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -62,8 +52,14 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
+import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
+import { FacilityService } from "@/services/FacilityService";
+import { DateTime } from "luxon";
+import { hasError } from "@/adapter";
+import logger from "@/logger";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "AddOperatingHoursModal",
@@ -86,22 +82,74 @@ export default defineComponent({
   },
   data() {
     return {
-      selectedCalendarId:'second'
+      selectedCalendarId: 'DEFAULT'
     }
+  },
+  props: ["facilityId"],
+  computed: {
+    ...mapGetters({
+      calendars: 'util/getCalendars',
+      facilityCalendar: 'facility/getFacilityCalendar'
+    })
   },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
     },
-    updateSelectedCalendar(ev: CustomEvent) {
-      this.selectedCalendarId = ev.detail.value
-      
+    async addOperatingHours() {
+      let resp;
+      try {
+        resp = await this.removeCalendarFromFacility()
+
+        if(hasError(resp)) {
+          throw resp.data;
+        }
+      } catch(err) {
+        showToast(translate("Failed to associate calendar to the facility."))
+        logger.error(err)
+        modalController.dismiss()
+        return;
+      }
+
+      if(this.selectedCalendarId && this.selectedCalendarId !== this.facilityCalendar.calendarId) {
+        try {
+          resp = await FacilityService.associateCalendarToFacility({
+            storeId: this.facilityId,
+            calendarId: this.selectedCalendarId,
+            fromDateStr: DateTime.now().toFormat('MM/dd/yyyy')
+          })
+
+          if(!hasError(resp)) {
+            showToast(translate("Successfully associated calendar to the facility."))
+          } else {
+            throw resp.data
+          }
+        } catch(err) {
+          showToast(translate("Failed to associate calendar to the facility."))
+          logger.error(err)
+        }
+      }
+
+      this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+      modalController.dismiss()
+    },
+    async removeCalendarFromFacility() {
+      return await FacilityService.associateCalendarToFacility({
+        storeId: this.facilityId,
+        calendarId: this.facilityCalendar.calendarId,
+        thruDateStr: DateTime.now().toFormat('MM/dd/yyyy'),
+        facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
+        fromDateStr: DateTime.fromMillis(this.facilityCalendar.fromDate).toFormat('MM/dd/yyyy')
+      })
     }
   },
   setup() {
+    const store = useStore();
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },

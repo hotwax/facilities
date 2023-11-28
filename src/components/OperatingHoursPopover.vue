@@ -28,7 +28,8 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
-  modalController
+  modalController,
+  popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
@@ -44,10 +45,16 @@ export default defineComponent({
     IonList,
     IonListHeader
   },
+  props: ["facilityId"],
   methods: {
     async addOperatingHours() {
       const addOperatingHoursModal = await modalController.create({
-        component: AddOperatingHoursModal
+        component: AddOperatingHoursModal,
+        componentProps: { facilityId: this.facilityId }
+      })
+
+      addOperatingHoursModal.onDidDismiss().then(() => {
+        popoverController.dismiss()
       })
       
       addOperatingHoursModal.present()

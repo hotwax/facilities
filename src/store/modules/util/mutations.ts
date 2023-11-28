@@ -3,6 +3,9 @@ import UtilState from './UtilState'
 import * as types from './mutation-types'
 
 const mutations: MutationTree<UtilState> = {
+  [types.UTIL_CALENDARS_UPDATED](state, payload) {
+    state.calendars = payload
+  },
   [types.UTIL_PRODUCT_STORES_UPDATED](state, payload) {
     state.productStores = payload
   },

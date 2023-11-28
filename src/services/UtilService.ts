@@ -44,7 +44,25 @@ const fetchExternalMappingTypes = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchCalendars = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const fetchCalendarWeek = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 export const UtilService = {
+  fetchCalendars,
+  fetchCalendarWeek,
   fetchExternalMappingTypes,
   fetchFacilityTypes,
   fetchLocationTypes,

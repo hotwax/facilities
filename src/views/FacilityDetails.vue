@@ -64,7 +64,7 @@
           </div>
 
           <!-- Todo: add functionality to operating hours card below. -->
-          <ion-card v-if="isCalendarFound">
+          <ion-card v-if="!facilityCalendar.calendarId">
             <ion-card-header>
               <div>
                 <ion-card-title>
@@ -75,29 +75,21 @@
                 </ion-card-subtitle>
               </div>
             </ion-card-header>
-            <ion-radio-group value="first">
-              <ion-item lines="none">
-                <ion-label>calendar name</ion-label>
-                <ion-radio value="first"/>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label>calendar name</ion-label>
-                <ion-radio value="second"/>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-label>calendar name</ion-label>
-                <ion-radio value="third"/>
+            <ion-radio-group v-model="selectedCalendarId">
+              <ion-item v-for="(calendar, index) in calendars" :key="index" lines="none">
+                <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
+                <ion-radio :value="calendar.calendarId"/>
               </ion-item>
             </ion-radio-group>
-            <ion-item button lines="none"  @click="addOperatingHours">
-              <ion-label>{{ "5 Others" }}</ion-label>
+            <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
+              <ion-label> {{ calendars.length - 3 }} {{ "Others" }}</ion-label>
               <ion-icon :icon="chevronForwardOutline" />
             </ion-item>
             <ion-item button lines="none" @click="addCustomSchedule">
               <ion-label>{{ translate("Custom schedule") }}</ion-label>
               <ion-icon color="primary" :icon="addCircleOutline" button />
             </ion-item>
-            <ion-button fill="outline" expand="block">
+            <ion-button fill="outline" expand="block" @click="associateCalendarToFacility">
               {{ translate("Add operating hours") }}
               <ion-icon slot="end" :icon="addCircleOutline" />
             </ion-button>
@@ -108,7 +100,7 @@
               <div>
                 <ion-text>{{ "Operating Hours" }}</ion-text>
                 <ion-card-title>
-                  {{ "<calendar hours>" }}
+                  {{ facilityCalendar.description }}
                 </ion-card-title>
               </div>
               <ion-button color="medium" fill="clear" class="ion-no-padding" @click="openOperatingHoursPopover">
@@ -120,43 +112,43 @@
                 <ion-label>
                   <p>{{ translate("Monday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.mondayStartTime ? getOpenEndTime(facilityCalendar.mondayStartTime, facilityCalendar.mondayCapacity) : '-' }} </ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
                   <p>{{ translate("Tuesday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.tuesdayStartTime ? getOpenEndTime(facilityCalendar.tuesdayStartTime, facilityCalendar.tuesdayCapacity) : '-' }}</ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
                   <p>{{ translate("Wednesday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.wednesdayStartTime ? getOpenEndTime(facilityCalendar.wednesdayStartTime, facilityCalendar.wednesdayCapacity) : '-' }}</ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
                   <p>{{ translate("Thursday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.thursdayStartTime ? getOpenEndTime(facilityCalendar.thursdayStartTime, facilityCalendar.thursdayCapacity) : '-' }}</ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
                   <p>{{ translate("Friday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.fridayStartTime ? getOpenEndTime(facilityCalendar.fridayStartTime, facilityCalendar.fridayCapacity) : '-' }}</ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
                   <p>{{ translate("Saturday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.saturdayStartTime ? getOpenEndTime(facilityCalendar.saturdayStartTime, facilityCalendar.saturdayCapacity) : '-' }}</ion-label>
               </ion-item>
               <ion-item>
                 <ion-label>
                   <p>{{ translate("Sunday") }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ "7:30am - 8:00pm" }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar.sundayStartTime ? getOpenEndTime(facilityCalendar.sundayStartTime, facilityCalendar.sundayCapacity) : '-' }}</ion-label>
               </ion-item>
             </ion-list>
           </ion-card>
@@ -510,14 +502,17 @@ export default defineComponent({
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
-      isCalendarFound: true 
+      isCalendarFound: true,
+      selectedCalendarId: 'DEFAULT'
     }
   },
   computed: {
     ...mapGetters({
       current: 'facility/getCurrent',
+      calendars: 'util/getCalendars',
       locationTypes: 'util/getLocationTypes',
       externalMappingTypes: 'util/getExternalMappingTypes',
+      facilityCalendar: 'facility/getFacilityCalendar',
       facilityParties: 'facility/getFacilityParties',
       partyRoles: 'util/getPartyRoles'
     })
@@ -526,8 +521,11 @@ export default defineComponent({
   async ionViewWillEnter() {
     await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })])
+    await this.store.dispatch('util/fetchUtilCalendars', { facilityId: this.facilityId })
+    await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
+    this.facilityCalendar
   },
   methods: {
     goToLink(link: string) {
@@ -542,6 +540,28 @@ export default defineComponent({
         showBackdrop: false
       });
       return popover.present()
+    },
+    async associateCalendarToFacility() {
+      let resp;
+
+       try {
+        resp = await FacilityService.associateCalendarToFacility({
+          storeId: this.facilityId,
+          calendarId: this.selectedCalendarId,
+          fromDateStr: DateTime.now().toFormat('MM/dd/yyyy'),
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate("Successfully associated calendar to the facility."))
+          
+          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate("Failed to associate calendar to the facility."))
+        logger.error(err)
+      }
     },
     async addAddress() {
       const addAddressModal = await modalController.create({
@@ -613,6 +633,7 @@ export default defineComponent({
     async openOperatingHoursPopover(ev: Event) {
       const operatingHoursPopover = await popoverController.create({
         component: OperatingHoursPopover,
+        componentProps: { facilityId: this.facilityId },
         event: ev,
         showBackdrop: false
       });
@@ -820,6 +841,12 @@ export default defineComponent({
 
       await popoverController.dismiss()
       customMappingModal.present()
+    },
+    getOpenEndTime(startTime: any, capacity: any) {
+      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
+      const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
+      return `${openTime} - ${endTime}`
+      
     }
   },
   setup() {

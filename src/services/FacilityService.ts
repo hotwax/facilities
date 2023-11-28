@@ -182,6 +182,14 @@ const addFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const associateCalendarToFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/storeCalendarAssocDataSetup",
+    method: "post",
+    data: payload
+  })
+}
+
 const createFacilityLocation = async(payload: any): Promise<any> => {
   return api({
     url: "service/createFacilityLocation",
@@ -278,9 +286,18 @@ const createEnumeration = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchFacilityCalendars = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
+  associateCalendarToFacility,
   createEnumeration,
   createFacilityIdentification,
   createFacilityLocation,
@@ -289,6 +306,7 @@ export const FacilityService = {
   deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,
+  fetchFacilityCalendars,
   fetchFacilityGroupInformation,
   fetchFacilityLocations,
   fetchFacilityMappings,

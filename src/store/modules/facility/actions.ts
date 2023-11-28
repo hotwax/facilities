@@ -195,6 +195,33 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
   },
 
+  async fetchFacilityCalendar({commit}, payload) {
+    let resp;
+    let facilityCalendar = {}
+    try {
+      const params = {
+        inputFields: {
+          facilityId: payload.facilityId
+        },
+        entityName: "StoreOperatingHours",
+        filterByDate: 'Y',
+        // viewSize: 1
+      }
+
+      resp = await FacilityService.fetchFacilityCalendars(params)
+
+      if(!hasError(resp) && resp.data.count) {
+        facilityCalendar = resp.data.docs[0]
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error(err)
+    }
+
+    commit(types.FACILITY_CALENDAR_UPDATED, facilityCalendar)
+  },
+
   async fetchFacilityMappings({ commit }, payload) {
     let mappings = []
     try {
