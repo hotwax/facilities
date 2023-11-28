@@ -45,14 +45,14 @@ const actions: ActionTree<UtilState, RootState> = {
       viewSize: 100,
       noConditionFind: 'Y',
       entityName: 'FacilityType',
-      fieldList: ['facilityTypeId', 'description']
+      fieldList: ['facilityTypeId', 'description', 'parentTypeId']
     } as any
 
     try {
       const resp = await UtilService.fetchFacilityTypes(params)
       if (!hasError(resp)) {
         facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
-          facilityType[type.facilityTypeId] = type.description
+          facilityType[type.facilityTypeId] = { description: type.description, parentTypeId: type.parentTypeId }
 
           return facilityType
         }, {})
@@ -239,10 +239,12 @@ const actions: ActionTree<UtilState, RootState> = {
 
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
-    commit(types.UTIL_FACILITY_TYPES_UPDATED, {})
+    commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
+    commit(types.UTIL_COUNTRIES_UPDATED, [])
+    commit(types.UTIL_STATES_UPDATED, {})
     commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
-  }
+  },
 }
 
 export default actions;

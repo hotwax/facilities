@@ -41,7 +41,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       const facilityGroupInformation = facilitiesGroupInformation[facility.facilityId]
 
-      if(facilityGroupInformation.length) {
+      if(facilityGroupInformation?.length) {
         facility.groupInformation = facilityGroupInformation
         facility.sellOnline = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
         facility.useOMSFulfillment = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
@@ -206,6 +206,10 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
+    commit(types.FACILITY_CURRENT_UPDATED, facility);
+  },
+
+  updateCurrentFacility({ commit }, facility) {
     commit(types.FACILITY_CURRENT_UPDATED, facility);
   },
 

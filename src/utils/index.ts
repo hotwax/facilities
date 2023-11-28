@@ -40,4 +40,10 @@ const copyToClipboard = async (value: string, text?: string) => {
   });
 }
 
-export { copyToClipboard, showToast }
+const isValidPassword = (password : string) => {
+  // Regular expression pattern for a valid password
+  const passwordPattern = /^.*(?=.{5,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!@#$%^&*]).*$/;
+  return passwordPattern.test(password);
+}
+
+export { copyToClipboard, isValidPassword, showToast }

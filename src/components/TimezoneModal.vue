@@ -6,10 +6,10 @@
           <ion-icon :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ $t("Select time zone") }}</ion-title>
+      <ion-title>{{ translate("Select time zone") }}</ion-title>
     </ion-toolbar>
     <ion-toolbar>
-      <ion-searchbar @ionFocus="selectSearchBarText($event)" :placeholder="$t('Search time zones')"  v-model="queryString" @keyup.enter="queryString = $event.target.value; findTimeZone()" @keydown="preventSpecialCharacters($event)" />
+      <ion-searchbar @ionFocus="selectSearchBarText($event)" :placeholder="translate('Search time zones')"  v-model="queryString" @keyup.enter="queryString = $event.target.value; findTimeZone()" @keydown="preventSpecialCharacters($event)" />
     </ion-toolbar>
   </ion-header>
 
@@ -17,12 +17,12 @@
     <form @keyup.enter="setUserTimeZone">
       <div class="empty-state" v-if="isLoading">
         <ion-spinner name="crescent" />
-        <p>{{ $t("Fetching TimeZones")}}</p>
+        <p>{{ translate("Fetching TimeZones")}}</p>
       </div>
 
       <!-- Empty state -->
       <div class="empty-state" v-else-if="filteredTimeZones.length === 0">
-        <p>{{ $t("No time zone found")}}</p>
+        <p>{{ translate("No time zone found")}}</p>
       </div>
 
       <!-- Timezones -->
@@ -74,6 +74,7 @@ import { UserService } from "@/services/UserService";
 import { hasError } from '@/adapter'
 import { DateTime } from 'luxon';
 import logger from "@/logger";
+import { translate } from "@hotwax/dxp-components";
 
 export default defineComponent({
   name: "TimeZoneModal",
@@ -153,6 +154,7 @@ export default defineComponent({
     return {
       closeOutline,
       saveOutline,
+      translate,
       store
     };
   }

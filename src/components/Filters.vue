@@ -21,7 +21,9 @@
           <ion-label>{{ translate("Type") }}</ion-label>
           <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
             <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-            <ion-select-option :value="facilityType" :key="facilityType" v-for="(description, facilityType) in facilityTypes">{{ description }}</ion-select-option>
+            <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypes">
+              {{ type.description }}
+            </ion-select-option>
           </ion-select>
         </ion-item>
       </ion-list>

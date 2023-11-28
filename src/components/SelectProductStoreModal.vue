@@ -69,8 +69,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
+      productStores: 'util/getProductStores',
       facilityProductStores: 'facility/getFacilityProductStores',
-      productStores: 'util/getProductStores'
     })
   },
   props: ["facilityId", "selectedProductStores"],

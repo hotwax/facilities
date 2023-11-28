@@ -77,9 +77,9 @@ export const UtilService = {
   fetchExternalMappingTypes,
   fetchFacilityTypes,
   fetchLocationTypes,
-  fetchPartyRoles,
   fetchProductStores,
   fetchStates,
-  generateLatLong
+  generateLatLong,
+  fetchPartyRoles,
 }
 

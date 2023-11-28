@@ -13,6 +13,15 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_CURRENT_UPDATED](state, payload) {
     state.current = payload
   },
+  [types.FACILITY_CURRENT_LOCATION_UPDATED](state, payload) {
+    state.current.locations = payload
+  },
+  [types.FACILITY_POSTAL_ADDRESS_UPDATED](state, payload) {
+    state.current.postalAddress = payload
+  },
+  [types.FACILITY_PRODUCT_STORES_UPDATED](state, payload) {
+    state.current.productStores = payload
+  },
   [types.FACILITY_LOCATIONS_UPDATED](state, payload) {
     state.current.locations = payload
   },
