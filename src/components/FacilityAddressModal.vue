@@ -106,22 +106,15 @@ export default defineComponent({
   },
   data() {
     return {
-      address: {
-        address1: '',
-        address2: '',
-        city: '',
-        countryGeoId: '',
-        stateProvinceGeoId: '',
-        postalCode: ''
-      } as any
+      address: {} as any
     }
   },
   props: ['facilityId'],
-  async mounted() {
-    await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
-  },
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
+  },
+  async mounted() {
+    await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
   },
   methods: {
     closeModal() {
