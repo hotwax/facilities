@@ -64,19 +64,19 @@
           <ion-list>
             <ion-item>
               <ion-label>{{ translate("Sell Inventory Online") }}</ion-label>
-              <ion-toggle v-model="fulfillmentSettings.FAC_GRP" slot="end" @click="updateFulfillmentSettings($event, 'FAC_GRP')"/>
+              <ion-toggle :value="fulfillmentSettings.FAC_GRP" slot="end" @click="updateFulfillmentSettings($event, 'FAC_GRP')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
-              <ion-toggle v-model="fulfillmentSettings.OMS_FULFILLMENT" slot="end" @click="updateFulfillmentSettings($event, 'OMS_FULFILLMENT')"/>
+              <ion-toggle :value="fulfillmentSettings.OMS_FULFILLMENT" slot="end" @click="updateFulfillmentSettings($event, 'OMS_FULFILLMENT')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle v-model="fulfillmentSettings.PICKUP" slot="end" @click="updateFulfillmentSettings($event, 'PICKUP')"/>
+              <ion-toggle :value="fulfillmentSettings.PICKUP" slot="end" @click="updateFulfillmentSettings($event, 'PICKUP')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Create login credentials") }}</ion-label>
-              <ion-toggle v-model="createLoginCreds" @click="createLoginCreds = !createLoginCreds" slot="end" />
+              <ion-toggle :value="createLoginCreds" @click="createLoginCreds = !createLoginCreds" slot="end" />
             </ion-item>
             <ion-item v-if="createLoginCreds" ref="password">
               <ion-label position="floating">
@@ -188,7 +188,7 @@ export default defineComponent({
         FAC_GRP: false,
         OMS_FULFILLMENT: false
       } as any,
-      createLoginCreds: false,
+      createLoginCreds: false as any,
       password: '',
       selectedProductStores: [] as any,
       primaryProductStoreId: ''
@@ -324,6 +324,8 @@ export default defineComponent({
           viewSize: 100
         })
 
+        // count check to handle only errors and not 404 (when facility group doesn't exist)
+        // as we create it below in case it doesn't exist
         if (hasError(resp) && resp?.data?.count !== 0) {
           throw { message: translate('Failed to make product store as primary.') }
         }
