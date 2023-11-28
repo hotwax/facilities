@@ -13,7 +13,7 @@
   <ion-content>
     <form @keyup.enter="saveGeoPoint">
       <ion-item class="ion-margin-bottom">
-        <ion-input placeholder="Zipcode" v-model="geoPoint.postalCode" />
+        <ion-input :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
         <ion-button fill="outline" @click="generateLatLong">
           {{ translate("Generate") }}
           <ion-icon slot="end" :icon="colorWandOutline" />
