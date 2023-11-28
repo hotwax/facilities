@@ -294,6 +294,14 @@ const fetchFacilityCalendars = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityCalendar = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/calendarDataSetup",
+    method: "post",
+    data: payload
+  })
+}
+
 const removeFacilityCalendar = async (payload: any): Promise<any> => {
   return api({
     url: "service/expireFacilityCalendar",
@@ -307,6 +315,7 @@ export const FacilityService = {
   addPartyToFacility,
   associateCalendarToFacility,
   createEnumeration,
+  createFacilityCalendar,
   createFacilityIdentification,
   createFacilityLocation,
   createShopifyShopLocation,

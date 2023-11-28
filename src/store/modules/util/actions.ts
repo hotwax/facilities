@@ -222,6 +222,7 @@ const actions: ActionTree<UtilState, RootState> = {
       
       if(!hasError(resp) && resp.data.count) {
         calendars = resp.data.docs
+        
       } else {
         throw resp.data
       }

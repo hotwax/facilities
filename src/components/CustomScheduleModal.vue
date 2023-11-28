@@ -13,7 +13,7 @@
   <ion-content>
     <ion-item>
       <ion-label>{{ translate("Name") }}</ion-label>
-      <ion-input />
+      <ion-input v-model="week.description" />
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
       <ion-label>{{ translate("Daily timings") }}</ion-label>
@@ -25,7 +25,13 @@
         <ion-label>
           <p>{{ translate(day) }}</p>
         </ion-label>
-        <ion-datetime-button :datetime="'start' + day" />-<ion-datetime-button :datetime="'end' + day" />
+        <ion-datetime-button :datetime="day+'StartTime'">
+          <ion-note :slot="week[day+'StartTime'] ? '' : 'time-target'">{{ "Start Time" }}</ion-note>
+        </ion-datetime-button>
+        -
+        <ion-datetime-button :datetime="day+'EndTime'">
+          <ion-note :slot="week[day+'EndTime'] ? '' : 'time-target'">{{ "End Time" }}</ion-note>
+        </ion-datetime-button>
       </ion-item>
     </ion-list>
 
@@ -34,21 +40,27 @@
         <ion-label>
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
-        <ion-datetime-button datetime="startTime" /> - <ion-datetime-button datetime="endTime" />
+        <ion-datetime-button datetime="DailyStartTime">
+          <ion-note :slot="week.DailyStartTime ? '' : 'time-target'">{{ "Start Time" }}</ion-note>
+        </ion-datetime-button>
+        -
+        <ion-datetime-button datetime="DailyEndTime">
+          <ion-note :slot="week.DailyEndTime ? '' : 'time-target'">{{ "End Time" }}</ion-note>
+        </ion-datetime-button>
       </ion-item>
     </ion-list>
   </ion-content>
 
-  <ion-modal class="date-time-modal"  :keep-contents-mounted="true">
-    <ion-datetime :id="'start' + day" v-for="(day, index) in days" :key="index" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day)" />
+  <ion-modal class="date-time-modal" v-for="(day, index) in days"  :key="index" :keep-contents-mounted="true">
+    <ion-datetime :id="day+'StartTime'" v-model="week[day+'StartTime']" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day+'StartTime')" />
   </ion-modal>
 
-  <ion-modal class="date-time-modal"  :keep-contents-mounted="true">
-    <ion-datetime :id="'end' + day" v-for="(day, index) in days" :key="index" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day)" />
+  <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
+    <ion-datetime :id="day+'EndTime'" v-model="week[day+'EndTime']" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day+'EndTime')" />
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button>
+    <ion-fab-button @click="saveCustomSchedule">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -78,6 +90,11 @@ import {
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
+import { FacilityService } from "@/services/FacilityService";
+import logger from "@/logger";
+import { hasError } from "@hotwax/oms-api";
+import { DateTime } from "luxon";
+import { mapGetters } from "vuex";
 
 export default defineComponent({
   name: "CustomScheduleModal",
@@ -103,9 +120,14 @@ export default defineComponent({
   data() {
     return {
       isDailyTimingsChecked: false as boolean,
-      days: ['Time'],
+      days: ['Daily'],
       week: {} as any,
     }
+  },
+  computed: {
+    ...mapGetters({
+      userProfile: 'user/getUserProfile'
+    })
   },
   methods: {
     closeModal() {
@@ -113,13 +135,42 @@ export default defineComponent({
     },
     updateDailyTimings() {
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
-      this.days = this.isDailyTimingsChecked ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] : ['Time']
+      this.days = this.isDailyTimingsChecked ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] : ['Daily']
     },
     updateTime(ev: CustomEvent, day: any) {
       if(this.week[day]) {
         this.week.day = ev.detail.value
       }
-    } 
+    },
+    async saveCustomSchedule() {
+      let resp;
+      let payload = {
+        description: this.week.description
+      } as any
+      
+      this.days.map((day: string) => {
+        if(this.week[day+'StartTime']) {
+          payload[day+'StartTime'] = DateTime.fromISO(this.week[day+'StartTime'], {setZone: true}).toFormat('HH:mm:ss')
+          payload[day+'Capacity'] = this.getCapacity(this.week[day+'StartTime'], this.week[day+'EndTime'])
+        }
+      })
+
+      try {
+        resp = await FacilityService.createFacilityCalendar(payload)
+
+        if(!hasError(resp)) {
+          console.log(resp);
+          
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+    },
+    getCapacity(startTime: string, endTime: any) {
+      return DateTime.fromISO(endTime, {setZone: true}).toMillis() - DateTime.fromISO(startTime, {setZone: true}).toMillis()
+    },
   },
   setup() {
     return {

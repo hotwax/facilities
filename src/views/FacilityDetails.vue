@@ -514,7 +514,8 @@ export default defineComponent({
       externalMappingTypes: 'util/getExternalMappingTypes',
       facilityCalendar: 'facility/getFacilityCalendar',
       facilityParties: 'facility/getFacilityParties',
-      partyRoles: 'util/getPartyRoles'
+      partyRoles: 'util/getPartyRoles',
+      userProfile: 'user/getUserProfile'
     })
   },
   props: ["facilityId"],
@@ -525,7 +526,7 @@ export default defineComponent({
     await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
-    this.facilityCalendar
+    
   },
   methods: {
     goToLink(link: string) {
@@ -843,7 +844,7 @@ export default defineComponent({
       customMappingModal.present()
     },
     getOpenEndTime(startTime: any, capacity: any) {
-      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
+      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').setZone(this.userProfile.userTimeZone).toFormat('HH:mm a');
       const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
       return `${openTime} - ${endTime}`
       
