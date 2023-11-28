@@ -4,4 +4,6 @@ export default interface UtilState {
   externalMappingTypes: object;
   productStores: any[];
   partyRoles: any[];
+  countries: any[];
+  states: any;
 }

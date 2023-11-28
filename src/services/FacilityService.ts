@@ -2,6 +2,14 @@ import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
 
+const createFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 const fetchFacilities = async(query: any): Promise <any> => {
   return api({
     url: "performFind", 
@@ -142,6 +150,14 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
   return facilityOrderCounts;
 }
 
+const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+
 const addPartyToFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/addPartyToFacility",
@@ -254,6 +270,14 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityPostalAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 const updateProductStoreFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/updateProductStoreFacility",
@@ -330,17 +354,19 @@ export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
   createEnumeration,
+  createFacilityLocation,
   createFacilityGroup,
   createFacilityIdentification,
-  createFacilityLocation,
+  createFacilityPostalAddress,
   createProductStoreFacility,
   createShopifyShopLocation,
   deleteFacilityLocation,
   deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,
-  fetchFacilityGroup,
+  fetchFacilityContactDetails,
   fetchFacilityGroupInformation,
+  fetchFacilityGroup,
   fetchFacilityLocations,
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
@@ -353,6 +379,7 @@ export const FacilityService = {
   updateFacility,
   updateFacilityIdentification,
   updateFacilityLocation,
+  updateFacilityPostalAddress,
   updateFacilityToGroup,
   updateProductStoreFacility,
   updateShopifyShopLocation
