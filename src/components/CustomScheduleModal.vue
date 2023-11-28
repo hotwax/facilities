@@ -25,7 +25,7 @@
         <ion-label>
           <p>{{ translate(day) }}</p>
         </ion-label>
-        <ion-datetime-button @click="selectedDay = 'start' + day" :datetime="'start' + day" />-<ion-datetime-button @click="selectedDay = 'end'+day" :datetime="'end' + day" />
+        <ion-datetime-button :datetime="'start' + day" />-<ion-datetime-button :datetime="'end' + day" />
       </ion-item>
     </ion-list>
 
@@ -34,13 +34,13 @@
         <ion-label>
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
-        <ion-datetime-button @click="selectedDay = 'startTime'" datetime="startTime" />-<ion-datetime-button @click="selectedDay = 'endTime'" datetime="endTime" />
+        <ion-datetime-button datetime="startTime" /> -<ion-datetime-button datetime="endTime" />
       </ion-item>
     </ion-list>
   </ion-content>
 
   <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="'start' + day" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event)" />
+    <ion-datetime :id="'start' + day" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day)" />
   </ion-modal>
 
   <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
@@ -104,7 +104,7 @@ export default defineComponent({
     return {
       isDailyTimingsChecked: false as boolean,
       days: ['Time'],
-      selectedDay: ''
+      week: {} as any
     }
   },
   methods: {
@@ -115,8 +115,10 @@ export default defineComponent({
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
       this.days = this.isDailyTimingsChecked ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] : ['Time']
     },
-    updateTime(ev: CustomEvent) {
-      console.log('Selected: ', this.selectedDay, " - ", ev.detail.value);
+    updateTime(ev: CustomEvent, day: any) {
+      if(this.week[day]) {
+        this.week.day = ev.detail.value
+      }
     } 
   },
   setup() {
