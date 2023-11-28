@@ -156,7 +156,6 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      createdFacility: 'facility/getCreatedFacility',
       countries: 'util/getCountries',
       states: 'util/getStates'
     })
@@ -177,7 +176,6 @@ export default defineComponent({
   },
   props: ['facilityId'],
   async ionViewWillEnter() {
-    await this.store.dispatch('facility/fetchCreatedFacility', { facilityId: this.facilityId })
     await this.store.dispatch('util/fetchCountries', { countryGeoId: "USA" })
   },
   methods: {

@@ -20,9 +20,6 @@ const getters: GetterTree <FacilityState, RootState> = {
   getCurrent(state) {
     return state.current ? JSON.parse(JSON.stringify(state.current)) : {}
   },
-  getCreatedFacility(state) {
-    return state.createdFacility ? JSON.parse(JSON.stringify(state.createdFacility)) : {}
-  },
   getFacilityParties(state) {
     return state.current.parties
   },

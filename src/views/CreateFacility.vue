@@ -80,6 +80,7 @@ import { translate } from "@hotwax/dxp-components";
 import { showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
+import logger from "@/logger";
 
 export default defineComponent({
   name: "CreateFacility",
@@ -120,7 +121,7 @@ export default defineComponent({
   async ionViewWillEnter() {
     this.clearFormData()
     await Promise.all([
-      this.store.dispatch('facility/updateCreatedFacility', {}),
+      this.store.dispatch('facility/updateCurrentFacility', {}),
       this.store.dispatch('util/fetchFacilityTypes', {
         parentTypeId: 'VIRTUAL_FACILITY',
         parentTypeId_op: 'notEqual',
@@ -164,17 +165,13 @@ export default defineComponent({
         const resp = await FacilityService.createFacility(payload);
         if (!hasError(resp)) {
           const { facilityId } = resp.data
-          this.store.dispatch('facility/updateCreatedFacility', {
-            facilityId,
-            facilityName: this.formData.facilityName,
-            facilityTypeId: this.selectedFacilityTypeId
-          })
+          showToast(translate("Facility created successfully."))
           this.router.replace(`/add-facility-address/${facilityId}`)
         } else {
           throw resp.data;
         }
       } catch (error) {
-        console.error(error)
+        logger.error(error)
         showToast(translate('Failed to create facility.'))
       }
     },

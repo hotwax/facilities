@@ -177,7 +177,7 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      createdFacility: 'facility/getCreatedFacility',
+      current: 'facility/getCurrent',
       getProductStore: 'util/getProductStore',
     })
   },
@@ -196,7 +196,7 @@ export default defineComponent({
   },
   props: ['facilityId'],
   async ionViewWillEnter() {
-    await this.store.dispatch('facility/fetchCreatedFacility', { facilityId: this.facilityId })
+    await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
     await this.store.dispatch('util/fetchProductStores')
   },
   methods: {
@@ -236,10 +236,10 @@ export default defineComponent({
         throw { message: translate('Failed to update some fulfillment settings.') }
       }
     },
-    async createFacilityLogin() {
+    async createFacilityUser() {
       try {
         const payload = {
-          "groupName": this.createdFacility.facilityName,
+          "groupName": this.current.facilityName,
           "facilityId": this.facilityId,
           "loginPassword": this.password,
           "partyTypeId": "PARTY_GROUP",
@@ -249,7 +249,7 @@ export default defineComponent({
           "partyRelationshipTypeId": "EMPLOYMENT"
         }
 
-        const resp = await UserService.createFacilityLogin(payload);
+        const resp = await UserService.createFacilityUser(payload);
         if (!hasError(resp)) {
           const partyId = resp.data.partyId;
           await UserService.addPartyToFacility({
@@ -278,7 +278,7 @@ export default defineComponent({
         }
 
         if (this.createLoginCreds) {
-          await this.createFacilityLogin()
+          await this.createFacilityUser()
         }
 
         if (this.selectedProductStores) {

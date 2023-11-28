@@ -136,7 +136,7 @@ const getUserProfile = async (token: any): Promise<any> => {
   }
 }
 
-const createFacilityLogin = async (payload: any): Promise <any> => {
+const createFacilityUser = async (payload: any): Promise <any> => {
   return api({
     url: "service/createRelationship", 
     method: "post",
@@ -155,7 +155,7 @@ const addPartyToFacility = async (payload: any): Promise <any> => {
 export const UserService = {
   addPartyToFacility,
   login,
-  createFacilityLogin,
+  createFacilityUser,
   getAvailableTimeZones,
   getUserProfile,
   setUserTimeZone,

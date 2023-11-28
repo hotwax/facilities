@@ -286,7 +286,7 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
 
 const createFacility = async (payload: any): Promise<any> => {
   return api({
-    url: "service/updateFacilityPostalAddress",
+    url: "service/createFacility",
     method: "post",
     data: payload
   })

@@ -9,5 +9,4 @@ export default interface FacilityState {
     total: number
   };
   current: any;
-  createdFacility: any;
 }

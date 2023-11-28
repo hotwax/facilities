@@ -146,46 +146,6 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_CURRENT_UPDATED, facility)
   },
 
-  async fetchCreatedFacility({ commit, state }, payload) {
-    const currentCreatedFacility = JSON.parse(JSON.stringify(state.createdFacility))
-    if (currentCreatedFacility.facilityId === payload.facilityId) {
-      return
-    }
-
-    emitter.emit("presentLoader");
-    const params = {
-      inputFields: {
-        facilityId: payload.facilityId
-      },
-      entityName: "FacilityAndProductStore",
-      noConditionFind: "Y",
-      distinct: "Y",
-      fieldList: ['facilityId', 'facilityName', 'facilityTypeId'],
-      viewSize: 1
-    }
-
-    let facility = {} as any;
-
-    try {
-      const resp = await FacilityService.fetchFacilities(params)
-
-      if(!hasError(resp)) {
-        facility = resp.data.docs[0]
-      } else {
-        throw resp.data
-      }
-    } catch(error) {
-      logger.error(error)
-    }
-
-    emitter.emit("dismissLoader");
-    commit(types.FACILITY_CREATED_UPDATED, facility);
-  },
-
-  updateCreatedFacility({ commit }, facility) {
-    commit(types.FACILITY_CREATED_UPDATED, facility);
-  },
-
   async fetchCurrentFacility({ commit, state }, payload) {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
@@ -246,6 +206,10 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
+    commit(types.FACILITY_CURRENT_UPDATED, facility);
+  },
+
+  updateCurrentFacility({ commit }, facility) {
     commit(types.FACILITY_CURRENT_UPDATED, facility);
   },
 
