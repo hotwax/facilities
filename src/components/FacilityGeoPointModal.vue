@@ -20,12 +20,12 @@
         </ion-button>
       </ion-item>
       <ion-item>
-        <ion-label>{{ translate("Latitude") }}</ion-label>
-        <ion-input v-model="geoPoint.latitude" slot="end"/>
+        <ion-label position="floating">{{ translate("Latitude") }}</ion-label>
+        <ion-input v-model="geoPoint.latitude" />
       </ion-item>
       <ion-item>
-        <ion-label>{{ translate("Longitude") }}</ion-label>
-        <ion-input v-model="geoPoint.longitude" slot="end" />
+        <ion-label position="floating">{{ translate("Longitude") }}</ion-label>
+        <ion-input v-model="geoPoint.longitude" />
       </ion-item>
     </form>
   </ion-content>
@@ -90,7 +90,7 @@ export default defineComponent({
       geoPoint: {} as any
     }
   },
-  mounted() {
+  beforeMount() {
     this.geoPoint = JSON.parse(JSON.stringify(this.postalAddress))
   },
   methods: {
