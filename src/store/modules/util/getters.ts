@@ -15,9 +15,6 @@ const getters: GetterTree<UtilState, RootState> = {
   getLocationTypes(state) {
     return state.locationTypes
   },
-  getProductStore: (state) => (productStoreId: string) => {
-    return state.productStores.find((store: any) => store.productStoreId === productStoreId)
-  },
   getCountries(state) {
     return state.countries
   },
@@ -26,6 +23,9 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getExternalMappingTypes(state) {
     return state.externalMappingTypes
-  }
+  },
+  getProductStore: (state) => (productStoreId: string) => {
+    return state.productStores.find((store: any) => store.productStoreId === productStoreId)
+  },
 }
 export default getters;

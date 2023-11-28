@@ -6,6 +6,9 @@ const getters: GetterTree <FacilityState, RootState> = {
   getFacilities(state) {
     return JSON.parse(JSON.stringify(state.facilities.list))
   },
+  getFacilityProductStores(state) {
+    return state.current.productStores
+  },
   getQuery(state) {
     return JSON.parse(JSON.stringify(state.query))
   },
@@ -22,9 +25,6 @@ const getters: GetterTree <FacilityState, RootState> = {
   },
   getPostalAddress(state) {
     return state.current?.postalAddress ? JSON.parse(JSON.stringify(state.current.postalAddress)) : {}
-  },
-  getFacilityProductStores(state) {
-    return state.current.productStores
   },
   getFacilityParties(state) {
     return state.current.parties

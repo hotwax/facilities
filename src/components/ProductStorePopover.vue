@@ -2,9 +2,9 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ getProductStore(currentProductStore.productStoreId).storeName }}</ion-list-header>
-      <ion-item button :disabled="currentProductStore.productStoreId === primaryMember.facilityGroupId" @click="makePrimary()">
-        {{ translate("Make primary") }}
-        <ion-icon slot="end" :icon="starOutline" />
+      <ion-item button @click="makePrimary()">
+        {{ translate("Primary") }}
+        <ion-icon slot="end"  :color="primaryMember.facilityGroupId === currentProductStore.productStoreId ? 'warning' : ''" :icon="primaryMember.facilityGroupId === currentProductStore.productStoreId ? star : starOutline" />
       </ion-item>
       <ion-item button lines="none" @click="removeStoreFromFacility()">
         {{ translate("Unlink") }}
@@ -17,14 +17,14 @@
 <script lang="ts">
 import {
   IonContent,
-  IonList,
-  IonListHeader,
   IonIcon,
   IonItem,
+  IonList,
+  IonListHeader,
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { starOutline, removeCircleOutline } from "ionicons/icons";
+import { removeCircleOutline, star, starOutline } from "ionicons/icons";
 import { translate } from "@hotwax/dxp-components";
 import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
@@ -32,21 +32,22 @@ import { DateTime } from "luxon";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
+
 export default defineComponent({
   name: "ProductStorePopover",
   components: {
     IonContent,
-    IonList,
-    IonListHeader,
     IonIcon,
-    IonItem
+    IonItem,
+    IonList,
+    IonListHeader
   },
   props: ['currentProductStore', 'facilityId', 'primaryMember'],
   computed: {
     ...mapGetters({
       facilityProductStores: 'facility/getFacilityProductStores',
-      productStores: 'util/getProductStores',
-      getProductStore: 'util/getProductStore'
+      getProductStore: 'util/getProductStore',
+      productStores: 'util/getProductStores'
     })
   },
   methods: {
@@ -58,12 +59,15 @@ export default defineComponent({
           fromDate: this.currentProductStore.fromDate,
           thruDate: DateTime.now().toMillis()
         })
+
         if(!hasError(resp)) {
           showToast(translate('Store unlinked successfully.'))
+
           // Removing store from primary Member group if primary.
           if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupId){
-            await this.removeProductFromPrimaryMember()
+            await this.revokePrimaryStatusFromStore()
           }
+
           // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
         } else {
@@ -76,34 +80,47 @@ export default defineComponent({
       popoverController.dismiss()
     },
     async makePrimary() {
+      const productStoreId = this.currentProductStore.productStoreId
+      if(this.primaryMember.facilityGroupId === productStoreId) {
+        this.revokePrimaryStatusFromStore()
+        popoverController.dismiss()
+        return;
+      }
+
       let resp;
       let facilityGroupId;
-      const productStoreId = this.currentProductStore.productStoreId
+
+      // Fetching the facility group corresponding to the selected product store.
+      // There should be one facility group where facilityGroupId equals to productStoreId in order
+      // to manage primary product store of a facility.
       facilityGroupId = await this.fetchFacilityGroup(productStoreId)
+
+      // Create one facility group corresponding to the selected product store if not exists.
       if(!facilityGroupId) {
         facilityGroupId = await this.createFacilityGroup(productStoreId)
       } 
+
       if(facilityGroupId) {
         try {
           resp = await FacilityService.addFacilityToGroup({
             facilityId: this.facilityId,
             facilityGroupId: facilityGroupId
           })
+
           if(!hasError(resp)) {
-            showToast(translate("Product Store made primary successfully."))
             // Remove old primary store
             if(this.primaryMember.facilityGroupId) {
-              await this.removeProductFromPrimaryMember()
+              await this.revokePrimaryStatusFromStore()
             }
           } else {
             throw resp.data
           }
         } catch(err) {
-          showToast(translate("Failed to make store primary."))
+          showToast(translate("Failed to make product store primary."))
           logger.error(err)
         }
       } else {
-        showToast(translate("Failed to make store primary."))
+        showToast(translate("Failed to make product store primary."))
       }
       popoverController.dismiss()
     },
@@ -118,6 +135,7 @@ export default defineComponent({
           entityName: 'FacilityGroup',
           viewSize: 100
         })
+
         if(!hasError(resp)) {
           facilityGroupId = resp.data.docs[0].facilityGroupId
         } else {
@@ -132,9 +150,9 @@ export default defineComponent({
       let facilityGroupId;
       try {
         const resp = await FacilityService.createFacilityGroup({
-          facilityGroupTypeId: 'FEATURING',
+          facilityGroupId: productStoreId,
           facilityGroupName: this.getProductStore(productStoreId).storeName,
-          facilityGroupId: productStoreId
+          facilityGroupTypeId: 'FEATURING'
         })
   
         if(!hasError(resp)) {
@@ -145,9 +163,10 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
+
       return facilityGroupId
     },
-    async removeProductFromPrimaryMember() {
+    async revokePrimaryStatusFromStore() {
       let resp;
       try {
         resp = await FacilityService.updateFacilityToGroup({
@@ -156,6 +175,10 @@ export default defineComponent({
           "fromDate": this.primaryMember.fromDate,
           "thruDate": DateTime.now().toMillis()
         })
+
+        if(hasError(resp)) {
+          throw resp.data
+        }
       } catch (err) {
         logger.error(err)
       }
@@ -163,8 +186,10 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+
     return {
       removeCircleOutline,
+      star,
       starOutline,
       store,
       translate
