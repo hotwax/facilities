@@ -114,9 +114,10 @@ export default defineComponent({
       if(this.selectedCalendarId && this.selectedCalendarId !== this.facilityCalendar.calendarId) {
         try {
           resp = await FacilityService.associateCalendarToFacility({
-            storeId: this.facilityId,
+            facilityId: this.facilityId,
             calendarId: this.selectedCalendarId,
-            fromDateStr: DateTime.now().toFormat('MM/dd/yyyy')
+            fromDate: DateTime.now().toMillis(),
+            facilityCalendarTypeId: 'OPERATING_HOURS'
           })
 
           if(!hasError(resp)) {
@@ -134,12 +135,11 @@ export default defineComponent({
       modalController.dismiss()
     },
     async removeCalendarFromFacility() {
-      return await FacilityService.associateCalendarToFacility({
-        storeId: this.facilityId,
+      return await FacilityService.removeFacilityCalendar({
+        facilityId: this.facilityId,
         calendarId: this.facilityCalendar.calendarId,
-        thruDateStr: DateTime.now().toFormat('MM/dd/yyyy'),
         facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-        fromDateStr: DateTime.fromMillis(this.facilityCalendar.fromDate).toFormat('MM/dd/yyyy')
+        fromDate: this.facilityCalendar.fromDate
       })
     }
   },

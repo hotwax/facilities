@@ -34,17 +34,17 @@
         <ion-label>
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
-        <ion-datetime-button datetime="startTime" /> -<ion-datetime-button datetime="endTime" />
+        <ion-datetime-button datetime="startTime" /> - <ion-datetime-button datetime="endTime" />
       </ion-item>
     </ion-list>
   </ion-content>
 
-  <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="'start' + day" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day)" />
+  <ion-modal class="date-time-modal"  :keep-contents-mounted="true">
+    <ion-datetime :id="'start' + day" v-for="(day, index) in days" :key="index" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day)" />
   </ion-modal>
 
-  <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="'end' + day" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event)" />
+  <ion-modal class="date-time-modal"  :keep-contents-mounted="true">
+    <ion-datetime :id="'end' + day" v-for="(day, index) in days" :key="index" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day)" />
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -104,7 +104,7 @@ export default defineComponent({
     return {
       isDailyTimingsChecked: false as boolean,
       days: ['Time'],
-      week: {} as any
+      week: {} as any,
     }
   },
   methods: {

@@ -80,12 +80,12 @@ export default defineComponent({
     async removeCalendarFromFacility() {
       let resp;
       try {
-        resp = await FacilityService.associateCalendarToFacility({
-        storeId: this.facilityId,
+        resp = await FacilityService.removeFacilityCalendar({
+        facilityId: this.facilityId,
         calendarId: this.facilityCalendar.calendarId,
-        thruDateStr: DateTime.now().toFormat('MM/dd/yyyy'),
+        // thruDate: DateTime.now().toFormat('MM/dd/yyyy'),
         facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-        fromDateStr: DateTime.fromMillis(this.facilityCalendar.fromDate).toFormat('MM/dd/yyyy')
+        fromDate: this.facilityCalendar.fromDate
       })
 
         if(!hasError(resp)) {

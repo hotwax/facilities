@@ -184,7 +184,7 @@ const addFacilityToGroup = async (payload: any): Promise<any> => {
 
 const associateCalendarToFacility = async (payload: any): Promise<any> => {
   return api({
-    url: "service/storeCalendarAssocDataSetup",
+    url: "service/createFacilityCalendar",
     method: "post",
     data: payload
   })
@@ -294,6 +294,14 @@ const fetchFacilityCalendars = async (payload: any): Promise<any> => {
   })
 }
 
+const removeFacilityCalendar = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/expireFacilityCalendar",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
@@ -314,6 +322,7 @@ export const FacilityService = {
   fetchShopifyFacilityMappings,
   getFacilityParties,
   getPartyRoleAndPartyDetails,
+  removeFacilityCalendar,
   removePartyFromFacility,
   updateFacility,
   updateFacilityIdentification,

@@ -546,14 +546,14 @@ export default defineComponent({
 
        try {
         resp = await FacilityService.associateCalendarToFacility({
-          storeId: this.facilityId,
+          facilityId: this.facilityId,
           calendarId: this.selectedCalendarId,
-          fromDateStr: DateTime.now().toFormat('MM/dd/yyyy'),
+          fromDate: DateTime.now().toMillis(),
+          facilityCalendarTypeId: 'OPERATING_HOURS'
         })
 
         if(!hasError(resp)) {
           showToast(translate("Successfully associated calendar to the facility."))
-          
           await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
         } else {
           throw resp.data

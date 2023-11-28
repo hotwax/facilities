@@ -194,7 +194,6 @@ const actions: ActionTree<UtilState, RootState> = {
       
       if(!hasError(resp) && resp.data.count) {
         calendars = resp.data.docs
-        dispatch('fetchCalendarWeek', {calendWeekId: calendars[0].calendarWeekId})
       } else {
         throw resp.data
       }
