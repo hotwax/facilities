@@ -37,7 +37,6 @@ import { mapGetters, useStore } from "vuex";
 import AddOperatingHoursModal from "@/components/AddOperatingHoursModal.vue";
 import CustomScheduleModal from "@/components/CustomScheduleModal.vue";
 import { FacilityService } from "@/services/FacilityService";
-import { DateTime } from "luxon";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import { hasError } from "@/adapter";
@@ -88,7 +87,6 @@ export default defineComponent({
         resp = await FacilityService.removeFacilityCalendar({
         facilityId: this.facilityId,
         calendarId: this.facilityCalendar.calendarId,
-        // thruDate: DateTime.now().toFormat('MM/dd/yyyy'),
         facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
         fromDate: this.facilityCalendar.fromDate
       })

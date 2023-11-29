@@ -153,6 +153,7 @@
   "Order fulfillment capacity": "Order fulfillment capacity",
   "orders allocated today": "{orderCount} orders allocated today",
   "orders in fulfillment queue": "{orderCount} orders in fulfillment queue",
+  "Others": "Others",
   "Parking": "Parking",
   "Party Id": "Party Id",
   "Party successfully removed from facility.": "Party successfully removed from facility.",

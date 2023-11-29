@@ -46,10 +46,10 @@
                   {{ translate("Latitude & Longitude") }}
                 </ion-card-title>
               </ion-card-header>
-              <ion-card-content>
-                {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
-              </ion-card-content>
               <div v-if="postalAddress?.latitude">
+                <ion-card-content>
+                  {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
+                </ion-card-content>
                 <ion-item lines="full">
                   <ion-label>{{ translate("Latitude") }}</ion-label>
                   <p>{{ postalAddress.latitude }}</p>
@@ -67,7 +67,6 @@
             </ion-card>
           </div>
 
-          <!-- Todo: add functionality to operating hours card below. -->
           <ion-card v-if="!facilityCalendar.calendarId">
             <ion-card-header>
               <div>
@@ -86,7 +85,7 @@
               </ion-item>
             </ion-radio-group>
             <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
-              <ion-label> {{ calendars.length - 3 }} {{ "Others" }}</ion-label>
+              <ion-label> {{ calendars.length - 3 }} {{ translate("Others") }}</ion-label>
               <ion-icon :icon="chevronForwardOutline" />
             </ion-item>
             <ion-item button lines="none" @click="addCustomSchedule">
@@ -495,7 +494,7 @@ export default defineComponent({
     return {
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
-      defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
+      defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
       primaryMember: {} as any,
       isCalendarFound: true,
       selectedCalendarId: 'DEFAULT'
@@ -520,7 +519,7 @@ export default defineComponent({
   props: ["facilityId"],
   async ionViewWillEnter() {
     await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchUtilCalendars', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.fetchFacilityPrimaryMember()
@@ -781,9 +780,8 @@ export default defineComponent({
       }
     },
     async revokePrimaryStatusFromStore() {
-      let resp;
       try {
-        resp = await FacilityService.updateFacilityToGroup({
+        const resp = await FacilityService.updateFacilityToGroup({
           "facilityId": this.facilityId,
           "facilityGroupId": this.primaryMember.facilityGroupId,
           "fromDate": this.primaryMember.fromDate,

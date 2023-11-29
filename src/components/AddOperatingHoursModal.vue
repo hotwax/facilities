@@ -13,7 +13,7 @@
     <ion-accordion-group v-model="selectedCalendarId" >
       <ion-radio-group v-model="selectedCalendarId">
         <ion-accordion v-for="calendar in calendars" :key="calendar.calendarId" :value="calendar.calendarId">
-          <ion-item slot="header" color="light">
+          <ion-item slot="header">
             <ion-radio :value="calendar.calendarId" slot="start" />
             <ion-label class="ion-text-wrap">
               {{ calendar.description }}
@@ -73,7 +73,7 @@
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="addOperatingHours">
+    <ion-fab-button :disabled="facilityCalendar.calendarId === selectedCalendarId" @click="addOperatingHours">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -153,7 +153,12 @@ export default defineComponent({
     async addOperatingHours() {
       let resp;
       try {
-        resp = await this.removeCalendarFromFacility()
+        resp = await FacilityService.removeFacilityCalendar({
+          facilityId: this.facilityId,
+          calendarId: this.facilityCalendar.calendarId,
+          facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
+          fromDate: this.facilityCalendar.fromDate
+        })
 
         if(hasError(resp)) {
           throw resp.data;
@@ -165,7 +170,7 @@ export default defineComponent({
         return;
       }
 
-      if(this.selectedCalendarId && this.selectedCalendarId !== this.facilityCalendar.calendarId) {
+      if(this.selectedCalendarId) {
         try {
           resp = await FacilityService.associateCalendarToFacility({
             facilityId: this.facilityId,
@@ -187,14 +192,6 @@ export default defineComponent({
 
       this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
       modalController.dismiss()
-    },
-    async removeCalendarFromFacility() {
-      return await FacilityService.removeFacilityCalendar({
-        facilityId: this.facilityId,
-        calendarId: this.facilityCalendar.calendarId,
-        facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-        fromDate: this.facilityCalendar.fromDate
-      })
     },
     getOpenEndTime(startTime: any, capacity: any) {
       const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');

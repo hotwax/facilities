@@ -80,7 +80,7 @@ const fetchCalendars = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchCalendarWeek = async (payload: any): Promise<any> => {
+const fetchCalendarWeekTimings = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
@@ -90,7 +90,7 @@ const fetchCalendarWeek = async (payload: any): Promise<any> => {
 
 export const UtilService = {
   fetchCalendars,
-  fetchCalendarWeek,
+  fetchCalendarWeekTimings,
   fetchCountries,
   fetchExternalMappingTypes,
   fetchFacilityTypes,

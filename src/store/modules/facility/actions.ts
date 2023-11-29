@@ -294,10 +294,10 @@ const actions: ActionTree<FacilityState, RootState> = {
         },
         entityName: "StoreOperatingHours",
         filterByDate: 'Y',
-        // viewSize: 1
+        viewSize: 1
       }
 
-      resp = await FacilityService.fetchFacilityCalendars(params)
+      resp = await FacilityService.fetchFacilityCalendar(params)
 
       if(!hasError(resp) && resp.data.count) {
         facilityCalendar = resp.data.docs[0]

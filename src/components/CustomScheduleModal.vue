@@ -17,7 +17,7 @@
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
       <ion-label>{{ translate("Daily timings") }}</ion-label>
-      <ion-toggle :isChecked="isDailyTimingsChecked" @click="updateDailyTimings" slot="end"/>
+      <ion-toggle :isChecked="isDailyTimingsChecked" @click="updateDailyTimings" slot="end" />
     </ion-item>
 
     <ion-list lines="none" v-if="isDailyTimingsChecked">
@@ -45,13 +45,13 @@
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
         <ion-datetime-button datetime="DailyStartTime">
-          <ion-label :slot="week.DailyStartTime ? '' : 'time-target'"  >
+          <ion-label :slot="week.DailyStartTime ? '' : 'time-target'">
             <p >{{ translate("Start Time") }}</p>
           </ion-label>
         </ion-datetime-button>
         -
         <ion-datetime-button datetime="DailyEndTime">
-          <ion-label :slot="week.DailyEndTime ? '' : 'time-target'"  >
+          <ion-label :slot="week.DailyEndTime ? '' : 'time-target'">
             <p >{{ translate("End Time") }}</p>
           </ion-label>
         </ion-datetime-button>
@@ -60,11 +60,11 @@
   </ion-content>
 
   <ion-modal class="date-time-modal" v-for="(day, index) in days"  :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="day+'StartTime'" v-model="week[day+'StartTime']" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day+'StartTime')" />
+    <ion-datetime :id="day+'StartTime'" v-model="week[day+'StartTime']" presentation="time" show-default-buttons hour-cycle="h12" />
   </ion-modal>
 
   <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="day+'EndTime'" v-model="week[day+'EndTime']" presentation="time" show-default-buttons hour-cycle="h12" @ionChange="updateTime($event, day+'EndTime')" />
+    <ion-datetime :id="day+'EndTime'" v-model="week[day+'EndTime']" presentation="time" show-default-buttons hour-cycle="h12" />
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -102,7 +102,7 @@ import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { hasError } from "@hotwax/oms-api";
 import { DateTime } from "luxon";
-import { mapGetters, useStore } from "vuex";
+import { useStore } from "vuex";
 import { showToast } from "@/utils";
 
 export default defineComponent({
@@ -134,11 +134,6 @@ export default defineComponent({
     }
   },
   props: ['facilityId'],
-  computed: {
-    ...mapGetters({
-      userProfile: 'user/getUserProfile'
-    })
-  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
@@ -146,11 +141,6 @@ export default defineComponent({
     updateDailyTimings() {
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
       this.days = this.isDailyTimingsChecked ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] : ['Daily']
-    },
-    updateTime(ev: CustomEvent, day: any) {
-      if(this.week[day]) {
-        this.week.day = ev.detail.value
-      }
     },
     async saveCustomSchedule() {
       let resp;
@@ -180,26 +170,22 @@ export default defineComponent({
         resp = await FacilityService.createFacilityCalendar({ ...payload, description: this.week.description})
         if(!hasError(resp)) {
           calendarId = resp.data.calendarId
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-        
-      try {
-        resp = await FacilityService.associateCalendarToFacility({
-          facilityId: this.facilityId,
-          calendarId: 10031,
-          fromDate: DateTime.now().toMillis(),
-          facilityCalendarTypeId: 'OPERATING_HOURS'
-        })
 
-        if(!hasError(resp)) {
-          showToast(translate("Successfully created and associated calendar to the facility."))
-          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-          await this.store.dispatch('util/fetchUtilCalendars', { facilityId: this.facilityId })
-          modalController.dismiss()
+          resp = await FacilityService.associateCalendarToFacility({
+            facilityId: this.facilityId,
+            calendarId: 10031,
+            fromDate: DateTime.now().toMillis(),
+            facilityCalendarTypeId: 'OPERATING_HOURS'
+          })
+
+          if(!hasError(resp)) {
+            showToast(translate("Successfully created and associated calendar to the facility."))
+            await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+            await this.store.dispatch('util/fetchCalendars', { facilityId: this.facilityId })
+            modalController.dismiss()
+          } else {
+            throw resp.data
+          }
         } else {
           throw resp.data
         }

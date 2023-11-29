@@ -178,7 +178,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
   },
   
-  async fetchUtilCalendars({ commit, dispatch }, payload) {
+  async fetchCalendars({ commit, dispatch }, payload) {
     let calendars = [] as any
     let calendarWeekTimings = [] as any
     let resp;
@@ -197,7 +197,7 @@ const actions: ActionTree<UtilState, RootState> = {
       if(!hasError(resp) && resp.data.count) {
         calendars = resp.data.docs
 
-        resp = await UtilService.fetchCalendarWeek({
+        resp = await UtilService.fetchCalendarWeekTimings({
           inputFields: {
             calendarWeekId: payload.calendarWeekId
           },
@@ -223,7 +223,6 @@ const actions: ActionTree<UtilState, RootState> = {
     } catch(err) {
       logger.error('Failed to fetch facility calendars', err)
     }
-
 
     commit(types.UTIL_CALENDARS_UPDATED, calendars)
   },

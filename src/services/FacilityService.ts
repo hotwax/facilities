@@ -373,7 +373,7 @@ const createEnumeration = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchFacilityCalendars = async (payload: any): Promise<any> => {
+const fetchFacilityCalendar = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
     method: "post",
@@ -417,7 +417,7 @@ export const FacilityService = {
   deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,
-  fetchFacilityCalendars,
+  fetchFacilityCalendar,
   fetchFacilityGroupInformation,
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
