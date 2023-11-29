@@ -23,14 +23,18 @@
     <ion-list lines="none" v-if="isDailyTimingsChecked">
       <ion-item v-for="(day, index) in days" :key="index">
         <ion-label>
-          <p>{{ translate(day) }}</p>
+          <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
         </ion-label>
         <ion-datetime-button :datetime="day+'StartTime'">
-          <ion-note :slot="week[day+'StartTime'] ? '' : 'time-target'">{{ "Start Time" }}</ion-note>
+          <ion-label :slot="week[day+'StartTime'] ? '' : 'time-target'">
+            <p>{{ translate("Start Time") }}</p>
+          </ion-label>
         </ion-datetime-button>
         -
         <ion-datetime-button :datetime="day+'EndTime'">
-          <ion-note :slot="week[day+'EndTime'] ? '' : 'time-target'">{{ "End Time" }}</ion-note>
+          <ion-label :slot="week[day+'EndTime'] ? '' : 'time-target'">
+            <p>{{ translate("End Time") }}</p>
+          </ion-label>
         </ion-datetime-button>
       </ion-item>
     </ion-list>
@@ -41,11 +45,15 @@
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
         <ion-datetime-button datetime="DailyStartTime">
-          <ion-note :slot="week.DailyStartTime ? '' : 'time-target'">{{ "Start Time" }}</ion-note>
+          <ion-label :slot="week.DailyStartTime ? '' : 'time-target'"  >
+            <p >{{ translate("Start Time") }}</p>
+          </ion-label>
         </ion-datetime-button>
         -
         <ion-datetime-button datetime="DailyEndTime">
-          <ion-note :slot="week.DailyEndTime ? '' : 'time-target'">{{ "End Time" }}</ion-note>
+          <ion-label :slot="week.DailyEndTime ? '' : 'time-target'"  >
+            <p >{{ translate("End Time") }}</p>
+          </ion-label>
         </ion-datetime-button>
       </ion-item>
     </ion-list>
