@@ -94,7 +94,8 @@ import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { hasError } from "@hotwax/oms-api";
 import { DateTime } from "luxon";
-import { mapGetters } from "vuex";
+import { mapGetters, useStore } from "vuex";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "CustomScheduleModal",
@@ -124,6 +125,7 @@ export default defineComponent({
       week: {} as any,
     }
   },
+  props: ['facilityId'],
   computed: {
     ...mapGetters({
       userProfile: 'user/getUserProfile'
@@ -144,38 +146,78 @@ export default defineComponent({
     },
     async saveCustomSchedule() {
       let resp;
-      let payload = {
-        description: this.week.description
-      } as any
+      let calendarId;
+      let payload = {} as any      
       
-      this.days.map((day: string) => {
-        if(this.week[day+'StartTime']) {
-          payload[day+'StartTime'] = DateTime.fromISO(this.week[day+'StartTime'], {setZone: true}).toFormat('HH:mm:ss')
-          payload[day+'Capacity'] = this.getCapacity(this.week[day+'StartTime'], this.week[day+'EndTime'])
+      if(this.days.length === 1) {
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        const dailyStartTime = DateTime.fromISO(this.week['DailyStartTime'], {setZone: true}).toFormat('HH:mm:ss')
+        const dailyCapacity = this.getCapacity(this.week['DailyStartTime'], this.week['DailyEndTime'])
+        if(dailyStartTime && dailyCapacity) {
+          days.map((day: string) => {
+            payload[day+'StartTime'] = dailyStartTime
+            payload[day+'Capacity'] = dailyCapacity
+          })
         }
-      })
+      } else {
+        this.days.map((day: string) => {
+          if(this.week[day+'StartTime'] && this.week[day+'EndTime']) {
+            payload[day+'StartTime'] = DateTime.fromISO(this.week[day+'StartTime'], {setZone: true}).toFormat('HH:mm:ss')
+            payload[day+'Capacity'] = this.getCapacity(this.week[day+'StartTime'], this.week[day+'EndTime'])
+          }
+        })
+      }
 
       try {
-        resp = await FacilityService.createFacilityCalendar(payload)
-
+        resp = await FacilityService.createFacilityCalendar({ ...payload, description: this.week.description})
         if(!hasError(resp)) {
-          console.log(resp);
-          
+          calendarId = resp.data.calendarId
         } else {
           throw resp.data
         }
       } catch(err) {
         logger.error(err)
       }
+        
+      try {
+        resp = await FacilityService.associateCalendarToFacility({
+          facilityId: this.facilityId,
+          calendarId: 10031,
+          fromDate: DateTime.now().toMillis(),
+          facilityCalendarTypeId: 'OPERATING_HOURS'
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate("Successfully created and associated calendar to the facility."))
+          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+          await this.store.dispatch('util/fetchUtilCalendars', { facilityId: this.facilityId })
+          modalController.dismiss()
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate("Failed to create or associate calendar to the facility."))
+        logger.error(err)
+      }
     },
-    getCapacity(startTime: string, endTime: any) {
-      return DateTime.fromISO(endTime, {setZone: true}).toMillis() - DateTime.fromISO(startTime, {setZone: true}).toMillis()
+    getCapacity(startTime: any, endTime: any) {
+      endTime = DateTime.fromISO(endTime, {setZone: true}).toMillis()
+      startTime = DateTime.fromISO(startTime, {setZone: true}).toMillis()
+
+      if(endTime <= startTime) {
+        return null;
+      }
+
+      return endTime - startTime
     },
   },
   setup() {
+    const store = useStore();
+
     return {
       closeOutline,
       saveOutline,
+      store,
       translate
     };
   },

@@ -67,14 +67,19 @@ export default defineComponent({
       addOperatingHoursModal.onDidDismiss().then(() => {
         popoverController.dismiss()
       })
-      
+
       addOperatingHoursModal.present()
     },
     async addCustomSchedule() {
       const customScheduleModal = await modalController.create({
-        component: CustomScheduleModal
+        component: CustomScheduleModal,
+        componentProps: { facilityId: this.facilityId }
       })
-      
+
+      customScheduleModal.onDidDismiss().then(() => {
+        popoverController.dismiss()
+      })
+
       customScheduleModal.present()
     },
     async removeCalendarFromFacility() {

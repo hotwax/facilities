@@ -76,7 +76,7 @@
               </div>
             </ion-card-header>
             <ion-radio-group v-model="selectedCalendarId">
-              <ion-item v-for="(calendar, index) in calendars" :key="index" lines="none">
+              <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
                 <ion-radio :value="calendar.calendarId"/>
               </ion-item>
@@ -573,7 +573,8 @@ export default defineComponent({
     },
     async addCustomSchedule() {
       const customScheduleModal = await modalController.create({
-        component: CustomScheduleModal
+        component: CustomScheduleModal,
+        componentProps: { facilityId: this.facilityId }
       })
 
       customScheduleModal.present()
@@ -844,10 +845,9 @@ export default defineComponent({
       customMappingModal.present()
     },
     getOpenEndTime(startTime: any, capacity: any) {
-      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').setZone(this.userProfile.userTimeZone).toFormat('HH:mm a');
+      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
       const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
       return `${openTime} - ${endTime}`
-      
     }
   },
   setup() {

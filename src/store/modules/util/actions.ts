@@ -179,57 +179,53 @@ const actions: ActionTree<UtilState, RootState> = {
   },
   
   async fetchUtilCalendars({ commit, dispatch }, payload) {
-    let calendars = []
-    const params = {
-      inputFields: {
-        facilityId: payload.facilityId
-      },
-      entityName: "TechDataCalendar",
-      viewSize: 100,
-      noConditionFind: 'Y'
-    }
+    let calendars = [] as any
+    let calendarWeekTimings = [] as any
+    let resp;
     
     try {
-      const resp = await UtilService.fetchCalendars(params)
+      resp = await UtilService.fetchCalendars({
+        inputFields: {
+          facilityId: payload.facilityId
+        },
+        entityName: "TechDataCalendar",
+        fieldList: ['calendarId', 'calendarWeekId', 'description'],
+        viewSize: 100,
+        noConditionFind: 'Y'
+      })
       
       if(!hasError(resp) && resp.data.count) {
         calendars = resp.data.docs
+
+        resp = await UtilService.fetchCalendarWeek({
+          inputFields: {
+            calendarWeekId: payload.calendarWeekId
+          },
+          entityName: "TechDataCalendarWeek",
+          fieldList: ['calendarWeekId', 'mondayStartTime', 'mondayCapacity', 'tuesdayStartTime', 'tuesdayCapacity', 'wednesdayStartTime', 'wednesdayCapacity', 'thursdayStartTime', 'thursdayCapacity', 'fridayStartTime', 'fridayCapacity', 'saturdayStartTime', 'saturdayCapacity', 'sundayStartTime', 'sundayCapacity'],
+          viewSize: 100,
+          noConditionFind: 'Y'
+        })
+        
+        if(!hasError(resp) && resp.data.count) {
+          calendarWeekTimings = resp.data.docs
+
+          calendars = calendars.map((calendar: any) => ({
+            ...calendar, 
+            ...calendarWeekTimings.find((calendarWeekTime: any) => calendarWeekTime.calendarWeekId === calendar.calendarWeekId)
+           }));
+        } else {
+          throw resp.data
+        }
       } else {
         throw resp.data
       }
     } catch(err) {
-      showToast(translate("Something went wrong"))
       logger.error('Failed to fetch facility calendars', err)
-    }
-    
-    commit(types.UTIL_CALENDARS_UPDATED, calendars)
-  },
-  
-  async fetchCalendarWeek({ commit }, payload) {
-    let calendars = []
-    
-    const params = {
-      inputFields: {
-        calendarWeekId: payload.calendarWeekId
-      },
-      entityName: "TechDataCalendarWeek",
-      viewSize: 100,
-      noConditionFind: 'Y'
     }
 
-    try {
-      const resp = await UtilService.fetchCalendarWeek(params)
-      
-      if(!hasError(resp) && resp.data.count) {
-        calendars = resp.data.docs
-        
-      } else {
-        throw resp.data
-      }
-    } catch(err) {
-      showToast(translate("Something went wrong"))
-      logger.error('Failed to fetch facility calendars', err)
-    }
+
+    commit(types.UTIL_CALENDARS_UPDATED, calendars)
   },
 
   clearUtilState({ commit }) {
