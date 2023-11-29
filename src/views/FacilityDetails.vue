@@ -660,6 +660,8 @@ export default defineComponent({
       // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
       if(result.data != undefined && result.data !== this.current.maximumOrderLimit) {
         await this.updateFacility(result.data, this.current)
+        // refetching the facility to update the maximumOrderLimit
+        await this.store.dispatch('facility/fetchCurrentFacility', this.facilityId)
       }
     },
     async updateFacility(maximumOrderLimit: number | string, facility: any) {

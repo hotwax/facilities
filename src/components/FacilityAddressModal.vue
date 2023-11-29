@@ -130,7 +130,6 @@ export default defineComponent({
 
       try {
         if (this.address.contactMechId) {
-          console.log('here')
           resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
         } else {
           resp = await FacilityService.createFacilityPostalAddress({
