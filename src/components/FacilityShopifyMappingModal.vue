@@ -39,7 +39,7 @@
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="type && type === 'update' ? updateMapping : saveMapping" @keyup.enter.stop>
+        <ion-fab-button @click="type && type === 'update' ? updateMapping() : saveMapping()" @keyup.enter.stop>
           <ion-icon :icon="saveOutline" />
         </ion-fab-button>
       </ion-fab>
