@@ -91,7 +91,7 @@
             <ion-icon slot="start" :icon="locationOutline"/>
             {{ translate("Save address") }}
           </ion-button>
-          <ion-button @click="router.replace(`/add-facility-config/${facilityId}`)" fill="clear">
+          <ion-button @click="router.replace(`/add-facility-config/${facilityId}`)" color="medium" fill="clear">
             {{ translate("Add address later") }}
           </ion-button>
         </div>

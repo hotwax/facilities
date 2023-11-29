@@ -72,6 +72,15 @@ const fetchExternalMappingTypes = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchShopifyShops = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload,
+    cache: true
+  })
+}
+
 export const UtilService = {
   fetchCountries,
   fetchExternalMappingTypes,
@@ -81,5 +90,6 @@ export const UtilService = {
   fetchStates,
   generateLatLong,
   fetchPartyRoles,
+  fetchShopifyShops
 }
 
