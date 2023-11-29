@@ -26,43 +26,43 @@
                   <ion-label>
                     <p>{{ translate("Monday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.mondayStartTime ? getOpenEndTime(calendar.mondayStartTime, calendar.mondayCapacity) : '-' }} </ion-label>
+                  <ion-label slot="end">{{ calendar.mondayStartTime ? getStartAndEndTime(calendar.mondayStartTime, calendar.mondayCapacity) : '-' }} </ion-label>
                 </ion-item>
                 <ion-item>
                   <ion-label>
                     <p>{{ translate("Tuesday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.tuesdayStartTime ? getOpenEndTime(calendar.tuesdayStartTime, calendar.tuesdayCapacity) : '-' }}</ion-label>
+                  <ion-label slot="end">{{ calendar.tuesdayStartTime ? getStartAndEndTime(calendar.tuesdayStartTime, calendar.tuesdayCapacity) : '-' }}</ion-label>
                 </ion-item>
                 <ion-item>
                   <ion-label>
                     <p>{{ translate("Wednesday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.wednesdayStartTime ? getOpenEndTime(calendar.wednesdayStartTime, calendar.wednesdayCapacity) : '-' }}</ion-label>
+                  <ion-label slot="end">{{ calendar.wednesdayStartTime ? getStartAndEndTime(calendar.wednesdayStartTime, calendar.wednesdayCapacity) : '-' }}</ion-label>
                 </ion-item>
                 <ion-item>
                   <ion-label>
                     <p>{{ translate("Thursday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.thursdayStartTime ? getOpenEndTime(calendar.thursdayStartTime, calendar.thursdayCapacity) : '-' }}</ion-label>
+                  <ion-label slot="end">{{ calendar.thursdayStartTime ? getStartAndEndTime(calendar.thursdayStartTime, calendar.thursdayCapacity) : '-' }}</ion-label>
                 </ion-item>
                 <ion-item>
                   <ion-label>
                     <p>{{ translate("Friday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.fridayStartTime ? getOpenEndTime(calendar.fridayStartTime, calendar.fridayCapacity) : '-' }}</ion-label>
+                  <ion-label slot="end">{{ calendar.fridayStartTime ? getStartAndEndTime(calendar.fridayStartTime, calendar.fridayCapacity) : '-' }}</ion-label>
                 </ion-item>
                 <ion-item>
                   <ion-label>
                     <p>{{ translate("Saturday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.saturdayStartTime ? getOpenEndTime(calendar.saturdayStartTime, calendar.saturdayCapacity) : '-' }}</ion-label>
+                  <ion-label slot="end">{{ calendar.saturdayStartTime ? getStartAndEndTime(calendar.saturdayStartTime, calendar.saturdayCapacity) : '-' }}</ion-label>
                 </ion-item>
                 <ion-item>
                   <ion-label>
                     <p>{{ translate("Sunday") }}</p>
                   </ion-label>
-                  <ion-label slot="end">{{ calendar.sundayStartTime ? getOpenEndTime(calendar.sundayStartTime, calendar.sundayCapacity) : '-' }}</ion-label>
+                  <ion-label slot="end">{{ calendar.sundayStartTime ? getStartAndEndTime(calendar.sundayStartTime, calendar.sundayCapacity) : '-' }}</ion-label>
                 </ion-item>
               </ion-list>
             </ion-card>
@@ -73,7 +73,7 @@
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button :disabled="facilityCalendar.calendarId === selectedCalendarId" @click="addOperatingHours">
+    <ion-fab-button :disabled="!selectedCalendarId || facilityCalendar.calendarId === selectedCalendarId" @click="saveOperatingHours()">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -150,7 +150,36 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true});
     },
+    saveOperatingHours() {
+      if(this.facilityCalendar?.calendarId) {
+        this.updateOperatingHours()
+      } else {
+        this.addOperatingHours()
+      }
+    },
     async addOperatingHours() {
+      try {
+        const resp = await FacilityService.associateCalendarToFacility({
+          facilityId: this.facilityId,
+          calendarId: this.selectedCalendarId,
+          fromDate: DateTime.now().toMillis(),
+          facilityCalendarTypeId: 'OPERATING_HOURS'
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate("Successfully associated calendar to the facility."))
+          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate("Failed to associate calendar to the facility."))
+        logger.error(err)
+      }
+
+      modalController.dismiss()
+    },
+    async updateOperatingHours() {
       let resp;
       try {
         resp = await FacilityService.removeFacilityCalendar({
@@ -160,18 +189,7 @@ export default defineComponent({
           fromDate: this.facilityCalendar.fromDate
         })
 
-        if(hasError(resp)) {
-          throw resp.data;
-        }
-      } catch(err) {
-        showToast(translate("Failed to associate calendar to the facility."))
-        logger.error(err)
-        modalController.dismiss()
-        return;
-      }
-
-      if(this.selectedCalendarId) {
-        try {
+        if(!hasError(resp)) {
           resp = await FacilityService.associateCalendarToFacility({
             facilityId: this.facilityId,
             calendarId: this.selectedCalendarId,
@@ -181,22 +199,24 @@ export default defineComponent({
 
           if(!hasError(resp)) {
             showToast(translate("Successfully associated calendar to the facility."))
+            await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
           } else {
             throw resp.data
           }
-        } catch(err) {
-          showToast(translate("Failed to associate calendar to the facility."))
-          logger.error(err)
+        } else {
+          throw resp.data;
         }
+      } catch(err) {
+        showToast(translate("Failed to associate calendar to the facility."))
+        logger.error(err)
       }
 
-      this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
       modalController.dismiss()
     },
-    getOpenEndTime(startTime: any, capacity: any) {
-      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
+    getStartAndEndTime(startTime: any, capacity: any) {
+      const formatedStartTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
       const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
-      return `${openTime} - ${endTime}`
+      return `${formatedStartTime} - ${endTime}`
     }
   },
   setup() {

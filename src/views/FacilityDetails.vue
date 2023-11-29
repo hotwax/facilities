@@ -659,7 +659,8 @@ export default defineComponent({
     },
     async addOperatingHours() {
       const addOperatingHoursModal = await modalController.create({
-        component: AddOperatingHoursModal
+        component: AddOperatingHoursModal,
+        componentProps: { facilityId: this.facilityId }
       })
 
       addOperatingHoursModal.present()
