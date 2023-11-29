@@ -13,7 +13,7 @@
   <ion-content>
     <ion-item>
       <ion-label>{{ translate("Name") }}</ion-label>
-      <ion-input v-model="week.description" />
+      <ion-input v-model="selectedTimesForWeek.description" />
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
       <ion-label>{{ translate("Daily timings") }}</ion-label>
@@ -26,13 +26,13 @@
           <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
         </ion-label>
         <ion-datetime-button :datetime="day+'StartTime'">
-          <ion-label :slot="week[day+'StartTime'] ? '' : 'time-target'">
+          <ion-label :slot="selectedTimesForWeek[day+'StartTime'] ? '' : 'time-target'">
             <p>{{ translate("Start Time") }}</p>
           </ion-label>
         </ion-datetime-button>
         -
         <ion-datetime-button :datetime="day+'EndTime'">
-          <ion-label :slot="week[day+'EndTime'] ? '' : 'time-target'">
+          <ion-label :slot="selectedTimesForWeek[day+'EndTime'] ? '' : 'time-target'">
             <p>{{ translate("End Time") }}</p>
           </ion-label>
         </ion-datetime-button>
@@ -45,13 +45,13 @@
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
         <ion-datetime-button datetime="DailyStartTime">
-          <ion-label :slot="week.DailyStartTime ? '' : 'time-target'">
+          <ion-label :slot="selectedTimesForWeek.DailyStartTime ? '' : 'time-target'">
             <p >{{ translate("Start Time") }}</p>
           </ion-label>
         </ion-datetime-button>
         -
         <ion-datetime-button datetime="DailyEndTime">
-          <ion-label :slot="week.DailyEndTime ? '' : 'time-target'">
+          <ion-label :slot="selectedTimesForWeek.DailyEndTime ? '' : 'time-target'">
             <p >{{ translate("End Time") }}</p>
           </ion-label>
         </ion-datetime-button>
@@ -60,15 +60,15 @@
   </ion-content>
 
   <ion-modal class="date-time-modal" v-for="(day, index) in days"  :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="day+'StartTime'" v-model="week[day+'StartTime']" presentation="time" show-default-buttons hour-cycle="h12" />
+    <ion-datetime :id="day+'StartTime'" v-model="selectedTimesForWeek[day+'StartTime']" presentation="time" show-clear-button show-default-buttons hour-cycle="h12" />
   </ion-modal>
 
   <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="day+'EndTime'" v-model="week[day+'EndTime']" presentation="time" show-default-buttons hour-cycle="h12" />
+    <ion-datetime :id="day+'EndTime'" v-model="selectedTimesForWeek[day+'EndTime']" presentation="time" show-clear-button show-default-buttons hour-cycle="h12" />
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveCustomSchedule">
+    <ion-fab-button :disabled="!Object.keys(selectedTimesForWeek).length" @click="saveCustomSchedule">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -102,7 +102,7 @@ import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { hasError } from "@hotwax/oms-api";
 import { DateTime } from "luxon";
-import { useStore } from "vuex";
+import { mapGetters, useStore } from "vuex";
 import { showToast } from "@/utils";
 
 export default defineComponent({
@@ -130,10 +130,15 @@ export default defineComponent({
     return {
       isDailyTimingsChecked: false as boolean,
       days: ['Daily'],
-      week: {} as any,
+      selectedTimesForWeek: {} as any,
     }
   },
   props: ['facilityId'],
+  computed: {
+    ...mapGetters({
+      facilityCalendar: 'facility/getFacilityCalendar'
+    })
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
@@ -142,15 +147,37 @@ export default defineComponent({
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
       this.days = this.isDailyTimingsChecked ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] : ['Daily']
     },
-    async saveCustomSchedule() {
+    async saveCustomSchedule() { 
+      if(this.facilityCalendar?.calendarId) {
+        try {
+          const resp = await FacilityService.removeFacilityCalendar({
+            facilityId: this.facilityId,
+            calendarId: this.facilityCalendar.calendarId,
+            facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
+            fromDate: this.facilityCalendar.fromDate
+          })
+
+          if(!hasError(resp)) {
+            await this.addCustomSchedule()
+          } else {
+            throw resp.data;
+          }
+        } catch(err) {
+          logger.error(err)
+        }
+      } else {
+        await this.addCustomSchedule()
+      }
+    },
+    async addCustomSchedule() {
       let resp;
       let calendarId;
-      let payload = {} as any      
-      
+      let payload = {} as any
+   
       if(this.days.length === 1) {
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-        const dailyStartTime = DateTime.fromISO(this.week['DailyStartTime'], {setZone: true}).toFormat('HH:mm:ss')
-        const dailyCapacity = this.getCapacity(this.week['DailyStartTime'], this.week['DailyEndTime'])
+        const dailyStartTime = DateTime.fromISO(this.selectedTimesForWeek['DailyStartTime'], {setZone: true}).toFormat('HH:mm:ss')
+        const dailyCapacity = this.getCapacity(this.selectedTimesForWeek['DailyStartTime'], this.selectedTimesForWeek['DailyEndTime'])
         if(dailyStartTime && dailyCapacity) {
           days.map((day: string) => {
             payload[day+'StartTime'] = dailyStartTime
@@ -159,15 +186,22 @@ export default defineComponent({
         }
       } else {
         this.days.map((day: string) => {
-          if(this.week[day+'StartTime'] && this.week[day+'EndTime']) {
-            payload[day+'StartTime'] = DateTime.fromISO(this.week[day+'StartTime'], {setZone: true}).toFormat('HH:mm:ss')
-            payload[day+'Capacity'] = this.getCapacity(this.week[day+'StartTime'], this.week[day+'EndTime'])
+          const startTime = this.selectedTimesForWeek[day+'StartTime']
+          const capacity = this.getCapacity(this.selectedTimesForWeek[day+'StartTime'], this.selectedTimesForWeek[day+'EndTime'])
+          if(startTime && capacity) {
+            payload[day+'StartTime'] = startTime
+            payload[day+'Capacity'] = capacity
           }
         })
       }
 
+      if(!Object.keys(payload).length) {
+        showToast(translate("Please check all the selected start time and end time entries."))
+        return;
+      }
+
       try {
-        resp = await FacilityService.createFacilityCalendar({ ...payload, description: this.week.description})
+        resp = await FacilityService.createFacilityCalendar({ ...payload, description: this.selectedTimesForWeek.description})
         if(!hasError(resp)) {
           calendarId = resp.data.calendarId
 
@@ -190,20 +224,20 @@ export default defineComponent({
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to create or associate calendar to the facility."))
+        showToast(translate("Failed to create calendar to the facility."))
         logger.error(err)
       }
     },
     getCapacity(startTime: any, endTime: any) {
-      endTime = DateTime.fromISO(endTime, {setZone: true}).toMillis()
-      startTime = DateTime.fromISO(startTime, {setZone: true}).toMillis()
+      const formatedStartTime = DateTime.fromISO(startTime, {setZone: true}).toMillis()
+      const formatedEndTime = DateTime.fromISO(endTime, {setZone: true}).toMillis()
 
-      if(endTime <= startTime) {
+      if(formatedEndTime <= formatedStartTime) {
         return null;
       }
 
-      return endTime - startTime
-    },
+      return formatedEndTime - formatedStartTime
+    }
   },
   setup() {
     const store = useStore();

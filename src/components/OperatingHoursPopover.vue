@@ -85,10 +85,10 @@ export default defineComponent({
       let resp;
       try {
         resp = await FacilityService.removeFacilityCalendar({
-        facilityId: this.facilityId,
-        calendarId: this.facilityCalendar.calendarId,
-        facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-        fromDate: this.facilityCalendar.fromDate
+          facilityId: this.facilityId,
+          calendarId: this.facilityCalendar.calendarId,
+          facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
+          fromDate: this.facilityCalendar.fromDate
       })
 
         if(!hasError(resp)) {

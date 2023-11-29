@@ -178,7 +178,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
   },
   
-  async fetchCalendars({ commit, dispatch }, payload) {
+  async fetchCalendars({ commit }, payload) {
     let calendars = [] as any
     let calendarWeekTimings = [] as any
     let resp;
