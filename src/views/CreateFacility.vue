@@ -25,19 +25,19 @@
               <ion-label position="floating">
                 {{ translate('Name') }} <ion-text color="danger">*</ion-text>
               </ion-label>
-              <ion-input clear-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName" />
+              <ion-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName" />
             </ion-item>
             <ion-item>
               <ion-label position="floating">
                 {{ translate('Internal ID') }}
               </ion-label>
-              <ion-input clear-input v-model="formData.facilityId" />
+              <ion-input v-model="formData.facilityId" />
             </ion-item>
             <ion-item>
               <ion-label position="floating">
                 {{ translate('External ID') }}
               </ion-label>
-              <ion-input clear-input v-model="formData.externalId" />
+              <ion-input v-model="formData.externalId" />
             </ion-item>
           </ion-list>
         </ion-card>
