@@ -220,6 +220,14 @@ const addFacilityToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const associateCalendarToFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityCalendar",
+    method: "post",
+    data: payload
+  })
+}
+
 const createFacilityGroup = async(payload: any): Promise<any> => {
   return api({
     url: "service/createFacilityGroup",
@@ -365,13 +373,39 @@ const createEnumeration = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchFacilityCalendar = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const createFacilityCalendar = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/calendarDataSetup",
+    method: "post",
+    data: payload
+  })
+}
+
+const removeFacilityCalendar = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/expireFacilityCalendar",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   createFacilityGroup,
   createFacility,
   createFacilityLocation,
   addPartyToFacility,
+  associateCalendarToFacility,
   createEnumeration,
+  createFacilityCalendar,
   createFacilityIdentification,
   createFacilityPostalAddress,
   createProductStoreFacility,
@@ -383,6 +417,7 @@ export const FacilityService = {
   deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,
+  fetchFacilityCalendar,
   fetchFacilityGroupInformation,
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
@@ -391,6 +426,7 @@ export const FacilityService = {
   fetchShopifyFacilityMappings,
   getFacilityParties,
   getPartyRoleAndPartyDetails,
+  removeFacilityCalendar,
   removePartyFromFacility,
   updateFacility,
   updateFacilityIdentification,

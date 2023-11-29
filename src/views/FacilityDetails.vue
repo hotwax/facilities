@@ -46,10 +46,10 @@
                   {{ translate("Latitude & Longitude") }}
                 </ion-card-title>
               </ion-card-header>
-              <ion-card-content>
-                {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
-              </ion-card-content>
               <div v-if="postalAddress?.latitude">
+                <ion-card-content>
+                  {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
+                </ion-card-content>
                 <ion-item lines="full">
                   <ion-label>{{ translate("Latitude") }}</ion-label>
                   <p>{{ postalAddress.latitude }}</p>
@@ -67,74 +67,91 @@
             </ion-card>
           </div>
 
-          <ion-card>
+          <ion-card v-if="!facilityCalendar.calendarId">
             <ion-card-header>
-              <ion-card-title>
-                {{ translate("Operating hours") }}
-              </ion-card-title>
+              <div>
+                <ion-card-title>
+                  {{ translate("Operating hours") }}
+                </ion-card-title>
+                <ion-card-subtitle>
+                  {{ translate("Select a saved calendar of store hours or create a new calendar") }}
+                </ion-card-subtitle>
+              </div>
+            </ion-card-header>
+            <ion-radio-group v-model="selectedCalendarId">
+              <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
+                <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
+                <ion-radio :value="calendar.calendarId"/>
+              </ion-item>
+            </ion-radio-group>
+            <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
+              <ion-label> {{ calendars.length - 3 }} {{ translate("Others") }}</ion-label>
+              <ion-icon :icon="chevronForwardOutline" />
+            </ion-item>
+            <ion-item button lines="none" @click="addCustomSchedule">
+              <ion-label>{{ translate("Custom schedule") }}</ion-label>
+              <ion-icon color="primary" :icon="addCircleOutline" button />
+            </ion-item>
+            <ion-button fill="outline" expand="block" @click="associateCalendarToFacility">
+              {{ translate("Add operating hours") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
+          </ion-card>
+
+          <ion-card v-else>
+            <ion-card-header>
+              <div>
+                <ion-text>{{ "Operating Hours" }}</ion-text>
+                <ion-card-title>
+                  {{ facilityCalendar.description }}
+                </ion-card-title>
+              </div>
+              <ion-button color="medium" fill="clear" class="ion-no-padding" @click="openOperatingHoursPopover">
+                <ion-icon :icon="ellipsisVerticalOutline" />
+              </ion-button>
             </ion-card-header>
             <ion-list lines="none">
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Monday") }}</p>
                 </ion-label>
-                <ion-label slot="end">
-                  {{ "7:30am - 8:00pm" }}
-                </ion-label>
+                <ion-label slot="end">{{ facilityCalendar.mondayStartTime ? getOpenEndTime(facilityCalendar.mondayStartTime, facilityCalendar.mondayCapacity) : '-' }} </ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Tuesday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ facilityCalendar.tuesdayStartTime ? getOpenEndTime(facilityCalendar.tuesdayStartTime, facilityCalendar.tuesdayCapacity) : '-' }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Wednesday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ facilityCalendar.wednesdayStartTime ? getOpenEndTime(facilityCalendar.wednesdayStartTime, facilityCalendar.wednesdayCapacity) : '-' }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Thursday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ facilityCalendar.thursdayStartTime ? getOpenEndTime(facilityCalendar.thursdayStartTime, facilityCalendar.thursdayCapacity) : '-' }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Friday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ facilityCalendar.fridayStartTime ? getOpenEndTime(facilityCalendar.fridayStartTime, facilityCalendar.fridayCapacity) : '-' }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Saturday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ facilityCalendar.saturdayStartTime ? getOpenEndTime(facilityCalendar.saturdayStartTime, facilityCalendar.saturdayCapacity) : '-' }}</ion-label>
               </ion-item>
-              <ion-item button @click="selectOperatingTime">
+              <ion-item>
                 <ion-label>
                   <p>{{ translate("Sunday") }}</p>
                 </ion-label>
-                <ion-button fill="clear" color="medium">
-                  <ion-icon :icon="addOutline" />
-                  {{ translate("Add timings") }}
-                </ion-button>
+                <ion-label slot="end">{{ facilityCalendar.sundayStartTime ? getOpenEndTime(facilityCalendar.sundayStartTime, facilityCalendar.sundayCapacity) : '-' }}</ion-label>
               </ion-item>
             </ion-list>
           </ion-card>
@@ -361,7 +378,7 @@
                 {{ location.positionId }}
                 <p>{{ translate("sequence") }}</p>
               </ion-label>
-              
+
               <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover($event, location)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
@@ -385,6 +402,7 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
+  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -396,6 +414,8 @@ import {
   IonList,
   IonPage,
   IonProgressBar,
+  IonRadio,
+  IonRadioGroup,
   IonSegment,
   IonSegmentButton,
   IonText,
@@ -410,6 +430,7 @@ import {
   addOutline,
   closeCircleOutline,
   closeOutline,
+  chevronForwardOutline,
   ellipsisVerticalOutline,
   globeOutline,
   locationOutline,
@@ -423,11 +444,12 @@ import FacilityAddressModal from '@/components/FacilityAddressModal.vue'
 import FacilityGeoPointModal from '@/components/FacilityGeoPointModal.vue';
 import ProductStorePopover from '@/components/ProductStorePopover.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
-import SelectOperatingTimeModal from '@/components/SelectOperatingTimeModal.vue';
+import AddOperatingHoursModal from '@/components/AddOperatingHoursModal.vue'
 import AddLocationModal from '@/components/AddLocationModal.vue';
 import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
+import CustomScheduleModal from '@/components/CustomScheduleModal.vue';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { FacilityService } from '@/services/FacilityService';
@@ -436,6 +458,7 @@ import logger from '@/logger';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 import { showToast } from '@/utils';
+import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -446,6 +469,7 @@ export default defineComponent({
     IonCard,
     IonCardContent,
     IonCardHeader,
+    IonCardSubtitle,
     IonCardTitle,
     IonChip,
     IonContent,
@@ -457,6 +481,8 @@ export default defineComponent({
     IonList,
     IonPage,
     IonProgressBar,
+    IonRadio,
+    IonRadioGroup,
     IonSegment,
     IonSegmentButton,
     IonText,
@@ -466,30 +492,34 @@ export default defineComponent({
   },
   data() {
     return {
-      isTimeModalOpen: false as boolean,
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
-      primaryMember: {} as any
+      primaryMember: {} as any,
+      isCalendarFound: true,
+      selectedCalendarId: 'DEFAULT'
     }
   },
   computed: {
     ...mapGetters({
+      calendars: 'util/getCalendars',
       current: 'facility/getCurrent',
       externalMappingTypes: 'util/getExternalMappingTypes',
+      facilityCalendar: 'facility/getFacilityCalendar',
       facilityParties: 'facility/getFacilityParties',
       facilityProductStores: 'facility/getFacilityProductStores',
       getProductStore: 'util/getProductStore',
       locationTypes: 'util/getLocationTypes',
       partyRoles: 'util/getPartyRoles',
       productStores: 'util/getProductStores',
-      postalAddress: 'facility/getPostalAddress'
+      postalAddress: 'facility/getPostalAddress',
+      userProfile: 'user/getUserProfile',
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.fetchFacilityPrimaryMember()
@@ -518,6 +548,28 @@ export default defineComponent({
 
       return popover.present()
     },
+    async associateCalendarToFacility() {
+      let resp;
+
+       try {
+        resp = await FacilityService.associateCalendarToFacility({
+          facilityId: this.facilityId,
+          calendarId: this.selectedCalendarId,
+          fromDate: DateTime.now().toMillis(),
+          facilityCalendarTypeId: 'OPERATING_HOURS'
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate("Successfully associated calendar to the facility."))
+          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate("Failed to associate calendar to the facility."))
+        logger.error(err)
+      }
+    },
     async openAddressModal() {
       const addressModal = await modalController.create({
         component: FacilityAddressModal,
@@ -525,6 +577,14 @@ export default defineComponent({
       })
 
       addressModal.present()
+    },
+    async addCustomSchedule() {
+      const customScheduleModal = await modalController.create({
+        component: CustomScheduleModal,
+        componentProps: { facilityId: this.facilityId }
+      })
+
+      customScheduleModal.present()
     },
     async openGeoPointModal() {
       const geoPointModal = await modalController.create({
@@ -597,12 +657,13 @@ export default defineComponent({
 
       addStaffModal.present()
     },
-    async selectOperatingTime() {
-      const selectOperatingTimeModal = await modalController.create({
-        component: SelectOperatingTimeModal
+    async addOperatingHours() {
+      const addOperatingHoursModal = await modalController.create({
+        component: AddOperatingHoursModal,
+        componentProps: { facilityId: this.facilityId }
       })
-  
-      selectOperatingTimeModal.present()
+
+      addOperatingHoursModal.present()
     },
     async openLocationDetailsPopover(ev: Event, location: any) {
       const locationDetailsPopover = await popoverController.create({
@@ -620,6 +681,16 @@ export default defineComponent({
         showBackdrop: false
       });
       return externalMappingPopover.present()
+    },
+    async openOperatingHoursPopover(ev: Event) {
+      const operatingHoursPopover = await popoverController.create({
+        component: OperatingHoursPopover,
+        componentProps: { facilityId: this.facilityId },
+        event: ev,
+        showBackdrop: false
+      });
+
+      operatingHoursPopover.present()
     },
     getDate(date: any) {
       return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
@@ -712,9 +783,8 @@ export default defineComponent({
       }
     },
     async revokePrimaryStatusFromStore() {
-      let resp;
       try {
-        resp = await FacilityService.updateFacilityToGroup({
+        const resp = await FacilityService.updateFacilityToGroup({
           "facilityId": this.facilityId,
           "facilityGroupId": this.primaryMember.facilityGroupId,
           "fromDate": this.primaryMember.fromDate,
@@ -862,6 +932,11 @@ export default defineComponent({
       })
 
       customMappingModal.present()
+    },
+    getOpenEndTime(startTime: any, capacity: any) {
+      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
+      const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
+      return `${openTime} - ${endTime}`
     }
   },
   setup() {
@@ -872,6 +947,7 @@ export default defineComponent({
       addOutline,
       closeCircleOutline,
       closeOutline,
+      chevronForwardOutline,
       ellipsisVerticalOutline,
       globeOutline,
       locationOutline,

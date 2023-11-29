@@ -175,6 +175,49 @@ const actions: ActionTree<UtilState, RootState> = {
 
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
   },
+  
+  async fetchCalendars({ commit }) {
+    let calendars = [] as any
+    let calendarWeekTimings = [] as any
+    let resp;
+    
+    try {
+      resp = await UtilService.fetchCalendars({
+        entityName: "TechDataCalendar",
+        fieldList: ['calendarId', 'calendarWeekId', 'description'],
+        viewSize: 100,
+        noConditionFind: 'Y'
+      })
+      
+      if(!hasError(resp) && resp.data.count) {
+        calendars = resp.data.docs
+
+        resp = await UtilService.fetchCalendarWeekTimings({
+          entityName: "TechDataCalendarWeek",
+          fieldList: ['calendarWeekId', 'mondayStartTime', 'mondayCapacity', 'tuesdayStartTime', 'tuesdayCapacity', 'wednesdayStartTime', 'wednesdayCapacity', 'thursdayStartTime', 'thursdayCapacity', 'fridayStartTime', 'fridayCapacity', 'saturdayStartTime', 'saturdayCapacity', 'sundayStartTime', 'sundayCapacity'],
+          viewSize: 100,
+          noConditionFind: 'Y'
+        })
+        
+        if(!hasError(resp) && resp.data.count) {
+          calendarWeekTimings = resp.data.docs
+
+          calendars = calendars.map((calendar: any) => ({
+            ...calendar, 
+            ...calendarWeekTimings.find((calendarWeekTime: any) => calendarWeekTime.calendarWeekId === calendar.calendarWeekId)
+           }));
+        } else {
+          throw resp.data
+        }
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch facility calendars', err)
+    }
+
+    commit(types.UTIL_CALENDARS_UPDATED, calendars)
+  },
 
   async fetchCountries({ commit, dispatch }, payload) {
     let countries = [] as any

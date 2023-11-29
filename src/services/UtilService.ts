@@ -72,6 +72,22 @@ const fetchExternalMappingTypes = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchCalendars = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
+const fetchCalendarWeekTimings = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 const fetchShopifyShops = async (payload: any): Promise<any> => {
   return api({
     url: "performFind",
@@ -82,6 +98,8 @@ const fetchShopifyShops = async (payload: any): Promise<any> => {
 }
 
 export const UtilService = {
+  fetchCalendars,
+  fetchCalendarWeekTimings,
   fetchCountries,
   fetchExternalMappingTypes,
   fetchFacilityTypes,

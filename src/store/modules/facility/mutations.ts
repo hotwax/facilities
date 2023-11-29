@@ -10,6 +10,9 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_QUERY_UPDATED](state, payload) {
     state.query = payload
   },
+  [types.FACILITY_CALENDAR_UPDATED](state, payload) {
+    state.current.calendar = payload
+  },
   [types.FACILITY_CURRENT_UPDATED](state, payload) {
     state.current = payload
   },
