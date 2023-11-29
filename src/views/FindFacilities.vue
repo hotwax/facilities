@@ -89,11 +89,11 @@
           <ion-icon :icon="addOutline" />
         </ion-fab-button>
         <ion-fab-list side="top">
-          <ion-fab-button @click="router.push('/create-facility?type=DISTRIBUTION_CENTER')">
-            <ion-icon :icon="businessOutline" />
-          </ion-fab-button>
           <ion-fab-button @click="router.push('/create-facility?type=PHYSICAL_STORE')">
             <ion-icon :icon="storefrontOutline" />
+          </ion-fab-button>
+          <ion-fab-button @click="router.push('/create-facility?type=DISTRIBUTION_CENTER')">
+            <ion-icon :icon="businessOutline" />
           </ion-fab-button>
         </ion-fab-list>
       </ion-fab>
