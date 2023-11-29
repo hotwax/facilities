@@ -68,7 +68,7 @@
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button :disabled="!Object.keys(selectedTimesForWeek).length" @click="saveCustomSchedule">
+    <ion-fab-button :disabled="!Object.keys(selectedTimesForWeek).length || !selectedTimesForWeek.description" @click="saveCustomSchedule">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
