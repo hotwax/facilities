@@ -848,12 +848,12 @@ export default defineComponent({
       }
     },
     async editFacilityMapping(mapping: any) {
+
       const customMappingModal = await modalController.create({
         component: FacilityMappingModal,
         componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
       })
 
-      await popoverController.dismiss()
       customMappingModal.present()
     },
     async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
