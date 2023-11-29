@@ -29,12 +29,15 @@
         <ion-item>
           <ion-label>{{ translate("Shopify store") }}</ion-label>
           <ion-label slot="end" v-if="type && type === 'update'">{{ shopifyFacilityMapping.shopId }}</ion-label>
-          <!-- TODO: change field to select -->
-          <ion-input slot="end" v-else v-model="shopId" />
+          <ion-select v-else interface="popover" :placeholder="translate('Select')" v-model="shopId">
+            <ion-select-option v-for="shop in shopifyShops" :key="shop.shopId" :value="shop.shopId">
+              {{ shop.name ? shop.name : shop.shopId }}
+            </ion-select-option>
+          </ion-select>
         </ion-item>
         <ion-item>
           <ion-label>{{ translate("Location ID") }}</ion-label>
-          <ion-input slot="end" :placeholder="translate('add your location ID from Shopify')" v-model="shopifyLocationId" />
+          <ion-input :placeholder="translate('Add your location ID from Shopify')" v-model="shopifyLocationId" />
         </ion-item>
       </ion-list>
 
@@ -61,6 +64,8 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToolbar,
   modalController
@@ -70,6 +75,7 @@ import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { mapGetters, useStore } from 'vuex'
 import { FacilityService } from '@/services/FacilityService'
+import { UtilService } from '@/services/UtilService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
@@ -89,6 +95,8 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonListHeader,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
   },
@@ -100,12 +108,14 @@ export default defineComponent({
   data() {
     return {
       shopId: '',
-      shopifyLocationId: ''
+      shopifyLocationId: '',
+      shopifyShops: [] as any
     }
   },
   props: ["shopifyFacilityMapping", "type"],
-  mounted() {
+  async mounted() {
     this.shopifyLocationId = this.shopifyFacilityMapping?.shopifyLocationId
+    await this.fetchShopifyShops() 
   },
   methods: {
     closeModal() {
@@ -164,6 +174,25 @@ export default defineComponent({
       } catch(err) {
         showToast(translate('Failed to update shopify mapping'))
         logger.error('Failed to update shopify mapping', err)
+      }
+    },
+    async fetchShopifyShops() {
+      try {
+        const resp = await UtilService.fetchShopifyShops({
+          entityName: "ShopifyShop",
+          fieldList: ['shopId', 'name'],
+          noConditionFind: 'Y',
+          viewSize: 100
+        })
+
+        if (!hasError(resp)) {
+          this.shopifyShops = resp.data.docs
+        } else {
+          throw resp.data
+        }
+      } catch (error) {
+        showToast(translate('Failed to fetch shopify shops.'))
+        logger.error('Failed to fetch shopify shops.', error)
       }
     }
   },
