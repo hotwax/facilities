@@ -55,7 +55,7 @@
             </ion-item>
 
             <div class="tablet">
-              <ion-chip outline>
+              <ion-chip outline @click.stop="updateSellOnlineStatus(facility)">
                 <ion-label>{{ translate('Sell Online') }}</ion-label>
                 <ion-icon :icon="shareOutline" :color="facility.sellOnline ? 'primary' : ''"/>
               </ion-chip>
@@ -157,6 +157,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import Filters from '@/components/Filters.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FindFacilities',
@@ -260,7 +261,58 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }))
         logger.error('Failed to update facility', err)
       }
-    }
+    },
+    async updateSellOnlineStatus(facility: any) {
+      if (!facility.sellOnline) {
+        this.addFacilityToGroup(facility.facilityId)
+      } else {
+        this.updateFacilityToGroup(facility)
+      }
+    },
+    async addFacilityToGroup(facilityId: string) {
+      let resp;
+      try {
+        resp = await FacilityService.addFacilityToGroup({
+          facilityId,
+          "facilityGroupId": 'FAC_GRP'
+        })
+
+        if (!hasError(resp)) {
+          showToast(translate('Fulfillment setting updated successfully'))
+          await this.fetchFacilities();
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', err)
+      }
+    },
+    async updateFacilityToGroup(facility: any) {
+      let resp;
+      const groupInformation = facility.groupInformation.find((group: any) => group.facilityGroupId === 'FAC_GRP')
+
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": facility.facilityId,
+          "facilityGroupId": 'FAC_GRP',
+          "fromDate": groupInformation.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+
+        console.log('resp', resp)
+
+        if (!hasError(resp)) {
+          showToast(translate('Fulfillment setting updated successfully'))
+          await this.fetchFacilities();
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', err)
+      }
+    },
   },
   setup() {
     const router = useRouter();
