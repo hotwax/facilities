@@ -11,7 +11,7 @@
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="saveAddress">
+    <form @keyup.enter="saveAddress()">
       <ion-item>
         <ion-label position="floating">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
         <ion-input v-model="address.address1" />
@@ -44,7 +44,7 @@
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveAddress">
+    <ion-fab-button @click="saveAddress()" :disabled="!isAddressUpdated()">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -121,12 +121,6 @@ export default defineComponent({
       modalController.dismiss()
     },
     async saveAddress() {
-      const isAddressUpdated = Object.entries(this.postalAddress).filter(([addressKey, addressValue]) => this.address[addressKey] !== addressValue).length
-      if(!isAddressUpdated) {
-        showToast(translate("Please fill all the required fields"))
-        return;
-      }
-
       let resp;
 
       if(!this.address?.address1 || !this.address?.city) {
@@ -135,10 +129,14 @@ export default defineComponent({
       }
 
       try {
-        if(this.address.contactMechId) {
-          resp = await FacilityService.updateFacilityPostalAddress({...this.address, facilityId: this.facilityId })
+        if (this.address.contactMechId) {
+          resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
         } else {
-          resp = await FacilityService.createFacilityPostalAddress(this.address)
+          resp = await FacilityService.createFacilityPostalAddress({
+            ...this.address,
+            facilityId: this.facilityId,
+            contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+          })
         }
 
         if(!hasError(resp)) {
@@ -155,6 +153,13 @@ export default defineComponent({
     },
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
+    },
+    isAddressUpdated() {
+      // in case postal address is not there - new facility is created
+      // hence explicitly returning true as .some check will fail
+      return Object.keys(this.postalAddress).length
+        ? Object.entries(this.postalAddress).some(([addressKey, addressValue]) => this.address[addressKey] !== addressValue)
+        : true
     }
   },
   setup() {
