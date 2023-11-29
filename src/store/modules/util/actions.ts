@@ -5,8 +5,6 @@ import UtilState from './UtilState'
 import * as types from './mutation-types'
 import { hasError } from '@/adapter'
 import logger from '@/logger'
-import { showToast } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<UtilState, RootState> = {
   async fetchProductStores({ commit }) {
@@ -178,16 +176,13 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, externalMappingTypes)
   },
   
-  async fetchCalendars({ commit }, payload) {
+  async fetchCalendars({ commit }) {
     let calendars = [] as any
     let calendarWeekTimings = [] as any
     let resp;
     
     try {
       resp = await UtilService.fetchCalendars({
-        inputFields: {
-          facilityId: payload.facilityId
-        },
         entityName: "TechDataCalendar",
         fieldList: ['calendarId', 'calendarWeekId', 'description'],
         viewSize: 100,
@@ -198,9 +193,6 @@ const actions: ActionTree<UtilState, RootState> = {
         calendars = resp.data.docs
 
         resp = await UtilService.fetchCalendarWeekTimings({
-          inputFields: {
-            calendarWeekId: payload.calendarWeekId
-          },
           entityName: "TechDataCalendarWeek",
           fieldList: ['calendarWeekId', 'mondayStartTime', 'mondayCapacity', 'tuesdayStartTime', 'tuesdayCapacity', 'wednesdayStartTime', 'wednesdayCapacity', 'thursdayStartTime', 'thursdayCapacity', 'fridayStartTime', 'fridayCapacity', 'saturdayStartTime', 'saturdayCapacity', 'sundayStartTime', 'sundayCapacity'],
           viewSize: 100,

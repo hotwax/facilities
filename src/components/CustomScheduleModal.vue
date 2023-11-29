@@ -216,7 +216,7 @@ export default defineComponent({
           if(!hasError(resp)) {
             showToast(translate("Successfully created and associated calendar to the facility."))
             await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-            await this.store.dispatch('util/fetchCalendars', { facilityId: this.facilityId })
+            await this.store.dispatch('util/fetchCalendars')
             modalController.dismiss()
           } else {
             throw resp.data
