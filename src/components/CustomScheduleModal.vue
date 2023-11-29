@@ -173,7 +173,7 @@ export default defineComponent({
 
           resp = await FacilityService.associateCalendarToFacility({
             facilityId: this.facilityId,
-            calendarId: 10031,
+            calendarId: calendarId,
             fromDate: DateTime.now().toMillis(),
             facilityCalendarTypeId: 'OPERATING_HOURS'
           })
