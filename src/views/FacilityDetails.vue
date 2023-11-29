@@ -23,16 +23,18 @@
                   {{ translate("Address") }}
                 </ion-card-title>
               </ion-card-header>
-              <ion-item lines="full">
-                <ion-label>
-                  <h3>{{ "Address line 1" }}</h3>
-                  <h3>{{ "Address line 2" }}</h3>
-                  <p class="ion-text-wrap">{{ "City," }} {{ "Zipcode" }}</p>
-                  <p class="ion-text-wrap">{{ "State," }} {{ "Country" }}</p>
-                </ion-label>
-              </ion-item>
-              <ion-button fill="clear" @click="addAddress">{{ translate("Edit") }}</ion-button>
-              <ion-button expand="block" fill="outline" @click="addAddress">
+              <div v-if="postalAddress?.address1">
+                <ion-item lines="full">
+                  <ion-label>
+                    <h3>{{ postalAddress.address1 }}</h3>
+                    <h3>{{ postalAddress.address2 }}</h3>
+                    <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
+                    <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
+                  </ion-label>
+                </ion-item>
+                <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
+              </div>
+              <ion-button v-else expand="block" fill="outline" @click="openAddressModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
@@ -47,16 +49,18 @@
               <ion-card-content>
                 {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
               </ion-card-content>
-              <ion-item lines="full">
-                <ion-label>{{ translate("Latitude") }}</ion-label>
-                <p>{{ "<latitude>" }}</p>
-              </ion-item>
-              <ion-item lines="full">
-                <ion-label>{{ translate("Longitude") }}</ion-label>
-                <p>{{ "<longitude>" }}</p>
-              </ion-item>
-              <ion-button fill="clear" @click="addGeoPoint">{{ translate("Edit") }}</ion-button>
-              <ion-button expand="block" fill="outline" @click="addGeoPoint">
+              <div v-if="postalAddress?.latitude">
+                <ion-item lines="full">
+                  <ion-label>{{ translate("Latitude") }}</ion-label>
+                  <p>{{ postalAddress.latitude }}</p>
+                </ion-item>
+                <ion-item lines="full">
+                  <ion-label>{{ translate("Longitude") }}</ion-label>
+                  <p>{{ postalAddress.longitude }}</p>
+                </ion-item>
+                <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
+              </div>
+              <ion-button v-else expand="block" fill="outline" :disabled="!postalAddress.address1" @click="openGeoPointModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
@@ -158,27 +162,17 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button @click="addProductStore" fill="clear">
+              <ion-button @click="selectProductStores()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="start" />
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
-
-            <ion-item>
+            <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>
-                {{ "NotNaked" }}
+                <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
               </ion-label>
-              <ion-badge>{{ translate("primary store") }}</ion-badge>
-              <ion-button color="medium" fill="clear" slot="end" @click="openStorePopover">
-                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
-              </ion-button>
-            </ion-item>
-            
-            <ion-item>
-              <ion-label>
-                {{ "Wasatch Ski company" }}
-              </ion-label>
-              <ion-button color="medium" fill="clear" slot="end" @click="openStorePopover">
+              <ion-badge v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
@@ -447,9 +441,9 @@ import {
 import { translate } from '@hotwax/dxp-components';
 import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
-import OpenStorePopover from '@/components/OpenStorePopover.vue';
-import AddAddressModal from '@/components/AddAddressModal.vue'
-import AddGeoPointModal from '@/components/AddGeoPointModal.vue';
+import FacilityAddressModal from '@/components/FacilityAddressModal.vue'
+import FacilityGeoPointModal from '@/components/FacilityGeoPointModal.vue';
+import ProductStorePopover from '@/components/ProductStorePopover.vue';
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue'
 import AddOperatingHoursModal from '@/components/AddOperatingHoursModal.vue'
 import AddLocationModal from '@/components/AddLocationModal.vue';
@@ -502,31 +496,34 @@ export default defineComponent({
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day(as the value is 0), but actually defaultDays are not setup on the facility
+      primaryMember: {} as any,
       isCalendarFound: true,
       selectedCalendarId: 'DEFAULT'
     }
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent',
       calendars: 'util/getCalendars',
-      locationTypes: 'util/getLocationTypes',
+      current: 'facility/getCurrent',
       externalMappingTypes: 'util/getExternalMappingTypes',
       facilityCalendar: 'facility/getFacilityCalendar',
       facilityParties: 'facility/getFacilityParties',
+      facilityProductStores: 'facility/getFacilityProductStores',
+      getProductStore: 'util/getProductStore',
+      locationTypes: 'util/getLocationTypes',
       partyRoles: 'util/getPartyRoles',
-      userProfile: 'user/getUserProfile'
+      productStores: 'util/getProductStores',
+      postalAddress: 'facility/getPostalAddress',
+      userProfile: 'user/getUserProfile',
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
     await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })])
-    await this.store.dispatch('util/fetchUtilCalendars', { facilityId: this.facilityId })
-    await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchUtilCalendars', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
-    
+    this.fetchFacilityPrimaryMember()
   },
   methods: {
     goToLink(link: string) {
@@ -534,12 +531,22 @@ export default defineComponent({
       // opening link in new tab without passing any reference
       window.open(url, '_blank', 'noopener, noreferrer')
     },
-    async openStorePopover(ev: Event) {
+    async productStorePopover(ev: Event, store: any) {
       const popover = await popoverController.create({
-        component: OpenStorePopover,
+        component: ProductStorePopover,
+        componentProps: {
+          currentProductStore: store,
+          facilityId: this.facilityId,
+          primaryMember: this.primaryMember
+        },
         event: ev,
         showBackdrop: false
       });
+
+      popover.onDidDismiss().then(async() => {
+        await this.fetchFacilityPrimaryMember()
+      })
+
       return popover.present()
     },
     async associateCalendarToFacility() {
@@ -564,12 +571,13 @@ export default defineComponent({
         logger.error(err)
       }
     },
-    async addAddress() {
-      const addAddressModal = await modalController.create({
-        component: AddAddressModal
+    async openAddressModal() {
+      const addressModal = await modalController.create({
+        component: FacilityAddressModal,
+        componentProps: { facilityId: this.facilityId }
       })
 
-      addAddressModal.present()
+      addressModal.present()
     },
     async addCustomSchedule() {
       const customScheduleModal = await modalController.create({
@@ -579,19 +587,61 @@ export default defineComponent({
 
       customScheduleModal.present()
     },
-    async addGeoPoint() {
-      const addGeoPointModal = await modalController.create({
-        component: AddGeoPointModal
+    async openGeoPointModal() {
+      const geoPointModal = await modalController.create({
+        component: FacilityGeoPointModal,
+        componentProps: { facilityId: this.facilityId }
       })
 
-      addGeoPointModal.present()
+      geoPointModal.present()
     },
-    async addProductStore() {
-      const addProductStoreModal = await modalController.create({
-        component: SelectProductStoreModal
+    async selectProductStores() {
+      const selectProductStoreModal = await modalController.create({
+        component: SelectProductStoreModal,
+        componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores }
       })
 
-      addProductStoreModal.present()
+      selectProductStoreModal.onDidDismiss().then(async(result: any) => {
+        if (result.data && result.data.value) {
+          const productStoresToCreate = result.data.value.productStoresToCreate
+          const productStoresToRemove = result.data.value.productStoresToRemove
+
+          const updateResponses = await Promise.allSettled(productStoresToRemove
+            .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
+              facilityId: this.facilityId,
+              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+              productStoreId: payload.productStoreId,
+              thruDate: DateTime.now().toMillis()
+            }))
+          )
+
+          const createResponses = await Promise.allSettled(productStoresToCreate
+            .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+              productStoreId: payload.productStoreId,
+              facilityId: this.facilityId,
+              fromDate: DateTime.now().toMillis(),
+            }))
+          )
+
+          const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
+          if(hasFailedResponse) {
+            showToast(translate("Failed to update some product stores"))
+          } else {
+            productStoresToRemove.map((store: any) => {
+              if(store.productStoreId === this.primaryMember.facilityGroupId) {
+                this.revokePrimaryStatusFromStore()
+              }
+            })
+            showToast(translate("Product stores updated successfully."))
+          }
+
+          // refetching product stores with updated roles and primary Member
+          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+          await this.fetchFacilityPrimaryMember()
+        }
+      })
+
+      selectProductStoreModal.present()
     },
     async addLocationModal() {
       const addLocationModal = await modalController.create({
@@ -721,12 +771,26 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
+          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
       } catch (err) {
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
+      }
+    },
+    async revokePrimaryStatusFromStore() {
+      let resp;
+      try {
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.facilityId,
+          "facilityGroupId": this.primaryMember.facilityGroupId,
+          "fromDate": this.primaryMember.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+      } catch (err) {
+        logger.error(err)
       }
     },
     async updateFulfillmentSetting(event: any, facilityGroupId: string) {
@@ -756,6 +820,7 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
+          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
@@ -782,6 +847,31 @@ export default defineComponent({
         logger.error('Failed to update default days to ship', err)
         showToast(translate('Failed to update default days to ship'))
       }
+    },
+    async fetchFacilityPrimaryMember() {
+      let primaryMember = {}
+      const payload = {
+        inputFields: {
+          facilityId: this.facilityId,
+          facilityGroupTypeId: 'FEATURING'
+        },
+        entityName: 'FacilityGroupAndMember',
+        filterByDate: 'Y',
+        viewSize: 1,
+      }
+
+      try {
+        const resp = await FacilityService.fetchFacilityPrimaryMember(payload)
+
+        if(!hasError(resp)) {
+          primaryMember = resp.data.docs[0]
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+      this.primaryMember = primaryMember
     },
     async removeFacilityMapping(mapping: any) {
       try {

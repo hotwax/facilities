@@ -13,7 +13,9 @@ const utilModule: Module<UtilState, RootState> = {
     productStores: [],
     facilityTypes: {},
     locationTypes: {},
-    externalMappingTypes: {}
+    externalMappingTypes: {},
+    countries: [],
+    states: {}
   },
   getters,
   actions,

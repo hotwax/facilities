@@ -47,14 +47,14 @@ const actions: ActionTree<UtilState, RootState> = {
       viewSize: 100,
       noConditionFind: 'Y',
       entityName: 'FacilityType',
-      fieldList: ['facilityTypeId', 'description']
+      fieldList: ['facilityTypeId', 'description', 'parentTypeId']
     } as any
 
     try {
       const resp = await UtilService.fetchFacilityTypes(params)
       if (!hasError(resp)) {
         facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
-          facilityType[type.facilityTypeId] = type.description
+          facilityType[type.facilityTypeId] = { description: type.description, parentTypeId: type.parentTypeId }
 
           return facilityType
         }, {})
@@ -228,12 +228,75 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_CALENDARS_UPDATED, calendars)
   },
 
+  async fetchCountries({ commit, dispatch }, payload) {
+    let countries = [] as any
+
+    const params = {
+      inputFields: {
+        geoIdTo: "DBIC"
+      },
+      entityName: 'GeoAssocAndGeoFrom',
+      fieldList: ['geoName', 'geoId'],
+      noConditionFind: 'Y',
+    } as any
+
+    try {
+      const resp = await UtilService.fetchCountries(params)
+
+      if(!hasError(resp)) {
+        countries = resp.data.docs
+        dispatch('fetchStates', { geoId:  payload.countryGeoId ? payload.countryGeoId : 'USA'})
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error(err)
+    }
+
+    commit(types.UTIL_COUNTRIES_UPDATED, countries)
+  },
+
+  async fetchStates({ commit, state }, payload) {
+    if(payload.geoId in state.states){
+      commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states: state.states[payload.geoId] })
+      return;
+    }
+    let states = [] as any
+
+    const params = {
+      inputFields: {
+        geoIdFrom: payload.geoId
+      },
+      entityName: 'GeoAssocAndGeoTo',
+      fieldList: ['geoName', 'geoId'],
+      noConditionFind: 'Y',
+      viewSize: 100
+    } as any
+
+    try {
+      const resp = await UtilService.fetchStates(params)
+
+      if(!hasError(resp)) {
+        states = resp.data.docs
+
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error(err)
+    }
+
+    commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states })
+  },
+
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
-    commit(types.UTIL_FACILITY_TYPES_UPDATED, {})
+    commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
+    commit(types.UTIL_COUNTRIES_UPDATED, [])
+    commit(types.UTIL_STATES_UPDATED, {})
     commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
-  }
+  },
 }
 
 export default actions;

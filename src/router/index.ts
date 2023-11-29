@@ -10,6 +10,9 @@ import { loader } from '@/utils/user';
 import FacilityManagement from '@/views/FacilityManagement.vue'
 import Settings from '@/views/Settings.vue';
 import FindFacilities from '@/views/FindFacilities.vue';
+import CreateFacility from '@/views/CreateFacility.vue';
+import AddFacilityAddress from '@/views/AddFacilityAddress.vue';
+import AddFacilityConfig from '@/views/AddFacilityConfig.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -65,6 +68,26 @@ const routes: Array<RouteRecordRaw> = [
     path: "/facility-details/:facilityId",
     name: "Facility Details",
     component: FacilityDetails,
+    props: true,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/create-facility",
+    name: "Create Facility",
+    component: CreateFacility,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/add-facility-address/:facilityId",
+    name: "Add Facility Address",
+    component: AddFacilityAddress,
+    props: true,
+    beforeEnter: authGuard
+  },
+  {
+    path: "/add-facility-config/:facilityId",
+    name: "Add Facility Config",
+    component: AddFacilityConfig,
     props: true,
     beforeEnter: authGuard
   },
