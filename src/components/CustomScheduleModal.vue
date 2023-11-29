@@ -17,7 +17,8 @@
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
       <ion-label>{{ translate("Daily timings") }}</ion-label>
-      <ion-toggle :isChecked="isDailyTimingsChecked" @click="updateDailyTimings" slot="end" />
+      {{ isDailyTimingsChecked }}
+      <ion-toggle :checked="isDailyTimingsChecked" @ionChange="updateDailyTimings" slot="end" />
     </ion-item>
 
     <ion-list lines="none" v-if="isDailyTimingsChecked">
