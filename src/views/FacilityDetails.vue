@@ -92,7 +92,7 @@
               <ion-label>{{ translate("Custom schedule") }}</ion-label>
               <ion-icon color="primary" :icon="addCircleOutline" button />
             </ion-item>
-            <ion-button fill="outline" expand="block" @click="associateCalendarToFacility">
+            <ion-button fill="outline" expand="block" :disabled="!selectedCalendarId" @click="associateCalendarToFacility">
               {{ translate("Add operating hours") }}
               <ion-icon slot="end" :icon="addCircleOutline" />
             </ion-button>
@@ -324,7 +324,7 @@
               </ion-item>
 
               <ion-label class="tablet">
-                <ion-chip outline>{{ partyRoles[party.roleTypeId] }}</ion-chip>
+                <ion-chip outline>{{ partyRoles[party.roleTypeId] ? partyRoles[party.roleTypeId] : '-' }}</ion-chip>
                 <p>{{ translate("role") }}</p>
               </ion-label>
 
@@ -375,7 +375,7 @@
               </ion-label>
 
               <ion-label>
-                {{ location.positionId }}
+                {{ location.positionId ? location.positionId : '-' }}
                 <p>{{ translate("sequence") }}</p>
               </ion-label>
 
@@ -497,7 +497,7 @@ export default defineComponent({
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
       primaryMember: {} as any,
       isCalendarFound: true,
-      selectedCalendarId: 'DEFAULT'
+      selectedCalendarId: ''
     }
   },
   computed: {
