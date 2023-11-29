@@ -7,33 +7,35 @@
     </ion-header>
 
     <ion-content>
-      <ion-card button @click="router.push('/find-facilities')">
-        <ion-card-header>
-          <ion-icon :icon="businessOutline"/>
-          <ion-card-title>{{ translate("Facilities") }}</ion-card-title>
-        </ion-card-header>
-      </ion-card>
+      <main>
+        <ion-card button @click="router.push('/find-facilities')">
+          <ion-card-header>
+            <ion-icon :icon="businessOutline"/>
+            <ion-card-title>{{ translate("Facilities") }}</ion-card-title>
+          </ion-card-header>
+        </ion-card>
 
-      <ion-card button @click="router.push('/find-parking')">
-        <ion-card-header>
-          <ion-icon :icon="golfOutline"/>
-          <ion-card-title>{{ translate("Parking") }}</ion-card-title>
-        </ion-card-header>
-      </ion-card>
+        <ion-card button @click="router.push('/find-parking')">
+          <ion-card-header>
+            <ion-icon :icon="golfOutline"/>
+            <ion-card-title>{{ translate("Parking") }}</ion-card-title>
+          </ion-card-header>
+        </ion-card>
 
-      <ion-card button @click="router.push('/find-groups')">
-        <ion-card-header>
-          <ion-icon :icon="albumsOutline"/>
-          <ion-card-title>{{ translate("Groups") }}</ion-card-title>
-        </ion-card-header>
-      </ion-card>
+        <ion-card button @click="router.push('/find-groups')">
+          <ion-card-header>
+            <ion-icon :icon="albumsOutline"/>
+            <ion-card-title>{{ translate("Groups") }}</ion-card-title>
+          </ion-card-header>
+        </ion-card>
 
-      <ion-card button @click="router.push('/settings')">
-        <ion-card-header>
-          <ion-icon :icon="settingsOutline"/>
-          <ion-card-title>{{ translate("Settings") }}</ion-card-title>
-        </ion-card-header>
-      </ion-card>
+        <ion-card button @click="router.push('/settings')">
+          <ion-card-header>
+            <ion-icon :icon="settingsOutline"/>
+            <ion-card-title>{{ translate("Settings") }}</ion-card-title>
+          </ion-card-header>
+        </ion-card>
+      </main>
     </ion-content>
   </ion-page>
 </template>
@@ -89,7 +91,16 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.list-item {
-  --columns-desktop: 4;
+
+main {
+  display: grid;
+  place-content: center;
+  grid-template-columns: 1fr 1fr;
 }
+
+ion-card-header {
+  display: flex;
+  justify-content: start;
+}
+
 </style>
