@@ -112,6 +112,7 @@ main {
   display: grid;
   place-content: center;
   grid-template-columns: 1fr 1fr;
+  height: calc(100vh - 56px);
 }
 
 ion-card-header {
