@@ -252,12 +252,12 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           // updating the facilities state instead of refetching
-          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((fac: any) => {
-            if (facility.facilityId === fac.facilityId) {
-              fac.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
-              fac.orderLimitType = fac.maximumOrderLimit === null ? 'unlimited' : (fac.maximumOrderLimit === 0 ? 'no-capacity' : 'custom')
+          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
+            if (facility.facilityId === facilityData.facilityId) {
+              facilityData.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+              facilityData.orderLimitType = facilityData.maximumOrderLimit === null ? 'unlimited' : (facilityData.maximumOrderLimit === 0 ? 'no-capacity' : 'custom')
             }
-            return fac
+            return facilityData
           })
           this.store.dispatch('facility/updateFacilities', updatedFacilities)
           showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
@@ -289,11 +289,11 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           // updating the facilities state instead of refetching
-          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((fac: any) => {
-            if (facility.facilityId === fac.facilityId) {
-              fac.sellOnline = !facility.sellOnline
+          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
+            if (facility.facilityId === facilityData.facilityId) {
+              facilityData.sellOnline = !facility.sellOnline
             }
-            return fac
+            return facilityData
           })
           this.store.dispatch('facility/updateFacilities', updatedFacilities)
           showToast(translate('Fulfillment setting updated successfully'))
