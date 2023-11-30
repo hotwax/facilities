@@ -64,29 +64,39 @@
           <ion-list>
             <ion-item>
               <ion-label>{{ translate("Sell Inventory Online") }}</ion-label>
-              <ion-toggle :value="fulfillmentSettings.FAC_GRP" slot="end" @click="updateFulfillmentSettings($event, 'FAC_GRP')"/>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
-              <ion-toggle :value="fulfillmentSettings.OMS_FULFILLMENT" slot="end" @click="updateFulfillmentSettings($event, 'OMS_FULFILLMENT')"/>
+              <ion-toggle v-model="fulfillmentSettings.FAC_GRP" slot="end"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle :value="fulfillmentSettings.PICKUP" slot="end" @click="updateFulfillmentSettings($event, 'PICKUP')"/>
+              <ion-toggle v-model="fulfillmentSettings.PICKUP" slot="end"/>
             </ion-item>
             <ion-item>
-              <ion-label>{{ translate("Create login credentials") }}</ion-label>
-              <ion-toggle :value="createLoginCreds" @click="createLoginCreds = !createLoginCreds" slot="end" />
+              <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
+              <ion-toggle v-model="fulfillmentSettings.OMS_FULFILLMENT" slot="end" @ionChange="createLoginCreds = true"/>
             </ion-item>
-            <ion-item v-if="createLoginCreds" ref="password">
-              <ion-label position="floating">
-                {{ translate('Password') }} <ion-text color="danger">*</ion-text>
-              </ion-label>
-              <ion-input v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password"/>
-              <ion-note slot="helper">
-                {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
-              </ion-note>
-            </ion-item>
+            <template v-if="fulfillmentSettings.OMS_FULFILLMENT">
+              <ion-item>
+                <ion-label>{{ translate("Create login credentials") }}</ion-label>
+                <ion-toggle v-model="createLoginCreds" slot="end" />
+              </ion-item>
+              <template v-if="createLoginCreds">
+                <ion-item>
+                  <ion-label position="floating">
+                    {{ translate('Username') }} <ion-text color="danger">*</ion-text>
+                  </ion-label>
+                  <ion-input v-model="username" />
+                </ion-item>
+                <ion-item ref="password">
+                  <ion-label position="floating">
+                    {{ translate('Password') }} <ion-text color="danger">*</ion-text>
+                  </ion-label>
+                  <ion-input v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password"/>
+                  <ion-note slot="helper">
+                    {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
+                  </ion-note>
+                </ion-item>
+                </template>
+            </template>
           </ion-list>
         </ion-card>
 
@@ -190,6 +200,7 @@ export default defineComponent({
       } as any,
       createLoginCreds: false as any,
       password: '',
+      username: '',
       selectedProductStores: [] as any,
       primaryProductStoreId: ''
     }
@@ -198,13 +209,9 @@ export default defineComponent({
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
     await this.store.dispatch('util/fetchProductStores')
+    this.username = this.current.facilityName
   },
   methods: {
-    async updateFulfillmentSettings(event: any, facilityGroupId: string) {
-      // Using `not` as the click event returns the current status of toggle,
-      // but on click we want to change the toggle status
-      this.fulfillmentSettings[facilityGroupId] = !event.target.checked
-    },
     async saveFulfillmentSettings() {
       const responses = []
       if (this.fulfillmentSettings.PICKUP) {
@@ -237,9 +244,13 @@ export default defineComponent({
       }
     },
     async createFacilityUser() {
+      if (!this.username) {
+        showToast(translate('Username is required.'))
+        return
+      }
       try {
         const payload = {
-          "groupName": this.current.facilityName,
+          "groupName": this.username,
           "facilityId": this.facilityId,
           "loginPassword": this.password,
           "partyTypeId": "PARTY_GROUP",

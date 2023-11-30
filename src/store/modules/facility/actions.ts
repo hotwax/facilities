@@ -136,13 +136,18 @@ const actions: ActionTree<FacilityState, RootState> = {
     facility.orderCount = facilityOrderCount[facility.facilityId] ? facilityOrderCount[facility.facilityId] : 0;
 
     const facilityGroupInfo = facilityGroupInformation[facility.facilityId]
-
-    if(facilityGroupInfo.length) {
+    if (facilityGroupInfo?.length) {
       facility.groupInformation = facilityGroupInfo
       facility.sellOnline = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
       facility.useOMSFulfillment = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
       facility.generateShippingLabel = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
       facility.allowPickup = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
+    } else {
+      facility.groupInformation = []
+      facility.sellOnline = false
+      facility.useOMSFulfillment = false
+      facility.generateShippingLabel = false
+      facility.allowPickup = false
     }
 
     commit(types.FACILITY_CURRENT_UPDATED, facility)

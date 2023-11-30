@@ -118,6 +118,7 @@
   "Groups": "Groups",
   "Identification": "Identification",
   "Internal ID": "Internal ID",
+  "Internal ID cannot be more than 20 characters.": "Internal ID cannot be more than 20 characters.",
   "Instance Url": "Instance Url",
   "Language": "Language",
   "Latitude": "Latitude",
@@ -153,6 +154,8 @@
   "OMS": "OMS",
   "OMS instance": "OMS instance",
   "Online Order Fulfillment": "Online Order Fulfillment",
+  "Online inventory turned on for": "Online inventory turned on for {facilityName}",
+  "Online inventory turned off for": "Online inventory turned off for {facilityName}",
   "Open and close time": "Open and close time",
   "Opening Time": "Opening Time",
   "Operating hours": "Operating hours",
@@ -186,7 +189,6 @@
   "Reset": "Reset",
   "Role": "Role",
   "role": "role",
-  "Role(s) updated successfully.": "Role(s) updated successfully.",
   "Saturday": "Saturday",
   "Save": "Save",
   "Save address": "Save address",
@@ -245,6 +247,7 @@
   "Unlink": "Unlink",
   "Update days to ship": "Update days to ship",
   "Username": "Username",
+  "Username is required.": "Username is required.",
   "Uses native fulfillment app": "Uses native fulfillment app",
   "Version: ": "Version: { appVersion }",
   "View order count history": "View order count history",
@@ -252,4 +255,4 @@
   "Wednesday": "Wednesday",
   "Would you like to update your time zone to . Your profile is currently set to . This setting can always be changed from the settings menu.": "Would you like to update your time zone to {localTimeZone}. Your profile is currently set to {profileTimeZone}. This setting can always be changed from the settings menu.",
   "Zipcode": "Zipcode"
-  }
+}
