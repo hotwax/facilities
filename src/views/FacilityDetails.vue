@@ -561,16 +561,15 @@ export default defineComponent({
 
       return popover.present()
     },
-    async openLatLongPopover(ev: Event, store: any) {
+    async openLatLongPopover(event: Event) {
       const popover = await popoverController.create({
         component: GeoPointPopover,
         componentProps: { facilityId: this.facilityId, isRegenerationRequired: this.isRegenerationRequired },
-        event: ev,
+        event,
         showBackdrop: false
       });
 
       popover.onDidDismiss().then(async() => {
-        await this.fetchFacilityPrimaryMember()
         await this.fetchPostalCodeByGeoPoints()
       })
 
@@ -816,7 +815,7 @@ export default defineComponent({
     },
     async revokePrimaryStatusFromStore() {
       try {
-        const resp = await FacilityService.updateFacilityToGroup({
+        await FacilityService.updateFacilityToGroup({
           "facilityId": this.facilityId,
           "facilityGroupId": this.primaryMember.facilityGroupId,
           "fromDate": this.primaryMember.fromDate,

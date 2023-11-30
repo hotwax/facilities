@@ -117,7 +117,7 @@ export default defineComponent({
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to generate latitude and Longitude."))
+        showToast(translate("Failed to generate latitude and longitude."))
         logger.error(err)
       }
     },
