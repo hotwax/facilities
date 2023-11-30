@@ -66,7 +66,7 @@
                 <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
                   <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
                 </ion-chip>
-                <p>{{ translate('threshold consumed') }}</p>
+                <ion-note>{{ translate('threshold consumed') }}</ion-note>
               </div>
 
               <ion-chip outline v-else-if="facility.orderLimitType === 'unlimited'" @click.stop="changeOrderLimitPopover($event, facility)">
@@ -131,6 +131,7 @@ import {
   IonLabel,
   IonList,
   IonMenuButton,
+  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -180,6 +181,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonMenuButton,
+    IonNote,
     IonPage,
     IonSearchbar,
     IonSelect,
