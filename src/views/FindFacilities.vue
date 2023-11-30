@@ -239,7 +239,6 @@ export default defineComponent({
       // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
       if(result.data != undefined && result.data !== facility.maximumOrderLimit) {
         await this.updateFacility(result.data, facility)
-        await this.fetchFacilities()
       }
     },
     async updateFacility(maximumOrderLimit: number | string, facility: any) {
@@ -251,8 +250,16 @@ export default defineComponent({
           maximumOrderLimit
         })
 
-        if(!hasError(resp)) {
-          facility.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+        if (!hasError(resp)) {
+          // updating the facilities state instead of refetching
+          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((fac: any) => {
+            if (facility.facilityId === fac.facilityId) {
+              fac.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+              fac.orderLimitType = fac.maximumOrderLimit === null ? 'unlimited' : (fac.maximumOrderLimit === 0 ? 'no-capacity' : 'custom')
+            }
+            return fac
+          })
+          this.store.dispatch('facility/updateFacilities', updatedFacilities)
           showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
         } else {
           throw resp.data
@@ -281,8 +288,15 @@ export default defineComponent({
         }
 
         if (!hasError(resp)) {
+          // updating the facilities state instead of refetching
+          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((fac: any) => {
+            if (facility.facilityId === fac.facilityId) {
+              fac.sellOnline = !facility.sellOnline
+            }
+            return fac
+          })
+          this.store.dispatch('facility/updateFacilities', updatedFacilities)
           showToast(translate('Fulfillment setting updated successfully'))
-          await this.fetchFacilities();
         } else {
           throw resp.data
         }

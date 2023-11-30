@@ -6,8 +6,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
-import { showToast } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -115,6 +113,10 @@ const actions: ActionTree<FacilityState, RootState> = {
     if(facilities.length) {
       await dispatch('fetchFacilitiesAdditionalInformation', payload)
     }
+  },
+
+  updateFacilities({ commit }, facilities) {
+    commit(types.FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
   async fetchFacilityAdditionalInformation({ commit, state }) {
