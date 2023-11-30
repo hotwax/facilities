@@ -183,7 +183,7 @@ export default defineComponent({
         aisleId: "TL",
         sectionId: "TL",
         levelId: "LL",
-        positionId: "04",
+        positionId: "01",
       })
     },
     getFacilityTypesByParentTypeId(parentTypeId: string) {

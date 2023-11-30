@@ -263,19 +263,22 @@ export default defineComponent({
       }
     },
     async updateSellOnlineStatus(facility: any) {
-      if (!facility.sellOnline) {
-        this.addFacilityToGroup(facility.facilityId)
-      } else {
-        this.updateFacilityToGroup(facility)
-      }
-    },
-    async addFacilityToGroup(facilityId: string) {
-      let resp;
       try {
-        resp = await FacilityService.addFacilityToGroup({
-          facilityId,
-          "facilityGroupId": 'FAC_GRP'
-        })
+        let resp
+        if (!facility.sellOnline) {
+          resp = await FacilityService.addFacilityToGroup({
+            "facilityId": facility.facilityId,
+            "facilityGroupId": 'FAC_GRP'
+          })
+        } else {
+          const groupInformation = facility.groupInformation.find((group: any) => group.facilityGroupId === 'FAC_GRP')
+          resp = await FacilityService.updateFacilityToGroup({
+            "facilityId": facility.facilityId,
+            "facilityGroupId": 'FAC_GRP',
+            "fromDate": groupInformation.fromDate,
+            "thruDate": DateTime.now().toMillis()
+          })
+        }
 
         if (!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
@@ -283,34 +286,9 @@ export default defineComponent({
         } else {
           throw resp.data
         }
-      } catch (err) {
+      } catch (error) {
         showToast(translate('Failed to update fulfillment setting'))
-        logger.error('Failed to update fulfillment setting', err)
-      }
-    },
-    async updateFacilityToGroup(facility: any) {
-      let resp;
-      const groupInformation = facility.groupInformation.find((group: any) => group.facilityGroupId === 'FAC_GRP')
-
-      try {
-        resp = await FacilityService.updateFacilityToGroup({
-          "facilityId": facility.facilityId,
-          "facilityGroupId": 'FAC_GRP',
-          "fromDate": groupInformation.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-
-        console.log('resp', resp)
-
-        if (!hasError(resp)) {
-          showToast(translate('Fulfillment setting updated successfully'))
-          await this.fetchFacilities();
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        showToast(translate('Failed to update fulfillment setting'))
-        logger.error('Failed to update fulfillment setting', err)
+        logger.error('Failed to update fulfillment setting', error)
       }
     },
   },
