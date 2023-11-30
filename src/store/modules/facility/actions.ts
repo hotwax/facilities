@@ -117,6 +117,10 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
   },
 
+  updateFacilities({ commit }, facilities) {
+    commit(types.FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
+  },
+
   async fetchFacilityAdditionalInformation({ commit, state }) {
     const facility = JSON.parse(JSON.stringify(state.current))
 
