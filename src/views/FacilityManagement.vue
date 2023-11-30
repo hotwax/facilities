@@ -24,21 +24,21 @@
 
         <ion-card class="ion-hide" button @click="router.push('/find-parking')">
           <ion-item>
-            <ion-icon :icon="golfOutline"/>
+            <ion-icon slot="start" :icon="golfOutline"/>
             <ion-card-title>{{ translate("Parking") }}</ion-card-title>
           </ion-item>
         </ion-card>
 
         <ion-card class="ion-hide" button @click="router.push('/find-groups')">
           <ion-item>
-            <ion-icon :icon="albumsOutline"/>
+            <ion-icon slot="start" :icon="albumsOutline"/>
             <h1>{{ translate("Groups") }}</h1>
           </ion-item>
         </ion-card>
 
         <ion-card button @click="router.push('/settings')">
           <ion-item>
-            <ion-icon :icon="settingsOutline"/>
+            <ion-icon slot="start" :icon="settingsOutline"/>
             <h1>{{ translate("Settings") }}</h1>
           </ion-item>
         </ion-card>
