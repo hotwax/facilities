@@ -23,7 +23,7 @@
                   {{ translate("Address") }}
                 </ion-card-title>
               </ion-card-header>
-              <div v-if="postalAddress?.address1">
+              <template v-if="postalAddress?.address1">
                 <ion-item lines="full">
                   <ion-label>
                     <h3>{{ postalAddress.address1 }}</h3>
@@ -33,7 +33,7 @@
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
-              </div>
+              </template>
               <ion-button v-else expand="block" fill="outline" @click="openAddressModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
@@ -46,7 +46,7 @@
                   {{ translate("Latitude & Longitude") }}
                 </ion-card-title>
               </ion-card-header>
-              <div v-if="postalAddress?.latitude">
+              <template v-if="postalAddress?.latitude">
                 <ion-card-content>
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
@@ -59,7 +59,7 @@
                   <p>{{ postalAddress.longitude }}</p>
                 </ion-item>
                 <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
-              </div>
+              </template>
               <ion-button v-else expand="block" fill="outline" :disabled="!postalAddress.address1" @click="openGeoPointModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />

@@ -264,6 +264,7 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchFacilityLocations({ commit }, payload) {
+    let facilityLocations = []
     try {
       const params = {
         inputFields: {
@@ -277,13 +278,14 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityLocations(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_LOCATIONS_UPDATED, resp.data.docs)
+        facilityLocations = resp.data.docs
       } else {
         throw resp.data
       }
     } catch(err) {
       logger.error('Failed to find the facility locations', err)
     }
+    commit(types.FACILITY_LOCATIONS_UPDATED, facilityLocations)
   },
 
   async fetchFacilityCalendar({commit}, payload) {

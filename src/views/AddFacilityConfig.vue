@@ -18,7 +18,7 @@
               {{ translate("Add") }}
             </ion-button>
           </ion-card-header>
-          <div v-if="selectedProductStores.length">
+          <template v-if="selectedProductStores.length">
             <ion-list>
               <ion-item v-for="store in selectedProductStores" :key="store.productStoreId">
                 <ion-label>
@@ -49,7 +49,7 @@
                 </ion-popover>
               </ion-item>
             </ion-list>
-          </div>
+          </template>
           <div v-else class="empty-state">
             <p>{{ translate("No product stores added.") }}</p>
           </div>

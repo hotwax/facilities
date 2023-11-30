@@ -19,20 +19,20 @@
       </ion-chip>
     </ion-row>
 
-    <ion-list>
+    <div class="ion-padding" v-if="!parties.length">
+      {{ translate("No party found") }}
+    </div>
+    <ion-list v-else>
       <ion-list-header>{{ translate("Staff") }}</ion-list-header>
-      <div class="ion-padding" v-if="!parties.length">{{ translate("No party found") }}</div>
-      <div v-else>
-        <ion-item v-for="(party, index) in parties" :key="index">
-          <ion-label>
-            {{ party.fullName }}
-            <p>{{ party.partyId }}</p>
-          </ion-label>
-          <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
-            <ion-select-option v-for="(description, roleTypeId) in partyRoles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
-          </ion-select>
-        </ion-item>
-      </div>
+      <ion-item v-for="(party, index) in parties" :key="index">
+        <ion-label>
+          {{ party.fullName }}
+          <p>{{ party.partyId }}</p>
+        </ion-label>
+        <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
+          <ion-select-option v-for="(description, roleTypeId) in partyRoles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
+        </ion-select>
+      </ion-item>
     </ion-list>
   </ion-content>
 
@@ -100,7 +100,7 @@ export default defineComponent({
   props: ['facilityId', 'selectedParties'],
   data() {
     return {
-      parties: [],
+      parties: [] as any,
       queryString: '',
       selectedPartyValues: JSON.parse(JSON.stringify(this.selectedParties))
     }
