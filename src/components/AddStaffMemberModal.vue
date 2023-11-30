@@ -20,7 +20,7 @@
       <ion-list-header>{{ translate("Staff") }}</ion-list-header>
       <ion-item v-for="(party, index) in parties" :key="index">
         <ion-label>
-          {{ party.fullName ? party.fullName : '' }}
+          {{ party.fullName }}
           <p>{{ party.partyId }}</p>
         </ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
@@ -143,7 +143,7 @@ export default defineComponent({
           let parties = resp.data.docs
 
           parties.map((party: any) => {
-            party.fullName = party.groupName ? party.groupName : `${party.firstName} ${party.lastName}`
+            party.fullName = party.groupName ? party.groupName : party.firstName ? `${party.firstName} ${party.lastName}` : ''
           })
           this.parties = parties
         } else {
