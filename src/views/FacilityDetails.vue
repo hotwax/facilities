@@ -23,7 +23,7 @@
                   {{ translate("Address") }}
                 </ion-card-title>
               </ion-card-header>
-              <div v-if="postalAddress?.address1">
+              <template v-if="postalAddress?.address1">
                 <ion-item lines="full">
                   <ion-label>
                     <h3>{{ postalAddress.address1 }}</h3>
@@ -33,7 +33,7 @@
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
-              </div>
+              </template>
               <ion-button v-else expand="block" fill="outline" @click="openAddressModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
@@ -46,7 +46,7 @@
                   {{ translate("Latitude & Longitude") }}
                 </ion-card-title>
               </ion-card-header>
-              <div v-if="postalAddress?.latitude">
+              <template v-if="postalAddress?.latitude">
                 <ion-card-content>
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
@@ -68,7 +68,7 @@
                     <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                   </ion-button>
                 </div>
-              </div>
+              </template>
               <ion-button v-else expand="block" fill="outline" :disabled="!postalAddress.address1" @click="openGeoPointModal">
                 {{ translate("Add") }}
                 <ion-icon slot="end" :icon="addCircleOutline" />
@@ -286,13 +286,13 @@
                 <ion-item lines="full">
                   <ion-label>{{ shopifyFacilityMapping.shopifyLocationId }}</ion-label>
                 </ion-item>
-                <ion-item lines="full">
+                <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
                   <ion-label>{{ shopifyFacilityMapping.myshopifyDomain + '/admin' }}</ion-label>
                   <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyFacilityMapping.myshopifyDomain + '/admin'}`)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
-                <ion-item lines="full">
+                <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
                   <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
                   <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
                     <ion-icon :icon="openOutline" />
@@ -535,7 +535,7 @@ export default defineComponent({
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.fetchFacilityPrimaryMember()
-    this.fetchPostalCodeByGeoPoints()
+    if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
     goToLink(link: string) {

@@ -46,7 +46,7 @@
         <main v-if="facilities?.length">
           <div class="list-item" v-for="(facility, index) in facilities" :key="index" @click="viewFacilityDetails(facility.facilityId)">
             <ion-item lines="none">
-              <ion-icon slot="start" :icon="storefrontOutline" />
+              <ion-icon slot="start" :icon="facilityTypes[facility.facilityTypeId].parentTypeId === 'DISTRIBUTION_CENTER' ? businessOutline : storefrontOutline" />
               <ion-label>
                 <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId].description : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
@@ -55,7 +55,7 @@
             </ion-item>
 
             <div class="tablet">
-              <ion-chip outline>
+              <ion-chip outline @click.stop="updateSellOnlineStatus(facility)">
                 <ion-label>{{ translate('Sell Online') }}</ion-label>
                 <ion-icon :icon="shareOutline" :color="facility.sellOnline ? 'primary' : ''"/>
               </ion-chip>
@@ -157,6 +157,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import Filters from '@/components/Filters.vue'
+import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FindFacilities',
@@ -238,7 +239,6 @@ export default defineComponent({
       // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
       if(result.data != undefined && result.data !== facility.maximumOrderLimit) {
         await this.updateFacility(result.data, facility)
-        await this.fetchFacilities()
       }
     },
     async updateFacility(maximumOrderLimit: number | string, facility: any) {
@@ -250,8 +250,16 @@ export default defineComponent({
           maximumOrderLimit
         })
 
-        if(!hasError(resp)) {
-          facility.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+        if (!hasError(resp)) {
+          // updating the facilities state instead of refetching
+          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
+            if (facility.facilityId === facilityData.facilityId) {
+              facilityData.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
+              facilityData.orderLimitType = facilityData.maximumOrderLimit === null ? 'unlimited' : (facilityData.maximumOrderLimit === 0 ? 'no-capacity' : 'custom')
+            }
+            return facilityData
+          })
+          this.store.dispatch('facility/updateFacilities', updatedFacilities)
           showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
         } else {
           throw resp.data
@@ -260,7 +268,43 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }))
         logger.error('Failed to update facility', err)
       }
-    }
+    },
+    async updateSellOnlineStatus(facility: any) {
+      try {
+        let resp
+        if (!facility.sellOnline) {
+          resp = await FacilityService.addFacilityToGroup({
+            "facilityId": facility.facilityId,
+            "facilityGroupId": 'FAC_GRP'
+          })
+        } else {
+          const groupInformation = facility.groupInformation.find((group: any) => group.facilityGroupId === 'FAC_GRP')
+          resp = await FacilityService.updateFacilityToGroup({
+            "facilityId": facility.facilityId,
+            "facilityGroupId": 'FAC_GRP',
+            "fromDate": groupInformation.fromDate,
+            "thruDate": DateTime.now().toMillis()
+          })
+        }
+
+        if (!hasError(resp)) {
+          // updating the facilities state instead of refetching
+          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
+            if (facility.facilityId === facilityData.facilityId) {
+              facilityData.sellOnline = !facility.sellOnline
+            }
+            return facilityData
+          })
+          this.store.dispatch('facility/updateFacilities', updatedFacilities)
+          showToast(translate('Fulfillment setting updated successfully'))
+        } else {
+          throw resp.data
+        }
+      } catch (error) {
+        showToast(translate('Failed to update fulfillment setting'))
+        logger.error('Failed to update fulfillment setting', error)
+      }
+    },
   },
   setup() {
     const router = useRouter();

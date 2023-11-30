@@ -6,8 +6,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
-import { showToast } from '@/utils'
-import { translate } from '@hotwax/dxp-components'
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -115,6 +113,10 @@ const actions: ActionTree<FacilityState, RootState> = {
     if(facilities.length) {
       await dispatch('fetchFacilitiesAdditionalInformation', payload)
     }
+  },
+
+  updateFacilities({ commit }, facilities) {
+    commit(types.FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
   async fetchFacilityAdditionalInformation({ commit, state }) {
@@ -262,6 +264,7 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchFacilityLocations({ commit }, payload) {
+    let facilityLocations = []
     try {
       const params = {
         inputFields: {
@@ -275,13 +278,14 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityLocations(params)
 
       if(!hasError(resp) && resp.data.count > 0) {
-        commit(types.FACILITY_LOCATIONS_UPDATED, resp.data.docs)
+        facilityLocations = resp.data.docs
       } else {
         throw resp.data
       }
     } catch(err) {
       logger.error('Failed to find the facility locations', err)
     }
+    commit(types.FACILITY_LOCATIONS_UPDATED, facilityLocations)
   },
 
   async fetchFacilityCalendar({commit}, payload) {
