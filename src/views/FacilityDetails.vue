@@ -190,16 +190,16 @@
               <ion-toggle :checked="current.sellOnline" slot="end" @click="updateFulfillmentSetting($event, 'FAC_GRP')"/>
             </ion-item>
             <ion-item>
+              <ion-label>{{ translate("Allow pickup") }}</ion-label>
+              <ion-toggle :checked="current.allowPickup" slot="end" @click="updateFulfillmentSetting($event, 'PICKUP')"/>
+            </ion-item>
+            <ion-item>
               <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
               <ion-toggle :checked="current.useOMSFulfillment" slot="end" @click="updateFulfillmentSetting($event, 'OMS_FULFILLMENT')"/>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate("Generate shipping labels") }}</ion-label>
               <ion-toggle :checked="current.generateShippingLabel" slot="end" @click="updateFulfillmentSetting($event, 'AUTO_SHIPPING_LABEL')"/>
-            </ion-item>
-            <ion-item>
-              <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle :checked="current.allowPickup" slot="end" @click="updateFulfillmentSetting($event, 'PICKUP')"/>
             </ion-item>
             <ion-item lines="full">
               <ion-label>{{ translate("Days to ship") }}</ion-label>
