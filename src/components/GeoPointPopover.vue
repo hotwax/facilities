@@ -67,7 +67,6 @@ export default defineComponent({
             if(!hasError(resp)) {
               showToast(translate("Successfully regenerated latitude and longitude for the facility."))
               await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
-              popoverController.dismiss()
             } else {
               throw resp.data
             }
@@ -79,6 +78,8 @@ export default defineComponent({
         showToast(translate("Failed to regenerate latitude and longitude for the facility."))
         logger.error(err);
       }
+
+      popoverController.dismiss()
     },
     async removeLatitudeAndLongitude() {
       let resp;
@@ -94,7 +95,6 @@ export default defineComponent({
         if(!hasError(resp)) {
           showToast(translate("Facility latitude and longitude removed successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
-          popoverController.dismiss()
         } else {
           throw resp.data
         }
@@ -102,6 +102,8 @@ export default defineComponent({
         showToast(translate("Failed to remove facility latitude and longitude."))
         logger.error(err)
       }
+
+      popoverController.dismiss()
     }
   },
   setup() {
