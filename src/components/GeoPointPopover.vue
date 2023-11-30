@@ -55,6 +55,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           const generatedLatLong = resp.data.response.docs[0]
+
           if(generatedLatLong.latitude && generatedLatLong.longitude) {
             resp = await FacilityService.updateFacilityPostalAddress({
               ...this.postalAddress,
@@ -83,17 +84,22 @@ export default defineComponent({
       let resp;
 
       try {
-        resp = await FacilityService.updateFacilityPostalAddress({...this.postalAddress, facilityId: this.facilityId, latitude: '', longitude: ''})
+        resp = await FacilityService.updateFacilityPostalAddress({
+          ...this.postalAddress,
+          facilityId: this.facilityId,
+          latitude: '',
+          longitude: ''
+        })
 
         if(!hasError(resp)) {
-          showToast(translate("Facility latitude & longitude removed successfully."))
+          showToast(translate("Facility latitude and longitude removed successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
           popoverController.dismiss()
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to remove facility latitude & longitude."))
+        showToast(translate("Failed to remove facility latitude and longitude."))
         logger.error(err)
       }
     }

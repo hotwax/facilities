@@ -133,7 +133,7 @@ export default defineComponent({
         resp = await FacilityService.updateFacilityPostalAddress({...this.geoPoint, postalCode: this.postalAddress.postalCode, facilityId: this.facilityId})
 
         if(!hasError(resp)) {
-          showToast(translate("Facility latitude & longitude updated successfully."))
+          showToast(translate("Facility latitude and longitude updated successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
         } else {
           throw resp.data
