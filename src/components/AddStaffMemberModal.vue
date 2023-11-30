@@ -12,12 +12,6 @@
 
   <ion-content class="ion-padding">
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findParties()"/>
-    <ion-row>
-      <ion-chip v-for="party in selectedPartyValues" :key="party.partyId">
-        <ion-label>{{ party.fullName }}</ion-label>
-        <ion-icon :icon="closeCircle" @click="removeSelectedParty(party.partyId)" />
-      </ion-chip>
-    </ion-row>
 
     <div class="ion-padding" v-if="!parties.length">
       {{ translate("No party found") }}
@@ -47,7 +41,6 @@
 import {
   IonButton,
   IonButtons,
-  IonChip,
   IonContent,
   IonFab,
   IonFabButton,
@@ -57,7 +50,6 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
-  IonRow,
   IonSearchbar,
   IonSelect,
   IonSelectOption,
@@ -80,7 +72,6 @@ export default defineComponent({
   components: {
     IonButton,
     IonButtons,
-    IonChip,
     IonContent,
     IonFab,
     IonFabButton,
@@ -90,7 +81,6 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonListHeader,
-    IonRow,
     IonSearchbar,
     IonSelect,
     IonSelectOption,
@@ -162,9 +152,6 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
-    },
-    removeSelectedParty(partyId: string) {
-      this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== partyId)
     },
     async saveParties() {
       const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))

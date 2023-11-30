@@ -81,7 +81,7 @@
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
-                <ion-radio :value="calendar.calendarId"/>
+                <ion-radio slot="end" :value="calendar.calendarId"/>
               </ion-item>
             </ion-radio-group>
             <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
@@ -101,7 +101,7 @@
           <ion-card v-else>
             <ion-card-header>
               <div>
-                <ion-text>{{ "Operating Hours" }}</ion-text>
+                <ion-text>{{ translate("Operating hours") }}</ion-text>
                 <ion-card-title>
                   {{ facilityCalendar.description }}
                 </ion-card-title>
@@ -111,47 +111,11 @@
               </ion-button>
             </ion-card-header>
             <ion-list lines="none">
-              <ion-item>
+              <ion-item v-for="day in days" :key="day">
                 <ion-label>
-                  <p>{{ translate("Monday") }}</p>
+                  <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.mondayStartTime ? getOpenEndTime(facilityCalendar.mondayStartTime, facilityCalendar.mondayCapacity) : '-' }} </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Tuesday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.tuesdayStartTime ? getOpenEndTime(facilityCalendar.tuesdayStartTime, facilityCalendar.tuesdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Wednesday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.wednesdayStartTime ? getOpenEndTime(facilityCalendar.wednesdayStartTime, facilityCalendar.wednesdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Thursday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.thursdayStartTime ? getOpenEndTime(facilityCalendar.thursdayStartTime, facilityCalendar.thursdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Friday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.fridayStartTime ? getOpenEndTime(facilityCalendar.fridayStartTime, facilityCalendar.fridayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Saturday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.saturdayStartTime ? getOpenEndTime(facilityCalendar.saturdayStartTime, facilityCalendar.saturdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Sunday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.sundayStartTime ? getOpenEndTime(facilityCalendar.sundayStartTime, facilityCalendar.sundayCapacity) : '-' }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar[day+'StartTime'] ? getOpenEndTime(facilityCalendar[day+'StartTime'], facilityCalendar[day+'Capacity']) : '-' }} </ion-label>
               </ion-item>
             </ion-list>
           </ion-card>
@@ -497,7 +461,8 @@ export default defineComponent({
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
       primaryMember: {} as any,
       isCalendarFound: true,
-      selectedCalendarId: ''
+      selectedCalendarId: '',
+      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     }
   },
   computed: {

@@ -20,52 +20,14 @@
             </ion-label>
           </ion-item>
           <div class="ion-padding" slot="content">
-            <ion-card class="ion-padding">
-              <ion-list lines="none">
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Monday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.mondayStartTime ? getStartAndEndTime(calendar.mondayStartTime, calendar.mondayCapacity) : '-' }} </ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Tuesday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.tuesdayStartTime ? getStartAndEndTime(calendar.tuesdayStartTime, calendar.tuesdayCapacity) : '-' }}</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Wednesday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.wednesdayStartTime ? getStartAndEndTime(calendar.wednesdayStartTime, calendar.wednesdayCapacity) : '-' }}</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Thursday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.thursdayStartTime ? getStartAndEndTime(calendar.thursdayStartTime, calendar.thursdayCapacity) : '-' }}</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Friday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.fridayStartTime ? getStartAndEndTime(calendar.fridayStartTime, calendar.fridayCapacity) : '-' }}</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Saturday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.saturdayStartTime ? getStartAndEndTime(calendar.saturdayStartTime, calendar.saturdayCapacity) : '-' }}</ion-label>
-                </ion-item>
-                <ion-item>
-                  <ion-label>
-                    <p>{{ translate("Sunday") }}</p>
-                  </ion-label>
-                  <ion-label slot="end">{{ calendar.sundayStartTime ? getStartAndEndTime(calendar.sundayStartTime, calendar.sundayCapacity) : '-' }}</ion-label>
-                </ion-item>
-              </ion-list>
-            </ion-card>
+            <ion-list lines="none">
+              <ion-item v-for="day in days" :key="day">
+                <ion-label>
+                  <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
+                </ion-label>
+                <ion-label slot="end">{{ calendar[day+'StartTime'] ? getStartAndEndTime(calendar[day+'StartTime'], calendar[day+'Capacity']) : '-' }} </ion-label>
+              </ion-item>
+            </ion-list>
           </div>
         </ion-accordion>
       </ion-radio-group>
@@ -85,7 +47,6 @@ import {
   IonAccordionGroup,
   IonButton,
   IonButtons,
-  IonCard,
   IonContent,
   IonFab,
   IonFabButton,
@@ -117,7 +78,6 @@ export default defineComponent({
     IonAccordionGroup,
     IonButton,
     IonButtons,
-    IonCard,
     IonContent,
     IonFab,
     IonFabButton,
@@ -133,6 +93,7 @@ export default defineComponent({
   },
   data() {
     return {
+      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
       selectedCalendarId: '' as any
     }
   },
