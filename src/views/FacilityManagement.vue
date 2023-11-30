@@ -113,6 +113,7 @@ main {
   place-content: center;
   grid-template-columns: 1fr 1fr;
   height: calc(100vh - 56px);
+  gap: var(--spacer-lg);
   padding: var(--spacer-lg);
 }
 
