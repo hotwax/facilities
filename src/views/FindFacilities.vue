@@ -46,7 +46,7 @@
         <main v-if="facilities?.length">
           <div class="list-item" v-for="(facility, index) in facilities" :key="index" @click="viewFacilityDetails(facility.facilityId)">
             <ion-item lines="none">
-              <ion-icon slot="start" :icon="facilityTypes[facility.facilityTypeId].parentTypeId === 'DISTRIBUTION_CENTER' ? businessOutline : storefrontOutline" />
+              <ion-icon slot="start" :icon="facilityTypes[facility.facilityTypeId]?.parentTypeId === 'DISTRIBUTION_CENTER' ? businessOutline : storefrontOutline" />
               <ion-label>
                 <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId].description : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
@@ -68,10 +68,12 @@
                 </ion-chip>
                 <p>{{ translate('threshold consumed') }}</p>
               </div>
+
               <ion-chip outline v-else-if="facility.orderLimitType === 'unlimited'" @click.stop="changeOrderLimitPopover($event, facility)">
                 <ion-label>{{ translate("Unlimited orders") }}</ion-label>
                 <ion-icon :icon="lockOpenOutline"/>
               </ion-chip>
+
               <ion-chip outline v-else @click.stop="changeOrderLimitPopover($event, facility)">
                 <ion-label>{{ translate("No capacity") }}</ion-label>
                 <ion-icon :icon="lockClosedOutline"/>

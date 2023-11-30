@@ -51,6 +51,10 @@
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
                 <ion-item lines="full">
+                  <ion-label>{{ translate("Facility zipcode") }}</ion-label>
+                  <p><ion-text :color="isRegenerationRequired ? 'danger' : ''" slot="end">{{ postalAddress.postalCode }}</ion-text></p>
+                </ion-item>
+                <ion-item lines="full">
                   <ion-label>{{ translate("Latitude") }}</ion-label>
                   <p>{{ postalAddress.latitude }}</p>
                 </ion-item>
@@ -58,7 +62,12 @@
                   <ion-label>{{ translate("Longitude") }}</ion-label>
                   <p>{{ postalAddress.longitude }}</p>
                 </ion-item>
-                <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
+                <div class="actions">
+                  <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
+                  <ion-button slot="end" fill="clear" color="medium" @click="openLatLongPopover">
+                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+                  </ion-button>
+                </div>
               </template>
               <ion-button v-else expand="block" fill="outline" :disabled="!postalAddress.address1" @click="openGeoPointModal">
                 {{ translate("Add") }}
@@ -69,28 +78,26 @@
 
           <ion-card v-if="!facilityCalendar.calendarId">
             <ion-card-header>
-              <div>
-                <ion-card-title>
-                  {{ translate("Operating hours") }}
-                </ion-card-title>
-                <ion-card-subtitle>
-                  {{ translate("Select a saved calendar of store hours or create a new calendar") }}
-                </ion-card-subtitle>
-              </div>
+              <ion-card-title>
+                {{ translate("Operating hours") }}
+              </ion-card-title>
             </ion-card-header>
+            <ion-card-content>
+              {{ translate("Select a saved calendar of store hours or create a new calendar") }}
+            </ion-card-content>
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
-                <ion-radio :value="calendar.calendarId"/>
+                <ion-radio slot="end" :value="calendar.calendarId"/>
               </ion-item>
             </ion-radio-group>
             <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
               <ion-label> {{ calendars.length - 3 }} {{ translate("Others") }}</ion-label>
-              <ion-icon :icon="chevronForwardOutline" />
+              <ion-icon slot="end" :icon="chevronForwardOutline" />
             </ion-item>
             <ion-item button lines="none" @click="addCustomSchedule">
               <ion-label>{{ translate("Custom schedule") }}</ion-label>
-              <ion-icon color="primary" :icon="addCircleOutline" button />
+              <ion-icon slot="end" color="primary" :icon="addCircleOutline" button />
             </ion-item>
             <ion-button fill="outline" expand="block" :disabled="!selectedCalendarId" @click="associateCalendarToFacility">
               {{ translate("Add operating hours") }}
@@ -101,7 +108,7 @@
           <ion-card v-else>
             <ion-card-header>
               <div>
-                <ion-text>{{ "Operating Hours" }}</ion-text>
+                <p class="overline">{{ translate("Operating hours") }}</p>
                 <ion-card-title>
                   {{ facilityCalendar.description }}
                 </ion-card-title>
@@ -111,47 +118,11 @@
               </ion-button>
             </ion-card-header>
             <ion-list lines="none">
-              <ion-item>
+              <ion-item v-for="day in days" :key="day">
                 <ion-label>
-                  <p>{{ translate("Monday") }}</p>
+                  <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
                 </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.mondayStartTime ? getOpenEndTime(facilityCalendar.mondayStartTime, facilityCalendar.mondayCapacity) : '-' }} </ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Tuesday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.tuesdayStartTime ? getOpenEndTime(facilityCalendar.tuesdayStartTime, facilityCalendar.tuesdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Wednesday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.wednesdayStartTime ? getOpenEndTime(facilityCalendar.wednesdayStartTime, facilityCalendar.wednesdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Thursday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.thursdayStartTime ? getOpenEndTime(facilityCalendar.thursdayStartTime, facilityCalendar.thursdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Friday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.fridayStartTime ? getOpenEndTime(facilityCalendar.fridayStartTime, facilityCalendar.fridayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Saturday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.saturdayStartTime ? getOpenEndTime(facilityCalendar.saturdayStartTime, facilityCalendar.saturdayCapacity) : '-' }}</ion-label>
-              </ion-item>
-              <ion-item>
-                <ion-label>
-                  <p>{{ translate("Sunday") }}</p>
-                </ion-label>
-                <ion-label slot="end">{{ facilityCalendar.sundayStartTime ? getOpenEndTime(facilityCalendar.sundayStartTime, facilityCalendar.sundayCapacity) : '-' }}</ion-label>
+                <ion-label slot="end">{{ facilityCalendar[day+'StartTime'] ? getOpenEndTime(facilityCalendar[day+'StartTime'], facilityCalendar[day+'Capacity']) : '-' }} </ion-label>
               </ion-item>
             </ion-list>
           </ion-card>
@@ -162,15 +133,13 @@
                 {{ translate("Product Stores") }}
               </ion-card-title>
               <ion-button @click="selectProductStores()" fill="clear">
-                <ion-icon :icon="addCircleOutline" slot="start" />
+                <ion-icon :icon="addCircleOutline" slot="end" />
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
-              <ion-label>
-                <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
-              </ion-label>
-              <ion-badge v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
+              <ion-badge slot="end" v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
@@ -402,7 +371,6 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -459,6 +427,8 @@ import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModa
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
+import GeoPointPopover from '@/components/GeoPointPopover.vue'
+import { UtilService } from '@/services/UtilService';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -469,7 +439,6 @@ export default defineComponent({
     IonCard,
     IonCardContent,
     IonCardHeader,
-    IonCardSubtitle,
     IonCardTitle,
     IonChip,
     IonContent,
@@ -497,7 +466,9 @@ export default defineComponent({
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
       primaryMember: {} as any,
       isCalendarFound: true,
-      selectedCalendarId: ''
+      selectedCalendarId: '',
+      isRegenerationRequired: true,
+      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     }
   },
   computed: {
@@ -523,6 +494,7 @@ export default defineComponent({
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.fetchFacilityPrimaryMember()
+    if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
     goToLink(link: string) {
@@ -544,6 +516,20 @@ export default defineComponent({
 
       popover.onDidDismiss().then(async() => {
         await this.fetchFacilityPrimaryMember()
+      })
+
+      return popover.present()
+    },
+    async openLatLongPopover(event: Event) {
+      const popover = await popoverController.create({
+        component: GeoPointPopover,
+        componentProps: { facilityId: this.facilityId, isRegenerationRequired: this.isRegenerationRequired },
+        event,
+        showBackdrop: false
+      });
+
+      popover.onDidDismiss().then(async() => {
+        await this.fetchPostalCodeByGeoPoints()
       })
 
       return popover.present()
@@ -591,6 +577,10 @@ export default defineComponent({
         component: FacilityGeoPointModal,
         componentProps: { facilityId: this.facilityId }
       })
+
+      geoPointModal.onDidDismiss().then(async() => {
+        await this.fetchPostalCodeByGeoPoints()
+      } )
 
       geoPointModal.present()
     },
@@ -784,7 +774,7 @@ export default defineComponent({
     },
     async revokePrimaryStatusFromStore() {
       try {
-        const resp = await FacilityService.updateFacilityToGroup({
+        await FacilityService.updateFacilityToGroup({
           "facilityId": this.facilityId,
           "facilityGroupId": this.primaryMember.facilityGroupId,
           "fromDate": this.primaryMember.fromDate,
@@ -937,6 +927,32 @@ export default defineComponent({
       const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
       const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
       return `${openTime} - ${endTime}`
+    },
+    async fetchPostalCodeByGeoPoints() {
+      const payload = {
+        json: {
+          "query": "*:*",
+          "filter": "{!geofilt sfield=location}",
+          "params": {
+            "pt": `${this.postalAddress.latitude}, ${this.postalAddress.longitude}`,
+            "d": "10"
+          },
+          sort: 'geodist(location, ' + this.postalAddress.latitude + ',' + this.postalAddress.longitude + ') asc',
+          "limit": 1
+        }
+      }
+
+      try {
+        const resp = await UtilService.generateLatLong(payload)
+
+        if(!hasError(resp)) {
+          this.isRegenerationRequired = !(this.postalAddress.postalCode === resp.data.response.docs[0].postcode)
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
     }
   },
   setup() {
@@ -1007,5 +1023,10 @@ ion-segment {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start; 
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
 }
 </style>
