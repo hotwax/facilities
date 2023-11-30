@@ -16,7 +16,8 @@
         <ion-input :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
         <ion-button fill="outline" @click="generateLatLong">
           {{ translate("Generate") }}
-          <ion-icon slot="end" :icon="colorWandOutline" />
+          <ion-icon v-if="!isGeneratingLatLong" slot="end" :icon="colorWandOutline" />
+          <ion-spinner v-else data-spinner-size="small"/>
         </ion-button>
       </ion-item>
       <ion-item>
@@ -49,6 +50,7 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonSpinner,
   IonTitle,
   IonToolbar,
   modalController
@@ -76,6 +78,7 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonLabel,
+    IonSpinner,
     IonTitle,
     IonToolbar,
   },
@@ -87,7 +90,8 @@ export default defineComponent({
   props: ['facilityId'],
   data() {
     return {
-      geoPoint: {} as any
+      geoPoint: {} as any,
+      isGeneratingLatLong: false
     }
   },
   beforeMount() {
@@ -98,6 +102,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async generateLatLong() {
+      this.isGeneratingLatLong = true
       const payload = {
         json: {
           params: {
@@ -120,6 +125,7 @@ export default defineComponent({
         showToast(translate("Failed to generate latitude & Longitude."))
         logger.error(err)
       }
+      this.isGeneratingLatLong = false
     },
     async saveGeoPoint() {
       if(!this.geoPoint.latitude || !this.geoPoint.longitude || !this.geoPoint.postalCode) {
@@ -158,3 +164,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+[data-spinner-size="small"] {
+  transform: scale(0.5);
+}
+</style>
