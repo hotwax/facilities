@@ -296,7 +296,7 @@ export default defineComponent({
             return facilityData
           })
           this.store.dispatch('facility/updateFacilities', updatedFacilities)
-          showToast(translate('Fulfillment setting updated successfully'))
+          showToast(translate(`Online inventory turned ${facility.sellOnline ? 'off' : 'on'} for`, { facilityName: facility.facilityName }))
         } else {
           throw resp.data
         }
