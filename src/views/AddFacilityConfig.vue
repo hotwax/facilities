@@ -244,6 +244,10 @@ export default defineComponent({
       }
     },
     async createFacilityUser() {
+      if (!this.username) {
+        showToast(translate('Username is required.'))
+        return
+      }
       try {
         const payload = {
           "groupName": this.username,

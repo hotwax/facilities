@@ -247,6 +247,7 @@
   "Unlink": "Unlink",
   "Update days to ship": "Update days to ship",
   "Username": "Username",
+  "Username is required.": "Username is required.",
   "Uses native fulfillment app": "Uses native fulfillment app",
   "Version: ": "Version: { appVersion }",
   "View order count history": "View order count history",
