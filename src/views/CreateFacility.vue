@@ -174,6 +174,17 @@ export default defineComponent({
         logger.error(error)
         showToast(translate('Failed to create facility.'))
       }
+
+      // creating default facility location
+      await FacilityService.createFacilityLocation({
+        facilityId: this.formData.facilityId,
+        locationTypeEnumId: "FLT_PICKLOC",
+        areaId: "TL",
+        aisleId: "TL",
+        sectionId: "TL",
+        levelId: "LL",
+        positionId: "01",
+      })
     },
     getFacilityTypesByParentTypeId(parentTypeId: string) {
       return parentTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {

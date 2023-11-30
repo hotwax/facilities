@@ -277,13 +277,13 @@
                 <ion-item lines="full">
                   <ion-label>{{ shopifyFacilityMapping.shopifyLocationId }}</ion-label>
                 </ion-item>
-                <ion-item lines="full">
+                <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
                   <ion-label>{{ shopifyFacilityMapping.myshopifyDomain + '/admin' }}</ion-label>
                   <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyFacilityMapping.myshopifyDomain + '/admin'}`)">
                     <ion-icon :icon="openOutline" />
                   </ion-button>
                 </ion-item>
-                <ion-item lines="full">
+                <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
                   <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
                   <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
                     <ion-icon :icon="openOutline" />
