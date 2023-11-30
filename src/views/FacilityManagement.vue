@@ -9,31 +9,31 @@
     <ion-content>
       <main>
         <ion-card button @click="router.push('/find-facilities')">
-          <ion-card-header>
-            <ion-icon :icon="businessOutline"/>
-            <ion-card-title>{{ translate("Facilities") }}</ion-card-title>
-          </ion-card-header>
+          <ion-item>
+            <ion-icon slot="start" :icon="businessOutline"/>
+            <h1>{{ translate("Facilities") }}</h1>
+          </ion-item>
         </ion-card>
 
         <ion-card button @click="router.push('/find-parking')">
-          <ion-card-header>
-            <ion-icon :icon="golfOutline"/>
-            <ion-card-title>{{ translate("Parking") }}</ion-card-title>
-          </ion-card-header>
+          <ion-item>
+            <ion-icon slot="start" :icon="golfOutline"/>
+            <h1>{{ translate("Parking") }}</h1>
+          </ion-item>
         </ion-card>
 
         <ion-card button @click="router.push('/find-groups')">
-          <ion-card-header>
+          <ion-item>
             <ion-icon :icon="albumsOutline"/>
-            <ion-card-title>{{ translate("Groups") }}</ion-card-title>
-          </ion-card-header>
+            <h1>{{ translate("Groups") }}</h1>
+          </ion-item>
         </ion-card>
 
         <ion-card button @click="router.push('/settings')">
-          <ion-card-header>
+          <ion-item>
             <ion-icon :icon="settingsOutline"/>
-            <ion-card-title>{{ translate("Settings") }}</ion-card-title>
-          </ion-card-header>
+            <h1>{{ translate("Settings") }}</h1>
+          </ion-item>
         </ion-card>
       </main>
     </ion-content>
@@ -48,6 +48,7 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonItem,
   IonPage,
   IonTitle,
   IonToolbar
@@ -71,6 +72,7 @@ export default defineComponent({
     IonContent,
     IonHeader,
     IonIcon,
+    IonItem,
     IonPage,
     IonTitle,
     IonToolbar
@@ -92,10 +94,20 @@ export default defineComponent({
 
 <style scoped>
 
+ion-card {
+  border-radius: 8px;
+  transition: box-shadow 200ms ease;
+}
+
+ion-card:hover {
+  box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.20), 0px 6px 30px 0px rgba(0, 0, 0, 0.12), 0px 16px 24px 0px rgba(0, 0, 0, 0.14);
+}
+
 main {
   display: grid;
   place-content: center;
   grid-template-columns: 1fr 1fr;
+  height: calc(100vh - 56px);
 }
 
 ion-card-header {
