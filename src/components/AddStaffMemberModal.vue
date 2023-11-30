@@ -20,7 +20,7 @@
       <ion-list-header>{{ translate("Staff") }}</ion-list-header>
       <ion-item v-for="(party, index) in parties" :key="index">
         <ion-label>
-          {{ party.fullName }}
+          {{ party.fullName ? party.fullName : '' }}
           <p>{{ party.partyId }}</p>
         </ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>

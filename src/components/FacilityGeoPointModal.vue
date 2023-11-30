@@ -101,7 +101,7 @@ export default defineComponent({
       const payload = {
         json: {
           params: {
-            q: `postcode: ${this.postalAddress.postalCode}`
+            q: `postcode: ${this.geoPoint.postalCode}`
           }
         }
       }
@@ -117,12 +117,12 @@ export default defineComponent({
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to generate latitude & Longitude."))
+        showToast(translate("Failed to generate latitude and longitude."))
         logger.error(err)
       }
     },
     async saveGeoPoint() {
-      if(!this.geoPoint.latitude || !this.geoPoint.longitude || !this.geoPoint.postalCode) {
+      if(!this.geoPoint.latitude || !this.geoPoint.longitude) {
         showToast("Please fill all the required fields")
         return;
       }
@@ -130,16 +130,16 @@ export default defineComponent({
       let resp;
 
       try {
-        resp = await FacilityService.updateFacilityPostalAddress({...this.geoPoint, facilityId: this.facilityId})
+        resp = await FacilityService.updateFacilityPostalAddress({...this.geoPoint, postalCode: this.postalAddress.postalCode, facilityId: this.facilityId})
 
         if(!hasError(resp)) {
-          showToast(translate("Facility latitude & longitude updated successfully."))
+          showToast(translate("Facility latitude and longitude updated successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to update facility latitude & longitude."))
+        showToast(translate("Failed to update facility latitude and longitude."))
         logger.error(err)
       }
       modalController.dismiss()
