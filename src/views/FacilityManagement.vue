@@ -20,8 +20,15 @@
             <ion-icon slot="start" :icon="golfOutline"/>
             <h1>{{ translate("Parking") }}</h1>
           </ion-item>
+        <ion-card class="ion-hide" button @click="router.push('/find-parking')">
+          <ion-card-header>
+            <ion-icon :icon="golfOutline"/>
+            <ion-card-title>{{ translate("Parking") }}</ion-card-title>
+          </ion-card-header>
         </ion-card>
 
+        <ion-card class="ion-hide" button @click="router.push('/find-groups')">
+          <ion-card-header>
         <ion-card button @click="router.push('/find-groups')">
           <ion-item>
             <ion-icon :icon="albumsOutline"/>
@@ -107,7 +114,6 @@ main {
   display: grid;
   place-content: center;
   grid-template-columns: 1fr 1fr;
-  height: calc(100vh - 56px);
 }
 
 ion-card-header {
