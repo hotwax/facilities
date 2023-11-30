@@ -22,9 +22,7 @@
           <div class="ion-padding" slot="content">
             <ion-list lines="none">
               <ion-item v-for="day in days" :key="day">
-                <ion-label>
-                  <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
-                </ion-label>
+                <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
                 <ion-label slot="end">{{ calendar[day+'StartTime'] ? getStartAndEndTime(calendar[day+'StartTime'], calendar[day+'Capacity']) : '-' }} </ion-label>
               </ion-item>
             </ion-list>

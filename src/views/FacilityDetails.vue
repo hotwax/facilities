@@ -69,15 +69,13 @@
 
           <ion-card v-if="!facilityCalendar.calendarId">
             <ion-card-header>
-              <div>
-                <ion-card-title>
-                  {{ translate("Operating hours") }}
-                </ion-card-title>
-                <ion-card-subtitle>
-                  {{ translate("Select a saved calendar of store hours or create a new calendar") }}
-                </ion-card-subtitle>
-              </div>
+              <ion-card-title>
+                {{ translate("Operating hours") }}
+              </ion-card-title>
             </ion-card-header>
+            <ion-card-content>
+              {{ translate("Select a saved calendar of store hours or create a new calendar") }}
+            </ion-card-content>
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
@@ -86,11 +84,11 @@
             </ion-radio-group>
             <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
               <ion-label> {{ calendars.length - 3 }} {{ translate("Others") }}</ion-label>
-              <ion-icon :icon="chevronForwardOutline" />
+              <ion-icon slot="end" :icon="chevronForwardOutline" />
             </ion-item>
             <ion-item button lines="none" @click="addCustomSchedule">
               <ion-label>{{ translate("Custom schedule") }}</ion-label>
-              <ion-icon color="primary" :icon="addCircleOutline" button />
+              <ion-icon slot="end" color="primary" :icon="addCircleOutline" button />
             </ion-item>
             <ion-button fill="outline" expand="block" :disabled="!selectedCalendarId" @click="associateCalendarToFacility">
               {{ translate("Add operating hours") }}
@@ -101,7 +99,7 @@
           <ion-card v-else>
             <ion-card-header>
               <div>
-                <ion-text>{{ translate("Operating hours") }}</ion-text>
+                <p class="overline">{{ translate("Operating hours") }}</p>
                 <ion-card-title>
                   {{ facilityCalendar.description }}
                 </ion-card-title>
@@ -126,15 +124,13 @@
                 {{ translate("Product Stores") }}
               </ion-card-title>
               <ion-button @click="selectProductStores()" fill="clear">
-                <ion-icon :icon="addCircleOutline" slot="start" />
+                <ion-icon :icon="addCircleOutline" slot="end" />
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
-              <ion-label>
-                <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
-              </ion-label>
-              <ion-badge v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
+              <ion-badge slot="end" v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
@@ -366,7 +362,6 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -433,7 +428,6 @@ export default defineComponent({
     IonCard,
     IonCardContent,
     IonCardHeader,
-    IonCardSubtitle,
     IonCardTitle,
     IonChip,
     IonContent,
