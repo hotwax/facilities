@@ -12,12 +12,13 @@
   
   <ion-content>
     <ion-item>
-      <ion-label>{{ translate("Name") }}</ion-label>
+      <ion-label>
+        {{ translate("Name") }} <ion-text color="danger">*</ion-text>
+      </ion-label>
       <ion-input v-model="selectedTimesForWeek.description" />
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
       <ion-label>{{ translate("Daily timings") }}</ion-label>
-      {{ isDailyTimingsChecked }}
       <ion-toggle :checked="isDailyTimingsChecked" @ionChange="updateDailyTimings" slot="end" />
     </ion-item>
 
@@ -91,6 +92,7 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  IonText,
   IonTitle,
   IonToggle,
   IonToolbar,
@@ -123,6 +125,7 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonModal,
+    IonText,
     IonTitle,
     IonToggle,
     IonToolbar,

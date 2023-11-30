@@ -374,7 +374,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     let parties = []
     const params = {
       inputFields: {
-        facilityId: payload.facilityId
+        facilityId: payload.facilityId,
+        partyId_op: 'not-empty'
       },
       entityName: "FacilityAndParty",
       filterByDate: 'Y',
@@ -396,7 +397,6 @@ const actions: ActionTree<FacilityState, RootState> = {
         throw resp.data
       }
     } catch(err) {
-      showToast(translate("Something went wrong"))
       logger.error('Failed to fetch facility parties', err)
     }
 
