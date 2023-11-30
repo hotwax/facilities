@@ -51,6 +51,10 @@
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
                 <ion-item lines="full">
+                  <ion-label>{{ translate("Facility zipcode") }}</ion-label>
+                  <p><ion-text :color="isRegenerationRequired ? 'danger' : ''" slot="end">{{ postalAddress.postalCode }}</ion-text></p>
+                </ion-item>
+                <ion-item lines="full">
                   <ion-label>{{ translate("Latitude") }}</ion-label>
                   <p>{{ postalAddress.latitude }}</p>
                 </ion-item>
@@ -58,7 +62,12 @@
                   <ion-label>{{ translate("Longitude") }}</ion-label>
                   <p>{{ postalAddress.longitude }}</p>
                 </ion-item>
-                <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
+                <div class="actions">
+                  <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
+                  <ion-button slot="end" fill="clear" color="medium" @click="openLatLongPopover">
+                    <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+                  </ion-button>
+                </div>
               </template>
               <ion-button v-else expand="block" fill="outline" :disabled="!postalAddress.address1" @click="openGeoPointModal">
                 {{ translate("Add") }}
@@ -459,6 +468,8 @@ import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModa
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
+import GeoPointPopover from '@/components/GeoPointPopover.vue'
+import { UtilService } from '@/services/UtilService';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -497,7 +508,8 @@ export default defineComponent({
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
       primaryMember: {} as any,
       isCalendarFound: true,
-      selectedCalendarId: ''
+      selectedCalendarId: '',
+      isRegenerationRequired: true
     }
   },
   computed: {
@@ -523,6 +535,7 @@ export default defineComponent({
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.fetchFacilityPrimaryMember()
+    if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
     goToLink(link: string) {
@@ -544,6 +557,20 @@ export default defineComponent({
 
       popover.onDidDismiss().then(async() => {
         await this.fetchFacilityPrimaryMember()
+      })
+
+      return popover.present()
+    },
+    async openLatLongPopover(event: Event) {
+      const popover = await popoverController.create({
+        component: GeoPointPopover,
+        componentProps: { facilityId: this.facilityId, isRegenerationRequired: this.isRegenerationRequired },
+        event,
+        showBackdrop: false
+      });
+
+      popover.onDidDismiss().then(async() => {
+        await this.fetchPostalCodeByGeoPoints()
       })
 
       return popover.present()
@@ -591,6 +618,10 @@ export default defineComponent({
         component: FacilityGeoPointModal,
         componentProps: { facilityId: this.facilityId }
       })
+
+      geoPointModal.onDidDismiss().then(async() => {
+        await this.fetchPostalCodeByGeoPoints()
+      } )
 
       geoPointModal.present()
     },
@@ -784,7 +815,7 @@ export default defineComponent({
     },
     async revokePrimaryStatusFromStore() {
       try {
-        const resp = await FacilityService.updateFacilityToGroup({
+        await FacilityService.updateFacilityToGroup({
           "facilityId": this.facilityId,
           "facilityGroupId": this.primaryMember.facilityGroupId,
           "fromDate": this.primaryMember.fromDate,
@@ -937,6 +968,32 @@ export default defineComponent({
       const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
       const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
       return `${openTime} - ${endTime}`
+    },
+    async fetchPostalCodeByGeoPoints() {
+      const payload = {
+        json: {
+          "query": "*:*",
+          "filter": "{!geofilt sfield=location}",
+          "params": {
+            "pt": `${this.postalAddress.latitude}, ${this.postalAddress.longitude}`,
+            "d": "10"
+          },
+          sort: 'geodist(location, ' + this.postalAddress.latitude + ',' + this.postalAddress.longitude + ') asc',
+          "limit": 1
+        }
+      }
+
+      try {
+        const resp = await UtilService.generateLatLong(payload)
+
+        if(!hasError(resp)) {
+          this.isRegenerationRequired = !(this.postalAddress.postalCode === resp.data.response.docs[0].postcode)
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
     }
   },
   setup() {
@@ -1007,5 +1064,10 @@ ion-segment {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start; 
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
 }
 </style>
