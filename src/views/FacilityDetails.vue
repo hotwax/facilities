@@ -138,7 +138,7 @@
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
-              <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
+              <ion-label>{{ getProductStore(store.productStoreId)?.storeName }}</ion-label>
               <ion-badge slot="end" v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
