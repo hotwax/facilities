@@ -50,7 +50,6 @@
 <script lang="ts">
 import {
   IonCard,
-  IonCardHeader,
   IonCardTitle,
   IonContent,
   IonHeader,
@@ -74,7 +73,6 @@ export default defineComponent({
   name: 'FacilityManagement',
   components: {
     IonCard,
-    IonCardHeader,
     IonCardTitle,
     IonContent,
     IonHeader,
