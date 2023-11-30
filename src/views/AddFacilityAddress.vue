@@ -51,7 +51,7 @@
               <ion-label position="floating">
                 {{ translate('State') }}
               </ion-label>
-              <ion-select interface="popover" :placeholder="translate('Select state')" v-model="formData.stateProvinceGeoId">
+              <ion-select interface="popover" :disabled="!formData.countryGeoId" :placeholder="translate('Select state')" v-model="formData.stateProvinceGeoId">
                 <ion-select-option v-for="state in states[formData.countryGeoId]" :key="state.geoId" :value="state.geoId">
                   {{ state.geoName }}
                 </ion-select-option>

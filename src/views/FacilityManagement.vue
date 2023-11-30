@@ -108,11 +108,17 @@ ion-card:hover {
   box-shadow: 0px 8px 10px 0px rgba(0, 0, 0, 0.20), 0px 6px 30px 0px rgba(0, 0, 0, 0.12), 0px 16px 24px 0px rgba(0, 0, 0, 0.14);
 }
 
+ion-item > h1 {
+  margin: unset;
+}
+
 main {
   display: grid;
   place-content: center;
   grid-template-columns: 1fr 1fr;
   height: calc(100vh - 56px);
+  gap: var(--spacer-lg);
+  padding: var(--spacer-lg);
 }
 
 ion-card-header {
