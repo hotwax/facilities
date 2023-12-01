@@ -397,6 +397,21 @@ const removeFacilityCalendar = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchJobs = async(payload: any): Promise <any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  });
+}
+const fetchOrderCountsByFacility = async (query: any): Promise<any> => {
+  return api({
+    url: "solr-query",
+    method: "post",
+    data: query
+  });
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   createFacilityGroup,
@@ -422,6 +437,8 @@ export const FacilityService = {
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
   fetchFacilityPrimaryMember,
+  fetchJobs,
+  fetchOrderCountsByFacility,
   getFacilityProductStores,
   fetchShopifyFacilityMappings,
   getFacilityParties,

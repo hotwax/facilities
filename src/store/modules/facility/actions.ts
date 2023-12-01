@@ -6,6 +6,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { prepareOrderQuery } from '@/utils/solrHelper';
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -431,6 +432,112 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error('Failed to fetch shopify facility mappings', err)
     }
     commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, shopifyFacilityMappings)
+  },
+
+  async fetchVirtualFacilities({ commit, dispatch }) {
+    let facilities = [], total = 0; 
+    
+    try {
+      const params = {
+        inputFields: {
+          parentTypeId: "VIRTUAL_FACILITY"
+        },
+        orderBy: "facilityName ASC",
+        entityName: "FacilityAndType",
+        viewSize: 100
+      }
+
+      const resp = await FacilityService.fetchFacilities(params)
+
+      if (!hasError(resp) && resp.data.count) {
+        facilities = resp.data.docs
+        total = resp.data.count
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+    
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
+    if (facilities.length) {
+      await dispatch('fetchVirtualFacilitiesAdditionalDetail')
+    }
+  },
+  
+  async fetchVirtualFacilitiesAdditionalDetail({ commit, state }) {
+    let facilities = state.virtualFacilities.list;
+
+    try {
+      const params = {
+        inputFields: {
+          "statusId": "SERVICE_PENDING",
+          "systemJobEnumId": ["JOB_RLS_ORD_DTE", "JOB_BKR_ORD"],
+          "systemJobEnumId_op": "in",
+        },
+        orderBy: "runTime ASC",
+        entityName: "JobSandbox",
+        fieldList: ["jobId", "statusId", "serviceName", "systemJobEnumId", "runTime"],
+        viewSize: 10
+      }
+
+      let resp = await FacilityService.fetchJobs(params)
+      if (!hasError(resp) && resp.data.count) {
+        const jobs = resp.data.docs;
+        const brokeringJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_BKR_ORD');
+        const autoReleaseJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_RLS_ORD_DTE');
+
+        facilities.forEach((facility: any) => {
+          if (facility.facilityId === '_NA_') {
+            facility.brokeringJob = brokeringJob;
+          } else if (facility.facilityTypeId === 'BACKORDER') {
+            facility.autoReleaseJob = autoReleaseJob;
+          } else if (facility.facilityTypeId === 'PRE_ORDER') {
+            facility.autoReleaseJob = autoReleaseJob;
+          }
+        });
+      }
+
+      const payload = prepareOrderQuery({
+        viewSize: "0",  // passing viewSize as 0, as we don't want to fetch any data
+        sort: 'orderDate asc',
+        defType: "edismax",
+        docType: "ORDER",
+        filters: {
+          '-shipmentMethodTypeId': { value: 'STOREPICKUP' },
+          orderStatusId: { value: '(ORDER_APPROVED OR ORDER_CREATED)' },
+          orderTypeId: { value: 'SALES_ORDER' },
+        },
+        facet: {
+          "facilityFacet": {
+            "field": "facilityId",
+            "mincount": 1,
+            "limit": -1,
+            "sort": "index",
+            "type": "terms",
+            "facet": {
+              "groups": "unique(orderId)",
+            }
+          }
+        }
+      })
+      resp = await FacilityService.fetchOrderCountsByFacility(payload);
+      if (!hasError(resp)) {
+        const facilityFacets = resp.data.facets.facilityFacet.buckets;
+        const facilityOrderCounts = facilityFacets.reduce((countObject: any, facet: any) => {
+          countObject[facet.val] = facet.groups;
+          return countObject;
+        }, {});
+        
+        facilities = facilities.map((facility:any) => ({
+          ...facility,
+          orderCount: facilityOrderCounts[facility.facilityId] || 0
+        }));
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities });
   }
 }
 
