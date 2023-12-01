@@ -261,8 +261,10 @@ ion-content {
   --padding-bottom: 80px;
 }
 ion-modal.date-time-modal {
-  --width: 290px;
-  --height: 440px;
+  --height: 252px;
   --border-radius: 8px;
+}
+ion-modal.date-time-modal::part(backdrop) {
+  --backdrop-opacity: 0.32;
 }
 </style>
