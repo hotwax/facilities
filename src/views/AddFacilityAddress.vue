@@ -222,8 +222,8 @@ export default defineComponent({
           throw resp.data
         }
       } catch (error) {
-        showToast(translate("Failed to generate latitude and longitude."))
-        logger.error("Failed to generate latitude and longitude.", error)
+        showToast(translate("Unable to find the latitude and longitude for the entered zip code."))
+        logger.error("Unable to find the latitude and longitude for the entered zip code.", error)
       }
     },
     async updateState(event: CustomEvent) {
