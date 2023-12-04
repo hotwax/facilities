@@ -9,6 +9,7 @@ import { useAuthStore, DxpLogin, translate } from '@hotwax/dxp-components'
 import { loader } from '@/utils/user';
 import FacilityManagement from '@/views/FacilityManagement.vue'
 import Settings from '@/views/Settings.vue';
+import Parking from '@/views/Parking.vue';
 import FindFacilities from '@/views/FindFacilities.vue';
 import CreateFacility from '@/views/CreateFacility.vue';
 import AddFacilityAddress from '@/views/AddFacilityAddress.vue';
@@ -89,6 +90,12 @@ const routes: Array<RouteRecordRaw> = [
     name: "Add Facility Config",
     component: AddFacilityConfig,
     props: true,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/parking',
+    name: 'Parking',
+    component: Parking,
     beforeEnter: authGuard
   },
   {

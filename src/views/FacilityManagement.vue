@@ -15,14 +15,14 @@
           </ion-item>
         </ion-card>
 
-        <ion-card button @click="router.push('/find-parking')">
+        <ion-card button @click="router.push('/parking')">
           <ion-item lines="none">
             <ion-icon slot="start" :icon="golfOutline"/>
             <h1>{{ translate("Parking") }}</h1>
           </ion-item>
         </ion-card>
 
-        <ion-card class="ion-hide" button @click="router.push('/find-parking')">
+        <ion-card class="ion-hide" button @click="router.push('/parking')">
           <ion-item lines="none">
             <ion-icon slot="start" :icon="golfOutline"/>
             <ion-card-title>{{ translate("Parking") }}</ion-card-title>

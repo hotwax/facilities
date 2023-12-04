@@ -114,7 +114,7 @@ export default defineComponent({
       try {
         const resp = await UtilService.generateLatLong(payload)
 
-        if(!hasError(resp)) {
+        if(!hasError(resp) && resp.data.response.docs.length > 0) {
           const result = resp.data.response.docs[0]
           this.geoPoint.latitude = result.latitude
           this.geoPoint.longitude = result.longitude
@@ -133,12 +133,15 @@ export default defineComponent({
         return;
       }
 
-      let resp;
+      let resp, geoPoints = '';
 
       try {
+        // passing old postalCode from here, as we don't allow user to update postalCode from this modal,
+        // and the user can only update the latLon from here
         resp = await FacilityService.updateFacilityPostalAddress({...this.geoPoint, postalCode: this.postalAddress.postalCode, facilityId: this.facilityId})
 
         if(!hasError(resp)) {
+          geoPoints = this.geoPoint
           showToast(translate("Facility latitude and longitude updated successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
         } else {
@@ -148,7 +151,7 @@ export default defineComponent({
         showToast(translate("Failed to update facility latitude and longitude."))
         logger.error(err)
       }
-      modalController.dismiss()
+      modalController.dismiss({ geoPoints })
     }
   },
   setup() {

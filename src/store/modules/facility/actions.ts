@@ -6,6 +6,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
+import { prepareOrderQuery } from '@/utils/solrHelper';
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -431,6 +432,84 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error('Failed to fetch shopify facility mappings', err)
     }
     commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, shopifyFacilityMappings)
+  },
+
+  async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
+    let facilities = [], total = 0;
+    if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
+    
+    try {
+      const params = {
+        inputFields: {
+          parentFacilityTypeId: "VIRTUAL_FACILITY"
+        },
+        orderBy: "facilityName ASC",
+        entityName: "FacilityAndProductStore",
+        fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
+        ...payload
+      }
+
+      const resp = await FacilityService.fetchFacilities(params)
+
+      if (!hasError(resp) && resp.data.count) {
+        facilities = resp.data.docs
+        total = resp.data.count
+
+        if (payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)).concat(facilities)
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
+    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
+    facilities.sort((firstFacility:any, secondFacility:any) => {
+      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
+      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
+      return secondFacilityOrder - firstFacilityOrder;
+    });
+    
+    emitter.emit("dismissLoader");
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
+    if (facilities.length) {
+      await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
+    }
+  },
+  
+  async fetchVirtualFacilitiesAdditionalDetail({ commit, state }, payload) {
+    // getting all the facilties from state
+    const cachedFacilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)); // maintaining cachedFacilities as to prepare the facilities payload to fetch additional information
+    let stateFacilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)); // maintaining stateFacilities as to update the facility information once information in fetched
+    const total = state.virtualFacilities.total
+
+    const facilityIds: Array<string> = [];
+
+    // splitting the facilities in batches to fetch the additional facilities information
+    const facilities = cachedFacilities.splice(payload.viewIndex * (process.env.VUE_APP_VIEW_SIZE as any), process.env.VUE_APP_VIEW_SIZE)
+    facilities.map((facility: any) => facilityIds.push(facility.facilityId))
+
+    stateFacilities = stateFacilities.filter((facility: any) => !facilityIds.includes(facility.facilityId))
+    
+    try {
+      const [jobData, facilitiesOrderCount] = await Promise.all([FacilityService.fetchJobData(), FacilityService.fetchOrderCountsByFacility(facilityIds)])
+
+      facilities.map((facility: any) => {
+        if (facility.facilityId === '_NA_') {
+          facility.brokeringJob = jobData.brokeringJob;
+        } else if (facility.facilityTypeId === 'BACKORDER') {
+          facility.autoReleaseJob = jobData.autoReleaseJob;
+        } else if (facility.facilityTypeId === 'PRE_ORDER') {
+          facility.autoReleaseJob = jobData.autoReleaseJob;
+        }
+        facility.orderCount = facilitiesOrderCount[facility.facilityId] || 0
+      });
+        
+    } catch(error) {
+      logger.error(error)
+    }
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
   }
 }
 
