@@ -300,6 +300,14 @@ const createFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const createVirtualFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacility",
+    method: "post",
+    data: payload
+  })
+}
+
 const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacilityPostalAddress",
@@ -414,11 +422,12 @@ const fetchOrderCountsByFacility = async (query: any): Promise<any> => {
 
 export const FacilityService = {
   addFacilityToGroup,
+  addPartyToFacility,
+  associateCalendarToFacility,
   createFacilityGroup,
   createFacility,
   createFacilityLocation,
-  addPartyToFacility,
-  associateCalendarToFacility,
+  createVirtualFacility,
   createEnumeration,
   createFacilityCalendar,
   createFacilityIdentification,

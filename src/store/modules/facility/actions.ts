@@ -440,7 +440,12 @@ const actions: ActionTree<FacilityState, RootState> = {
     try {
       const params = {
         inputFields: {
-          parentTypeId: "VIRTUAL_FACILITY"
+          parentTypeId_value: 'VIRTUAL_FACILITY',
+          parentTypeId_op: 'equals',
+          parentTypeId_grp: '1',
+          facilityTypeId_value: 'VIRTUAL_FACILITY',
+          facilityTypeId_op: 'equals',
+          facilityTypeId_grp: '2'
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndType",

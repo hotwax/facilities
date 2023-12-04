@@ -25,7 +25,7 @@
                 </ion-item>
                 <ion-item lines="full">
                   <ion-label>{{ translate('Next brokering') }}</ion-label>
-                  <ion-note slot="end">{{ getDateTime(facility?.brokeringJob?.runTime) }}</ion-note>
+                  <ion-note slot="end">{{ facility?.brokeringJob?.runTime && getDateTime(facility.brokeringJob.runTime) }}</ion-note>
                 </ion-item>
               </template>
               <ion-item v-else>
@@ -40,6 +40,12 @@
                 <ion-label>{{ facility.description }}</ion-label>
               </ion-item>
             </ion-card> 
+            <ion-card>
+              <ion-button color="medium" fill="clear" @click="openCreateParkingModal()">
+                <ion-icon :icon="addOutline" slot="start"/>
+                {{ translate('Add new parking') }}
+              </ion-button>
+            </ion-card>
           </div>   
         </section>
       </main>
@@ -61,11 +67,13 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  modalController,
 } from '@ionic/vue'
-import { ellipsisVerticalOutline } from 'ionicons/icons'
+import { addOutline, ellipsisVerticalOutline } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
+import AddParkingModal from '@/components/AddParkingModal.vue';
 
 export default defineComponent({
   name: 'Parking',
@@ -93,12 +101,20 @@ export default defineComponent({
   methods: {
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
+    async openCreateParkingModal() {
+      const createParkingModal = await modalController.create({
+        component: AddParkingModal
+      })
+
+      createParkingModal.present()
     }
   },
   setup() {
     const store = useStore();
 
     return {
+      addOutline,
       ellipsisVerticalOutline,
       store,
       translate
