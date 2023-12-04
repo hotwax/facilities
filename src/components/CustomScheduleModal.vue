@@ -202,7 +202,7 @@ export default defineComponent({
         }
       } else {
         this.days.map((day: string) => {
-          const startTime = this.selectedTimesForWeek[day+'StartTime']
+          const startTime = DateTime.fromISO(this.selectedTimesForWeek[day+'StartTime'], {setZone: true}).toFormat('HH:mm:ss')
           const capacity = this.getCapacity(this.selectedTimesForWeek[day+'StartTime'], this.selectedTimesForWeek[day+'EndTime'])
           if(startTime && capacity) {
             payload[day+'StartTime'] = startTime
