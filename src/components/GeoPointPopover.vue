@@ -42,7 +42,7 @@ export default defineComponent({
   props: ['facilityId', 'isRegenerationRequired'],
   methods: {
     async regenerateLatitudeAndLongitude() {
-      let resp;
+      let resp, generatedLatLong;
 
       try {
         resp = await UtilService.generateLatLong({
@@ -53,8 +53,8 @@ export default defineComponent({
           }
         })
 
-        if(!hasError(resp)) {
-          const generatedLatLong = resp.data.response.docs[0]
+        if(!hasError(resp) && resp.data.response.docs.length > 0) {
+          generatedLatLong = resp.data.response.docs[0]
 
           if(generatedLatLong.latitude && generatedLatLong.longitude) {
             resp = await FacilityService.updateFacilityPostalAddress({
@@ -79,7 +79,7 @@ export default defineComponent({
         logger.error(err);
       }
 
-      popoverController.dismiss()
+      popoverController.dismiss({ generatedLatLong })
     },
     async removeLatitudeAndLongitude() {
       let resp;

@@ -528,8 +528,12 @@ export default defineComponent({
         showBackdrop: false
       });
 
-      popover.onDidDismiss().then(async() => {
-        await this.fetchPostalCodeByGeoPoints()
+      popover.onDidDismiss().then(async(result) => {
+        if(result?.data?.generatedLatLong) {
+          // changing the value for the variable, as if the popover has returned some value, it simply
+          // means that the latLng are correct for current zipCode
+          this.isRegenerationRequired = false
+        }
       })
 
       return popover.present()
@@ -578,9 +582,11 @@ export default defineComponent({
         componentProps: { facilityId: this.facilityId }
       })
 
-      geoPointModal.onDidDismiss().then(async() => {
-        await this.fetchPostalCodeByGeoPoints()
-      } )
+      geoPointModal.onDidDismiss().then(async(result) => {
+        if(result.data?.geoPoints) {
+          await this.fetchPostalCodeByGeoPoints()
+        }
+      })
 
       geoPointModal.present()
     },

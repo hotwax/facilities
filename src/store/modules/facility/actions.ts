@@ -442,15 +442,16 @@ const actions: ActionTree<FacilityState, RootState> = {
     try {
       const params = {
         inputFields: {
-          parentTypeId_value: 'VIRTUAL_FACILITY',
-          parentTypeId_op: 'equals',
-          parentTypeId_grp: '1',
+          parentFacilityTypeId_value: 'VIRTUAL_FACILITY',
+          parentFacilityTypeId_op: 'equals',
+          parentFacilityTypeId_grp: '1',
           facilityTypeId_value: 'VIRTUAL_FACILITY',
           facilityTypeId_op: 'equals',
           facilityTypeId_grp: '2'
         },
         orderBy: "facilityName ASC",
-        entityName: "FacilityAndType",
+        entityName: "FacilityAndProductStore",
+        fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
         viewSize: 100
       }
 
@@ -465,6 +466,14 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(error) {
       logger.error(error)
     }
+
+    //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
+    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
+    facilities.sort((firstFacility:any, secondFacility:any) => {
+      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
+      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
+      return secondFacilityOrder - firstFacilityOrder;
+    });
     
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total });
     if (facilities.length) {
