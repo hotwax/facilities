@@ -133,7 +133,7 @@ export default defineComponent({
             facilityGroupId: productStoreId
           },
           entityName: 'FacilityGroup',
-          viewSize: 100
+          viewSize: 1
         })
 
         if(!hasError(resp)) {

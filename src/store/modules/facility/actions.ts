@@ -56,7 +56,9 @@ const actions: ActionTree<FacilityState, RootState> = {
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
     const filters = {
       'parentFacilityTypeId': 'VIRTUAL_FACILITY',
-      'parentFacilityTypeId_op': 'notEqual'
+      'parentFacilityTypeId_op': 'notEqual',
+      'facilityTypeId': 'VIRTUAL_FACILITY',
+      'facilityTypeId_op': 'notEqual',
     } as any
 
     if(state.query.productStoreId) {
@@ -543,7 +545,11 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities });
-  }
+  },
+
+  updateVirtualFacilities({ commit }, facilities) {
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
+  },
 }
 
 export default actions;

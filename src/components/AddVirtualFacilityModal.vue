@@ -67,13 +67,13 @@ import { defineComponent } from "vue";
 import { addOutline, closeOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { useStore } from 'vuex'
+import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 
 export default defineComponent({
-  name: "AddParkingModal",
+  name: "AddVirtualFacility",
   components: {
     IonButton,
     IonButtons,
@@ -89,6 +89,11 @@ export default defineComponent({
     IonText,
     IonTitle,
     IonToolbar
+  },
+  computed: {
+    ...mapGetters({
+      virtualFacilities: 'facility/getVirtualFacilities',
+    })
   },
   data() {
     return {
@@ -143,7 +148,14 @@ export default defineComponent({
         const resp = await FacilityService.createVirtualFacility(payload);
         if (!hasError(resp)) {
           showToast(translate("New parking created successfully."))
-          await this.store.dispatch('facility/fetchVirtualFacilities')
+          // TODO consider updating facility state instead of fetching
+          const createdFacility = {
+            ...this.formData,
+            facilityTypeId: 'VIRTUAL_FACILITY',
+            orderCount: 0
+          }
+          const updatedVirtualFacilities = [...this.virtualFacilities, createdFacility]
+          this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
         } else {
           throw resp.data;
         }
