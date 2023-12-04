@@ -104,7 +104,7 @@ export default defineComponent({
       },
     }
   },
-  async ionViewWillEnter() {
+  ionViewWillEnter() {
     this.clearFormData()
   },
   methods: {

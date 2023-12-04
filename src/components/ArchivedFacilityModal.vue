@@ -45,7 +45,14 @@ export default defineComponent({
     IonList,
     IonToolbar,
   },
-  props: ['facility'],
+  data() {
+    return {
+      archivedFacilities: [] as any,
+    }
+  },
+  async ionViewWillEnter() {
+    //
+  },
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});

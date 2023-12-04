@@ -32,7 +32,7 @@
                 </ion-item>
                 <ion-item lines="full">
                   <ion-label>{{ translate('Next brokering') }}</ion-label>
-                  <ion-note slot="end">{{ facility?.brokeringJob?.runTime && getDateTime(facility.brokeringJob.runTime) }}</ion-note>
+                  <ion-note slot="end">{{ facility?.brokeringJob?.runTime ? getDateTime(facility?.brokeringJob?.runTime) : '-' }}</ion-note>
                 </ion-item>
               </template>
               <ion-item v-else>
@@ -56,6 +56,16 @@
           </div>   
         </section>
       </main>
+      <ion-infinite-scroll
+        @ionInfinite="loadMoreFacilities($event)"
+        threshold="100px"
+        :disabled="!isScrollable"
+      >
+        <ion-infinite-scroll-content
+          loading-spinner="crescent"
+          :loading-text="translate('Loading')"
+        />
+      </ion-infinite-scroll>
     </ion-content>
   </ion-page>
 </template>
@@ -110,10 +120,11 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
+      isScrollable: "facility/isScrollable",
     })
   },
-  async ionViewWillEnter() {
-    await this.store.dispatch('facility/fetchVirtualFacilities')
+  async mounted() {
+    await this.fetchFacilities();
   },
   methods: {
     getDateTime(time: any) {
@@ -165,6 +176,25 @@ export default defineComponent({
       })
 
       archivedFacilityModal.present()
+    },
+    async fetchFacilities(vSize?: any, vIndex?: any) {
+      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
+      const viewIndex = vIndex ? vIndex : 0;
+      const payload = {
+        viewSize,
+        viewIndex
+      };
+      await this.store.dispatch('facility/fetchVirtualFacilities', payload)
+    },
+    async loadMoreFacilities(event: any) {
+      this.fetchFacilities(
+        undefined,
+        Math.ceil(
+          this.virtualFacilities?.length / (process.env.VUE_APP_VIEW_SIZE as any)
+        ).toString()
+      ).then(() => {
+        event.target.complete();
+      });
     }
   },
   setup() {
