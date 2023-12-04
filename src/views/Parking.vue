@@ -122,6 +122,7 @@ export default defineComponent({
   }
 });
 </script>
+
 <style scoped>
 .virtual-facilities {
   display: grid;

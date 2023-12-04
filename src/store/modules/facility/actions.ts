@@ -65,8 +65,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     if(state.query.facilityTypeId) {
-        filters['facilityTypeId'] = state.query.facilityTypeId
-        filters['facilityTypeId_op'] = 'equals'
+      filters['facilityTypeId'] = state.query.facilityTypeId
+      filters['facilityTypeId_op'] = 'equals'
     }
 
     if(state.query.queryString) {
@@ -464,7 +464,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
     
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total });
     if (facilities.length) {
       await dispatch('fetchVirtualFacilitiesAdditionalDetail')
     }
@@ -542,7 +542,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(error) {
       logger.error(error)
     }
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities });
   }
 }
 
