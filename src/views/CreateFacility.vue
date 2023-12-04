@@ -149,7 +149,7 @@ export default defineComponent({
       this.formData.facilityId = event.target.value.trimEnd().trimStart().toUpperCase().split(' ').join('_');
     },
     async createFacility() {
-      if (!this.formData.facilityName) {
+      if (!this.formData.facilityName?.trim()) {
         showToast(translate('Facility name is required.'))
         return
       }
