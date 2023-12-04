@@ -27,17 +27,15 @@
         <ion-label>
           <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
         </ion-label>
-        <ion-datetime-button :datetime="day+'StartTime'">
-          <ion-label :slot="selectedTimesForWeek[day+'StartTime'] ? '' : 'time-target'">
-            <p>{{ translate("Start Time") }}</p>
-          </ion-label>
-        </ion-datetime-button>
+        <ion-chip color="medium" @click="openTimeModal(day+'StartTime', selectedTimesForWeek[day+'StartTime'])">
+          {{ selectedTimesForWeek[day+'StartTime'] ? getTime(selectedTimesForWeek[day+'StartTime']) : 'Start Time' }}
+          <ion-icon v-if="selectedTimesForWeek[day+'StartTime']" :icon="closeCircle" @click="clearSelectedTime(day+'StartTime')" @click.stop />
+        </ion-chip>
         -
-        <ion-datetime-button :datetime="day+'EndTime'">
-          <ion-label :slot="selectedTimesForWeek[day+'EndTime'] ? '' : 'time-target'">
-            <p>{{ translate("End Time") }}</p>
-          </ion-label>
-        </ion-datetime-button>
+        <ion-chip color="medium" @click="openTimeModal(day+'EndTime', selectedTimesForWeek[day+'EndTime'])">
+          {{ selectedTimesForWeek[day+'EndTime'] ? getTime(selectedTimesForWeek[day+'EndTime']) : 'End Time' }}
+          <ion-icon v-if="selectedTimesForWeek[day+'EndTime']" :icon="closeCircle" @click="clearSelectedTime(day+'StartTime')" @click.stop />
+        </ion-chip>
       </ion-item>
     </ion-list>
 
@@ -46,27 +44,29 @@
         <ion-label>
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
-        <ion-datetime-button datetime="DailyStartTime">
-          <ion-label :slot="selectedTimesForWeek.DailyStartTime ? '' : 'time-target'">
-            <p >{{ translate("Start Time") }}</p>
-          </ion-label>
-        </ion-datetime-button>
+        <ion-chip color="medium" @click="openTimeModal('DailyStartTime', selectedTimesForWeek['DailyStartTime'])">
+          {{ selectedTimesForWeek['DailyStartTime'] ? getTime(selectedTimesForWeek['DailyStartTime']) : 'Start Time' }}
+          <ion-icon v-if="selectedTimesForWeek['DailyStartTime']" :icon="closeCircle" @click="clearSelectedTime('DailyStartTime')" @click.stop />
+        </ion-chip>
         -
-        <ion-datetime-button datetime="DailyEndTime">
-          <ion-label :slot="selectedTimesForWeek.DailyEndTime ? '' : 'time-target'">
-            <p >{{ translate("End Time") }}</p>
-          </ion-label>
-        </ion-datetime-button>
+        <ion-chip color="medium" @click="openTimeModal('DailyEndTime', selectedTimesForWeek['DailyEndTime'])">
+          {{ selectedTimesForWeek['DailyEndTime'] ? getTime(selectedTimesForWeek['DailyEndTime']) : 'End Time' }}
+          <ion-icon v-if="selectedTimesForWeek['DailyEndTime']" :icon="closeCircle" @click="clearSelectedTime('DailyEndTime')" @click.stop />
+        </ion-chip>
       </ion-item>
     </ion-list>
   </ion-content>
 
-  <ion-modal class="date-time-modal" v-for="(day, index) in days"  :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="day+'StartTime'" v-model="selectedTimesForWeek[day+'StartTime']" presentation="time" show-clear-button show-default-buttons hour-cycle="h12" />
-  </ion-modal>
-
-  <ion-modal class="date-time-modal" v-for="(day, index) in days" :key="index" :keep-contents-mounted="true">
-    <ion-datetime :id="day+'EndTime'" v-model="selectedTimesForWeek[day+'EndTime']" presentation="time" show-clear-button show-default-buttons hour-cycle="h12" />
+  <ion-modal class="date-time-modal" :is-open="isTimeModalOpen" @didDismiss="() => isTimeModalOpen = false">
+    <ion-content :force-overscroll="false">
+      <ion-datetime
+        show-default-buttons
+        hour-cycle="h12"
+        presentation="time"
+        :value="selectedTimesForWeek[selectedDayKey] ? selectedTimesForWeek[selectedDayKey] : ''"
+        @ionChange="updateTime($event)"
+      />
+    </ion-content>
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -75,14 +75,14 @@
     </ion-fab-button>
   </ion-fab>
 </template>
-  
+
 <script lang="ts">
 import { 
   IonButton,
   IonButtons,
+  IonChip,
   IonContent,
   IonDatetime,
-  IonDatetimeButton,
   IonFab,
   IonFabButton,
   IonHeader,
@@ -99,7 +99,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, saveOutline } from "ionicons/icons";
+import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
@@ -113,9 +113,9 @@ export default defineComponent({
   components: { 
     IonButton,
     IonButtons,
+    IonChip,
     IonContent,
     IonDatetime,
-    IonDatetimeButton,
     IonFab,
     IonFabButton,
     IonHeader,
@@ -135,6 +135,8 @@ export default defineComponent({
       isDailyTimingsChecked: false as boolean,
       days: ['Daily'],
       selectedTimesForWeek: {} as any,
+      selectedDayKey: 'None',
+      isTimeModalOpen: false
     }
   },
   props: ['facilityId'],
@@ -146,6 +148,16 @@ export default defineComponent({
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true});
+    },
+    clearSelectedTime(timeKey: string) {
+      this.selectedTimesForWeek[timeKey] = ''
+    },
+    async openTimeModal(timeKeyId: string, timeValue: any) {
+      this.selectedDayKey = timeKeyId
+      this.isTimeModalOpen = true
+    },
+    updateTime(event: CustomEvent) {
+      this.selectedTimesForWeek[this.selectedDayKey] = event.detail.value      
     },
     updateDailyTimings() {
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
@@ -241,12 +253,16 @@ export default defineComponent({
       }
 
       return formatedEndTime - formatedStartTime
+    },
+    getTime(time: any) {
+      return DateTime.fromISO(time, {setZone: true}).toFormat('hh:mm a')
     }
   },
   setup() {
     const store = useStore();
 
     return {
+      closeCircle,
       closeOutline,
       saveOutline,
       store,
@@ -262,7 +278,10 @@ ion-content {
 }
 ion-modal.date-time-modal {
   --width: 290px;
-  --height: 440px;
+  --height: 252px;
   --border-radius: 8px;
+}
+ion-modal.date-time-modal::part(backdrop) {
+  --backdrop-opacity: 0.32;
 }
 </style>
