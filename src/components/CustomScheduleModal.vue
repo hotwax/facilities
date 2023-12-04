@@ -27,14 +27,14 @@
         <ion-label>
           <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
         </ion-label>
-        <ion-chip color="medium" @click="openTimeModal(day+'StartTime', selectedTimesForWeek[day+'StartTime'])">
+        <ion-chip @click="openTimeModal(day+'StartTime')">
           {{ selectedTimesForWeek[day+'StartTime'] ? getTime(selectedTimesForWeek[day+'StartTime']) : 'Start Time' }}
           <ion-icon v-if="selectedTimesForWeek[day+'StartTime']" :icon="closeCircle" @click="clearSelectedTime(day+'StartTime')" @click.stop />
         </ion-chip>
         -
-        <ion-chip color="medium" @click="openTimeModal(day+'EndTime', selectedTimesForWeek[day+'EndTime'])">
+        <ion-chip @click="openTimeModal(day+'EndTime')">
           {{ selectedTimesForWeek[day+'EndTime'] ? getTime(selectedTimesForWeek[day+'EndTime']) : 'End Time' }}
-          <ion-icon v-if="selectedTimesForWeek[day+'EndTime']" :icon="closeCircle" @click="clearSelectedTime(day+'StartTime')" @click.stop />
+          <ion-icon v-if="selectedTimesForWeek[day+'EndTime']" :icon="closeCircle" @click="clearSelectedTime(day+'EndTime')" @click.stop />
         </ion-chip>
       </ion-item>
     </ion-list>
@@ -44,12 +44,12 @@
         <ion-label>
           <p>{{ translate("Open and close time") }}</p>
         </ion-label>
-        <ion-chip color="medium" @click="openTimeModal('DailyStartTime', selectedTimesForWeek['DailyStartTime'])">
+        <ion-chip @click="openTimeModal('DailyStartTime')">
           {{ selectedTimesForWeek['DailyStartTime'] ? getTime(selectedTimesForWeek['DailyStartTime']) : 'Start Time' }}
           <ion-icon v-if="selectedTimesForWeek['DailyStartTime']" :icon="closeCircle" @click="clearSelectedTime('DailyStartTime')" @click.stop />
         </ion-chip>
         -
-        <ion-chip color="medium" @click="openTimeModal('DailyEndTime', selectedTimesForWeek['DailyEndTime'])">
+        <ion-chip @click="openTimeModal('DailyEndTime')">
           {{ selectedTimesForWeek['DailyEndTime'] ? getTime(selectedTimesForWeek['DailyEndTime']) : 'End Time' }}
           <ion-icon v-if="selectedTimesForWeek['DailyEndTime']" :icon="closeCircle" @click="clearSelectedTime('DailyEndTime')" @click.stop />
         </ion-chip>
@@ -63,7 +63,7 @@
         show-default-buttons
         hour-cycle="h12"
         presentation="time"
-        :value="selectedTimesForWeek[selectedDayKey] ? selectedTimesForWeek[selectedDayKey] : ''"
+        :value="selectedTimesForWeek[selectedDayTime] ? selectedTimesForWeek[selectedDayTime] : ''"
         @ionChange="updateTime($event)"
       />
     </ion-content>
@@ -135,7 +135,7 @@ export default defineComponent({
       isDailyTimingsChecked: false as boolean,
       days: ['Daily'],
       selectedTimesForWeek: {} as any,
-      selectedDayKey: 'None',
+      selectedDayTime: '',
       isTimeModalOpen: false
     }
   },
@@ -149,15 +149,15 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss({ dismissed: true});
     },
-    clearSelectedTime(timeKey: string) {
-      this.selectedTimesForWeek[timeKey] = ''
+    clearSelectedTime(selectedDayTime: string) {
+      this.selectedTimesForWeek[selectedDayTime] = ''
     },
-    async openTimeModal(timeKeyId: string, timeValue: any) {
-      this.selectedDayKey = timeKeyId
+    async openTimeModal(selectedDayTime: string) {
+      this.selectedDayTime = selectedDayTime
       this.isTimeModalOpen = true
     },
     updateTime(event: CustomEvent) {
-      this.selectedTimesForWeek[this.selectedDayKey] = event.detail.value      
+      this.selectedTimesForWeek[this.selectedDayTime] = event.detail.value
     },
     updateDailyTimings() {
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
