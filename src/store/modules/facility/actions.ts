@@ -434,8 +434,9 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, shopifyFacilityMappings)
   },
 
-  async fetchVirtualFacilities({ commit, dispatch }) {
-    let facilities = [], total = 0; 
+  async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
+    let facilities = [], total = 0;
+    if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
     
     try {
       const params = {
@@ -445,7 +446,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
         fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
-        viewSize: 100
+        ...payload
       }
 
       const resp = await FacilityService.fetchFacilities(params)
@@ -453,6 +454,8 @@ const actions: ActionTree<FacilityState, RootState> = {
       if (!hasError(resp) && resp.data.count) {
         facilities = resp.data.docs
         total = resp.data.count
+
+        if (payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -468,85 +471,45 @@ const actions: ActionTree<FacilityState, RootState> = {
       return secondFacilityOrder - firstFacilityOrder;
     });
     
+    emitter.emit("dismissLoader");
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
     if (facilities.length) {
-      await dispatch('fetchVirtualFacilitiesAdditionalDetail')
+      await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
     }
   },
   
-  async fetchVirtualFacilitiesAdditionalDetail({ commit, state }) {
-    let facilities = state.virtualFacilities.list;
+  async fetchVirtualFacilitiesAdditionalDetail({ commit, state }, payload) {
+    // getting all the facilties from state
+    const cachedFacilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)); // maintaining cachedFacilities as to prepare the facilities payload to fetch additional information
+    let stateFacilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)); // maintaining stateFacilities as to update the facility information once information in fetched
+    const total = state.virtualFacilities.total
 
+    const facilityIds: Array<string> = [];
+
+    // splitting the facilities in batches to fetch the additional facilities information
+    const facilities = cachedFacilities.splice(payload.viewIndex * (process.env.VUE_APP_VIEW_SIZE as any), process.env.VUE_APP_VIEW_SIZE)
+    facilities.map((facility: any) => facilityIds.push(facility.facilityId))
+
+    stateFacilities = stateFacilities.filter((facility: any) => !facilityIds.includes(facility.facilityId))
+    
     try {
-      const params = {
-        inputFields: {
-          "statusId": "SERVICE_PENDING",
-          "systemJobEnumId": ["JOB_RLS_ORD_DTE", "JOB_BKR_ORD"],
-          "systemJobEnumId_op": "in",
-        },
-        orderBy: "runTime ASC",
-        entityName: "JobSandbox",
-        fieldList: ["jobId", "statusId", "serviceName", "systemJobEnumId", "runTime"],
-        viewSize: 10
-      }
+      const [jobData, facilitiesOrderCount] = await Promise.all([FacilityService.fetchJobData(), FacilityService.fetchOrderCountsByFacility(facilityIds)])
 
-      let resp = await FacilityService.fetchJobs(params)
-      if (!hasError(resp) && resp.data.count) {
-        const jobs = resp.data.docs;
-        const brokeringJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_BKR_ORD');
-        const autoReleaseJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_RLS_ORD_DTE');
-
-        facilities.forEach((facility: any) => {
-          if (facility.facilityId === '_NA_') {
-            facility.brokeringJob = brokeringJob;
-          } else if (facility.facilityTypeId === 'BACKORDER') {
-            facility.autoReleaseJob = autoReleaseJob;
-          } else if (facility.facilityTypeId === 'PRE_ORDER') {
-            facility.autoReleaseJob = autoReleaseJob;
-          }
-        });
-      }
-
-      const payload = prepareOrderQuery({
-        viewSize: "0",  // passing viewSize as 0, as we don't want to fetch any data
-        sort: 'orderDate asc',
-        defType: "edismax",
-        docType: "ORDER",
-        filters: {
-          '-shipmentMethodTypeId': { value: 'STOREPICKUP' },
-          orderStatusId: { value: '(ORDER_APPROVED OR ORDER_CREATED)' },
-          orderTypeId: { value: 'SALES_ORDER' },
-        },
-        facet: {
-          "facilityFacet": {
-            "field": "facilityId",
-            "mincount": 1,
-            "limit": -1,
-            "sort": "index",
-            "type": "terms",
-            "facet": {
-              "groups": "unique(orderId)",
-            }
-          }
+      facilities.map((facility: any) => {
+        if (facility.facilityId === '_NA_') {
+          facility.brokeringJob = jobData.brokeringJob;
+        } else if (facility.facilityTypeId === 'BACKORDER') {
+          facility.autoReleaseJob = jobData.autoReleaseJob;
+        } else if (facility.facilityTypeId === 'PRE_ORDER') {
+          facility.autoReleaseJob = jobData.autoReleaseJob;
         }
-      })
-      resp = await FacilityService.fetchOrderCountsByFacility(payload);
-      if (!hasError(resp)) {
-        const facilityFacets = resp.data.facets.facilityFacet.buckets;
-        const facilityOrderCounts = facilityFacets.reduce((countObject: any, facet: any) => {
-          countObject[facet.val] = facet.groups;
-          return countObject;
-        }, {});
+        facility.orderCount = facilitiesOrderCount[facility.facilityId] || 0
+      });
         
-        facilities = facilities.map((facility:any) => ({
-          ...facility,
-          orderCount: facilityOrderCounts[facility.facilityId] || 0
-        }));
-      }
     } catch(error) {
       logger.error(error)
     }
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
   }
 }
 

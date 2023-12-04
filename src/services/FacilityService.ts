@@ -1,6 +1,7 @@
 import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
+import { prepareOrderQuery } from '@/utils/solrHelper';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
@@ -397,19 +398,82 @@ const removeFacilityCalendar = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchJobs = async(payload: any): Promise <any> => {
-  return api({
-    url: "performFind",
-    method: "post",
-    data: payload
-  });
+const fetchJobData = async(): Promise <any> => {
+  const payload = {
+    inputFields: {
+      "statusId": "SERVICE_PENDING",
+      "systemJobEnumId": ["JOB_RLS_ORD_DTE", "JOB_BKR_ORD"],
+      "systemJobEnumId_op": "in",
+    },
+    orderBy: "runTime ASC",
+    entityName: "JobSandbox",
+    fieldList: ["jobId", "statusId", "serviceName", "systemJobEnumId", "runTime"],
+    viewSize: 10
+  }
+
+  try {
+    const resp = await api({
+      url: "performFind", 
+      method: "post",
+      data: payload
+    }) as any;
+
+    if (!hasError(resp) && resp.data.count > 0) {
+      const jobs = resp.data.docs;
+      const brokeringJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_BKR_ORD');
+      const autoReleaseJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_RLS_ORD_DTE');
+      return { brokeringJob, autoReleaseJob };
+    } else {
+      throw resp.data;
+    }
+  } catch(err) {
+    logger.error(err);
+  }
 }
-const fetchOrderCountsByFacility = async (query: any): Promise<any> => {
-  return api({
-    url: "solr-query",
-    method: "post",
-    data: query
-  });
+const fetchOrderCountsByFacility = async (facilityIds: Array<string>): Promise<any> => {
+  try {
+    const query = prepareOrderQuery({
+      viewSize: "0",  // passing viewSize as 0, as we don't want to fetch any data
+      sort: 'orderDate asc',
+      defType: "edismax",
+      docType: "ORDER",
+      filters: {
+        '-shipmentMethodTypeId': { value: 'STOREPICKUP' },
+        orderStatusId: { value: '(ORDER_APPROVED OR ORDER_CREATED)' },
+        orderTypeId: { value: 'SALES_ORDER' },
+        facilityId: { value: facilityIds }
+      },
+      facet: {
+        "facilityFacet": {
+          "field": "facilityId",
+          "mincount": 1,
+          "limit": -1,
+          "sort": "index",
+          "type": "terms",
+          "facet": {
+            "groups": "unique(orderId)",
+          }
+        }
+      }
+    })
+    const resp = await api({
+      url: "solr-query",
+      method: "post",
+      data: query
+    }) as any;
+    if (!hasError(resp)) {
+      const facilityFacets = resp.data.facets.facilityFacet.buckets;
+      const facilityOrderCounts = facilityFacets.reduce((countObject: any, facet: any) => {
+        countObject[facet.val] = facet.groups;
+        return countObject;
+      }, {});
+      return facilityOrderCounts;
+    } else {
+      throw resp.data;
+    }
+  } catch(error) {
+    logger.error(error);
+  }
 }
 
 export const FacilityService = {
@@ -437,7 +501,7 @@ export const FacilityService = {
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
   fetchFacilityPrimaryMember,
-  fetchJobs,
+  fetchJobData,
   fetchOrderCountsByFacility,
   getFacilityProductStores,
   fetchShopifyFacilityMappings,
