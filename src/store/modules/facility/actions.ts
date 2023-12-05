@@ -439,7 +439,12 @@ const actions: ActionTree<FacilityState, RootState> = {
   async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
     let facilities = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
-    
+
+    let archivedFacilities = JSON.parse(JSON.stringify(state.archivedFacilities))
+    if (archivedFacilities.length) {
+      archivedFacilities = archivedFacilities.map((facility: any) => facility.facilityId)
+    }
+
     try {
       const params = {
         inputFields: {
@@ -448,7 +453,9 @@ const actions: ActionTree<FacilityState, RootState> = {
           parentFacilityTypeId_grp: '1',
           facilityTypeId_value: 'VIRTUAL_FACILITY',
           facilityTypeId_op: 'equals',
-          facilityTypeId_grp: '2'
+          facilityTypeId_grp: '2',
+          // conditionally filtering if archived facilities are present
+          ...(archivedFacilities.length && { facilityId: archivedFacilities, facilityId_op: 'not-in' }),
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
@@ -479,7 +486,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     });
     
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total });
     if (facilities.length) {
       await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
     }
@@ -516,12 +523,42 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(error) {
       logger.error(error)
     }
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities: stateFacilities.concat(facilities), total });
   },
 
   updateVirtualFacilities({ commit }, facilities) {
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
-  }
+  },
+
+  async fetchArchivedFacilities({ commit }) {
+    let facilities = []
+    try {
+      const resp = await FacilityService.fetchArchivedFacilities({
+        inputFields: {
+          facilityGroupId: 'ARCHIVE',
+        },
+        fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
+        entityName: "FacilityAndGroupMember",
+        distinct: 'Y',
+        noConditionFind: 'Y',
+        filterByDate: 'Y',
+        viewSize: 50
+      })
+
+      if (!hasError(resp) && resp.data.count > 0) {
+        facilities = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch (err) {
+      logger.error('Failed to fetch archived parkings.', err)
+    }
+    commit(types.FACILITY_ARCHIVED_FACILITIES_UPDATED, facilities);
+  },
+
+  updateArchivedFacilities({ commit }, facilities) {
+    commit(types.FACILITY_ARCHIVED_FACILITIES_UPDATED, facilities)
+  },
 }
 
 export default actions;

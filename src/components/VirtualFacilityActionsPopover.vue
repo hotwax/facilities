@@ -70,14 +70,14 @@ export default defineComponent({
     },
     async archiveVirtualFacility() {
       try {
-        let facilityGroupId = await this.fetchArchiveGroup('ARCHIVE')
+        let facilityGroupId = await this.fetchArchiveGroup()
 
         if (!facilityGroupId) {
-          facilityGroupId = await this.createArchiveGroup('ARCHIVE')
+          facilityGroupId = await this.createArchiveGroup()
         }
-
+        
         if (!facilityGroupId) {
-          throw { message: translate('Failed to archive facility.') }
+          throw { message: translate('Failed to archive parking.') }
         }
 
         const resp = await FacilityService.addFacilityToGroup({
@@ -89,7 +89,8 @@ export default defineComponent({
           const updatedVirtualFacilities = JSON.parse(JSON.stringify(this.virtualFacilities))
             .filter((facility: any) => facility.facilityId !== this.facility.facilityId)
           this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
-          showToast(translate("Facility archived successfully."))
+          await this.store.dispatch('facility/fetchArchivedFacilities')
+          showToast(translate("Parking archived successfully."))
         } else {
           throw resp.data
         }
@@ -100,12 +101,12 @@ export default defineComponent({
 
       popoverController.dismiss()
     },
-    async fetchArchiveGroup(facilityGroupId: string) {
+    async fetchArchiveGroup() {
       let fetchedFacilityGroupId = ''
       try {
         const resp = await FacilityService.fetchFacilityGroup({
           inputFields: {
-            facilityGroupId
+            facilityGroupId: 'ARCHIVE',
           },
           entityName: 'FacilityGroup',
           viewSize: 1
@@ -116,7 +117,7 @@ export default defineComponent({
           if (!resp.data.count) {
             return Promise.resolve(fetchedFacilityGroupId)
           } else {
-            throw { message: translate('Failed to archive facility.') }
+            throw { message: translate('Failed to archive parking.') }
           }
         } else {
           fetchedFacilityGroupId = resp.data.docs[0].facilityGroupId
@@ -127,19 +128,19 @@ export default defineComponent({
         return Promise.reject(error);
       }
     },
-    async createArchiveGroup(facilityGroupId: string) {
+    async createArchiveGroup() {
       let createdFacilityGroupId = ''
       try {
         const resp = await FacilityService.createFacilityGroup({
-          facilityGroupId,
-          facilityGroupName: '',
-          facilityGroupTypeId: ''
+          facilityGroupName: 'Archive',
+          facilityGroupId: 'ARCHIVE',
+          facilityGroupTypeId: '', // TODO need to decide group type ID
         })
 
         if (!hasError(resp)) {
           createdFacilityGroupId = resp.data.facilityGroupId
         } else {
-          throw { message: translate('Failed to archive facility.') }
+          throw { message: translate('Failed to archive parking.') }
         }
 
         return Promise.resolve(createdFacilityGroupId)

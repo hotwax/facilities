@@ -9,6 +9,9 @@ const getters: GetterTree <FacilityState, RootState> = {
   getVirtualFacilities(state) {
     return JSON.parse(JSON.stringify(state.virtualFacilities.list))
   },
+  getArchivedFacilities(state) {
+    return JSON.parse(JSON.stringify(state.archivedFacilities))
+  },
   getFacilityProductStores(state) {
     return state.current.productStores
   },

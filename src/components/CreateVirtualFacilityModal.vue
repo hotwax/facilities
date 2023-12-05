@@ -58,6 +58,7 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonNote,
   IonText,
   IonTitle,
   IonToolbar,
@@ -73,7 +74,7 @@ import { showToast } from "@/utils";
 import logger from "@/logger";
 
 export default defineComponent({
-  name: "AddVirtualFacility",
+  name: "CreateVirtualFacility",
   components: {
     IonButton,
     IonButtons,
@@ -86,6 +87,7 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonNote,
     IonText,
     IonTitle,
     IonToolbar

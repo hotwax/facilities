@@ -12,5 +12,6 @@ export default interface FacilityState {
     list: Array<object>,
     total: number
   };
+  archivedFacilities: Array<object>,
   current: any;
 }

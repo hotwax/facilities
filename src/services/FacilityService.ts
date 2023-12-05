@@ -484,6 +484,14 @@ const fetchOrderCountsByFacility = async (facilityIds: Array<string>): Promise<a
   }
 }
 
+const fetchArchivedFacilities = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
@@ -497,12 +505,13 @@ export const FacilityService = {
   createFacilityIdentification,
   createFacilityPostalAddress,
   createProductStoreFacility,
+  createShopifyShopLocation,
   deleteFacilityLocation,
+  deleteShopifyShopLocation,
+  fetchArchivedFacilities,
   fetchFacilityGroup,
   fetchFacilityLocations,
   fetchFacilityContactDetails,
-  createShopifyShopLocation,
-  deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,
   fetchFacilityCalendar,

@@ -48,7 +48,7 @@
               </ion-item>
             </ion-card> 
             <ion-card>
-              <ion-button color="medium" fill="clear" @click="openAddVirtualFacilityModal()">
+              <ion-button color="medium" fill="clear" @click="openCreateVirtualFacility()">
                 <ion-icon :icon="addOutline" slot="start"/>
                 {{ translate('Add new parking') }}
               </ion-button>
@@ -80,8 +80,11 @@ import {
   IonContent,
   IonHeader, 
   IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   IonItem,
   IonLabel,
+  IonNote,
   IonPage,
   IonTitle,
   IonToggle,
@@ -93,12 +96,13 @@ import { addOutline, archiveOutline, ellipsisVerticalOutline } from 'ionicons/ic
 import { translate } from '@hotwax/dxp-components';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
-import AddVirtualFacilityModal from '@/components/AddVirtualFacilityModal.vue';
+import CreateVirtualFacilityModal from '@/components/CreateVirtualFacilityModal.vue';
 import VirtualFacilityActionsPopover from '@/components/VirtualFacilityActionsPopover.vue';
 import ArchivedFacilityModal from '@/components/ArchivedFacilityModal.vue';
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import { showToast } from '@/utils';
+import logger from "@/logger";
 
 export default defineComponent({
   name: 'Parking',
@@ -110,8 +114,11 @@ export default defineComponent({
     IonContent,
     IonHeader, 
     IonIcon,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
     IonItem,
     IonLabel,
+    IonNote,
     IonPage,
     IonTitle,
     IonToggle,
@@ -124,18 +131,19 @@ export default defineComponent({
     })
   },
   async mounted() {
+    await this.fetchArchivedFacilities();
     await this.fetchFacilities();
   },
   methods: {
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
-    async openAddVirtualFacilityModal() {
-      const addVirtualFacility = await modalController.create({
-        component: AddVirtualFacilityModal
+    async openCreateVirtualFacility() {
+      const createVirtualFacility = await modalController.create({
+        component: CreateVirtualFacilityModal
       })
 
-      addVirtualFacility.present()
+      createVirtualFacility.present()
     },
     async openVirtualFacilityActionsPopover(event: Event, facility: any) {
       const parkingActionsPopover = await popoverController.create({
@@ -164,9 +172,10 @@ export default defineComponent({
               return facilityData
             })
           this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
-          showToast(translate('Parking name updated.'))
+          showToast(translate('Parking renamed successfully.'))
         } else {
-          throw resp.data
+          showToast(translate('Failed to rename parking..'))
+          logger.error('Failed to rename parking.', resp.data)
         }
       }
     },
@@ -195,6 +204,9 @@ export default defineComponent({
       ).then(() => {
         event.target.complete();
       });
+    },
+    async fetchArchivedFacilities() {
+      await this.store.dispatch('facility/fetchArchivedFacilities')
     }
   },
   setup() {
