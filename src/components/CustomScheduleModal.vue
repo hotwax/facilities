@@ -58,15 +58,13 @@
   </ion-content>
 
   <ion-modal class="date-time-modal" :is-open="isTimeModalOpen" @didDismiss="() => isTimeModalOpen = false">
-    <ion-content :force-overscroll="false">
-      <ion-datetime
-        show-default-buttons
-        hour-cycle="h12"
-        presentation="time"
-        :value="selectedTimesForWeek[selectedDayTime] ? selectedTimesForWeek[selectedDayTime] : ''"
-        @ionChange="updateTime($event)"
-      />
-    </ion-content>
+    <ion-datetime
+      show-default-buttons
+      hour-cycle="h12"
+      presentation="time"
+      :value="selectedTimesForWeek[selectedDayTime] ? selectedTimesForWeek[selectedDayTime] : ''"
+      @ionChange="updateTime($event)"
+    />
   </ion-modal>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
