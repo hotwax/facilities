@@ -150,7 +150,6 @@ export default defineComponent({
         const resp = await FacilityService.createVirtualFacility(payload);
         if (!hasError(resp)) {
           showToast(translate("New parking created successfully."))
-          // TODO consider updating facility state instead of fetching
           const createdFacility = {
             ...this.formData,
             facilityTypeId: 'VIRTUAL_FACILITY',
