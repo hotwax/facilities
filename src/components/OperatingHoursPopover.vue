@@ -9,12 +9,12 @@
       </ion-item>
       <ion-item button @click="addCustomSchedule">
         <ion-label>
-          {{ translate("Add custom schedules") }}
+          {{ translate("Add custom schedule") }}
         </ion-label>
       </ion-item>
       <ion-item button lines="none" @click="removeCalendarFromFacility">
         <ion-label>
-          {{ translate("Remove schedules") }}
+          {{ translate("Remove schedule") }}
         </ion-label>
       </ion-item>
     </ion-list>
