@@ -24,7 +24,6 @@ import {
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { lockClosedOutline, lockOpenOutline } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components'
 import { showToast } from '@/utils';
 import { FacilityService } from "@/services/FacilityService";
@@ -112,21 +111,12 @@ export default defineComponent({
           viewSize: 1
         })
 
-        if (hasError(resp)) {
-          // if no record is found, we create it hence, error is not thrown
-          if (!resp.data.count) {
-            return Promise.resolve(fetchedFacilityGroupId)
-          } else {
-            throw { message: translate('Failed to archive parking.') }
-          }
-        } else {
-          fetchedFacilityGroupId = resp.data.docs[0].facilityGroupId
-        }
-
-        return Promise.resolve(fetchedFacilityGroupId)
+        fetchedFacilityGroupId = resp.data.count ? resp.data.docs[0].facilityGroupId : ''
       } catch (error) {
-        return Promise.reject(error);
+        logger.error(error)
+        showToast(translate('Something went wrong.'))
       }
+      return fetchedFacilityGroupId
     },
     async createArchiveGroup() {
       let createdFacilityGroupId = ''
@@ -153,8 +143,6 @@ export default defineComponent({
     const store = useStore();
 
     return {
-      lockClosedOutline,
-      lockOpenOutline,
       store,
       translate
     }

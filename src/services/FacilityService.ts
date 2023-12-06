@@ -484,12 +484,35 @@ const fetchOrderCountsByFacility = async (facilityIds: Array<string>): Promise<a
   }
 }
 
-const fetchArchivedFacilities = async (payload: any): Promise<any> => {
-  return api({
-    url: "performFind",
-    method: "post",
-    data: payload
-  })
+const fetchArchivedFacilities = async (): Promise<any> => {
+  let facilities = []
+
+  try {
+    const resp = await api({
+      url: "performFind",
+      method: "post",
+      data: {
+        inputFields: {
+          facilityGroupId: 'ARCHIVE',
+        },
+        fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
+        entityName: "FacilityAndGroupMember",
+        distinct: 'Y',
+        noConditionFind: 'Y',
+        filterByDate: 'Y',
+        viewSize: 50
+      }
+    }) as any
+
+    if (!hasError(resp) && resp.data.count > 0) {
+      facilities = resp.data.docs
+      return Promise.resolve(facilities)
+    } else {
+      throw { message: 'Failed to fetch archived parkings.' }
+    }
+  } catch (error) {
+    return Promise.reject(error)
+  }
 }
 
 export const FacilityService = {

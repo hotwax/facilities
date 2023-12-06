@@ -6,7 +6,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
-import { prepareOrderQuery } from '@/utils/solrHelper';
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -440,9 +439,9 @@ const actions: ActionTree<FacilityState, RootState> = {
     let facilities = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
 
-    let archivedFacilities = JSON.parse(JSON.stringify(state.archivedFacilities))
-    if (archivedFacilities.length) {
-      archivedFacilities = archivedFacilities.map((facility: any) => facility.facilityId)
+    let archivedFacilityIds = []
+    if (state.archivedFacilities.length) {
+      archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities)).map((facility: any) => facility.facilityId)
     }
 
     try {
@@ -455,7 +454,7 @@ const actions: ActionTree<FacilityState, RootState> = {
           facilityTypeId_op: 'equals',
           facilityTypeId_grp: '2',
           // conditionally filtering if archived facilities are present
-          ...(archivedFacilities.length && { facilityId: archivedFacilities, facilityId_op: 'not-in' }),
+          ...(archivedFacilityIds.length && { facilityId: archivedFacilityIds, facilityId_op: 'not-in' }),
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
@@ -526,6 +525,44 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities: stateFacilities.concat(facilities), total });
   },
 
+  async fetchVirtualFacility({ commit, dispatch, state }, payload) {
+    // not presenting loader as to avoid flickering
+    let facility = {}
+    try {
+      const resp = await FacilityService.fetchFacilities({
+        inputFields: {
+          facilityId: payload.facilityId,
+        },
+        entityName: "FacilityAndProductStore",
+        fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
+        filterByDate: 'Y',
+        viewSize: 1
+      })
+
+      if (!hasError(resp) && resp.data.count) {
+        facility = resp.data.docs[0]
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
+    const facilities = [...state.virtualFacilities.list, facility]
+    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
+    facilities.sort((firstFacility:any, secondFacility:any) => {
+      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
+      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
+      return secondFacilityOrder - firstFacilityOrder;
+    });
+    
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length });
+    if (facilities.length) {
+      await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
+    }
+  },
+
   updateVirtualFacilities({ commit }, facilities) {
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
@@ -533,25 +570,9 @@ const actions: ActionTree<FacilityState, RootState> = {
   async fetchArchivedFacilities({ commit }) {
     let facilities = []
     try {
-      const resp = await FacilityService.fetchArchivedFacilities({
-        inputFields: {
-          facilityGroupId: 'ARCHIVE',
-        },
-        fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
-        entityName: "FacilityAndGroupMember",
-        distinct: 'Y',
-        noConditionFind: 'Y',
-        filterByDate: 'Y',
-        viewSize: 50
-      })
-
-      if (!hasError(resp) && resp.data.count > 0) {
-        facilities = resp.data.docs
-      } else {
-        throw resp.data
-      }
-    } catch (err) {
-      logger.error('Failed to fetch archived parkings.', err)
+      facilities = await FacilityService.fetchArchivedFacilities()
+    } catch (error: any) {
+      logger.error(error.message)
     }
     commit(types.FACILITY_ARCHIVED_FACILITIES_UPDATED, facilities);
   },

@@ -42,7 +42,7 @@ import {
   modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, gitPullRequestOutline, lockClosedOutline, lockOpenOutline } from 'ionicons/icons'
+import { closeOutline, gitPullRequestOutline } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components'
 import { showToast } from '@/utils';
 import logger from "@/logger";
@@ -86,7 +86,7 @@ export default defineComponent({
         if (!hasError(resp)) {
           const archivedFacilities = JSON.parse(JSON.stringify(this.archivedFacilities)).filter((facility: any) => facility.facilityId !== archivedFacility.facilityId)
           this.store.dispatch('facility/updateArchivedFacilities', archivedFacilities)
-          await this.store.dispatch('facility/fetchVirtualFacilities', { viewSize: process.env.VUE_APP_VIEW_SIZE, viewIndex: 0 })
+          await this.store.dispatch('facility/fetchVirtualFacility', { facilityId: archivedFacility.facilityId })
           showToast(translate("Parking unarchived successfully."))
         } else {
           throw resp.data
@@ -103,8 +103,6 @@ export default defineComponent({
     return {
       closeOutline,
       gitPullRequestOutline,
-      lockClosedOutline,
-      lockOpenOutline,
       store,
       translate
     }
