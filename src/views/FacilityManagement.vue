@@ -22,14 +22,7 @@
           </ion-item>
         </ion-card>
 
-        <ion-card class="ion-hide" button @click="router.push('/parking')">
-          <ion-item lines="none">
-            <ion-icon slot="start" :icon="golfOutline"/>
-            <ion-card-title>{{ translate("Parking") }}</ion-card-title>
-          </ion-item>
-        </ion-card>
-
-        <ion-card class="ion-hide" button @click="router.push('/find-groups')">
+        <ion-card button @click="router.push('/find-groups')">
           <ion-item lines="none">
             <ion-icon slot="start" :icon="albumsOutline"/>
             <h1>{{ translate("Groups") }}</h1>
@@ -50,7 +43,6 @@
 <script lang="ts">
 import {
   IonCard,
-  IonCardTitle,
   IonContent,
   IonHeader,
   IonIcon,
@@ -73,7 +65,6 @@ export default defineComponent({
   name: 'FacilityManagement',
   components: {
     IonCard,
-    IonCardTitle,
     IonContent,
     IonHeader,
     IonIcon,

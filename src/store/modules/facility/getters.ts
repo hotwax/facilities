@@ -9,6 +9,9 @@ const getters: GetterTree <FacilityState, RootState> = {
   getVirtualFacilities(state) {
     return JSON.parse(JSON.stringify(state.virtualFacilities.list))
   },
+  getFacilityGroups(state) {
+    return JSON.parse(JSON.stringify(state.facilityGroups.list))
+  },
   getFacilityProductStores(state) {
     return state.current.productStores
   },
@@ -18,6 +21,11 @@ const getters: GetterTree <FacilityState, RootState> = {
   isScrollable(state) {
     return (
       state.facilities.list?.length > 0 && state.facilities.list?.length < state.facilities.total
+    );
+  },
+  isFacilityGroupsScrollable(state) {
+    return (
+      state.facilityGroups.list?.length > 0 && state.facilityGroups.list?.length < state.facilityGroups.total
     );
   },
   getCurrent(state) {

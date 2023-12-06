@@ -510,6 +510,48 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
+  },
+
+  async fetchFacilityGroups({ commit, state }, payload) {
+    let groups = [], total = 0;
+    if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
+    
+    try {
+      const params = {
+        entityName: "FacilityGroup",
+        noConditionFind: 'Y',
+        orderBy: "facilityGroupName ASC",
+        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+        ...payload
+      }
+
+      const resp = await FacilityService.fetchFacilityGroups(params)
+
+      if (!hasError(resp) && resp.data.count) {
+        groups = resp.data.docs
+        total = resp.data.count
+
+        if (payload.viewIndex && payload.viewIndex > 0) {
+          groups = JSON.parse(JSON.stringify(state.facilityGroups.list)).concat(groups)
+        }
+        console.log(state.facilityGroups)
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    // Applying custom sorting to always bring fulfillment and pickup groups first.
+    const customOrder = ['OMS_FULFILLMENT', 'PICKUP'];
+    groups.sort((firstGroup:any, secondGroup:any) => {
+      const firstGroupOrder = customOrder.indexOf(firstGroup.facilityGroupId);
+      const secondGroupOrder = customOrder.indexOf(secondGroup.facilityGroupId);
+      return secondGroupOrder - firstGroupOrder;
+    });
+    
+    emitter.emit("dismissLoader");
+    commit(types.FACILITY_GROUPS_UPDATED , { groups, total });
   }
 }
 
