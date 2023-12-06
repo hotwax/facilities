@@ -4,6 +4,11 @@
       <ion-toolbar>
         <ion-back-button slot="start" default-href="/"/>
         <ion-title>{{ translate("Parking") }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="openArchivedFacilityModal()">
+            <ion-icon slot="icon-only" :icon="archiveOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content>
@@ -16,7 +21,9 @@
                   {{ facility.facilityName }}
                   <p>{{ facility.facilityId }}</p>
                 </ion-label>
-                <ion-icon :icon="ellipsisVerticalOutline" slot="end"/>
+                <ion-button slot="end" fill="clear" color="medium" @click="openVirtualFacilityActionsPopover($event, facility)">
+                  <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+                </ion-button>
               </ion-item>
               <template v-if="facility.facilityId === '_NA_'">
                 <ion-item lines="full">
@@ -40,6 +47,12 @@
                 <ion-label>{{ facility.description }}</ion-label>
               </ion-item>
             </ion-card> 
+            <ion-card>
+              <ion-button color="medium" fill="clear" @click="openCreateVirtualFacilityModal()">
+                <ion-icon :icon="addOutline" slot="start"/>
+                {{ translate('Add new parking') }}
+              </ion-button>
+            </ion-card>
           </div>   
         </section>
       </main>
@@ -61,32 +74,51 @@
 import { defineComponent } from 'vue';
 import {
   IonBackButton,
+  IonButton,
+  IonButtons,
   IonCard,
   IonContent,
   IonHeader, 
   IonIcon,
+  IonInfiniteScroll,
+  IonInfiniteScrollContent,
   IonItem,
   IonLabel,
+  IonNote,
   IonPage,
   IonTitle,
   IonToggle,
   IonToolbar,
+  modalController,
+  popoverController,
 } from '@ionic/vue'
-import { ellipsisVerticalOutline } from 'ionicons/icons'
+import { addOutline, archiveOutline, ellipsisVerticalOutline } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
 import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
+import CreateVirtualFacilityModal from '@/components/CreateVirtualFacilityModal.vue';
+import VirtualFacilityActionsPopover from '@/components/VirtualFacilityActionsPopover.vue';
+import ArchivedFacilityModal from '@/components/ArchivedFacilityModal.vue';
+import { FacilityService } from '@/services/FacilityService';
+import { hasError } from '@/adapter';
+import { showToast } from '@/utils';
+import logger from "@/logger";
 
 export default defineComponent({
   name: 'Parking',
   components: {
     IonBackButton,
+    IonButton,
+    IonButtons,
     IonCard,
     IonContent,
     IonHeader, 
     IonIcon,
+    IonInfiniteScroll,
+    IonInfiniteScrollContent,
     IonItem,
     IonLabel,
+    IonNote,
     IonPage,
     IonTitle,
     IonToggle,
@@ -99,11 +131,64 @@ export default defineComponent({
     })
   },
   async mounted() {
+    await this.fetchArchivedFacilities();
     await this.fetchFacilities();
   },
   methods: {
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+    },
+    async openCreateVirtualFacilityModal() {
+      const createVirtualFacility = await modalController.create({
+        component: CreateVirtualFacilityModal
+      })
+
+      createVirtualFacility.present()
+    },
+    async openVirtualFacilityActionsPopover(event: Event, facility: any) {
+      const parkingActionsPopover = await popoverController.create({
+        component: VirtualFacilityActionsPopover,
+        event,
+        showBackdrop: false,
+        componentProps: { facility }
+      });
+
+      parkingActionsPopover.present();
+
+      const result = await parkingActionsPopover.onDidDismiss();
+      if (result.data && result.data !== facility.facilityName) {
+        try {
+          const resp = await FacilityService.updateFacility({
+            facilityId: facility.facilityId,
+            facilityName: result.data
+          })
+
+          if (!hasError(resp)) {
+            const updatedVirtualFacilities = JSON.parse(JSON.stringify(this.virtualFacilities))
+              .map((facilityData: any) => {
+                if (facility.facilityId === facilityData.facilityId) {
+                  facilityData.facilityName = result.data
+                }
+
+                return facilityData
+              })
+            this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
+            showToast(translate('Parking renamed successfully.'))
+          } else {
+            throw resp.data
+          }
+        } catch (error) {
+          showToast(translate('Failed to rename parking.'))
+          logger.error('Failed to rename parking.', error)
+        }
+      }
+    },
+    async openArchivedFacilityModal() {
+      const archivedFacilityModal = await modalController.create({
+        component: ArchivedFacilityModal
+      })
+
+      archivedFacilityModal.present()
     },
     async fetchFacilities(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
@@ -123,12 +208,17 @@ export default defineComponent({
       ).then(() => {
         event.target.complete();
       });
+    },
+    async fetchArchivedFacilities() {
+      await this.store.dispatch('facility/fetchArchivedFacilities')
     }
   },
   setup() {
     const store = useStore();
 
     return {
+      addOutline,
+      archiveOutline,
       ellipsisVerticalOutline,
       store,
       translate
@@ -136,6 +226,7 @@ export default defineComponent({
   }
 });
 </script>
+
 <style scoped>
 .virtual-facilities {
   display: grid;

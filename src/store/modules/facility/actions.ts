@@ -6,7 +6,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
-import { prepareOrderQuery } from '@/utils/solrHelper';
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -56,7 +55,9 @@ const actions: ActionTree<FacilityState, RootState> = {
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
     const filters = {
       'parentFacilityTypeId': 'VIRTUAL_FACILITY',
-      'parentFacilityTypeId_op': 'notEqual'
+      'parentFacilityTypeId_op': 'notEqual',
+      'facilityTypeId': 'VIRTUAL_FACILITY',
+      'facilityTypeId_op': 'notEqual',
     } as any
 
     if(state.query.productStoreId) {
@@ -65,8 +66,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     if(state.query.facilityTypeId) {
-        filters['facilityTypeId'] = state.query.facilityTypeId
-        filters['facilityTypeId_op'] = 'equals'
+      filters['facilityTypeId'] = state.query.facilityTypeId
+      filters['facilityTypeId_op'] = 'equals'
     }
 
     if(state.query.queryString) {
@@ -437,11 +438,23 @@ const actions: ActionTree<FacilityState, RootState> = {
   async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
     let facilities = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
-    
+
+    let archivedFacilityIds = []
+    if (state.archivedFacilities.length) {
+      archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities)).map((facility: any) => facility.facilityId)
+    }
+
     try {
       const params = {
         inputFields: {
-          parentFacilityTypeId: "VIRTUAL_FACILITY"
+          parentFacilityTypeId_value: 'VIRTUAL_FACILITY',
+          parentFacilityTypeId_op: 'equals',
+          parentFacilityTypeId_grp: '1',
+          facilityTypeId_value: 'VIRTUAL_FACILITY',
+          facilityTypeId_op: 'equals',
+          facilityTypeId_grp: '2',
+          // conditionally filtering if archived facilities are present
+          ...(archivedFacilityIds.length && { facilityId: archivedFacilityIds, facilityId_op: 'not-in' }),
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
@@ -472,7 +485,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     });
     
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total });
     if (facilities.length) {
       await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
     }
@@ -509,8 +522,64 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(error) {
       logger.error(error)
     }
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
-  }
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities: stateFacilities.concat(facilities), total });
+  },
+
+  async fetchVirtualFacility({ commit, dispatch, state }, payload) {
+    // not presenting loader as to avoid flickering
+    let facility = {}
+    try {
+      const resp = await FacilityService.fetchFacilities({
+        inputFields: {
+          facilityId: payload.facilityId,
+        },
+        entityName: "FacilityAndProductStore",
+        fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
+        filterByDate: 'Y',
+        viewSize: 1
+      })
+
+      if (!hasError(resp) && resp.data.count) {
+        facility = resp.data.docs[0]
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
+    const facilities = [...state.virtualFacilities.list, facility]
+    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
+    facilities.sort((firstFacility:any, secondFacility:any) => {
+      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
+      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
+      return secondFacilityOrder - firstFacilityOrder;
+    });
+    
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length });
+    if (facilities.length) {
+      await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
+    }
+  },
+
+  updateVirtualFacilities({ commit }, facilities) {
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
+  },
+
+  async fetchArchivedFacilities({dispatch }) {
+    let facilities = []
+    try {
+      facilities = await FacilityService.fetchArchivedFacilities()
+    } catch (error) {
+      logger.error(error)
+    }
+    dispatch('updateArchivedFacilities', facilities)
+  },
+
+  updateArchivedFacilities({ commit }, facilities) {
+    commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
+  },
 }
 
 export default actions;
