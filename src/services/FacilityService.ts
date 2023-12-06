@@ -301,6 +301,14 @@ const createFacility = async (payload: any): Promise<any> => {
   })
 }
 
+const createVirtualFacility = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacility",
+    method: "post",
+    data: payload
+  })
+}
+
 const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacilityPostalAddress",
@@ -484,25 +492,59 @@ const fetchFacilityGroups = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchArchivedFacilities = async (): Promise<any> => {
+  let facilities = []
+
+  try {
+    const resp = await api({
+      url: "performFind",
+      method: "post",
+      data: {
+        inputFields: {
+          facilityGroupId: 'ARCHIVE',
+        },
+        fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
+        entityName: "FacilityAndGroupMember",
+        distinct: 'Y',
+        noConditionFind: 'Y',
+        filterByDate: 'Y',
+        viewSize: 50
+      }
+    }) as any
+
+    if (!hasError(resp) && resp.data.count > 0) {
+      facilities = resp.data.docs
+    } else {
+      throw resp.data
+    }
+  } catch (error) {
+    logger.error('Failed to fetch archived parkings.', error)
+  }
+
+  return facilities
+}
+
 export const FacilityService = {
   addFacilityToGroup,
+  addPartyToFacility,
+  associateCalendarToFacility,
   createFacilityGroup,
   createFacility,
   createFacilityLocation,
-  addPartyToFacility,
-  associateCalendarToFacility,
+  createVirtualFacility,
   createEnumeration,
   createFacilityCalendar,
   createFacilityIdentification,
   createFacilityPostalAddress,
   createProductStoreFacility,
+  createShopifyShopLocation,
   deleteFacilityLocation,
+  deleteShopifyShopLocation,
+  fetchArchivedFacilities,
   fetchFacilityGroup,
   fetchFacilityGroups,
   fetchFacilityLocations,
   fetchFacilityContactDetails,
-  createShopifyShopLocation,
-  deleteShopifyShopLocation,
   fetchFacilities,
   fetchFacilitiesOrderCount,
   fetchFacilityCalendar,

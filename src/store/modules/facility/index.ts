@@ -25,6 +25,7 @@ const facilityModule: Module<FacilityState, RootState> = {
       list: [],
       total: 0
     },
+    archivedFacilities: [],
     current: {}
   },
   getters,

@@ -512,6 +512,63 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
   },
 
+
+  async fetchVirtualFacility({ commit, dispatch, state }, payload) {
+    // not presenting loader as to avoid flickering
+    let facility = {}
+    try {
+      const resp = await FacilityService.fetchFacilities({
+        inputFields: {
+          facilityId: payload.facilityId,
+        },
+        entityName: "FacilityAndProductStore",
+        fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
+        filterByDate: 'Y',
+        viewSize: 1
+      })
+
+      if (!hasError(resp) && resp.data.count) {
+        facility = resp.data.docs[0]
+      } else {
+        throw resp.data
+      }
+    } catch(error) {
+      logger.error(error)
+    }
+
+    //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
+    const facilities = [...state.virtualFacilities.list, facility]
+    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
+    facilities.sort((firstFacility:any, secondFacility:any) => {
+      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
+      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
+      return secondFacilityOrder - firstFacilityOrder;
+    });
+    
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length });
+    if (facilities.length) {
+      await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
+    }
+  },
+
+  updateVirtualFacilities({ commit }, facilities) {
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
+  },
+
+  async fetchArchivedFacilities({dispatch }) {
+    let facilities = []
+    try {
+      facilities = await FacilityService.fetchArchivedFacilities()
+    } catch (error) {
+      logger.error(error)
+    }
+    dispatch('updateArchivedFacilities', facilities)
+  },
+
+  updateArchivedFacilities({ commit }, facilities) {
+    commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
+  },
+
   async fetchFacilityGroups({ commit, state }, payload) {
     let groups = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 

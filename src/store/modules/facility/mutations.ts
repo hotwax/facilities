@@ -47,6 +47,10 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_GROUPS_UPDATED](state, payload) {
     state.facilityGroups.list = payload.groups
     state.facilityGroups.total = payload.total
+
+  },
+  [types.FACILITY_ARCHIVED_UPDATED](state, payload) {
+    state.archivedFacilities = payload
   }
 }
 export default mutations;
