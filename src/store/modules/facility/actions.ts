@@ -567,14 +567,14 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
-  async fetchArchivedFacilities({ commit }) {
+  async fetchArchivedFacilities({dispatch }) {
     let facilities = []
     try {
       facilities = await FacilityService.fetchArchivedFacilities()
-    } catch (error: any) {
-      logger.error(error.message)
+    } catch (error) {
+      logger.error(error)
     }
-    commit(types.FACILITY_ARCHIVED_UPDATED, facilities);
+    dispatch('updateArchivedFacilities', facilities)
   },
 
   updateArchivedFacilities({ commit }, facilities) {

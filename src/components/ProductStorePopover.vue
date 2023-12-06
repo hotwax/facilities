@@ -133,6 +133,7 @@ export default defineComponent({
             facilityGroupId: productStoreId
           },
           entityName: 'FacilityGroup',
+          fieldList: ['facilityGroupId', 'facilityId'],
           viewSize: 1
         })
 
