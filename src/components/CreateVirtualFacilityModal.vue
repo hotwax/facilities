@@ -23,7 +23,7 @@
           <ion-label position="floating">
             {{ translate("Internal ID") }}
           </ion-label>
-          <ion-input v-model="formData.facilityId" @keyup="validateFacilityId" @ionBlur="markFacilityIdTouched" />
+          <ion-input v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" />
           <ion-note slot="error">
             {{ translate('Internal ID cannot be more than 20 characters.') }}
           </ion-note>
