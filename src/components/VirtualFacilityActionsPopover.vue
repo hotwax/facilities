@@ -114,7 +114,7 @@ export default defineComponent({
         fetchedFacilityGroupId = resp.data.count ? resp.data.docs[0].facilityGroupId : ''
       } catch (error) {
         logger.error(error)
-        showToast(translate('Something went wrong.'))
+        showToast(translate('Something went wrong'))
       }
       return fetchedFacilityGroupId
     },
