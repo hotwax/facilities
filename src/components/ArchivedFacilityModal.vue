@@ -84,7 +84,7 @@ export default defineComponent({
         })
 
         if (!hasError(resp)) {
-    showToast(translate("Parking unarchived successfully."))
+          showToast(translate("Parking unarchived successfully."))
           const archivedFacilities = JSON.parse(JSON.stringify(this.archivedFacilities)).filter((facility: any) => facility.facilityId !== archivedFacility.facilityId)
           this.store.dispatch('facility/updateArchivedFacilities', archivedFacilities)
           await this.store.dispatch('facility/fetchVirtualFacility', { facilityId: archivedFacility.facilityId })
