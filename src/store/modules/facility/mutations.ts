@@ -44,7 +44,7 @@ const mutations: MutationTree <FacilityState> = {
     state.virtualFacilities.list = payload.facilities
     state.virtualFacilities.total = payload.total
   },
-  [types.FACILITY_ARCHIVED_FACILITIES_UPDATED](state, payload) {
+  [types.FACILITY_ARCHIVED_UPDATED](state, payload) {
     state.archivedFacilities = payload
   }
 }

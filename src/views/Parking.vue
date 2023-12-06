@@ -48,7 +48,7 @@
               </ion-item>
             </ion-card> 
             <ion-card>
-              <ion-button color="medium" fill="clear" @click="openCreateVirtualFacility()">
+              <ion-button color="medium" fill="clear" @click="openCreateVirtualFacilityModal()">
                 <ion-icon :icon="addOutline" slot="start"/>
                 {{ translate('Add new parking') }}
               </ion-button>
@@ -138,7 +138,7 @@ export default defineComponent({
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
     },
-    async openCreateVirtualFacility() {
+    async openCreateVirtualFacilityModal() {
       const createVirtualFacility = await modalController.create({
         component: CreateVirtualFacilityModal
       })
@@ -157,25 +157,29 @@ export default defineComponent({
 
       const result = await parkingActionsPopover.onDidDismiss();
       if (result.data && result.data !== facility.facilityName) {
-        const resp = await FacilityService.updateFacility({
-          facilityId: facility.facilityId,
-          facilityName: result.data
-        })
+        try {
+          const resp = await FacilityService.updateFacility({
+            facilityId: facility.facilityId,
+            facilityName: result.data
+          })
 
-        if (!hasError(resp)) {
-          const updatedVirtualFacilities = JSON.parse(JSON.stringify(this.virtualFacilities))
-            .map((facilityData: any) => {
-              if (facility.facilityId === facilityData.facilityId) {
-                facilityData.facilityName = result.data
-              }
+          if (!hasError(resp)) {
+            const updatedVirtualFacilities = JSON.parse(JSON.stringify(this.virtualFacilities))
+              .map((facilityData: any) => {
+                if (facility.facilityId === facilityData.facilityId) {
+                  facilityData.facilityName = result.data
+                }
 
-              return facilityData
-            })
-          this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
-          showToast(translate('Parking renamed successfully.'))
-        } else {
-          showToast(translate('Failed to rename parking..'))
-          logger.error('Failed to rename parking.', resp.data)
+                return facilityData
+              })
+            this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
+            showToast(translate('Parking renamed successfully.'))
+          } else {
+            throw resp.data
+          }
+        } catch (error) {
+          showToast(translate('Failed to rename parking.'))
+          logger.error('Failed to rename parking.', error)
         }
       }
     },

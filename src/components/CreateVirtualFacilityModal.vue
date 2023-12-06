@@ -118,7 +118,7 @@ export default defineComponent({
       }
     },
     setFacilityId(event: any) {
-      this.formData.facilityId = event.target.value.trimEnd().trimStart().toUpperCase().split(' ').join('_');
+      this.formData.facilityId = event.target.value.trim().toUpperCase().split(' ').join('_');
     },
     closeModal() {
       modalController.dismiss();

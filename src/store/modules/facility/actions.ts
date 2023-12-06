@@ -574,11 +574,11 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch (error: any) {
       logger.error(error.message)
     }
-    commit(types.FACILITY_ARCHIVED_FACILITIES_UPDATED, facilities);
+    commit(types.FACILITY_ARCHIVED_UPDATED, facilities);
   },
 
   updateArchivedFacilities({ commit }, facilities) {
-    commit(types.FACILITY_ARCHIVED_FACILITIES_UPDATED, facilities)
+    commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
   },
 }
 

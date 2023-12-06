@@ -68,17 +68,18 @@ export default defineComponent({
       await alert.present()
     },
     async archiveVirtualFacility() {
+      let facilityGroupId = await this.fetchArchiveGroup()
+
+      if (!facilityGroupId) {
+        facilityGroupId = await this.createArchiveGroup()
+      }
+
+      if (!facilityGroupId) {
+        showToast(translate('Failed to archive parking.'))
+        return
+      }
+
       try {
-        let facilityGroupId = await this.fetchArchiveGroup()
-
-        if (!facilityGroupId) {
-          facilityGroupId = await this.createArchiveGroup()
-        }
-        
-        if (!facilityGroupId) {
-          throw { message: translate('Failed to archive parking.') }
-        }
-
         const resp = await FacilityService.addFacilityToGroup({
           facilityId: this.facility.facilityId,
           facilityGroupId
@@ -93,14 +94,15 @@ export default defineComponent({
         } else {
           throw resp.data
         }
-      } catch (error: any) {
-        showToast(error.message)
-        logger.error(error.message)
+      } catch (error) {
+        showToast(translate('Failed to archive parking.'))
+        logger.error('Failed to archive parking.', error)
       }
 
       popoverController.dismiss()
     },
     async fetchArchiveGroup() {
+      // checking if the archive group exists and return the facilityGroupId if it does
       let fetchedFacilityGroupId = ''
       try {
         const resp = await FacilityService.fetchFacilityGroup({
@@ -114,7 +116,6 @@ export default defineComponent({
         fetchedFacilityGroupId = resp.data.count ? resp.data.docs[0].facilityGroupId : ''
       } catch (error) {
         logger.error(error)
-        showToast(translate('Something went wrong'))
       }
       return fetchedFacilityGroupId
     },
@@ -130,13 +131,14 @@ export default defineComponent({
         if (!hasError(resp)) {
           createdFacilityGroupId = resp.data.facilityGroupId
         } else {
-          throw { message: translate('Failed to archive parking.') }
+          throw resp.data
         }
 
-        return Promise.resolve(createdFacilityGroupId)
       } catch (error) {
-        return Promise.reject(error);
+        showToast(translate('Failed to archive parking.'))
+        logger.error('Failed to archive parking.', error)
       }
+      return createdFacilityGroupId
     }
   },
   setup() {

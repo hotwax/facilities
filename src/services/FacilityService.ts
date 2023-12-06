@@ -506,13 +506,14 @@ const fetchArchivedFacilities = async (): Promise<any> => {
 
     if (!hasError(resp) && resp.data.count > 0) {
       facilities = resp.data.docs
-      return Promise.resolve(facilities)
     } else {
-      throw { message: 'Failed to fetch archived parkings.' }
+      throw resp.data
     }
   } catch (error) {
-    return Promise.reject(error)
+    logger.error('Failed to fetch archived parkings.', error)
   }
+
+  return facilities
 }
 
 export const FacilityService = {
