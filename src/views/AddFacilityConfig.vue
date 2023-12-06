@@ -328,7 +328,7 @@ export default defineComponent({
             facilityGroupId: productStoreId
           },
           entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityId'],
+          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
           viewSize: 100
         })
         if (!hasError(resp)) {
@@ -348,7 +348,7 @@ export default defineComponent({
             facilityGroupId: this.primaryProductStoreId
           },
           entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityId'],
+          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
           viewSize: 100
         })
 
