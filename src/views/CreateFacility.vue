@@ -15,7 +15,7 @@
           <ion-list>
             <ion-item lines="none">
               <ion-label>{{ translate("Type") }}</ion-label>
-              <ion-select interface="popover" :value="selectedFacilityTypeId">
+              <ion-select interface="popover" v-model="selectedFacilityTypeId">
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
                   {{ type.description }}
                 </ion-select-option>
@@ -48,7 +48,7 @@
         <div class="ion-text-center ion-margin">
           <ion-button @click="createFacility()">
             <ion-icon slot="start" :icon="addOutline"/>
-            {{ translate("Create store") }}
+            {{ facilityTypes[selectedFacilityTypeId] ? translate(`Create ${facilityTypes[selectedFacilityTypeId]?.description}`) : translate("Create store") }}
           </ion-button>
         </div>
       </main>
@@ -72,6 +72,8 @@ import {
   IonList,
   IonNote,
   IonPage,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToolbar,
@@ -103,6 +105,8 @@ export default defineComponent({
     IonList,
     IonNote,
     IonPage,
+    IonSelect,
+    IonSelectOption,
     IonText,
     IonTitle,
     IonToolbar,
