@@ -18,8 +18,11 @@ const getters: GetterTree <FacilityState, RootState> = {
   getFacilityProductStores(state) {
     return state.current.productStores
   },
-  getQuery(state) {
-    return JSON.parse(JSON.stringify(state.query))
+  getFacilityQuery(state) {
+    return JSON.parse(JSON.stringify(state.facilityQuery))
+  },
+  getGroupQuery(state) {
+    return JSON.parse(JSON.stringify(state.groupQuery))
   },
   isScrollable(state) {
     return (

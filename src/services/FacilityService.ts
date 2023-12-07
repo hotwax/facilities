@@ -175,8 +175,6 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
   })
 }
 
-
-
 const addPartyToFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/addPartyToFacility",
@@ -185,8 +183,6 @@ const addPartyToFacility = async (payload: any): Promise <any> => {
   });
 }
 
-
-
 const removePartyFromFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/removePartyFromFacility",
@@ -194,7 +190,6 @@ const removePartyFromFacility = async (payload: any): Promise <any> => {
     data: payload
   });
 }
-
 
 const updateProductStoreFacility = async (payload: any): Promise <any> => {
   return api({
@@ -211,7 +206,6 @@ const fetchFacilityLocations = async(payload: any): Promise<any> => {
     data: payload
   })
 }
-
 
 const addFacilityToGroup = async (payload: any): Promise<any> => {
   return api({
@@ -524,6 +518,56 @@ const fetchArchivedFacilities = async (): Promise<any> => {
   return facilities
 }
 
+const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> => {
+  if (!facilityGroupIds.length) return []
+  const requests = []
+
+  const facilityGroupIdList = facilityGroupIds
+  while (facilityGroupIdList.length) {
+    const batch = facilityGroupIdList.splice(0, 10)
+    const params = {
+      inputFields: {
+        facilityGroupId: batch
+      },
+      viewSize: 250, // maximum view size
+      entityName: 'FacilityGroupAndMember',
+      noConditionFind: "Y",
+      filterByDate: 'Y',
+      fieldList: ['facilityGroupId', 'facilityId']
+    }
+    requests.push(params)
+  }
+
+  const facilityCountResponse = await Promise.allSettled(requests.map((params) => api({
+    url: 'performFind',
+    method: 'POST',
+    data: params
+  })))
+
+  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && response.value.data.error !== "No record found")
+  if (hasFailedResponse) {
+    logger.error('Failed to fetch facility count for some group(s)', facilityCountResponse)
+  }
+
+  // taking out the response from Promise.allSettled's 'value' field first 
+  const allResponseData = facilityCountResponse.map((response: any) => response.value)
+    .reduce((responseData: any, response: any) => {
+      if (!hasError(response)) {
+        responseData.push(...response.data.docs)
+      }
+      return responseData
+    }, [])
+
+  return allResponseData.reduce((facilityCountByGroup: any, responseData: any) => {
+    if (facilityCountByGroup[responseData.facilityGroupId]) {
+      facilityCountByGroup[responseData.facilityGroupId] += 1
+    } else {
+      facilityCountByGroup[responseData.facilityGroupId] = 1
+    }
+    return facilityCountByGroup
+  }, {})
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
@@ -545,6 +589,7 @@ export const FacilityService = {
   fetchFacilityGroups,
   fetchFacilityLocations,
   fetchFacilityContactDetails,
+  fetchFacilityCountByGroup,
   fetchFacilities,
   fetchFacilitiesOrderCount,
   fetchFacilityCalendar,

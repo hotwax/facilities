@@ -6,7 +6,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
-import { prepareOrderQuery } from '@/utils/solrHelper';
 
 const actions: ActionTree<FacilityState, RootState> = {
   async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
@@ -56,25 +55,27 @@ const actions: ActionTree<FacilityState, RootState> = {
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
     const filters = {
       'parentFacilityTypeId': 'VIRTUAL_FACILITY',
-      'parentFacilityTypeId_op': 'notEqual'
+      'parentFacilityTypeId_op': 'notEqual',
+      'facilityTypeId': 'VIRTUAL_FACILITY',
+      'facilityTypeId_op': 'notEqual',
     } as any
 
-    if(state.query.productStoreId) {
-      filters['productStoreId'] = state.query.productStoreId
+    if(state.facilityQuery.productStoreId) {
+      filters['productStoreId'] = state.facilityQuery.productStoreId
       filters['productStoreId_op'] = 'equals'
     }
 
-    if(state.query.facilityTypeId) {
-        filters['facilityTypeId'] = state.query.facilityTypeId
-        filters['facilityTypeId_op'] = 'equals'
+    if(state.facilityQuery.facilityTypeId) {
+      filters['facilityTypeId'] = state.facilityQuery.facilityTypeId
+      filters['facilityTypeId_op'] = 'equals'
     }
 
-    if(state.query.queryString) {
-      filters['facilityId_value'] = state.query.queryString
+    if(state.facilityQuery.queryString) {
+      filters['facilityId_value'] = state.facilityQuery.queryString
       filters['facilityId_op'] = 'contains'
       filters['facilityId_ic'] = 'Y'
       filters['facilityId_grp'] = '1'
-      filters['facilityName_value'] = state.query.queryString
+      filters['facilityName_value'] = state.facilityQuery.queryString
       filters['facilityName_op'] = 'contains'
       filters['facilityName_ic'] = 'Y'
       filters['facilityName_grp'] = '2'
@@ -255,8 +256,12 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
   },
 
-  updateQuery({ commit }, query) {
+  updateFacilityQuery({ commit }, query) {
     commit(types.FACILITY_QUERY_UPDATED, query)
+  },
+
+  updateGroupQuery({ commit }, query) {
+    commit(types.FACILITY_GROUP_QUERY_UPDATED, query)
   },
 
   clearFacilityState({ commit }) {
@@ -264,6 +269,9 @@ const actions: ActionTree<FacilityState, RootState> = {
       queryString: '',
       productStoreId: '',
       facilityTypeId: ''
+    })
+    commit(types.FACILITY_GROUP_QUERY_UPDATED, {
+      queryString: '',
     })
     commit(types.FACILITY_LIST_UPDATED , { facilities: [], total: 0 });
     commit(types.FACILITY_CURRENT_UPDATED, {});
@@ -437,11 +445,23 @@ const actions: ActionTree<FacilityState, RootState> = {
   async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
     let facilities = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
-    
+
+    let archivedFacilityIds = []
+    if (state.archivedFacilities.length) {
+      archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities)).map((facility: any) => facility.facilityId)
+    }
+
     try {
       const params = {
         inputFields: {
-          parentFacilityTypeId: "VIRTUAL_FACILITY"
+          parentFacilityTypeId_value: 'VIRTUAL_FACILITY',
+          parentFacilityTypeId_op: 'equals',
+          parentFacilityTypeId_grp: '1',
+          facilityTypeId_value: 'VIRTUAL_FACILITY',
+          facilityTypeId_op: 'equals',
+          facilityTypeId_grp: '2',
+          // conditionally filtering if archived facilities are present
+          ...(archivedFacilityIds.length && { facilityId: archivedFacilityIds, facilityId_op: 'not-in' }),
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
@@ -463,16 +483,8 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
 
-    //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
-    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
-    facilities.sort((firstFacility:any, secondFacility:any) => {
-      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
-      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
-      return secondFacilityOrder - firstFacilityOrder;
-    });
-    
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities, total });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total });
     if (facilities.length) {
       await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
     }
@@ -509,9 +521,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch(error) {
       logger.error(error)
     }
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED , { facilities: stateFacilities.concat(facilities), total });
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities: stateFacilities.concat(facilities), total });
   },
-
 
   async fetchVirtualFacility({ commit, dispatch, state }, payload) {
     // not presenting loader as to avoid flickering
@@ -538,12 +549,6 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     //Applying custom sorting to alwyas bring Brokering queue, Pre-order parking and backorder parking first.
     const facilities = [...state.virtualFacilities.list, facility]
-    const customOrder = ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'];
-    facilities.sort((firstFacility:any, secondFacility:any) => {
-      const firstFacilityOrder = customOrder.indexOf(firstFacility.facilityId);
-      const secondFacilityOrder = customOrder.indexOf(secondFacility.facilityId);
-      return secondFacilityOrder - firstFacilityOrder;
-    });
     
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length });
     if (facilities.length) {
@@ -569,12 +574,28 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
   },
 
-  async fetchFacilityGroups({ commit, state }, payload) {
+  async fetchFacilityGroups({ commit, state, dispatch }, payload) {
     let groups = [], total = 0;
-    if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
-    
+    if (payload.viewIndex === 0) emitter.emit("presentLoader");
+
+    const filters = {} as any
+
+    // TODO add other filtering in UI and here
+    if (state.groupQuery.queryString) {
+      filters['facilityGroupId_value'] = state.groupQuery.queryString
+      filters['facilityGroupId_op'] = 'contains'
+      filters['facilityGroupId_ic'] = 'Y'
+      filters['facilityGroupId_grp'] = '1'
+      filters['facilityGroupName_value'] = state.groupQuery.queryString
+      filters['facilityGroupName_op'] = 'contains'
+      filters['facilityGroupName_ic'] = 'Y'
+      filters['facilityGroupName_grp'] = '2'
+    }
     try {
       const params = {
+        inputFields: {
+          ...filters
+        },
         entityName: "FacilityGroup",
         noConditionFind: 'Y',
         orderBy: "facilityGroupName ASC",
@@ -591,25 +612,48 @@ const actions: ActionTree<FacilityState, RootState> = {
         if (payload.viewIndex && payload.viewIndex > 0) {
           groups = JSON.parse(JSON.stringify(state.facilityGroups.list)).concat(groups)
         }
-        console.log(state.facilityGroups)
       } else {
         throw resp.data
       }
-    } catch(error) {
+    } catch (error) {
       logger.error(error)
     }
 
-    // Applying custom sorting to always bring fulfillment and pickup groups first.
-    const customOrder = ['OMS_FULFILLMENT', 'PICKUP'];
-    groups.sort((firstGroup:any, secondGroup:any) => {
-      const firstGroupOrder = customOrder.indexOf(firstGroup.facilityGroupId);
-      const secondGroupOrder = customOrder.indexOf(secondGroup.facilityGroupId);
-      return secondGroupOrder - firstGroupOrder;
-    });
-    
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_GROUPS_UPDATED , { groups, total });
-  }
+    commit(types.FACILITY_GROUPS_LIST_UPDATED, { groups, total });
+    if (groups.length) {
+      await dispatch('fetchFacilityGroupsAdditionalDetails', payload)
+    }
+  },
+
+  async fetchFacilityGroupsAdditionalDetails({ commit, state }, payload) {
+    // getting all the groups from state
+    const cachedGroups = JSON.parse(JSON.stringify(state.facilityGroups.list)); // maintaining facilityGroups as to prepare the facilities payload to fetch additional information
+    let stateGroups = JSON.parse(JSON.stringify(state.facilityGroups.list)); // maintaining stateGroups as to update the facility information once information in fetched
+    const total = state.facilityGroups.total
+
+    const facilityGroupIds: Array<string> = [];
+
+    // splitting the groups in batches to fetch the additional groups information
+    const groups = cachedGroups.splice(payload.viewIndex * (process.env.VUE_APP_VIEW_SIZE as any), process.env.VUE_APP_VIEW_SIZE)
+    groups.map((group: any) => facilityGroupIds.push(group.facilityGroupId))
+
+    stateGroups = stateGroups.filter((group: any) => !facilityGroupIds.includes(group.facilityGroupId))
+
+    try {
+      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(facilityGroupIds)
+      groups.map((group: any) => {
+        group.facilityCount = facilityCountByGroup[group.facilityGroupId] || 0
+      })
+    } catch (error) {
+      logger.error(error)
+    }
+    commit(types.FACILITY_GROUPS_LIST_UPDATED, { groups: stateGroups.concat(groups), total })
+  },
+
+  updateFacilityGroups({ commit }, groups) {
+    commit(types.FACILITY_GROUPS_LIST_UPDATED, { groups, total: groups.length })
+  },
 }
 
 export default actions;
