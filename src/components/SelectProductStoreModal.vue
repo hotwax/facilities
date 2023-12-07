@@ -21,7 +21,7 @@
       </ion-item>
     </ion-list>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button :disabled="isProductStoreUpdated()" @click="saveProductStores()">
+      <ion-fab-button @click="saveProductStores()">
         <ion-icon :icon="saveOutline" />  
       </ion-fab-button>
     </ion-fab>
@@ -108,9 +108,6 @@ export default defineComponent({
     },
     isSelected(productStoreId: string) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
-    },
-    isProductStoreUpdated() {
-      return this.selectedProductStoreValues.some((selectedStore: any) => this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId));
     }
   },
   setup() {
