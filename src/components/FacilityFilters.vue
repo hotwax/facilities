@@ -68,7 +68,7 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      query: "facility/getGroupQuery",
+      query: "facility/getFacilityQuery",
       facilityTypes: "util/getFacilityTypes",
       productStores: "util/getProductStores"
     })
@@ -78,7 +78,7 @@ export default defineComponent({
       menuController.close()
     },
     async updateQuery() {
-      await this.store.dispatch('facility/updateGroupQuery', this.query)
+      await this.store.dispatch('facility/updateFacilityQuery', this.query)
       this.closeMenu();
     },
   },
