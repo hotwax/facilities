@@ -110,7 +110,7 @@ export default defineComponent({
             facilityGroupId: 'ARCHIVE',
           },
           entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityId'],
+          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
           viewSize: 1
         })
 
