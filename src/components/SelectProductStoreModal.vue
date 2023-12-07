@@ -73,7 +73,7 @@ export default defineComponent({
       facilityProductStores: 'facility/getFacilityProductStores',
     })
   },
-  props: ["facilityId", "selectedProductStores"],
+  props: ["selectedProductStores"],
   data() {
     return {
       selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),

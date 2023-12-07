@@ -593,7 +593,7 @@ export default defineComponent({
     async selectProductStores() {
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
-        componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores }
+        componentProps: { selectedProductStores: this.facilityProductStores }
       })
 
       selectProductStoreModal.onDidDismiss().then(async(result: any) => {
