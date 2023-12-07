@@ -106,10 +106,12 @@ ion-item > h1 {
 main {
   display: grid;
   place-content: center;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 343px));
   height: calc(100vh - 56px);
   gap: var(--spacer-lg);
   padding: var(--spacer-lg);
+  max-width: 1000px;
+  margin: auto;
 }
 
 ion-card-header {
