@@ -106,17 +106,7 @@ export default defineComponent({
       },
     }
   },
-  mounted() {
-    this.clearFormData()
-  },
   methods: {
-    clearFormData() {
-      this.formData = {
-        facilityName: '',
-        facilityId: '',
-        description: '',
-      }
-    },
     setFacilityId(event: any) {
       this.formData.facilityId = event.target.value.trim().toUpperCase().split(' ').join('_');
     },

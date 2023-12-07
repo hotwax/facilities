@@ -128,7 +128,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
-      isScrollable: "facility/isScrollable",
+      isScrollable: "facility/isVirtualFacilitiesScrollable",
     })
   },
   async mounted() {

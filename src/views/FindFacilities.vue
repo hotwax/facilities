@@ -193,7 +193,7 @@ export default defineComponent({
     ...mapGetters({
       facilities: "facility/getFacilities",
       query: "facility/getFacilityQuery",
-      isScrollable: "facility/isScrollable",
+      isScrollable: "facility/isFacilitiesScrollable",
       facilityTypes: "util/getFacilityTypes",
       productStores: "util/getProductStores"
     })

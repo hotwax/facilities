@@ -60,7 +60,9 @@
 
 <script lang="ts">
 import {
+  IonButton,
   IonBackButton,
+  IonCard,
   IonContent,
   IonHeader,
   IonIcon,
@@ -86,7 +88,9 @@ import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue'
 export default defineComponent({
   name: 'FindGroups',
   components: {
+    IonButton,
     IonBackButton,
+    IonCard,
     IonContent,
     IonHeader,
     IonIcon,
