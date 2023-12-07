@@ -84,8 +84,8 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true});
     },
     async saveProductStores() {
-      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedFacility: any) => !this.selectedProductStores.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
-      const productStoresToRemove = this.selectedProductStores.filter((facility: any) => !this.selectedProductStoreValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
+      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedStore: any) => !this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId))
+      const productStoresToRemove = this.selectedProductStores.filter((store: any) => !this.selectedProductStoreValues.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId))
 
       modalController.dismiss({
         dismissed: true,
