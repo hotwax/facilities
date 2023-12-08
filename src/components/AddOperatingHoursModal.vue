@@ -16,7 +16,7 @@
           <ion-item slot="header">
             <ion-radio :value="calendar.calendarId" slot="start" />
             <ion-label class="ion-text-wrap">
-              {{ calendar.description }}
+              {{ calendar.description ? calendar.description : calendar.calendarId }}
             </ion-label>
           </ion-item>
           <div class="ion-padding" slot="content">
