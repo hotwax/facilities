@@ -210,7 +210,7 @@ export default defineComponent({
       }
 
       if(!Object.keys(payload).length) {
-        showToast(translate("Please check all the selected start time and end time entries."))
+        showToast(translate("Please check start time and end time entries. End time cannot be less than start time."))
         return;
       }
 
