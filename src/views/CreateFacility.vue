@@ -17,7 +17,7 @@
               <ion-label>{{ translate("Type") }}</ion-label>
               <ion-select interface="popover" v-model="selectedFacilityTypeId">
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
-                  {{ type.description }}
+                  {{ type?.description ? type.description : facilityTypeId }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -48,7 +48,7 @@
         <div class="ion-text-center ion-margin">
           <ion-button @click="createFacility()">
             <ion-icon slot="start" :icon="addOutline"/>
-            {{ facilityTypes[selectedFacilityTypeId] ? translate(`Create ${facilityTypes[selectedFacilityTypeId]?.description}`) : translate("Create store") }}
+            {{ facilityTypes[selectedFacilityTypeId]?.description ? translate(`Create ${facilityTypes[selectedFacilityTypeId].description}`) : translate(`Create ${selectedFacilityTypeId}`) }}
           </ion-button>
         </div>
       </main>
