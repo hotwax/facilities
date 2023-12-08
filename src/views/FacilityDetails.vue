@@ -988,13 +988,13 @@ export default defineComponent({
 
                 if (!hasError(resp)) {
                   showToast(translate("Facility renamed successfully."))
-                  await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+                  await this.store.dispatch('facility/updateFacilityName', data.facilityName)
                 } else {
                   throw resp.data
                 }
               } catch (error) {
                 showToast(translate('Failed to rename facility.'))
-                logger.error('Failed to rename parking.', error)
+                logger.error('Failed to rename facility.', error)
               }
             }
           }
