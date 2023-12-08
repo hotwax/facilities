@@ -13,7 +13,7 @@
             <ion-card-title>{{ translate('Setup Store') }}</ion-card-title>
           </ion-card-header>
           <ion-list>
-            <ion-item lines="none">
+            <ion-item>
               <ion-label>{{ translate("Type") }}</ion-label>
               <ion-select interface="popover" :value="selectedFacilityTypeId">
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
@@ -72,6 +72,8 @@ import {
   IonList,
   IonNote,
   IonPage,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToolbar,
@@ -103,6 +105,8 @@ export default defineComponent({
     IonList,
     IonNote,
     IonPage,
+    IonSelect,
+    IonSelectOption,
     IonText,
     IonTitle,
     IonToolbar,

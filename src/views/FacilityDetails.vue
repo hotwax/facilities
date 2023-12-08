@@ -87,7 +87,7 @@
             </ion-card-content>
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
-                <ion-label class="ion-text-wrap">{{ calendar.description }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }}</ion-label>
                 <ion-radio slot="end" :value="calendar.calendarId"/>
               </ion-item>
             </ion-radio-group>
