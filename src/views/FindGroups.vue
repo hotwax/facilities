@@ -11,7 +11,22 @@
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
+          <ion-list>
+            <ion-list-header>
+              {{ translate('Security groups') }}
+            </ion-list-header>
+            <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
+              <ion-label>
+                {{ groupType.facilityGroupTypeId }}
+                <p>{{ groupType.description }}</p>
+              </ion-label>
+              <ion-label slot="end">
+                {{ groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups.length === 1 ? groupType.facilityGroups[0] : '-' }}
+              </ion-label>
+            </ion-item>
+          </ion-list>
         </section>
+
         <main v-if="groups.length">
           <div class="groups">
             <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
@@ -70,6 +85,8 @@ import {
   IonInfiniteScrollContent,
   IonItem,
   IonLabel,
+  IonList,
+  IonListHeader,
   IonNote,
   IonPage,
   IonSearchbar,
@@ -98,6 +115,8 @@ export default defineComponent({
     IonInfiniteScrollContent,
     IonItem,
     IonLabel,
+    IonList,
+    IonListHeader,
     IonNote,
     IonPage,
     IonSearchbar,
@@ -107,6 +126,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       groups: "facility/getFacilityGroups",
+      facilityGroupTypes: "util/getFacilityGroupTypes",
       isScrollable: "facility/isFacilityGroupsScrollable",
       query: "facility/getGroupQuery",
     })

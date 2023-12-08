@@ -67,13 +67,6 @@ const actions: ActionTree<UtilState, RootState> = {
   },
 
   async fetchFacilityGroupTypes({ commit, state }) {
-    const cachedFacilityGroupTypes = JSON.parse(JSON.stringify(state.facilityGroupTypes))
-
-    // not fetching facility group types information again if already present, as it will not be changed so frequently
-    if (cachedFacilityGroupTypes.length) {
-      return;
-    }
-
     let facilityGroupTypes = []
     const params = {
       viewSize: 100,
@@ -85,7 +78,27 @@ const actions: ActionTree<UtilState, RootState> = {
     try {
       const resp = await UtilService.fetchFacilityGroupTypes(params)
       if (!hasError(resp)) {
-        facilityGroupTypes = resp.data.docs
+        // mapping facility groups to each group type
+        const facilityGroupsByGroupTypes = JSON.parse(JSON.stringify(this.state.facility.facilityGroups.list))
+          .reduce((facilityGroupsByGroupTypes: any, group: any) => {
+            // in case facilityGroupTypeId is not present
+            const parameter = group.facilityGroupTypeId ? group.facilityGroupTypeId : group.facilityGroupId
+            if (facilityGroupsByGroupTypes[parameter]) {
+              facilityGroupsByGroupTypes[parameter].push(group.facilityGroupId)
+            } else {
+              facilityGroupsByGroupTypes[parameter] = []
+            }
+
+            return facilityGroupsByGroupTypes
+          }, {})
+
+        // add associated facility groups info in types
+        facilityGroupTypes = resp.data.docs.map((type: any) => (
+          {
+            ...type,
+            facilityGroups: facilityGroupsByGroupTypes[type.facilityGroupTypeId] ? facilityGroupsByGroupTypes[type.facilityGroupTypeId] : []
+          }
+        ))
       } else {
         throw resp.data
       }
