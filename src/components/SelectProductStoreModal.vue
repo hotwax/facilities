@@ -21,7 +21,7 @@
       </ion-item>
     </ion-list>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button :disabled="isProductStoreUpdated()" @click="saveProductStores()">
+      <ion-fab-button @click="saveProductStores()">
         <ion-icon :icon="saveOutline" />  
       </ion-fab-button>
     </ion-fab>
@@ -73,7 +73,7 @@ export default defineComponent({
       facilityProductStores: 'facility/getFacilityProductStores',
     })
   },
-  props: ["facilityId", "selectedProductStores"],
+  props: ["selectedProductStores"],
   data() {
     return {
       selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),
@@ -84,8 +84,8 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true});
     },
     async saveProductStores() {
-      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedFacility: any) => !this.selectedProductStores.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
-      const productStoresToRemove = this.selectedProductStores.filter((facility: any) => !this.selectedProductStoreValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
+      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedStore: any) => !this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId))
+      const productStoresToRemove = this.selectedProductStores.filter((store: any) => !this.selectedProductStoreValues.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId))
 
       modalController.dismiss({
         dismissed: true,
@@ -108,9 +108,6 @@ export default defineComponent({
     },
     isSelected(productStoreId: string) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
-    },
-    isProductStoreUpdated() {
-      return this.selectedProductStoreValues.some((selectedStore: any) => this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId));
     }
   },
   setup() {
