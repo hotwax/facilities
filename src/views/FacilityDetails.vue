@@ -988,7 +988,7 @@ export default defineComponent({
 
                 if (!hasError(resp)) {
                   showToast(translate("Facility renamed successfully."))
-                  await this.store.dispatch('facility/updateFacilityName', data.facilityName)
+                  await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityName: data.facilityName })
                 } else {
                   throw resp.data
                 }

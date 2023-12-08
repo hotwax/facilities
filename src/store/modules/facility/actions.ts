@@ -580,9 +580,6 @@ const actions: ActionTree<FacilityState, RootState> = {
   updateArchivedFacilities({ commit }, facilities) {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
   },
-  updateFacilityName({ commit, state }, facilityName) {
-    commit(types.FACILITY_CURRENT_UPDATED, { ...state.current, facilityName })
-  },
 }
 
 export default actions;
