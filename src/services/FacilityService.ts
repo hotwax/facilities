@@ -544,9 +544,9 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
     data: params
   })))
 
-  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && response.value.data.error !== "No record found")
+  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response.data.count)
   if (hasFailedResponse) {
-    logger.error('Failed to fetch facility count for some groups', facilityCountResponse)
+    logger.error('Failed to fetch facility count for some groups')
   }
 
   // taking out the response from Promise.allSettled's 'value' field first 

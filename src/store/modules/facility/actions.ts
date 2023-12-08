@@ -620,7 +620,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_GROUPS_LIST_UPDATED, { groups, total });
+    commit(types.FACILITY_GROUP_LIST_UPDATED, { groups, total });
     if (groups.length) {
       await dispatch('fetchFacilityGroupsAdditionalDetails', payload)
     }
@@ -648,11 +648,11 @@ const actions: ActionTree<FacilityState, RootState> = {
     } catch (error) {
       logger.error(error)
     }
-    commit(types.FACILITY_GROUPS_LIST_UPDATED, { groups: stateGroups.concat(groups), total })
+    commit(types.FACILITY_GROUP_LIST_UPDATED, { groups: stateGroups.concat(groups), total })
   },
 
   updateFacilityGroups({ commit }, groups) {
-    commit(types.FACILITY_GROUPS_LIST_UPDATED, { groups, total: groups.length })
+    commit(types.FACILITY_GROUP_LIST_UPDATED, { groups, total: groups.length })
   },
 }
 

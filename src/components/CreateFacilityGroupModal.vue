@@ -32,7 +32,7 @@
           <ion-label>{{ translate("System group type") }}</ion-label>
           <ion-select interface="popover" v-model="formData.facilityGroupTypeId">
             <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
-              {{ facilityGroupType.facilityGroupTypeId }}
+              {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
             </ion-select-option>
           </ion-select>
         </ion-item>
@@ -129,7 +129,7 @@ export default defineComponent({
       modalController.dismiss();
     },
     async createFacilityGroup() {
-      if (!this.formData.facilityGroupTypeId?.trim() || !this.formData.facilityGroupName?.trim()) {
+      if (!this.formData.facilityGroupId?.trim() || !this.formData.facilityGroupName?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
       }
