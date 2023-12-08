@@ -581,7 +581,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
   },
   updateFacilityName({ commit, state }, facilityName) {
-    commit(types.FACILITY_CURRENT_UPDATED, { ...state.current, facilityName: facilityName })
+    commit(types.FACILITY_CURRENT_UPDATED, { ...state.current, facilityName })
   },
 }
 
