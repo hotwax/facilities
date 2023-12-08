@@ -8,16 +8,23 @@ import RootState from '@/store/RootState'
 const facilityModule: Module<FacilityState, RootState> = {
   namespaced: true,
   state: {
-    query: {
+    facilityQuery: {
       queryString: '',
       productStoreId: '',
       facilityTypeId: ''
+    },
+    groupQuery: {
+      queryString: ''
     },
     facilities: {
       list: [],
       total: 0
     },
     virtualFacilities: {
+      list: [],
+      total: 0
+    },
+    facilityGroups: {
       list: [],
       total: 0
     },

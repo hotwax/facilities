@@ -52,7 +52,7 @@ import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
 
 export default defineComponent({
-  name: 'Filters',
+  name: 'FacilityFilters',
   components: {
     IonContent,
     IonHeader,
@@ -68,7 +68,7 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      query: "facility/getQuery",
+      query: "facility/getFacilityQuery",
       facilityTypes: "util/getFacilityTypes",
       productStores: "util/getProductStores"
     })
@@ -78,7 +78,7 @@ export default defineComponent({
       menuController.close()
     },
     async updateQuery() {
-      await this.store.dispatch('facility/updateQuery', this.query)
+      await this.store.dispatch('facility/updateFacilityQuery', this.query)
       this.closeMenu();
     },
   },

@@ -33,7 +33,7 @@ const actions: ActionTree<UtilState, RootState> = {
     const cachedFacilityTypes = JSON.parse(JSON.stringify(state.facilityTypes))
 
     // not fetching facility type information again if already present, as it will not be changed so frequently
-    if(cachedFacilityTypes.length) {
+    if (Object.keys(cachedFacilityTypes).length) {
       return;
     }
 
@@ -64,6 +64,36 @@ const actions: ActionTree<UtilState, RootState> = {
     }
 
     commit(types.UTIL_FACILITY_TYPES_UPDATED, facilityTypes)
+  },
+
+  async fetchFacilityGroupTypes({ commit, state }) {
+    const cachedFacilityGroupTypes = JSON.parse(JSON.stringify(state.facilityGroupTypes))
+
+    // not fetching facility group types information again if already present, as it will not be changed so frequently
+    if (cachedFacilityGroupTypes.length) {
+      return;
+    }
+
+    let facilityGroupTypes = []
+    const params = {
+      viewSize: 100,
+      noConditionFind: 'Y',
+      entityName: 'FacilityGroupType',
+      fieldList: ['facilityGroupTypeId', 'description']
+    } as any
+
+    try {
+      const resp = await UtilService.fetchFacilityGroupTypes(params)
+      if (!hasError(resp)) {
+        facilityGroupTypes = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+
+    commit(types.UTIL_FACILITY_GROUP_TYPES_UPDATED, facilityGroupTypes)
   },
 
   async fetchLocationTypes({ commit, state }) {

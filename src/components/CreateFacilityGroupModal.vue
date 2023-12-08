@@ -6,27 +6,35 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate("New parking") }}</ion-title>
+      <ion-title>{{ translate("New group") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="createVirtualFacility">
+    <form @keyup.enter="createFacilityGroup">
       <ion-list>
         <ion-item>
           <ion-label position="floating">
             {{ translate("Name") }} <ion-text color="danger">*</ion-text>
           </ion-label>
-          <ion-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName"/>
+          <ion-input v-model="formData.facilityGroupName"/>
         </ion-item>
-        <ion-item ref="facilityId">
+        <ion-item ref="facilityGroupId">
           <ion-label position="floating">
             {{ translate("Internal ID") }}
           </ion-label>
-          <ion-input v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" />
+          <ion-input v-model="formData.facilityGroupId" @ionChange="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" />
           <ion-note slot="error">
             {{ translate('Internal ID cannot be more than 20 characters.') }}
           </ion-note>
+        </ion-item>
+        <ion-item lines="none">
+          <ion-label>{{ translate("System group type") }}</ion-label>
+          <ion-select interface="popover" v-model="formData.facilityGroupTypeId">
+            <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
+              {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
+            </ion-select-option>
+          </ion-select>
         </ion-item>
         <ion-item>
           <ion-label position="floating">
@@ -37,7 +45,7 @@
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="createVirtualFacility" @keyup.enter.stop>
+        <ion-fab-button @click="createFacilityGroup" @keyup.enter.stop>
           <ion-icon :icon="addOutline" />
         </ion-fab-button>
       </ion-fab>
@@ -59,6 +67,8 @@ import {
   IonLabel,
   IonList,
   IonNote,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToolbar,
@@ -74,7 +84,7 @@ import { showToast } from "@/utils";
 import logger from "@/logger";
 
 export default defineComponent({
-  name: "CreateVirtualFacility",
+  name: "CreateFacilityGroupModal",
   components: {
     IonButton,
     IonButtons,
@@ -88,87 +98,83 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonNote,
+    IonSelect,
+    IonSelectOption,
     IonText,
     IonTitle,
     IonToolbar
   },
   computed: {
     ...mapGetters({
-      virtualFacilities: 'facility/getVirtualFacilities',
+      groups: 'facility/getFacilityGroups',
+      facilityGroupTypes: 'util/getFacilityGroupTypes',
     })
   },
   data() {
     return {
       formData: {
-        facilityName: '',
-        facilityId: '',
+        facilityGroupId: '',
+        facilityGroupName: '',
+        facilityGroupTypeId: '',
         description: '',
       },
     }
   },
+  mounted() {
+    // setting facilityGroupTypeId as the first groupTypeId
+    this.formData.facilityGroupTypeId = this.facilityGroupTypes[0].facilityGroupTypeId
+  },
   methods: {
-    setFacilityId(event: any) {
-      this.formData.facilityId = event.target.value.trim().toUpperCase().split(' ').join('_');
-    },
     closeModal() {
       modalController.dismiss();
     },
-    async createVirtualFacility() {
-      if (!this.formData.facilityName?.trim()) {
+    async createFacilityGroup() {
+      if (!this.formData.facilityGroupId?.trim() || !this.formData.facilityGroupName?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
       }
 
-      if (this.formData.facilityId.length > 20) {
+      if (this.formData.facilityGroupId.length > 20) {
         showToast(translate('Internal ID cannot be more than 20 characters.'))
         return
-      }
-
-      // In case the user does not lose focus from the facility name input
-      // and click on create the button, we need to set the internal id manually
-      if (!this.formData.facilityId) {
-        this.formData.facilityId = this.formData.facilityName.trimEnd().trimStart().toUpperCase().split(' ').join('_');
       }
 
       try {
         const payload = {
           ...this.formData,
-          facilityTypeId: 'VIRTUAL_FACILITY',
-          ownerPartyId: "COMPANY"
         }
 
-        const resp = await FacilityService.createVirtualFacility(payload);
+        const resp = await FacilityService.createFacilityGroup(payload);
         if (!hasError(resp)) {
-          showToast(translate("New parking created successfully."))
-          const createdFacility = {
+          showToast(translate("Facility group created."))
+          const createdGroup = {
             ...this.formData,
-            facilityTypeId: 'VIRTUAL_FACILITY',
-            orderCount: 0
+            facilityCount: 0
           }
-          const updatedVirtualFacilities = [...this.virtualFacilities, createdFacility]
-          this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
+          const updatedFacilityGroups = [...this.groups, createdGroup]
+          await this.store.dispatch('facility/updateFacilityGroups', updatedFacilityGroups)
         } else {
           throw resp.data;
         }
       } catch (error) {
         logger.error(error)
-        showToast(translate('Failed to create parking.'))
+        showToast(translate('Failed to create facility group.'))
       }
       modalController.dismiss()
     },
-    validateFacilityId(event: any) {
+    validateFacilityGroupId(event: any) {
       const value = event.target.value;
-      (this as any).$refs.facilityId.$el.classList.remove('ion-valid');
-      (this as any).$refs.facilityId.$el.classList.remove('ion-invalid');
+      (this as any).$refs.facilityGroupId.$el.classList.remove('ion-valid');
+      (this as any).$refs.facilityGroupId.$el.classList.remove('ion-invalid');
 
       if (value === '') return;
 
-      this.formData.facilityId.length <= 20
-        ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
-        : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
+      this.formData.facilityGroupId.length <= 20
+        ? (this as any).$refs.facilityGroupId.$el.classList.add('ion-valid')
+        : (this as any).$refs.facilityGroupId.$el.classList.add('ion-invalid');
     },
-    markFacilityIdTouched() {
-      (this as any).$refs.facilityId.$el.classList.add('ion-touched');
+    markFacilityGroupIdTouched() {
+      (this as any).$refs.facilityGroupId.$el.classList.add('ion-touched');
     },
   },
   setup() {

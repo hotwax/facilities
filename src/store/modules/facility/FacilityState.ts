@@ -1,9 +1,12 @@
 export default interface FacilityState {
-  query: {
+  facilityQuery: {
     queryString: string,
     productStoreId: string,
     facilityTypeId: string
-  };
+  },
+  groupQuery: {
+    queryString: string
+  },
   facilities: {
     list: Array<object>,
     total: number
@@ -12,6 +15,10 @@ export default interface FacilityState {
     list: Array<object>,
     total: number
   };
-  archivedFacilities: Array<object>,
+  facilityGroups: {
+    list: Array<object>,
+    total: number
+  };
+  archivedFacilities: Array<object>;
   current: any;
 }

@@ -46,4 +46,13 @@ const isValidPassword = (password : string) => {
   return passwordPattern.test(password);
 }
 
-export { copyToClipboard, isValidPassword, showToast }
+// will sort the list but keeps the customValues at the beginning
+const customSort = (list: any, customValues: Array<string>, sortParameter: string) => {
+  return list.sort((first: any, second: any) => {
+    const firstVal = customValues.indexOf(first[sortParameter]);
+    const secondVal = customValues.indexOf(second[sortParameter]);
+    return secondVal - firstVal;
+  });
+}
+
+export { copyToClipboard, customSort, isValidPassword, showToast }

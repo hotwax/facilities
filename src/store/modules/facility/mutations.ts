@@ -8,7 +8,10 @@ const mutations: MutationTree <FacilityState> = {
     state.facilities.total = payload.total
   },
   [types.FACILITY_QUERY_UPDATED](state, payload) {
-    state.query = payload
+    state.facilityQuery = payload
+  },
+  [types.FACILITY_GROUP_QUERY_UPDATED](state, payload) {
+    state.groupQuery = payload
   },
   [types.FACILITY_CALENDAR_UPDATED](state, payload) {
     state.current.calendar = payload
@@ -43,6 +46,10 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED](state, payload) {
     state.virtualFacilities.list = payload.facilities
     state.virtualFacilities.total = payload.total
+  },
+  [types.FACILITY_GROUP_LIST_UPDATED](state, payload) {
+    state.facilityGroups.list = payload.groups
+    state.facilityGroups.total = payload.total
   },
   [types.FACILITY_ARCHIVED_UPDATED](state, payload) {
     state.archivedFacilities = payload

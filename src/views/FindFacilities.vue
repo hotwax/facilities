@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <Filters content-id="filter-content" />
+    <FacilityFilters content-id="filter-content" />
 
     <ion-header :translucent="true">
       <ion-toolbar>
@@ -159,13 +159,13 @@ import { hasError } from '@/adapter';
 import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
-import Filters from '@/components/Filters.vue'
+import FacilityFilters from '@/components/FacilityFilters.vue'
 import { DateTime } from 'luxon';
 
 export default defineComponent({
   name: 'FindFacilities',
   components: {
-    Filters,
+    FacilityFilters,
     IonBackButton,
     IonButtons,
     IonChip,
@@ -192,8 +192,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       facilities: "facility/getFacilities",
-      query: "facility/getQuery",
-      isScrollable: "facility/isScrollable",
+      query: "facility/getFacilityQuery",
+      isScrollable: "facility/isFacilitiesScrollable",
       facilityTypes: "util/getFacilityTypes",
       productStores: "util/getProductStores"
     })
@@ -205,7 +205,7 @@ export default defineComponent({
   },
   methods: {
     async updateQuery() {
-      await this.store.dispatch('facility/updateQuery', this.query)
+      await this.store.dispatch('facility/updateFacilityQuery', this.query)
       this.fetchFacilities();
     },
     async fetchFacilities(vSize?: any, vIndex?: any) {

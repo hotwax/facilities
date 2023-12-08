@@ -15,6 +15,9 @@ const getters: GetterTree<UtilState, RootState> = {
   getFacilityTypes(state) {
     return state.facilityTypes
   },
+  getFacilityGroupTypes(state) {
+    return state.facilityGroupTypes
+  },
   getLocationTypes(state) {
     return state.locationTypes
   },

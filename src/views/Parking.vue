@@ -15,7 +15,8 @@
       <main>
         <section>
           <div class="virtual-facilities">
-            <ion-card v-for="(facility, index) in virtualFacilities" :key="index">
+            <!-- custom sorting in the UI to keep BACKORDER_PARKING, PRE_ORDER_PARKING and _NA_ types first -->
+            <ion-card v-for="(facility, index) in customSort(virtualFacilities, ['BACKORDER_PARKING', 'PRE_ORDER_PARKING', '_NA_'], 'facilityId')" :key="index">
               <ion-item lines="full">
                 <ion-label>
                   {{ facility.facilityName }}
@@ -101,7 +102,7 @@ import VirtualFacilityActionsPopover from '@/components/VirtualFacilityActionsPo
 import ArchivedFacilityModal from '@/components/ArchivedFacilityModal.vue';
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
-import { showToast } from '@/utils';
+import { customSort, showToast } from '@/utils';
 import logger from "@/logger";
 
 export default defineComponent({
@@ -127,7 +128,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
-      isScrollable: "facility/isScrollable",
+      isScrollable: "facility/isVirtualFacilitiesScrollable",
     })
   },
   async mounted() {
@@ -219,6 +220,7 @@ export default defineComponent({
     return {
       addOutline,
       archiveOutline,
+      customSort,
       ellipsisVerticalOutline,
       store,
       translate

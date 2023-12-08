@@ -12,6 +12,7 @@ const utilModule: Module<UtilState, RootState> = {
     partyRoles: [],
     productStores: [],
     facilityTypes: {},
+    facilityGroupTypes: [],
     locationTypes: {},
     externalMappingTypes: {},
     countries: [],

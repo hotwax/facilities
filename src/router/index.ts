@@ -11,6 +11,7 @@ import FacilityManagement from '@/views/FacilityManagement.vue'
 import Settings from '@/views/Settings.vue';
 import Parking from '@/views/Parking.vue';
 import FindFacilities from '@/views/FindFacilities.vue';
+import FindGroups from '@/views/FindGroups.vue';
 import CreateFacility from '@/views/CreateFacility.vue';
 import AddFacilityAddress from '@/views/AddFacilityAddress.vue';
 import AddFacilityConfig from '@/views/AddFacilityConfig.vue';
@@ -96,6 +97,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/parking',
     name: 'Parking',
     component: Parking,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/find-groups',
+    name: 'FindGroups',
+    component: FindGroups,
     beforeEnter: authGuard
   },
   {
