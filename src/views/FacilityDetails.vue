@@ -10,7 +10,10 @@
       <main v-if="current?.facilityId">
         <ion-item lines="none" class="ion-margin-top">
           <ion-label>
-            <h1>{{ current.facilityName }}</h1>
+            <h1>
+              {{ current.facilityName }}
+              <ion-icon :icon="pencilOutline" @click="renameFacility()" />
+            </h1>
             <p>{{ current.facilityId }}</p>
           </ion-label>
         </ion-item>
@@ -390,6 +393,7 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  alertController,
   modalController,
   popoverController
 } from '@ionic/vue'
@@ -403,6 +407,7 @@ import {
   globeOutline,
   locationOutline,
   openOutline,
+  pencilOutline,
   personOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
@@ -959,7 +964,45 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
-    }
+    },
+    async renameFacility() {
+      const alert = await alertController.create({
+        header: translate("Rename facility"),
+        inputs: [{
+          name: "facilityName",
+          value: this.current.facilityName
+        }],
+        buttons: [{
+          text: translate('Cancel'),
+          role: "cancel"
+        },
+        {
+          text: translate('Apply'),
+          handler: async (data: any) => {
+            if(data.facilityName) {
+              try {
+                const resp = await FacilityService.updateFacility({
+                  facilityId: this.facilityId,
+                  facilityName: data.facilityName
+                })
+
+                if (!hasError(resp)) {
+                  showToast(translate("Facility renamed successfully."))
+                  await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityName: data.facilityName })
+                } else {
+                  throw resp.data
+                }
+              } catch (error) {
+                showToast(translate('Failed to rename facility.'))
+                logger.error('Failed to rename facility.', error)
+              }
+            }
+          }
+        }]
+      })
+
+      await alert.present()
+    },
   },
   setup() {
     const store = useStore();
@@ -974,6 +1017,7 @@ export default defineComponent({
       globeOutline,
       locationOutline,
       openOutline,
+      pencilOutline,
       personOutline,
       store,
       translate
