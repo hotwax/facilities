@@ -434,6 +434,7 @@ import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
+import emitter from '@/event-bus'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -766,6 +767,7 @@ export default defineComponent({
     },
     async addFacilityToGroup(facilityGroupId: string) {
       let resp;
+      emitter.emit("presentLoader");
       try {
         resp = await FacilityService.addFacilityToGroup({
           "facilityId": this.current.facilityId,
@@ -774,7 +776,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
-          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
@@ -782,6 +784,7 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+      emitter.emit("dismissLoader");
     },
     async revokePrimaryStatusFromStore() {
       try {
@@ -801,6 +804,7 @@ export default defineComponent({
       // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
       const isChecked = !event.target.checked;
 
+      
       if(isChecked) {
         this.addFacilityToGroup(facilityGroupId)
       } else {
@@ -810,9 +814,11 @@ export default defineComponent({
     async updateFacilityToGroup(facilityGroupId: string) {
       let resp;
 
+      emitter.emit("presentLoader");
       const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
 
       try {
+        
         resp = await FacilityService.updateFacilityToGroup({
           "facilityId": this.current.facilityId,
           "facilityGroupId": facilityGroupId,
@@ -822,7 +828,7 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
-          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
@@ -830,6 +836,7 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+      emitter.emit("dismissLoader");
     },
     async updateDefaultDaysToShip() {
       try {
