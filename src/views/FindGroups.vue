@@ -12,32 +12,30 @@
         <section class="search">
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
         </section>
-        <main v-if="groups.length">
-          <div class="groups">
-            <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
-            <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
-              <ion-item lines="full">
-                <ion-label>
-                  {{ group.facilityGroupName }}
-                  <p>{{ group.facilityGroupId }}</p>
-                </ion-label>
-                <ion-icon :icon="ellipsisVerticalOutline" slot="end"/>
-              </ion-item>
-              <ion-item>
-                <ion-label>{{ translate('Facilities') }}</ion-label>
-                <ion-note slot="end">{{ group.facilityCount }}</ion-note>
-              </ion-item>
-              <ion-item lines="full" v-if="group.description">
-                <ion-label>{{ group.description }}</ion-label>
-              </ion-item>
-            </ion-card> 
-            <ion-card>
-              <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
-                <ion-icon :icon="addOutline" slot="start"/>
-                {{ translate('Create group') }}
-              </ion-button>
-            </ion-card>
-          </div>   
+        <main class="groups" v-if="groups.length">
+          <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
+          <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
+            <ion-item lines="full">
+              <ion-label>
+                <h1>{{ group.facilityGroupName }}</h1>
+                <p>{{ group.facilityGroupId }}</p>
+              </ion-label>
+              <ion-icon :icon="ellipsisVerticalOutline" slot="end"/>
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ translate('Facilities') }}</ion-label>
+              <ion-note slot="end">{{ group.facilityCount }}</ion-note>
+            </ion-item>
+            <ion-item lines="full" v-if="group.description">
+              <ion-label>{{ group.description }}</ion-label>
+            </ion-item>
+          </ion-card> 
+          <ion-card>
+            <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
+              <ion-icon :icon="addOutline" slot="start"/>
+              {{ translate('Create group') }}
+            </ion-button>
+          </ion-card>
         </main>
         <main v-else>
           <p class="empty-state">{{ translate("No groups found") }}</p>

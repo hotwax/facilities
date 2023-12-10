@@ -108,8 +108,6 @@ main {
   place-content: center;
   grid-template-columns: repeat(auto-fill, minmax(300px, 343px));
   height: calc(100vh - 56px);
-  gap: var(--spacer-lg);
-  padding: var(--spacer-lg);
   max-width: 1000px;
   margin: auto;
 }
@@ -118,5 +116,15 @@ ion-card-header {
   display: flex;
   justify-content: start;
 }
+
+@media screen and (min-width: 700px) {
+
+  main {
+    padding: var(--spacer-lg);
+
+  }
+
+}
+
 
 </style>

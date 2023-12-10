@@ -55,15 +55,15 @@
                 </ion-card-content>
                 <ion-item lines="full">
                   <ion-label>{{ translate("Facility zipcode") }}</ion-label>
-                  <p><ion-text :color="isRegenerationRequired ? 'danger' : ''" slot="end">{{ postalAddress.postalCode }}</ion-text></p>
+                  <ion-label><ion-text :color="isRegenerationRequired ? 'danger' : ''" slot="end">{{ postalAddress.postalCode }}</ion-text></ion-label>
                 </ion-item>
                 <ion-item lines="full">
                   <ion-label>{{ translate("Latitude") }}</ion-label>
                   <p>{{ postalAddress.latitude }}</p>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ translate("Longitude") }}</ion-label>
-                  <p>{{ postalAddress.longitude }}</p>
+                  <ion-label><p>{{ translate("Longitude") }}</p></ion-label>
+                  <ion-label>{{ postalAddress.longitude }}</ion-label>
                 </ion-item>
                 <div class="actions">
                   <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
@@ -283,7 +283,7 @@
           <div v-else-if="segment === 'staff'">
             <ion-button fill="outline" @click="addStaffMemberModal">
               <ion-icon :icon="addCircleOutline" slot="start" />
-              {{ translate("Add staff member to facility") }}
+              {{ translate("Staff member") }}
             </ion-button>
 
             <div v-for="(party, index) in facilityParties" class="list-item staff" :key="index">
@@ -314,7 +314,7 @@
           <div v-else-if="segment == 'locations'">
             <ion-button fill="outline" @click="addLocationModal">
               <ion-icon :icon="addCircleOutline" slot="start" />
-              {{ translate("Add locations to facility") }}
+              {{ translate("Add internal locations") }}
             </ion-button>
 
             <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
@@ -1074,6 +1074,7 @@ ion-segment {
 
 .staff {
   --columns-desktop: 5;
+  padding-block: var(--spacer-xs);
 }
 
 .external-mappings {
