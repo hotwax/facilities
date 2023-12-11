@@ -113,7 +113,7 @@ export default defineComponent({
         })
 
         if(!hasError(resp)) {
-          showToast(translate('Facility external id udpated'))
+          showToast(translate('Facility external ID updated.'))
           await this.store.dispatch('facility/updateCurrentFacility', this.currentFacility)
           this.closeModal();
         } else {
