@@ -7,7 +7,7 @@
       <ion-item button @click="renameVirtualFacility()">
         {{ translate("Rename") }}
       </ion-item>
-      <ion-item button @click="archiveVirtualFacility()">
+      <ion-item button @click="archiveVirtualFacility()" lines="none">
         {{ translate("Archive") }}
       </ion-item>
     </ion-list>

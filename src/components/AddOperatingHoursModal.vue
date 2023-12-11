@@ -22,8 +22,12 @@
           <div class="ion-padding" slot="content">
             <ion-list lines="none">
               <ion-item v-for="day in days" :key="day">
-                <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
-                <ion-label slot="end">{{ calendar[day+'StartTime'] ? getStartAndEndTime(calendar[day+'StartTime'], calendar[day+'Capacity']) : '-' }} </ion-label>
+                <ion-label>
+                  <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
+                </ion-label>
+                <ion-label slot="end">
+                  <p>{{ calendar[day+'StartTime'] ? getStartAndEndTime(calendar[day+'StartTime'], calendar[day+'Capacity']) : translate('Closed') }}</p>
+                </ion-label>
               </ion-item>
             </ion-list>
           </div>
@@ -173,7 +177,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     getStartAndEndTime(startTime: any, capacity: any) {
-      const formatedStartTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
+      const formatedStartTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('hh:mm a');
       const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
       return `${formatedStartTime} - ${endTime}`
     }
