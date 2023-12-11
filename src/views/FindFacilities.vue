@@ -199,9 +199,14 @@ export default defineComponent({
     })
   },
   async mounted() {
-    await this.fetchFacilities();
     // We only need to fetch those types whose parent is not virtual facility
     await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY', parentTypeId_op: 'notEqual', facilityTypeId: 'VIRTUAL_FACILITY', facilityTypeId_op: 'notEqual' }), this.store.dispatch('util/fetchProductStores')])
+  },
+  async ionViewWillEnter() {
+    // fetching facilities information in the ionViewWillEnter hook as when updating facilityGroup or fulfillment limit
+    // from the details page and again coming to the list page, the UI does not gets updated when fetching information in
+    // the mounted hook
+    await this.fetchFacilities();
   },
   methods: {
     async updateQuery() {
