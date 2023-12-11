@@ -593,6 +593,12 @@ export default defineComponent({
         componentProps: { facilityId: this.facilityId }
       })
 
+      addressModal.onDidDismiss().then(async(result) => {
+        if(result.data?.postalAddress) {
+          await this.fetchPostalCodeByGeoPoints()
+        }
+      })
+
       addressModal.present()
     },
     async addCustomSchedule() {
