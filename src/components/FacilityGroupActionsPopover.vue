@@ -32,7 +32,7 @@ import { mapGetters, useStore } from "vuex";
 import logger from "@/logger";
 
 export default defineComponent({
-  name: "VirtualFacilityActionsPopover",
+  name: "FacilityGroupActionsPopover",
   components: {
     IonContent,
     IonItem,
