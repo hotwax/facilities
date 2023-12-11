@@ -493,7 +493,7 @@ export default defineComponent({
       primaryMember: {} as any,
       isCalendarFound: true,
       selectedCalendarId: '',
-      isRegenerationRequired: true,
+      isRegenerationRequired: false,  // keeping value as false, as initially we does not know whether the zipCode is valid or not, if making it true, the UI changes from danger to normal which is not a good experience
       days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
       externalId: ''
     }
