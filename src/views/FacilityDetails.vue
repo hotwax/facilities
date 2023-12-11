@@ -10,7 +10,10 @@
       <main v-if="current?.facilityId">
         <ion-item lines="none" class="ion-margin-top">
           <ion-label>
-            <h1>{{ current.facilityName }}</h1>
+            <h1>
+              {{ current.facilityName }}
+              <ion-icon :icon="pencilOutline" @click="renameFacility()" />
+            </h1>
             <p>{{ current.facilityId }}</p>
           </ion-label>
         </ion-item>
@@ -390,6 +393,7 @@ import {
   IonTitle,
   IonToggle,
   IonToolbar,
+  alertController,
   modalController,
   popoverController
 } from '@ionic/vue'
@@ -403,6 +407,7 @@ import {
   globeOutline,
   locationOutline,
   openOutline,
+  pencilOutline,
   personOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
@@ -429,6 +434,7 @@ import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
+import emitter from '@/event-bus'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -593,7 +599,7 @@ export default defineComponent({
     async selectProductStores() {
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
-        componentProps: { facilityId: this.facilityId, selectedProductStores: this.facilityProductStores }
+        componentProps: { selectedProductStores: this.facilityProductStores }
       })
 
       selectProductStoreModal.onDidDismiss().then(async(result: any) => {
@@ -761,6 +767,7 @@ export default defineComponent({
     },
     async addFacilityToGroup(facilityGroupId: string) {
       let resp;
+      emitter.emit("presentLoader");
       try {
         resp = await FacilityService.addFacilityToGroup({
           "facilityId": this.current.facilityId,
@@ -769,7 +776,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
-          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
@@ -777,6 +784,7 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+      emitter.emit("dismissLoader");
     },
     async revokePrimaryStatusFromStore() {
       try {
@@ -796,6 +804,7 @@ export default defineComponent({
       // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
       const isChecked = !event.target.checked;
 
+      
       if(isChecked) {
         this.addFacilityToGroup(facilityGroupId)
       } else {
@@ -805,9 +814,11 @@ export default defineComponent({
     async updateFacilityToGroup(facilityGroupId: string) {
       let resp;
 
+      emitter.emit("presentLoader");
       const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
 
       try {
+        
         resp = await FacilityService.updateFacilityToGroup({
           "facilityId": this.current.facilityId,
           "facilityGroupId": facilityGroupId,
@@ -817,7 +828,7 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
-          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
         } else {
           throw resp.data
         }
@@ -825,6 +836,7 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+      emitter.emit("dismissLoader");
     },
     async updateDefaultDaysToShip() {
       try {
@@ -959,7 +971,45 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
-    }
+    },
+    async renameFacility() {
+      const alert = await alertController.create({
+        header: translate("Rename facility"),
+        inputs: [{
+          name: "facilityName",
+          value: this.current.facilityName
+        }],
+        buttons: [{
+          text: translate('Cancel'),
+          role: "cancel"
+        },
+        {
+          text: translate('Apply'),
+          handler: async (data: any) => {
+            if(data.facilityName) {
+              try {
+                const resp = await FacilityService.updateFacility({
+                  facilityId: this.facilityId,
+                  facilityName: data.facilityName
+                })
+
+                if (!hasError(resp)) {
+                  showToast(translate("Facility renamed successfully."))
+                  await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityName: data.facilityName })
+                } else {
+                  throw resp.data
+                }
+              } catch (error) {
+                showToast(translate('Failed to rename facility.'))
+                logger.error('Failed to rename facility.', error)
+              }
+            }
+          }
+        }]
+      })
+
+      await alert.present()
+    },
   },
   setup() {
     const store = useStore();
@@ -974,6 +1024,7 @@ export default defineComponent({
       globeOutline,
       locationOutline,
       openOutline,
+      pencilOutline,
       personOutline,
       store,
       translate

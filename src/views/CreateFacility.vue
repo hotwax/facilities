@@ -15,9 +15,9 @@
           <ion-list>
             <ion-item>
               <ion-label>{{ translate("Type") }}</ion-label>
-              <ion-select interface="popover" :value="selectedFacilityTypeId">
+              <ion-select interface="popover" v-model="selectedFacilityTypeId">
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
-                  {{ type.description }}
+                  {{ type.description ? type.description : facilityTypeId }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -48,7 +48,7 @@
         <div class="ion-text-center ion-margin">
           <ion-button @click="createFacility()">
             <ion-icon slot="start" :icon="addOutline"/>
-            {{ translate("Create store") }}
+            {{ facilityTypes[selectedFacilityTypeId]?.description ? translate(`Create ${facilityTypes[selectedFacilityTypeId].description}`) : translate(`Create ${selectedFacilityTypeId}`) }}
           </ion-button>
         </div>
       </main>
@@ -139,7 +139,11 @@ export default defineComponent({
       })
     ])
     this.facilityTypesByParentTypeId = this.getFacilityTypesByParentTypeId(this.$route.query.type as string)
-    this.selectedFacilityTypeId = Object.keys(this.facilityTypesByParentTypeId)[0]
+
+    // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
+    // as default elements within the list. These elements may appear at any index within the list structure.
+    // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
+    this.selectedFacilityTypeId = this.facilityTypesByParentTypeId['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypesByParentTypeId['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypesByParentTypeId)[0]
   },
   methods: {
     clearFormData() {
