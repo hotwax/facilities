@@ -1137,6 +1137,11 @@ ion-segment {
   align-items: start; 
 }
 
+ion-card > ion-button[expand="block"] {
+  margin-inline: var(--spacer-sm);
+  margin-bottom: var(--spacer-sm);
+}
+
 .actions {
   display: flex;
   justify-content: space-between;
