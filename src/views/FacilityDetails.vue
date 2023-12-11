@@ -931,7 +931,9 @@ export default defineComponent({
         const resp = await FacilityService.updateFacility(payload)
 
         if(!hasError(resp)) {
+          this.current.externalId = ''
           showToast(translate('Removed facility external ID'))
+          await this.store.dispatch('facility/updateCurrentFacility', this.current)
         } else {
           throw resp.data
         }

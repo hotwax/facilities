@@ -11,7 +11,7 @@
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="updateExternalId()">
+    <form @keyup.enter="updateExternalId()" @submit.prevent>
       <ion-list>
         <ion-list-header>{{ translate("Facility details") }}</ion-list-header>
         <ion-item>
@@ -97,7 +97,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async updateExternalId() {
-      if(!this.currentFacility.externalId.trim()) {
+      if(!this.currentFacility.externalId?.trim()) {
         showToast(translate('Please enter a valid value'))
         return;
       }
@@ -114,7 +114,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate('Facility external id udpated'))
-          this.store.dispatch('facility/updateCurrentFacility', this.currentFacility)
+          await this.store.dispatch('facility/updateCurrentFacility', this.currentFacility)
           this.closeModal();
         } else {
           throw resp.data
