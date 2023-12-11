@@ -86,7 +86,7 @@ const actions: ActionTree<UtilState, RootState> = {
             if (facilityGroupsByGroupTypes[parameter]) {
               facilityGroupsByGroupTypes[parameter].push(group.facilityGroupId)
             } else {
-              facilityGroupsByGroupTypes[parameter] = []
+              facilityGroupsByGroupTypes[parameter] = [group.facilityGroupId]
             }
 
             return facilityGroupsByGroupTypes
