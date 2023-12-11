@@ -544,7 +544,7 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
     data: params
   })))
 
-  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response.data.count)
+  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response?.data?.count)
   if (hasFailedResponse) {
     logger.error('Failed to fetch facility count for some groups')
   }
