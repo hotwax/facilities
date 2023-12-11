@@ -125,7 +125,9 @@
                 <ion-label>
                   <p>{{ translate(day.charAt(0).toUpperCase() + day.slice(1)) }}</p>
                 </ion-label>
-                <ion-label slot="end"><p>{{ facilityCalendar[day+'StartTime'] ? getOpenEndTime(facilityCalendar[day+'StartTime'], facilityCalendar[day+'Capacity']) : translate('Closed') }}</p></ion-label>
+                <ion-label slot="end">
+                  <p>{{ facilityCalendar[day+'StartTime'] ? getOpenEndTime(facilityCalendar[day+'StartTime'], facilityCalendar[day+'Capacity']) : translate('Closed') }}</p>
+                </ion-label>
               </ion-item>
             </ion-list>
           </ion-card>
@@ -572,7 +574,7 @@ export default defineComponent({
         componentProps: { facilityId: this.facilityId }
       })
 
-       addressModal.present()
+      addressModal.present()
     },
     async addCustomSchedule() {
       const customScheduleModal = await modalController.create({
