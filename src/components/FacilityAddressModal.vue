@@ -121,7 +121,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async saveAddress() {
-      let resp;
+      let resp, postalAddress = '';
 
       if(!this.address?.address1 || !this.address?.city) {
         showToast("Please fill all the required fields.")
@@ -140,6 +140,7 @@ export default defineComponent({
         }
 
         if(!hasError(resp)) {
+          postalAddress = this.address
           showToast(translate("Facility address updated successfully."))
           await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
         } else {
@@ -149,7 +150,7 @@ export default defineComponent({
         showToast(translate("Failed to update facility address."))
         logger.error(err)
       }
-      modalController.dismiss()
+      modalController.dismiss({ postalAddress })
     },
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
