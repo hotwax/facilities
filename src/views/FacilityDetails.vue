@@ -277,6 +277,21 @@
                 <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
                 <ion-button fill="clear" color="danger" @click="removeFacilityMapping(mapping)">{{ translate("Remove") }}</ion-button>
               </ion-card>
+
+              <!-- Hardcoded card to shop facility externalId, as externalID is not available as an identification -->
+              <ion-card>
+                <ion-card-header>
+                  <ion-card-title>
+                    {{ translate('Facility External ID') }}
+                  </ion-card-title>
+                </ion-card-header>
+                <ion-item lines="full">
+                  <ion-label>{{ translate('Identification') }}</ion-label>
+                  <ion-label slot="end">{{ current.externalId ? current.externalId : '-' }}</ion-label>
+                </ion-item>
+                <ion-button fill="clear" @click="editFacilityExternalId()">{{ translate("Edit") }}</ion-button>
+                <ion-button fill="clear" color="danger" @click="removeFacilityExternalID()">{{ translate("Remove") }}</ion-button>
+              </ion-card>
             </div>
           </div>
 
@@ -429,6 +444,7 @@ import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
+import FacilityExternalIdModal from '@/components/FacilityExternalIdModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
@@ -474,7 +490,8 @@ export default defineComponent({
       isCalendarFound: true,
       selectedCalendarId: '',
       isRegenerationRequired: true,
-      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+      externalId: ''
     }
   },
   computed: {
@@ -904,6 +921,25 @@ export default defineComponent({
         showToast(translate('Failed to remove facility mapping'))
       }
     },
+    async removeFacilityExternalID() {
+      try {
+        const payload = {
+          facilityId: this.current.facilityId,
+          externalId: ''
+        }
+
+        const resp = await FacilityService.updateFacility(payload)
+
+        if(!hasError(resp)) {
+          showToast(translate('Removed facility external ID'))
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error('Failed to remove external id', err)
+        showToast(translate('Failed to remove external id'))
+      }
+    },
     async removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
       try {
         const payload = {
@@ -932,6 +968,13 @@ export default defineComponent({
       })
 
       customMappingModal.present()
+    },
+    async editFacilityExternalId() {
+      const facilityExternalIdModal = await modalController.create({
+        component: FacilityExternalIdModal
+      })
+
+      facilityExternalIdModal.present()
     },
     async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
       const customMappingModal = await modalController.create({
@@ -1009,7 +1052,7 @@ export default defineComponent({
       })
 
       await alert.present()
-    },
+    }
   },
   setup() {
     const store = useStore();
