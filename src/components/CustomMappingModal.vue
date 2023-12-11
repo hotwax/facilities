@@ -22,7 +22,7 @@
         <p>{{ currentFacility.facilityName }}</p>
       </ion-item>
     </ion-list>
-    <form @keyup.enter="saveMapping">
+    <form @keyup.enter="saveMapping" @submit.prevent>
       <ion-list>
         <ion-list-header>{{ translate("Custom mapping") }}</ion-list-header>
         <ion-item>
