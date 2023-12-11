@@ -11,7 +11,7 @@
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="saveMapping">
+    <form @keyup.enter="type && type === 'update' ? updateMapping() : saveMapping()" @submit.prevent>
       <ion-list>
         <ion-list-header>{{ translate("Facility details") }}</ion-list-header>
         <ion-item>
