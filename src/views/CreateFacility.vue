@@ -83,7 +83,7 @@ import { mapGetters, useStore } from "vuex";
 import { useRouter } from 'vue-router'
 import { addOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
-import { showToast } from "@/utils";
+import { generateInternalId, showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
@@ -154,7 +154,7 @@ export default defineComponent({
       }
     },
     setFacilityId(event: any) {
-      this.formData.facilityId = event.target.value.trimEnd().trimStart().toUpperCase().split(' ').join('_');
+      this.formData.facilityId = generateInternalId(event.target.value)
     },
     async createFacility() {
       if (!this.formData.facilityName?.trim()) {
@@ -170,7 +170,7 @@ export default defineComponent({
       // In case the user does not lose focus from the facility name input
       // and click on create the button, we need to set the internal id manually
       if (!this.formData.facilityId) {
-        this.formData.facilityId = this.formData.facilityName.trimEnd().trimStart().toUpperCase().split(' ').join('_');
+        this.formData.facilityId = generateInternalId(this.formData.facilityName)
       }
 
       try {

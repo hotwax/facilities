@@ -55,4 +55,8 @@ const customSort = (list: any, customValues: Array<string>, sortParameter: strin
   });
 }
 
-export { copyToClipboard, customSort, isValidPassword, showToast }
+const generateInternalId = (name: string) => {
+  return name.trim().toUpperCase().split(' ').join('_');
+}
+
+export { copyToClipboard, customSort, generateInternalId, isValidPassword, showToast }
