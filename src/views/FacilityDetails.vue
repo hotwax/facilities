@@ -314,7 +314,7 @@
           <div v-else-if="segment == 'locations'">
             <ion-button fill="outline" @click="addLocationModal">
               <ion-icon :icon="addCircleOutline" slot="start" />
-              {{ translate("Add internal locations") }}
+              {{ translate("Internal locations") }}
             </ion-button>
 
             <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
@@ -1035,10 +1035,6 @@ export default defineComponent({
 
 <style scoped>
 
-ion-content > main {
-  margin: var(--spacer-lg)
-}
-
 section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1058,9 +1054,7 @@ ion-card-header {
 }
 
 
-/*Height of segment is defined now since their are less list items. Will remove it later */
 .segments {
-  height: 400px;
   margin-top: var(--spacer-2xl);
 }
 
@@ -1083,8 +1077,20 @@ ion-segment {
   align-items: start; 
 }
 
+ion-card > ion-button[expand="block"] {
+  margin-inline: var(--spacer-sm);
+  margin-bottom: var(--spacer-sm);
+}
+
 .actions {
   display: flex;
   justify-content: space-between;
+}
+
+@media screen and (min-width: 700px) {
+
+  ion-content > main {
+    margin: var(--spacer-lg)
+  }
 }
 </style>
