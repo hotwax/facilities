@@ -88,7 +88,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "entityName": "FacilityAndProductStore",
       "noConditionFind": "Y",
       "distinct": "Y",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip'],
+      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId"],
       ...payload
     }
 
@@ -173,7 +173,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityAndProductStore",
       noConditionFind: "Y",
       distinct: "Y",
-      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip'],
+      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId"],
       viewSize: 1
     }
 
