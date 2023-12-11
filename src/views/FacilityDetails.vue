@@ -289,7 +289,9 @@
                   <ion-label>{{ translate('Identification') }}</ion-label>
                   <ion-label slot="end">{{ current.externalId ? current.externalId : '-' }}</ion-label>
                 </ion-item>
-                <ion-button fill="clear" @click="editFacilityExternalId()">{{ translate("Edit") }}</ion-button>
+                <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
+                and we can't focus two elements at the same time -->
+                <ion-button fill="clear" @click="$event.target.blur(); editFacilityExternalId()">{{ translate("Edit") }}</ion-button>
                 <ion-button fill="clear" color="danger" @click="removeFacilityExternalID()">{{ translate("Remove") }}</ion-button>
               </ion-card>
             </div>
@@ -751,7 +753,7 @@ export default defineComponent({
       if(result.data != undefined && result.data !== this.current.maximumOrderLimit) {
         await this.updateFacility(result.data, this.current)
         // refetching the facility to update the maximumOrderLimit
-        await this.store.dispatch('facility/fetchCurrentFacility', this.facilityId)
+        await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId, skipState: true })
       }
     },
     async updateFacility(maximumOrderLimit: number | string, facility: any) {
