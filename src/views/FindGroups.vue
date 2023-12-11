@@ -20,9 +20,11 @@
                 {{ groupType.facilityGroupTypeId }}
                 <p>{{ groupType.description }}</p>
               </ion-label>
-              <ion-label slot="end">
-                {{ groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups.length === 1 ? groupType.facilityGroups[0] : '-' }}
-              </ion-label>
+              <ion-select v-if="groupType.facilityGroups.length" :placeholder="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" interface="popover">
+                <ion-select-option :value="groupId" :key="groupId" v-for="groupId in groupType.facilityGroups">
+                  {{ groupId }}
+                </ion-select-option>
+              </ion-select>
             </ion-item>
           </ion-list>
         </section>
@@ -36,6 +38,7 @@
                   {{ group.facilityGroupName }}
                   <p>{{ group.facilityGroupId }}</p>
                 </ion-label>
+                <ion-badge slot="end">{{ group.facilityGroupTypeId }}</ion-badge>
                 <ion-icon :icon="ellipsisVerticalOutline" slot="end"/>
               </ion-item>
               <ion-item>
@@ -77,6 +80,7 @@
 import {
   IonButton,
   IonBackButton,
+  IonBadge,
   IonCard,
   IonContent,
   IonHeader,
@@ -90,6 +94,8 @@ import {
   IonNote,
   IonPage,
   IonSearchbar,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToolbar,
   modalController,
@@ -107,6 +113,7 @@ export default defineComponent({
   components: {
     IonButton,
     IonBackButton,
+    IonBadge,
     IonCard,
     IonContent,
     IonHeader,
@@ -120,6 +127,8 @@ export default defineComponent({
     IonNote,
     IonPage,
     IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
   },
