@@ -33,7 +33,7 @@
       </ion-list>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="updateExternalId()">
+        <ion-fab-button @click="updateExternalId()" @keyup.enter.stop>
           <ion-icon :icon="saveOutline" />
         </ion-fab-button>
       </ion-fab>
