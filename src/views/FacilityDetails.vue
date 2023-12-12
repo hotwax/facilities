@@ -94,7 +94,7 @@
                 <ion-radio slot="end" :value="calendar.calendarId"/>
               </ion-item>
             </ion-radio-group>
-            <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
+            <ion-item button lines="none" v-if="calendars?.length > 3"  @click="addOperatingHours">
               <ion-label> {{ calendars.length - 3 }} {{ translate("Others") }}</ion-label>
               <ion-icon slot="end" :icon="chevronForwardOutline" />
             </ion-item>
@@ -571,6 +571,7 @@ export default defineComponent({
     },
     async associateCalendarToFacility() {
       let resp;
+      emitter.emit('presentLoader')
 
        try {
         resp = await FacilityService.associateCalendarToFacility({
@@ -590,6 +591,7 @@ export default defineComponent({
         showToast(translate("Failed to associate calendar to the facility."))
         logger.error(err)
       }
+      emitter.emit('dismissLoader')
     },
     async openAddressModal() {
       const addressModal = await modalController.create({
@@ -1046,6 +1048,7 @@ export default defineComponent({
           text: translate('Apply'),
           handler: async (data: any) => {
             if(data.facilityName) {
+              emitter.emit('presentLoader')
               try {
                 const resp = await FacilityService.updateFacility({
                   facilityId: this.facilityId,
@@ -1062,6 +1065,7 @@ export default defineComponent({
                 showToast(translate('Failed to rename facility.'))
                 logger.error('Failed to rename facility.', error)
               }
+              emitter.emit('dismissLoader')
             }
           }
         }]

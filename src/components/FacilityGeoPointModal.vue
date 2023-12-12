@@ -64,6 +64,7 @@ import { hasError } from "@/adapter";
 import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
 import { FacilityService } from '@/services/FacilityService'
+import emitter from "@/event-bus";
   
 export default defineComponent({
   name: "FacilityGeoPointModal",
@@ -135,6 +136,7 @@ export default defineComponent({
 
       let resp, geoPoints = '';
 
+      emitter.emit('presentLoader')
       try {
         // passing old postalCode from here, as we don't allow user to update postalCode from this modal,
         // and the user can only update the latLon from here
@@ -152,6 +154,7 @@ export default defineComponent({
         logger.error(err)
       }
       modalController.dismiss({ geoPoints })
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

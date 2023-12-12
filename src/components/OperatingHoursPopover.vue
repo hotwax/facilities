@@ -40,6 +40,7 @@ import { FacilityService } from "@/services/FacilityService";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import { hasError } from "@/adapter";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "FacilityMappingPopover",
@@ -83,6 +84,8 @@ export default defineComponent({
     },
     async removeCalendarFromFacility() {
       let resp;
+      emitter.emit('presentLoader')
+
       try {
         resp = await FacilityService.removeFacilityCalendar({
           facilityId: this.facilityId,
@@ -103,6 +106,7 @@ export default defineComponent({
       }
 
       popoverController.dismiss()
+      emitter.emit('dismissLoader')
     }
   },
   setup() {
