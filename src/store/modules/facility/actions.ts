@@ -212,7 +212,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
 
-    commit(types.FACILITY_CURRENT_UPDATED, facility);
+    commit(types.FACILITY_CURRENT_UPDATED, { ...state.current, ...facility });
   },
 
   updateCurrentFacility({ commit }, facility) {
