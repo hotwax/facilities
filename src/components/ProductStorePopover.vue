@@ -32,6 +32,7 @@ import { DateTime } from "luxon";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "ProductStorePopover",
@@ -52,6 +53,8 @@ export default defineComponent({
   },
   methods: {
     async removeStoreFromFacility() {
+      emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.updateProductStoreFacility({
           facilityId: this.facilityId,
@@ -78,6 +81,7 @@ export default defineComponent({
         showToast(translate('Store unlink failed.'))
       }
       popoverController.dismiss()
+      emitter.emit('dismissLoader')
     },
     async makePrimary() {
       const productStoreId = this.currentProductStore.productStoreId
@@ -86,6 +90,8 @@ export default defineComponent({
         popoverController.dismiss()
         return;
       }
+
+      emitter.emit('presentLoader')
 
       let resp;
       let facilityGroupId;
@@ -123,6 +129,7 @@ export default defineComponent({
         showToast(translate("Failed to make product store primary."))
       }
       popoverController.dismiss()
+      emitter.emit('dismissLoader')
     },
     async fetchFacilityGroup(productStoreId: string) {
       let facilityGroupId;
@@ -168,6 +175,8 @@ export default defineComponent({
       return facilityGroupId
     },
     async revokePrimaryStatusFromStore() {
+      emitter.emit('presentLoader')
+
       let resp;
       try {
         resp = await FacilityService.updateFacilityToGroup({
@@ -183,6 +192,8 @@ export default defineComponent({
       } catch (err) {
         logger.error(err)
       }
+
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

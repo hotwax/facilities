@@ -77,6 +77,7 @@ import { FacilityService } from '@/services/FacilityService';
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "FacilityAddressModal",
@@ -128,6 +129,8 @@ export default defineComponent({
         return
       }
 
+      emitter.emit('presentLoader')
+
       try {
         if (this.address.contactMechId) {
           resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
@@ -151,6 +154,7 @@ export default defineComponent({
         logger.error(err)
       }
       modalController.dismiss({ postalAddress })
+      emitter.emit('dismissLoader')
     },
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })

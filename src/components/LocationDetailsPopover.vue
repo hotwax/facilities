@@ -29,6 +29,7 @@ import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "LocationDetailsPopover",
@@ -55,6 +56,8 @@ export default defineComponent({
       addLocationModal.present()
     },
     async removeLocation() {
+      emitter.emit('presentLoader')
+
       const params = {
         facilityId: this.location.facilityId,
         locationSeqId: this.location.locationSeqId
@@ -74,6 +77,7 @@ export default defineComponent({
         logger.error('Failed to remove facility location', err)
       }
       popoverController.dismiss();
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

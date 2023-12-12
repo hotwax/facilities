@@ -64,6 +64,7 @@ import { hasError } from "@/adapter";
 import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
 import { FacilityService } from '@/services/FacilityService'
+import emitter from "@/event-bus";
   
 export default defineComponent({
   name: "FacilityGeoPointModal",
@@ -133,6 +134,8 @@ export default defineComponent({
         return;
       }
 
+      emitter.emit('presentLoader')
+
       let resp, geoPoints = '';
 
       try {
@@ -152,6 +155,7 @@ export default defineComponent({
         logger.error(err)
       }
       modalController.dismiss({ geoPoints })
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

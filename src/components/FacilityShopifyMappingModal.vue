@@ -79,6 +79,7 @@ import { UtilService } from '@/services/UtilService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "FacilityShopifyMappingModal",
@@ -127,6 +128,8 @@ export default defineComponent({
         return;
       }
 
+      emitter.emit('presentLoader')
+
       let resp;
 
       try {
@@ -147,12 +150,16 @@ export default defineComponent({
         showToast(translate('Failed to create shopify mapping'))
         logger.error('Failed to create shopify mapping', err)
       }
+
+      emitter.emit('dismissLoader')
     },
     async updateMapping() {
       if(!this.shopifyLocationId) {
         showToast(translate('Please fill all the required fields'))
         return;
       }
+
+      emitter.emit('presentLoader')
 
       let resp;
 
@@ -175,6 +182,8 @@ export default defineComponent({
         showToast(translate('Failed to update shopify mapping'))
         logger.error('Failed to update shopify mapping', err)
       }
+
+      emitter.emit('dismissLoader')
     },
     async fetchShopifyShops() {
       try {
