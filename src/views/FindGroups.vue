@@ -20,7 +20,7 @@
                 <h1>{{ group.facilityGroupName }}</h1>
                 <p>{{ group.facilityGroupId }}</p>
               </ion-label>
-              <ion-button @click="openFacilityGroupActionsPopover($event, group)" fill="clear" color="medium">
+              <ion-button @click="openFacilityGroupActionsPopover($event, group)" fill="clear" color="medium" slot="end">
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
