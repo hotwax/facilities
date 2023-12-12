@@ -74,6 +74,7 @@ import { showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "CustomMappingModal",
@@ -116,6 +117,7 @@ export default defineComponent({
       }
 
       let resp;
+      emitter.emit('presentLoader')
 
       try {
         resp = await FacilityService.createEnumeration({
@@ -148,6 +150,7 @@ export default defineComponent({
         showToast(translate('Failed to create external mapping'))
         logger.error('Failed to create external mapping', err)
       }
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

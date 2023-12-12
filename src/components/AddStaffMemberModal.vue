@@ -66,6 +66,7 @@ import logger from "@/logger";
 import { mapGetters, useStore } from "vuex";
 import { showToast } from "@/utils";
 import { DateTime } from "luxon";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "AddStaffMemberModal",
@@ -105,6 +106,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async findParties() {
+      emitter.emit('presentLoader')
       this.parties = []
       let inputFields = {}
       if(this.queryString.length > 0) {
@@ -152,8 +154,10 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
+      emitter.emit('dismissLoader')
     },
     async saveParties() {
+      emitter.emit('presentLoader')
       const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
       const partiesToRemove = this.selectedParties.filter((party: any) => !this.selectedPartyValues.some((selectedParty: any) => party.partyId === selectedParty.partyId))
       const partiesRoleChanged = this.selectedParties.filter((party: any) => this.selectedPartyValues.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId))
@@ -192,6 +196,7 @@ export default defineComponent({
       // refetching parties with updated roles
       await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
       modalController.dismiss()
+      emitter.emit('dismissLoader')
     },
     updateSelectedParties(event: CustomEvent, selectedPartyId: string) {
       let party = {} as any

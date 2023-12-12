@@ -67,6 +67,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "FacilityMappingModal",
@@ -114,6 +115,7 @@ export default defineComponent({
       }
 
       let resp;
+      emitter.emit('presentLoader')
 
       try {
         resp = await FacilityService.createFacilityIdentification({
@@ -133,6 +135,7 @@ export default defineComponent({
         showToast(translate('Failed to create external mapping'))
         logger.error('Failed to create external mapping', err)
       }
+      emitter.emit('dismissLoader')
     },
     async updateMapping() {
       if(!this.mappingValue.trim()) {
@@ -141,6 +144,7 @@ export default defineComponent({
       }
 
       let resp;
+      emitter.emit('presentLoader')
 
       try {
         resp = await FacilityService.updateFacilityIdentification({
@@ -161,6 +165,7 @@ export default defineComponent({
         showToast(translate('Failed to update external mapping'))
         logger.error('Failed to update external mapping', err)
       }
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

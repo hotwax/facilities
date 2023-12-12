@@ -164,8 +164,6 @@ const actions: ActionTree<FacilityState, RootState> = {
       return;
     }
 
-    emitter.emit("presentLoader");
-
     const params = {
       inputFields: {
         facilityId: payload.facilityId
@@ -214,7 +212,6 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
 
-    emitter.emit("dismissLoader");
     commit(types.FACILITY_CURRENT_UPDATED, facility);
   },
 
