@@ -116,8 +116,9 @@ export default defineComponent({
         return;
       }
 
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
 
       try {
         resp = await FacilityService.createEnumeration({
@@ -150,6 +151,7 @@ export default defineComponent({
         showToast(translate('Failed to create external mapping'))
         logger.error('Failed to create external mapping', err)
       }
+
       emitter.emit('dismissLoader')
     }
   },

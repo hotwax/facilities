@@ -54,6 +54,7 @@ export default defineComponent({
   methods: {
     async removeStoreFromFacility() {
       emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.updateProductStoreFacility({
           facilityId: this.facilityId,
@@ -90,9 +91,10 @@ export default defineComponent({
         return;
       }
 
+      emitter.emit('presentLoader')
+
       let resp;
       let facilityGroupId;
-      emitter.emit('presentLoader')
 
       // Fetching the facility group corresponding to the selected product store.
       // There should be one facility group where facilityGroupId equals to productStoreId in order
@@ -173,8 +175,9 @@ export default defineComponent({
       return facilityGroupId
     },
     async revokePrimaryStatusFromStore() {
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
       try {
         resp = await FacilityService.updateFacilityToGroup({
           "facilityId": this.facilityId,
@@ -189,6 +192,7 @@ export default defineComponent({
       } catch (err) {
         logger.error(err)
       }
+
       emitter.emit('dismissLoader')
     }
   },

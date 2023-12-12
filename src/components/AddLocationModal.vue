@@ -134,11 +134,12 @@ export default defineComponent({
       await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
     },
     async addFacilityLocation() {
-      emitter.emit('presentLoader')
       const params = {
         facilityId: this.current.facilityId,
         ...this.locationInfo
       }
+
+      emitter.emit('presentLoader')
 
       try {
         const resp = await FacilityService.createFacilityLocation(params)
@@ -153,15 +154,17 @@ export default defineComponent({
         showToast(translate('Failed to create facility location'))
         logger.error('Failed to create facility location', err)
       }
+
       emitter.emit('dismissLoader')
     },
 
     async updateFacilityLocation() {
-      emitter.emit('presentLoader')
       const params = {
         facilityId: this.current.facilityId,
         ...this.locationInfo
       }
+
+      emitter.emit('presentLoader')
 
       try {
         const resp = await FacilityService.updateFacilityLocation(params)
@@ -176,6 +179,7 @@ export default defineComponent({
         showToast(translate('Failed to update facility location'))
         logger.error('Failed to update facility location', err)
       }
+
       emitter.emit('dismissLoader')
     },
   },

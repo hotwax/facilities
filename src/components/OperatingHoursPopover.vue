@@ -83,8 +83,9 @@ export default defineComponent({
       customScheduleModal.present()
     },
     async removeCalendarFromFacility() {
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
 
       try {
         resp = await FacilityService.removeFacilityCalendar({

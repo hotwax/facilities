@@ -123,6 +123,7 @@ export default defineComponent({
     },
     async addOperatingHours() {
       emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.associateCalendarToFacility({
           facilityId: this.facilityId,
@@ -146,8 +147,9 @@ export default defineComponent({
       emitter.emit('dismissLoader')
     },
     async updateOperatingHours() {
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
 
       try {
         resp = await FacilityService.removeFacilityCalendar({

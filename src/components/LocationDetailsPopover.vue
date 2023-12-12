@@ -57,6 +57,7 @@ export default defineComponent({
     },
     async removeLocation() {
       emitter.emit('presentLoader')
+
       const params = {
         facilityId: this.location.facilityId,
         locationSeqId: this.location.locationSeqId

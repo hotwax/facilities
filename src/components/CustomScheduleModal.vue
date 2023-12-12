@@ -190,7 +190,9 @@ export default defineComponent({
         showToast(translate("Please check start time and end time entries. End time cannot be less than start time."))
         return;
       }
+
       emitter.emit('presentLoader')
+
       if(this.facilityCalendar?.calendarId) {
         try {
           const resp = await FacilityService.removeFacilityCalendar({
@@ -211,6 +213,7 @@ export default defineComponent({
       } else {
         await this.addCustomSchedule(payload)
       }
+
       emitter.emit('dismissLoader')
     },
     async addCustomSchedule(payload: any) {

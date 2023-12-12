@@ -570,8 +570,9 @@ export default defineComponent({
       return popover.present()
     },
     async associateCalendarToFacility() {
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
 
        try {
         resp = await FacilityService.associateCalendarToFacility({
@@ -591,6 +592,7 @@ export default defineComponent({
         showToast(translate("Failed to associate calendar to the facility."))
         logger.error(err)
       }
+
       emitter.emit('dismissLoader')
     },
     async openAddressModal() {
@@ -638,6 +640,7 @@ export default defineComponent({
       selectProductStoreModal.onDidDismiss().then(async(result: any) => {
         if (result.data && result.data.value) {
           emitter.emit('presentLoader')
+
           const productStoresToCreate = result.data.value.productStoresToCreate
           const productStoresToRemove = result.data.value.productStoresToRemove
 
@@ -734,6 +737,7 @@ export default defineComponent({
     },
     async removePartyFromFacility(party: any) {
       emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.removePartyFromFacility({
           facilityId: party.facilityId,
@@ -755,6 +759,7 @@ export default defineComponent({
         showToast(translate("Failed to remove party from facility."))
         logger.error(err)
       }
+
       emitter.emit('dismissLoader')
     },
     async changeOrderLimitPopover(ev: Event) {
@@ -770,9 +775,11 @@ export default defineComponent({
       // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
       if(result.data != undefined && result.data !== this.current.maximumOrderLimit) {
         emitter.emit('presentLoader')
+
         await this.updateFacility(result.data, this.current)
         // refetching the facility to update the maximumOrderLimit
         await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId, skipState: true })
+
         emitter.emit('dismissLoader')
       }
     },
@@ -805,8 +812,9 @@ export default defineComponent({
       facilityOrderCountModal.present()
     },
     async addFacilityToGroup(facilityGroupId: string) {
-      let resp;
       emitter.emit("presentLoader");
+
+      let resp;
       try {
         resp = await FacilityService.addFacilityToGroup({
           "facilityId": this.current.facilityId,
@@ -823,6 +831,7 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+
       emitter.emit("dismissLoader");
     },
     async revokePrimaryStatusFromStore() {
@@ -851,9 +860,10 @@ export default defineComponent({
       }
     },
     async updateFacilityToGroup(facilityGroupId: string) {
+      emitter.emit("presentLoader");
+
       let resp;
 
-      emitter.emit("presentLoader");
       const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
 
       try {
@@ -875,10 +885,12 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+
       emitter.emit("dismissLoader");
     },
     async updateDefaultDaysToShip() {
       emitter.emit('presentLoader')
+
       try {
         const payload = {
           facilityId: this.current.facilityId,
@@ -896,6 +908,7 @@ export default defineComponent({
         logger.error('Failed to update default days to ship', err)
         showToast(translate('Failed to update default days to ship'))
       }
+
       emitter.emit('dismissLoader')
     },
     async fetchFacilityPrimaryMember() {
@@ -925,6 +938,7 @@ export default defineComponent({
     },
     async removeFacilityMapping(mapping: any) {
       emitter.emit('presentLoader')
+
       try {
         const payload = {
           facilityId: this.current.facilityId,
@@ -945,10 +959,12 @@ export default defineComponent({
         logger.error('Failed to remove facility mapping', err)
         showToast(translate('Failed to remove facility mapping'))
       }
+
       emitter.emit('dismissLoader')
     },
     async removeFacilityExternalID() {
       emitter.emit('presentLoader')
+
       try {
         const payload = {
           facilityId: this.current.facilityId,
@@ -968,6 +984,7 @@ export default defineComponent({
         logger.error('Failed to remove external id', err)
         showToast(translate('Failed to remove external id'))
       }
+
       emitter.emit('dismissLoader')
     },
     async removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
@@ -1061,6 +1078,7 @@ export default defineComponent({
           handler: async (data: any) => {
             if(data.facilityName) {
               emitter.emit('presentLoader')
+
               try {
                 const resp = await FacilityService.updateFacility({
                   facilityId: this.facilityId,
@@ -1077,6 +1095,7 @@ export default defineComponent({
                 showToast(translate('Failed to rename facility.'))
                 logger.error('Failed to rename facility.', error)
               }
+
               emitter.emit('dismissLoader')
             }
           }

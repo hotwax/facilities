@@ -134,9 +134,10 @@ export default defineComponent({
         return;
       }
 
+      emitter.emit('presentLoader')
+
       let resp, geoPoints = '';
 
-      emitter.emit('presentLoader')
       try {
         // passing old postalCode from here, as we don't allow user to update postalCode from this modal,
         // and the user can only update the latLon from here

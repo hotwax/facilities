@@ -107,6 +107,7 @@ export default defineComponent({
     },
     async findParties() {
       emitter.emit('presentLoader')
+
       this.parties = []
       let inputFields = {}
       if(this.queryString.length > 0) {
@@ -154,10 +155,12 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
+
       emitter.emit('dismissLoader')
     },
     async saveParties() {
       emitter.emit('presentLoader')
+
       const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
       const partiesToRemove = this.selectedParties.filter((party: any) => !this.selectedPartyValues.some((selectedParty: any) => party.partyId === selectedParty.partyId))
       const partiesRoleChanged = this.selectedParties.filter((party: any) => this.selectedPartyValues.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId))

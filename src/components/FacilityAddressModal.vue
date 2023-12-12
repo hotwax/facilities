@@ -130,6 +130,7 @@ export default defineComponent({
       }
 
       emitter.emit('presentLoader')
+
       try {
         if (this.address.contactMechId) {
           resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })

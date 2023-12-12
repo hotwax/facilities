@@ -44,7 +44,9 @@ export default defineComponent({
   methods: {
     async regenerateLatitudeAndLongitude() {
       let resp, generatedLatLong;
+
       emitter.emit('presentLoader')
+
       try {
         resp = await UtilService.generateLatLong({
           json: {
@@ -84,9 +86,10 @@ export default defineComponent({
       emitter.emit('dismissLoader')
     },
     async removeLatitudeAndLongitude() {
+      emitter.emit('presentLoader')
+
       let resp;
 
-      emitter.emit('presentLoader')
       try {
         resp = await FacilityService.updateFacilityPostalAddress({
           ...this.postalAddress,

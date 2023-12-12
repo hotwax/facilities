@@ -128,8 +128,9 @@ export default defineComponent({
         return;
       }
 
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
 
       try {
         resp = await FacilityService.createShopifyShopLocation({
@@ -149,6 +150,7 @@ export default defineComponent({
         showToast(translate('Failed to create shopify mapping'))
         logger.error('Failed to create shopify mapping', err)
       }
+
       emitter.emit('dismissLoader')
     },
     async updateMapping() {
@@ -157,8 +159,9 @@ export default defineComponent({
         return;
       }
 
-      let resp;
       emitter.emit('presentLoader')
+
+      let resp;
 
       try {
         resp = await FacilityService.updateShopifyShopLocation({
@@ -179,6 +182,7 @@ export default defineComponent({
         showToast(translate('Failed to update shopify mapping'))
         logger.error('Failed to update shopify mapping', err)
       }
+
       emitter.emit('dismissLoader')
     },
     async fetchShopifyShops() {
