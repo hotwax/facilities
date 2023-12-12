@@ -161,33 +161,9 @@ export default defineComponent({
       this.isDailyTimingsChecked = !this.isDailyTimingsChecked
       this.days = this.isDailyTimingsChecked ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] : ['Daily']
     },
-    async saveCustomSchedule() { 
-      if(this.facilityCalendar?.calendarId) {
-        try {
-          const resp = await FacilityService.removeFacilityCalendar({
-            facilityId: this.facilityId,
-            calendarId: this.facilityCalendar.calendarId,
-            facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-            fromDate: this.facilityCalendar.fromDate
-          })
-
-          if(!hasError(resp)) {
-            await this.addCustomSchedule()
-          } else {
-            throw resp.data;
-          }
-        } catch(err) {
-          logger.error(err)
-        }
-      } else {
-        await this.addCustomSchedule()
-      }
-    },
-    async addCustomSchedule() {
-      let resp;
-      let calendarId;
+    async saveCustomSchedule() {
       let payload = {} as any
-   
+
       if(this.days.length === 1) {
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         const dailyStartTime = DateTime.fromISO(this.selectedTimesForWeek['DailyStartTime'], {setZone: true}).toFormat('HH:mm:ss')
@@ -213,6 +189,31 @@ export default defineComponent({
         showToast(translate("Please check start time and end time entries. End time cannot be less than start time."))
         return;
       }
+
+      if(this.facilityCalendar?.calendarId) {
+        try {
+          const resp = await FacilityService.removeFacilityCalendar({
+            facilityId: this.facilityId,
+            calendarId: this.facilityCalendar.calendarId,
+            facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
+            fromDate: this.facilityCalendar.fromDate
+          })
+
+          if(!hasError(resp)) {
+            await this.addCustomSchedule(payload)
+          } else {
+            throw resp.data;
+          }
+        } catch(err) {
+          logger.error(err)
+        }
+      } else {
+        await this.addCustomSchedule(payload)
+      }
+    },
+    async addCustomSchedule(payload: any) {
+      let resp;
+      let calendarId;
 
       try {
         resp = await FacilityService.createFacilityCalendar({ ...payload, description: this.selectedTimesForWeek.description})
