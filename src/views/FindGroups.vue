@@ -20,7 +20,9 @@
                 <h1>{{ group.facilityGroupName }}</h1>
                 <p>{{ group.facilityGroupId }}</p>
               </ion-label>
-              <ion-icon :icon="ellipsisVerticalOutline" slot="end"/>
+              <ion-button @click="openFacilityGroupActionsPopover($event, group)" fill="clear" color="medium">
+                <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
+              </ion-button>
             </ion-item>
             <ion-item>
               <ion-label>{{ translate('Facilities') }}</ion-label>
@@ -74,14 +76,19 @@ import {
   IonTitle,
   IonToolbar,
   modalController,
+  popoverController,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { ellipsisVerticalOutline, addOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
-import { customSort } from '@/utils';
+import { customSort, showToast } from '@/utils';
 import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
+import FacilityGroupActionsPopover from '@/components/FacilityGroupActionsPopover.vue';
+import { FacilityService } from '@/services/FacilityService';
+import { hasError } from '@/adapter';
+import logger from '@/logger';
 
 export default defineComponent({
   name: 'FindGroups',
@@ -143,6 +150,44 @@ export default defineComponent({
       })
 
       createVirtualFacility.present()
+    },
+    async openFacilityGroupActionsPopover(event: Event, group: any) {
+      const facilityGroupActionsPopover = await popoverController.create({
+        component: FacilityGroupActionsPopover,
+        event,
+        showBackdrop: false,
+        componentProps: { group }
+      });
+
+      facilityGroupActionsPopover.present();
+
+      const result = await facilityGroupActionsPopover.onDidDismiss();
+      if (result.data && result.data !== group.facilityGroupName) {
+        try {
+          const resp = await FacilityService.updateFacilityGroup({
+            facilityGroupId: group.facilityGroupId,
+            facilityGroupName: result.data
+          })
+
+          if (!hasError(resp)) {
+            showToast(translate('Facility group renamed.'))
+            const updatedGroups = JSON.parse(JSON.stringify(this.groups))
+              .map((groupData: any) => {
+                if (group.facilityGroupId === groupData.facilityGroupId) {
+                  groupData.facilityGroupName = result.data
+                }
+
+                return groupData
+              })
+            this.store.dispatch('facility/updateFacilityGroups', updatedGroups)
+          } else {
+            throw resp.data
+          }
+        } catch (error) {
+          showToast(translate('Failed to rename facility group.'))
+          logger.error('Failed to rename facility group.', error)
+        }
+      }
     },
   },
   setup() {

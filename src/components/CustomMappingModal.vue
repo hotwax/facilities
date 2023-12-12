@@ -22,29 +22,31 @@
         <p>{{ currentFacility.facilityName }}</p>
       </ion-item>
     </ion-list>
+    <form @keyup.enter="saveMapping" @submit.prevent>
+      <ion-list>
+        <ion-list-header>{{ translate("Custom mapping") }}</ion-list-header>
+        <ion-item>
+          <ion-label>{{ translate("Mapping ID") }}</ion-label>
+          <ion-input v-model="mappingId" placeholder="Mapping ID" />
+        </ion-item>
+        <ion-item>
+          <ion-label>{{ translate("Mapping Name") }}</ion-label>
+          <ion-input v-model="mappingName" placeholder="Mapping name" />
+        </ion-item>
+        <ion-item>
+          <ion-label>{{ translate("Identification") }}</ion-label>
+          <ion-input v-model="mappingValue" placeholder="Mapping Value" />
+        </ion-item>
+      </ion-list>
 
-    <ion-list>
-      <ion-list-header>{{ translate("Custom mapping") }}</ion-list-header>
-      <ion-item>
-        <ion-label>{{ translate("Mapping ID") }}</ion-label>
-        <ion-input v-model="mappingId" placeholder="Mapping ID" />
-      </ion-item>
-      <ion-item>
-        <ion-label>{{ translate("Mapping Name") }}</ion-label>
-        <ion-input v-model="mappingName" placeholder="Mapping name" />
-      </ion-item>
-      <ion-item>
-        <ion-label>{{ translate("Identification") }}</ion-label>
-        <ion-input v-model="mappingValue" placeholder="Mapping Value" />
-      </ion-item>
-    </ion-list>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="saveMapping">
+          <ion-icon :icon="saveOutline" />
+        </ion-fab-button>
+      </ion-fab>
+    </form>
   </ion-content>
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveMapping">
-      <ion-icon :icon="saveOutline" />
-    </ion-fab-button>
-  </ion-fab>
-</template>
+  </template>
 
 <script lang="ts">
 import {

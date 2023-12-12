@@ -11,7 +11,7 @@
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="saveMapping">
+    <form @keyup.enter="type && type === 'update' ? updateMapping() : saveMapping()" @submit.prevent>
       <ion-list>
         <ion-list-header>{{ translate("Facility details") }}</ion-list-header>
         <ion-item>
@@ -26,7 +26,7 @@
 
       <ion-list>
         <ion-list-header>{{ translate('Shopify location') }}</ion-list-header>
-        <ion-item>
+        <ion-item @keyup.enter.stop>
           <ion-label>{{ translate("Shopify store") }}</ion-label>
           <ion-label slot="end" v-if="type && type === 'update'">{{ shopifyFacilityMapping.shopId }}</ion-label>
           <ion-select v-else interface="popover" :placeholder="translate('Select')" v-model="shopId">

@@ -31,7 +31,7 @@
             </ion-item>
             <ion-item lines="full">
               <ion-label>{{ translate('Next brokering') }}</ion-label>
-              <ion-note slot="end">{{ facility?.brokeringJob?.runTime ? getDateTime(facility?.brokeringJob?.runTime) : '-' }}</ion-note>
+              <ion-note slot="end">{{ facility?.brokeringJob?.runTime ? getDateTime(facility?.brokeringJob?.runTime) : translate("Not scheduled") }}</ion-note>
             </ion-item>
           </template>
           <ion-item v-else>

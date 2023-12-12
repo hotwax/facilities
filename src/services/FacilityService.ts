@@ -544,7 +544,7 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
     data: params
   })))
 
-  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response.data.count)
+  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response?.data?.count)
   if (hasFailedResponse) {
     logger.error('Failed to fetch facility count for some groups')
   }
@@ -568,6 +568,22 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
   }, {})
 }
 
+const updateFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+const deleteFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/deleteFacilityGroup",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
@@ -582,6 +598,7 @@ export const FacilityService = {
   createFacilityPostalAddress,
   createProductStoreFacility,
   createShopifyShopLocation,
+  deleteFacilityGroup,
   deleteFacilityLocation,
   deleteShopifyShopLocation,
   fetchArchivedFacilities,
@@ -606,6 +623,7 @@ export const FacilityService = {
   removeFacilityCalendar,
   removePartyFromFacility,
   updateFacility,
+  updateFacilityGroup,
   updateFacilityIdentification,
   updateFacilityLocation,
   updateFacilityPostalAddress,
