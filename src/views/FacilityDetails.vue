@@ -54,16 +54,22 @@
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
                 <ion-item lines="full">
-                  <ion-label>{{ translate("Facility zipcode") }}</ion-label>
-                  <ion-label><ion-text :color="isRegenerationRequired ? 'danger' : ''" slot="end">{{ postalAddress.postalCode }}</ion-text></ion-label>
+                  <ion-label>
+                    <p>{{ translate("Facility zipcode") }}</p>
+                  </ion-label>
+                  <ion-label slot="end"><ion-text :color="isRegenerationRequired ? 'danger' : ''">{{ postalAddress.postalCode }}</ion-text></ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ translate("Latitude") }}</ion-label>
-                  <p>{{ postalAddress.latitude }}</p>
+                  <ion-label>
+                    <p>{{ translate("Latitude") }}</p>
+                  </ion-label>
+                  <ion-label slot="end">{{ postalAddress.latitude }}</ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label><p>{{ translate("Longitude") }}</p></ion-label>
-                  <ion-label>{{ postalAddress.longitude }}</ion-label>
+                  <ion-label>
+                    <p>{{ translate("Longitude") }}</p>
+                  </ion-label>
+                  <ion-label slot="end">{{ postalAddress.longitude }}</ion-label>
                 </ion-item>
                 <div class="actions">
                   <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
