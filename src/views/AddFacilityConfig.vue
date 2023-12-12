@@ -13,7 +13,7 @@
             <ion-card-title>
               {{ translate("Product Stores") }}
             </ion-card-title>
-            <ion-button @click="selectProductStore()" fill="clear">
+            <ion-button v-if="selectedProductStores.length" @click="selectProductStore()" fill="clear">
               <ion-icon :icon="addCircleOutline" slot="start" />
               {{ translate("Add") }}
             </ion-button>
@@ -50,9 +50,10 @@
               </ion-item>
             </ion-list>
           </template>
-          <div v-else class="empty-state">
-            <p>{{ translate("No product stores added.") }}</p>
-          </div>
+          <ion-button v-else expand="block" fill="outline" @click="selectProductStore()">
+            {{ translate("Add") }}
+            <ion-icon slot="end" :icon="addCircleOutline" />
+          </ion-button>
         </ion-card>
 
         <ion-card>
