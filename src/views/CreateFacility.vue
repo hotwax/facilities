@@ -191,6 +191,7 @@ export default defineComponent({
       } catch (error) {
         logger.error(error)
         showToast(translate('Failed to create facility.'))
+        return;
       }
 
       // creating default facility location

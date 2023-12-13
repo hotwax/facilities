@@ -77,6 +77,7 @@ import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "AddLocationModal",
@@ -138,6 +139,8 @@ export default defineComponent({
         ...this.locationInfo
       }
 
+      emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.createFacilityLocation(params)
 
@@ -151,6 +154,8 @@ export default defineComponent({
         showToast(translate('Failed to create facility location'))
         logger.error('Failed to create facility location', err)
       }
+
+      emitter.emit('dismissLoader')
     },
 
     async updateFacilityLocation() {
@@ -158,6 +163,8 @@ export default defineComponent({
         facilityId: this.current.facilityId,
         ...this.locationInfo
       }
+
+      emitter.emit('presentLoader')
 
       try {
         const resp = await FacilityService.updateFacilityLocation(params)
@@ -172,6 +179,8 @@ export default defineComponent({
         showToast(translate('Failed to update facility location'))
         logger.error('Failed to update facility location', err)
       }
+
+      emitter.emit('dismissLoader')
     },
   },
   setup() {

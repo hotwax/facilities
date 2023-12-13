@@ -32,6 +32,7 @@ import { DateTime } from "luxon";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "ProductStorePopover",
@@ -54,6 +55,8 @@ export default defineComponent({
   },
   methods: {
     async removeStoreFromFacility() {
+      emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.updateProductStoreFacility({
           facilityId: this.facilityId,
@@ -84,6 +87,7 @@ export default defineComponent({
         showToast(translate('Store unlink failed.'))
       }
       popoverController.dismiss()
+      emitter.emit('dismissLoader')
     },
     async updatePrimaryStore(shopifyShopId = '') {
       try {
@@ -102,6 +106,8 @@ export default defineComponent({
       }
     },
     async togglePrimary() {
+      emitter.emit('presentLoader')
+
       const productStoreId = this.currentProductStore.productStoreId
       let shopifyShopId = this.shopifyShopIdForProductStore(productStoreId)
 
@@ -119,10 +125,12 @@ export default defineComponent({
       if(this.current.primaryFacilityGroupId === shopifyShopId) {
         await this.updatePrimaryStore();
         popoverController.dismiss()
+        emitter.emit('dismissLoader')
         return;
       }
 
       // creating for facility group, as group is required when updating primaryFacilityGroupId on facility
+
       let facilityGroupId;
 
       // Fetching the facility group corresponding to the shopifyShopId.
@@ -142,6 +150,7 @@ export default defineComponent({
         showToast(translate('Failed to make product store primary due to missing group'))
       }
       popoverController.dismiss()
+      emitter.emit('dismissLoader')
     },
     async fetchFacilityGroup(shopifyShopId: string) {
       let facilityGroupId;
