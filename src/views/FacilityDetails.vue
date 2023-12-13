@@ -137,7 +137,7 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button v-if="facilityProductStores.length" @click="selectProductStores()" fill="clear">
+              <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
                 {{ translate("Add") }}
               </ion-button>
@@ -149,7 +149,7 @@
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
-            <ion-button v-if="!facilityProductStores.length" expand="block" fill="outline" @click="selectProductStores()">
+            <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
               {{ translate("Add") }}
               <ion-icon slot="end" :icon="addCircleOutline" />
             </ion-button>
