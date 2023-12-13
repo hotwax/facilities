@@ -88,7 +88,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "entityName": "FacilityAndProductStore",
       "noConditionFind": "Y",
       "distinct": "Y",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId"],
+      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId", 'primaryFacilityGroupId'],
       ...payload
     }
 
@@ -173,7 +173,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityAndProductStore",
       noConditionFind: "Y",
       distinct: "Y",
-      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId"],
+      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId", 'primaryFacilityGroupId'],
       viewSize: 1
     }
 
@@ -346,6 +346,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       if(!hasError(resp) && resp.data.count) {
         productStores = resp.data.docs
+        this.dispatch('util/fetchShopifyShopForProductStores', resp.data.docs.map((productStore: any) => productStore.productStoreId))
       } else {
         throw resp.data
       }

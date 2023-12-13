@@ -310,31 +310,32 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_STATES_UPDATED, { countryGeoId: payload.geoId, states })
   },
 
-  async fetchShopifyShopForProductStore({ commit }, productStoreId) {
-    let shopifyShop = {} as any
+  async fetchShopifyShopForProductStores({ commit }, productStoreIds) {
+    let shopifyShops = [] as any
 
     const params = {
       inputFields: {
-        productStoreId
+        productStoreId: productStoreIds,
+        productStoreId_op: 'in'
       },
       entityName: 'ShopifyShop',
       fieldList: ['productStoreId', 'shopifyShopId'],
       noConditionFind: 'Y',
-      viewSize: 1,
+      viewSize: productStoreIds.length,
     }
 
     try {
       const resp = await UtilService.fetchShopifyShop(params)
       if (!hasError(resp) && resp.data.count > 0) {
-        shopifyShop = resp.data.docs[0]
+        shopifyShops = resp.data.docs
       } else {
         throw resp.data
       }
     } catch (error) {
       logger.error(error)
     }
-    commit(types.UTIL_SHOPIFY_SHOP_UPDATED, shopifyShop)
-    return shopifyShop.shopifyShopId
+    commit(types.UTIL_SHOPIFY_SHOP_UPDATED, shopifyShops)
+    return shopifyShops[0].shopifyShopId
   },
 
   clearUtilState({ commit }) {
@@ -344,7 +345,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_STATES_UPDATED, {})
     commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
-    commit(types.UTIL_SHOPIFY_SHOP_UPDATED, {})
+    commit(types.UTIL_SHOPIFY_SHOP_UPDATED, [])
   },
 }
 

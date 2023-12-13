@@ -247,14 +247,6 @@ const createProductStoreFacility = async (payload: any): Promise <any> => {
   });
 }
 
-const fetchFacilityPrimaryMember = async (payload: any): Promise <any> => {
-  return api({
-    url: "performFind",
-    method: "post",
-    data: payload
-  });
-}
-
 const updateFacility = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacility",
@@ -613,7 +605,6 @@ export const FacilityService = {
   fetchFacilityGroupInformation,
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
-  fetchFacilityPrimaryMember,
   fetchJobData,
   fetchOrderCountsByFacility,
   getFacilityProductStores,

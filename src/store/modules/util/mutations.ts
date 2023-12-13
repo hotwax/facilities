@@ -37,7 +37,9 @@ const mutations: MutationTree<UtilState> = {
     state.states[payload.countryGeoId] = payload.states
   },
   [types.UTIL_SHOPIFY_SHOP_UPDATED](state, payload) {
-    state.shopifyShopForProductStore[payload.productStoreId] = payload.shopifyShopId
+    payload.map((shopifyShop: any) => {
+      state.shopifyShopForProductStore[shopifyShop.productStoreId] = shopifyShop.shopifyShopId
+    })
   }
 }
 export default mutations;
