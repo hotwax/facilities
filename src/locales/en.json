@@ -124,6 +124,7 @@
   "Failed to update facility location": "Failed to update facility location",
   "Failed to update fulfillment capacity for ": "Failed to update fulfillment capacity for {facilityName}",
   "Failed to update fulfillment setting": "Failed to update fulfillment setting",
+  "Failed to update primary product store": "Failed to update primary product store",
   "Failed to update shopify mapping": "Failed to update shopify mapping",
   "Failed to update some fulfillment settings.": "Failed to update some fulfillment settings.",
   "Failed to update some product stores": "Failed to update some product stores",

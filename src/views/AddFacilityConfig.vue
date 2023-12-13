@@ -24,7 +24,7 @@
                 <ion-label>
                   <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
                 </ion-label>
-                <ion-badge v-if="store.productStoreId === primaryProductStoreId">
+                <ion-badge v-if="store.productStoreId === primaryFacilityGroupId">
                   {{ translate("primary store") }}
                 </ion-badge>
                 <!-- TODO add logic for make primary -->
@@ -36,9 +36,9 @@
                   <ion-content>
                     <ion-list>
                       <ion-list-header>{{ getProductStore(store.productStoreId).storeName }}</ion-list-header>
-                      <ion-item button @click="updatePrimaryProductStoreId(store.productStoreId)">
+                      <ion-item button @click="updatePrimaryFacilityGroupId(store.productStoreId)">
                         {{ translate("Primary") }}
-                        <ion-icon slot="end" :color="store.productStoreId === primaryProductStoreId ? 'warning' : ''" :icon="store.productStoreId === primaryProductStoreId ? star : starOutline" />
+                        <ion-icon slot="end" :color="store.productStoreId === primaryFacilityGroupId ? 'warning' : ''" :icon="store.productStoreId === primaryFacilityGroupId ? star : starOutline" />
                       </ion-item>
                       <ion-item button lines="none" @click="removeProductStore(store.productStoreId)">
                         {{ translate("Unlink") }}
@@ -96,7 +96,7 @@
                     {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
                   </ion-note>
                 </ion-item>
-                </template>
+              </template>
             </template>
           </ion-list>
         </ion-card>
@@ -152,11 +152,10 @@ import {
   starOutline
 } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
-import { showToast } from "@/utils";
+import { isValidPassword, showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { FacilityService } from "@/services/FacilityService";
-import { isValidPassword } from '@/utils'
 import { UserService } from "@/services/UserService";
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue';
 import { DateTime } from "luxon";
@@ -203,7 +202,7 @@ export default defineComponent({
       password: '',
       username: '',
       selectedProductStores: [] as any,
-      primaryProductStoreId: ''
+      primaryFacilityGroupId: ''  // storing productStoreId initially in this, as at this point we don't fetch shopifyShopId
     }
   },
   props: ['facilityId'],
@@ -295,8 +294,9 @@ export default defineComponent({
 
         if (this.selectedProductStores) {
           await this.addProductStoresToFacility()
-          if (this.primaryProductStoreId) {
-            await this.makeProductStorePrimary()
+          if (this.primaryFacilityGroupId) {
+            const shopifyShopId = await this.store.dispatch('util/fetchShopifyShopForProductStores', [this.primaryFacilityGroupId])
+            await this.makeProductStorePrimary(shopifyShopId)
           }
         }
 
@@ -321,12 +321,12 @@ export default defineComponent({
         throw { message: translate('Failed to add some product stores to the facility.') }
       }
     },
-    async fetchFacilityGroup(productStoreId: string) {
+    async fetchFacilityGroup(shopifyShopId: string) {
       let facilityGroupId;
       try {
         const resp = await FacilityService.fetchFacilityGroup({
           inputFields: {
-            facilityGroupId: productStoreId
+            facilityGroupId: shopifyShopId
           },
           entityName: 'FacilityGroup',
           fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
@@ -342,37 +342,27 @@ export default defineComponent({
       }
       return facilityGroupId
     },
-    async makeProductStorePrimary() {
+    async makeProductStorePrimary(shopifyShopId: string) {
+      let resp;
       try {
-        let resp = await FacilityService.fetchFacilityGroup({
-          inputFields: {
-            facilityGroupId: this.primaryProductStoreId
-          },
-          entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-          viewSize: 100
-        })
+        let facilityGroupId = await this.fetchFacilityGroup(shopifyShopId)
 
-        // count check to handle only errors and not 404 (when facility group doesn't exist)
-        // as we create it below in case it doesn't exist
-        if (hasError(resp) && resp?.data?.count !== 0) {
-          throw { message: translate('Failed to make product store as primary.') }
-        }
-
-        let facilityGroupId = resp.data.docs[0].facilityGroupId
         if (!facilityGroupId) {
           resp = await FacilityService.createFacilityGroup({
             facilityGroupTypeId: 'FEATURING',
-            facilityGroupName: this.getProductStore(this.primaryProductStoreId).storeName,
-            facilityGroupId: this.primaryProductStoreId
+            facilityGroupName: this.getProductStore(this.primaryFacilityGroupId).storeName,
+            facilityGroupId: shopifyShopId
           })
-          facilityGroupId = resp.data.facilityGroupId
+
+          if(!hasError(resp)) {
+            facilityGroupId = resp.data.facilityGroupId
+          }
         }
 
         if (facilityGroupId) {
-          resp = await FacilityService.addFacilityToGroup({
+          resp = await FacilityService.updateFacility({
             facilityId: this.facilityId,
-            facilityGroupId: facilityGroupId
+            primaryFacilityGroupId: facilityGroupId
           })
           if (hasError(resp)) {
             throw { message: translate('Failed to make product store as primary.') }
@@ -389,7 +379,6 @@ export default defineComponent({
       const selectProductStoreModal = await modalController.create({
         component: SelectProductStoreModal,
         componentProps: {
-          facilityId: this.facilityId,
           selectedProductStores: this.selectedProductStores
         }
       })
@@ -405,8 +394,8 @@ export default defineComponent({
     removeProductStore(productStoreId: string) {
       this.selectedProductStores = this.selectedProductStores.filter((store: any) => store.productStoreId !== productStoreId)
     },
-    updatePrimaryProductStoreId(productStoreId: string) {
-      productStoreId === this.primaryProductStoreId ? (this.primaryProductStoreId = '') : (this.primaryProductStoreId = productStoreId)
+    updatePrimaryFacilityGroupId(productStoreId: string) {
+      productStoreId === this.primaryFacilityGroupId ? (this.primaryFacilityGroupId = '') : (this.primaryFacilityGroupId = productStoreId)
     },
     validatePassword(event: any) {
       const value = event.target.value;

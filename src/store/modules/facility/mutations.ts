@@ -40,9 +40,6 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_PARTIES_UPDATED](state, payload) {
     state.current.parties = payload
   },
-  [types.FACILITY_PRODUCT_STORES_UPDATED](state, payload) {
-    state.current.productStores = payload
-  },
   [types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED](state, payload) {
     state.virtualFacilities.list = payload.facilities
     state.virtualFacilities.total = payload.total

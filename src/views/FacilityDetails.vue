@@ -137,19 +137,19 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button v-if="facilityProductStores.length" @click="selectProductStores()" fill="clear">
+              <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>{{ getProductStore(store.productStoreId)?.storeName }}</ion-label>
-              <ion-badge slot="end" v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
-            <ion-button v-if="!facilityProductStores.length" expand="block" fill="outline" @click="selectProductStores()">
+            <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
               {{ translate("Add") }}
               <ion-icon slot="end" :icon="addCircleOutline" />
             </ion-button>
@@ -494,7 +494,6 @@ export default defineComponent({
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
-      primaryMember: {} as any,
       isCalendarFound: true,
       selectedCalendarId: '',
       isRegenerationRequired: false,  // keeping value as false, as initially we does not know whether the zipCode is valid or not, if making it true, the UI changes from danger to normal which is not a good experience
@@ -516,6 +515,7 @@ export default defineComponent({
       productStores: 'util/getProductStores',
       postalAddress: 'facility/getPostalAddress',
       userProfile: 'user/getUserProfile',
+      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore'
     })
   },
   props: ["facilityId"],
@@ -524,7 +524,6 @@ export default defineComponent({
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
-    this.fetchFacilityPrimaryMember()
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
@@ -538,16 +537,11 @@ export default defineComponent({
         component: ProductStorePopover,
         componentProps: {
           currentProductStore: store,
-          facilityId: this.facilityId,
-          primaryMember: this.primaryMember
+          facilityId: this.facilityId
         },
         event: ev,
         showBackdrop: false
       });
-
-      popover.onDidDismiss().then(async() => {
-        await this.fetchFacilityPrimaryMember()
-      })
 
       return popover.present()
     },
@@ -665,17 +659,11 @@ export default defineComponent({
           if(hasFailedResponse) {
             showToast(translate("Failed to update some product stores"))
           } else {
-            productStoresToRemove.map((store: any) => {
-              if(store.productStoreId === this.primaryMember.facilityGroupId) {
-                this.revokePrimaryStatusFromStore()
-              }
-            })
             showToast(translate("Product stores updated successfully."))
           }
 
-          // refetching product stores with updated roles and primary Member
+          // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
-          await this.fetchFacilityPrimaryMember()
           emitter.emit('dismissLoader')
         }
       })
@@ -834,18 +822,6 @@ export default defineComponent({
 
       emitter.emit("dismissLoader");
     },
-    async revokePrimaryStatusFromStore() {
-      try {
-        await FacilityService.updateFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": this.primaryMember.facilityGroupId,
-          "fromDate": this.primaryMember.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-      } catch (err) {
-        logger.error(err)
-      }
-    },
     async updateFulfillmentSetting(event: any, facilityGroupId: string) {
       event.stopImmediatePropagation();
 
@@ -910,31 +886,6 @@ export default defineComponent({
       }
 
       emitter.emit('dismissLoader')
-    },
-    async fetchFacilityPrimaryMember() {
-      let primaryMember = {}
-      const payload = {
-        inputFields: {
-          facilityId: this.facilityId,
-          facilityGroupTypeId: 'FEATURING'
-        },
-        entityName: 'FacilityGroupAndMember',
-        filterByDate: 'Y',
-        viewSize: 1,
-      }
-
-      try {
-        const resp = await FacilityService.fetchFacilityPrimaryMember(payload)
-
-        if(!hasError(resp)) {
-          primaryMember = resp.data.docs[0]
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-      this.primaryMember = primaryMember
     },
     async removeFacilityMapping(mapping: any) {
       emitter.emit('presentLoader')
