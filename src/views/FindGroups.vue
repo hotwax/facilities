@@ -12,7 +12,7 @@
         <section class="search">
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
         </section>
-        <main class="groups" v-if="groups.length">
+        <main v-if="groups.length">
           <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
           <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
             <ion-item lines="full">
@@ -211,9 +211,9 @@ export default defineComponent({
   --columns-desktop: 4;
 }
 
-.groups {
+main:has(ion-card) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  align-items: start; 
+  align-items: start;
 }
 </style>
