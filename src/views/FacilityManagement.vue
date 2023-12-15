@@ -179,9 +179,9 @@ export default defineComponent({
     },
     async fetchFacilitiesCountByGroup() {
       try {
-        const groupsFacilityCount = await FacilityService.fetchFacilityCountByGroup(['PICKUP', 'OMS_FULFILLMENT'])
+        const groupsFacilityCount = await FacilityService.fetchFacilityCountByGroup(['PICKUP', 'FAC_GRP'])
         this.pickupFacilitiesCount = groupsFacilityCount['PICKUP'] || 0
-        this.onlineFacilitiesCount = groupsFacilityCount['OMS_FULFILLMENT'] || 0
+        this.onlineFacilitiesCount = groupsFacilityCount['FAC_GRP'] || 0
       } catch (error) {
         logger.error('Failed to fetch facility count for groups', error)
       }
