@@ -100,7 +100,7 @@
                 <ion-radio slot="end" :value="calendar.calendarId"/>
               </ion-item>
             </ion-radio-group>
-            <ion-item button lines="none" v-if="calendars.length > 3"  @click="addOperatingHours">
+            <ion-item button lines="none" v-if="calendars?.length > 3"  @click="addOperatingHours">
               <ion-label> {{ calendars.length - 3 }} {{ translate("Others") }}</ion-label>
               <ion-icon slot="end" :icon="chevronForwardOutline" />
             </ion-item>
@@ -143,18 +143,22 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button @click="selectProductStores()" fill="clear">
+              <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>{{ getProductStore(store.productStoreId)?.storeName }}</ion-label>
-              <ion-badge slot="end" v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
+            <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
           </ion-card>
         </section>
 
@@ -494,7 +498,6 @@ export default defineComponent({
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
-      primaryMember: {} as any,
       isCalendarFound: true,
       selectedCalendarId: '',
       isRegenerationRequired: false,  // keeping value as false, as initially we does not know whether the zipCode is valid or not, if making it true, the UI changes from danger to normal which is not a good experience
@@ -516,6 +519,7 @@ export default defineComponent({
       productStores: 'util/getProductStores',
       postalAddress: 'facility/getPostalAddress',
       userProfile: 'user/getUserProfile',
+      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore'
     })
   },
   props: ["facilityId"],
@@ -524,7 +528,6 @@ export default defineComponent({
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
-    this.fetchFacilityPrimaryMember()
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
@@ -538,16 +541,11 @@ export default defineComponent({
         component: ProductStorePopover,
         componentProps: {
           currentProductStore: store,
-          facilityId: this.facilityId,
-          primaryMember: this.primaryMember
+          facilityId: this.facilityId
         },
         event: ev,
         showBackdrop: false
       });
-
-      popover.onDidDismiss().then(async() => {
-        await this.fetchFacilityPrimaryMember()
-      })
 
       return popover.present()
     },
@@ -570,6 +568,8 @@ export default defineComponent({
       return popover.present()
     },
     async associateCalendarToFacility() {
+      emitter.emit('presentLoader')
+
       let resp;
 
        try {
@@ -590,6 +590,8 @@ export default defineComponent({
         showToast(translate("Failed to associate calendar to the facility."))
         logger.error(err)
       }
+
+      emitter.emit('dismissLoader')
     },
     async openAddressModal() {
       const addressModal = await modalController.create({
@@ -635,6 +637,8 @@ export default defineComponent({
 
       selectProductStoreModal.onDidDismiss().then(async(result: any) => {
         if (result.data && result.data.value) {
+          emitter.emit('presentLoader')
+
           const productStoresToCreate = result.data.value.productStoresToCreate
           const productStoresToRemove = result.data.value.productStoresToRemove
 
@@ -659,17 +663,12 @@ export default defineComponent({
           if(hasFailedResponse) {
             showToast(translate("Failed to update some product stores"))
           } else {
-            productStoresToRemove.map((store: any) => {
-              if(store.productStoreId === this.primaryMember.facilityGroupId) {
-                this.revokePrimaryStatusFromStore()
-              }
-            })
             showToast(translate("Product stores updated successfully."))
           }
 
-          // refetching product stores with updated roles and primary Member
+          // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
-          await this.fetchFacilityPrimaryMember()
+          emitter.emit('dismissLoader')
         }
       })
 
@@ -729,6 +728,8 @@ export default defineComponent({
       return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
     },
     async removePartyFromFacility(party: any) {
+      emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.removePartyFromFacility({
           facilityId: party.facilityId,
@@ -750,6 +751,8 @@ export default defineComponent({
         showToast(translate("Failed to remove party from facility."))
         logger.error(err)
       }
+
+      emitter.emit('dismissLoader')
     },
     async changeOrderLimitPopover(ev: Event) {
       const popover = await popoverController.create({
@@ -763,9 +766,13 @@ export default defineComponent({
       const result = await popover.onDidDismiss();
       // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
       if(result.data != undefined && result.data !== this.current.maximumOrderLimit) {
+        emitter.emit('presentLoader')
+
         await this.updateFacility(result.data, this.current)
         // refetching the facility to update the maximumOrderLimit
         await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId, skipState: true })
+
+        emitter.emit('dismissLoader')
       }
     },
     async updateFacility(maximumOrderLimit: number | string, facility: any) {
@@ -797,8 +804,9 @@ export default defineComponent({
       facilityOrderCountModal.present()
     },
     async addFacilityToGroup(facilityGroupId: string) {
-      let resp;
       emitter.emit("presentLoader");
+
+      let resp;
       try {
         resp = await FacilityService.addFacilityToGroup({
           "facilityId": this.current.facilityId,
@@ -815,19 +823,8 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+
       emitter.emit("dismissLoader");
-    },
-    async revokePrimaryStatusFromStore() {
-      try {
-        await FacilityService.updateFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": this.primaryMember.facilityGroupId,
-          "fromDate": this.primaryMember.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-      } catch (err) {
-        logger.error(err)
-      }
     },
     async updateFulfillmentSetting(event: any, facilityGroupId: string) {
       event.stopImmediatePropagation();
@@ -843,9 +840,10 @@ export default defineComponent({
       }
     },
     async updateFacilityToGroup(facilityGroupId: string) {
+      emitter.emit("presentLoader");
+
       let resp;
 
-      emitter.emit("presentLoader");
       const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
 
       try {
@@ -867,9 +865,12 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+
       emitter.emit("dismissLoader");
     },
     async updateDefaultDaysToShip() {
+      emitter.emit('presentLoader')
+
       try {
         const payload = {
           facilityId: this.current.facilityId,
@@ -887,33 +888,12 @@ export default defineComponent({
         logger.error('Failed to update default days to ship', err)
         showToast(translate('Failed to update default days to ship'))
       }
-    },
-    async fetchFacilityPrimaryMember() {
-      let primaryMember = {}
-      const payload = {
-        inputFields: {
-          facilityId: this.facilityId,
-          facilityGroupTypeId: 'FEATURING'
-        },
-        entityName: 'FacilityGroupAndMember',
-        filterByDate: 'Y',
-        viewSize: 1,
-      }
 
-      try {
-        const resp = await FacilityService.fetchFacilityPrimaryMember(payload)
-
-        if(!hasError(resp)) {
-          primaryMember = resp.data.docs[0]
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-      this.primaryMember = primaryMember
+      emitter.emit('dismissLoader')
     },
     async removeFacilityMapping(mapping: any) {
+      emitter.emit('presentLoader')
+
       try {
         const payload = {
           facilityId: this.current.facilityId,
@@ -934,8 +914,12 @@ export default defineComponent({
         logger.error('Failed to remove facility mapping', err)
         showToast(translate('Failed to remove facility mapping'))
       }
+
+      emitter.emit('dismissLoader')
     },
     async removeFacilityExternalID() {
+      emitter.emit('presentLoader')
+
       try {
         const payload = {
           facilityId: this.current.facilityId,
@@ -955,6 +939,8 @@ export default defineComponent({
         logger.error('Failed to remove external id', err)
         showToast(translate('Failed to remove external id'))
       }
+
+      emitter.emit('dismissLoader')
     },
     async removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
       try {
@@ -1046,6 +1032,8 @@ export default defineComponent({
           text: translate('Apply'),
           handler: async (data: any) => {
             if(data.facilityName) {
+              emitter.emit('presentLoader')
+
               try {
                 const resp = await FacilityService.updateFacility({
                   facilityId: this.facilityId,
@@ -1062,6 +1050,8 @@ export default defineComponent({
                 showToast(translate('Failed to rename facility.'))
                 logger.error('Failed to rename facility.', error)
               }
+
+              emitter.emit('dismissLoader')
             }
           }
         }]

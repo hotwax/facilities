@@ -88,7 +88,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "entityName": "FacilityAndProductStore",
       "noConditionFind": "Y",
       "distinct": "Y",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId"],
+      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId", 'primaryFacilityGroupId'],
       ...payload
     }
 
@@ -164,8 +164,6 @@ const actions: ActionTree<FacilityState, RootState> = {
       return;
     }
 
-    emitter.emit("presentLoader");
-
     const params = {
       inputFields: {
         facilityId: payload.facilityId
@@ -173,7 +171,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityAndProductStore",
       noConditionFind: "Y",
       distinct: "Y",
-      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId"],
+      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId", 'primaryFacilityGroupId'],
       viewSize: 1
     }
 
@@ -214,8 +212,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error(error)
     }
 
-    emitter.emit("dismissLoader");
-    commit(types.FACILITY_CURRENT_UPDATED, facility);
+    commit(types.FACILITY_CURRENT_UPDATED, { ...state.current, ...facility });
   },
 
   updateCurrentFacility({ commit }, facility) {
@@ -346,6 +343,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       if(!hasError(resp) && resp.data.count) {
         productStores = resp.data.docs
+        this.dispatch('util/fetchShopifyShopForProductStores', resp.data.docs.map((productStore: any) => productStore.productStoreId))
       } else {
         throw resp.data
       }

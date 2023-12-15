@@ -16,7 +16,8 @@ const utilModule: Module<UtilState, RootState> = {
     locationTypes: {},
     externalMappingTypes: {},
     countries: [],
-    states: {}
+    states: {},
+    shopifyShopForProductStore: {}
   },
   getters,
   actions,
