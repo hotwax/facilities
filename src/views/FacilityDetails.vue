@@ -8,15 +8,36 @@
     </ion-header>
     <ion-content>
       <main v-if="current?.facilityId">
-        <ion-item lines="none" class="ion-margin-top">
-          <ion-label>
-            <h1>
-              {{ current.facilityName }}
-              <ion-icon :icon="pencilOutline" @click="renameFacility()" />
-            </h1>
-            <p>{{ current.facilityId }}</p>
-          </ion-label>
-        </ion-item>
+        <div class="facility-info">
+          <ion-card class="facility-info facility-details">
+            <ion-item lines="none" class="ion-margin-top">
+              <ion-label>
+                <p class="overline">{{ current.facilityId }}</p>
+                <h1>{{ current.facilityName }}</h1>
+              </ion-label>
+              <ion-button @click="renameFacility()" fill="outline">{{ translate('Edit') }}</ion-button>
+            </ion-item>
+
+            <div class="ion-margin-top">
+              <ion-item>
+                <ion-icon :icon="bookmarkOutline" slot="start"/>
+                <ion-label>{{ translate('Facility Type') }}</ion-label>
+                <ion-select interface="popover" v-model="parentFacilityTypeId" @ionChange="getFacilityTypesByParentTypeId()">
+                  <ion-select-option value="PHYSICAL_STORE">{{ translate('Physical Store') }}</ion-select-option>
+                  <ion-select-option value="DISTRIBUTION_CENTER">{{ translate('Distribution Center') }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+
+              <ion-item lines="none" class="ion-margin-bottom">
+                <ion-icon :icon="bookmarksOutline" slot="start"/>
+                <ion-label>{{ translate('Facility SubType') }}</ion-label>
+                <ion-select interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
+                  <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIdOptions" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+            </div>
+          </ion-card>
+        </div>
 
         <section>
           <div>
@@ -412,6 +433,8 @@ import {
   IonRadioGroup,
   IonSegment,
   IonSegmentButton,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToggle,
@@ -423,6 +446,8 @@ import {
 import { 
   addCircleOutline,
   addOutline,
+  bookmarkOutline,
+  bookmarksOutline,
   closeCircleOutline,
   closeOutline,
   chevronForwardOutline,
@@ -484,6 +509,8 @@ export default defineComponent({
     IonRadioGroup,
     IonSegment,
     IonSegmentButton,
+    IonSelect,
+    IonSelectOption,
     IonText,
     IonTitle,
     IonToggle,
@@ -498,7 +525,10 @@ export default defineComponent({
       selectedCalendarId: '',
       isRegenerationRequired: false,  // keeping value as false, as initially we does not know whether the zipCode is valid or not, if making it true, the UI changes from danger to normal which is not a good experience
       days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-      externalId: ''
+      externalId: '',
+      facilityTypeId: '',
+      parentFacilityTypeId: '',
+      facilityTypeIdOptions: {} as any
     }
   },
   computed: {
@@ -515,15 +545,30 @@ export default defineComponent({
       productStores: 'util/getProductStores',
       postalAddress: 'facility/getPostalAddress',
       userProfile: 'user/getUserProfile',
-      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore'
+      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
+      facilityTypes: "util/getFacilityTypes"
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
-    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
+    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles'), this.store.dispatch('util/fetchFacilityTypes', {
+      parentTypeId: 'VIRTUAL_FACILITY',
+      parentTypeId_op: 'notEqual',
+      facilityTypeId: 'VIRTUAL_FACILITY',
+      facilityTypeId_op: 'notEqual'
+    })])
     await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
+    this.parentFacilityTypeId = this.current.parentFacilityTypeId
+    this.facilityTypeId = this.current.facilityTypeId
+    // not calling the method (getFacilityTypesByParentTypeId) here, as the method will be called on ionChange of parentType
+    this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+      if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
+        facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
+      }
+      return facilityTypesByParentTypeId
+    }, {}) : this.facilityTypes
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
@@ -1054,6 +1099,50 @@ export default defineComponent({
       })
 
       await alert.present()
+    },
+    getFacilityTypesByParentTypeId() {
+      this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+        if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
+          facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
+        }
+        return facilityTypesByParentTypeId
+      }, {}) : this.facilityTypes
+
+      // added this check to stop the programatic execution of this flow on initial load
+      if(this.current.parentFacilityTypeId === this.parentFacilityTypeId) {
+        return;
+      }
+      // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
+      // as default elements within the list. These elements may appear at any index within the list structure.
+      // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
+      this.facilityTypeId = this.facilityTypeIdOptions['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIdOptions['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIdOptions)[0]
+    },
+    async updateFacilityType() {
+      // Not updating facility when current selected type and facilityType are same, as the value of facilityTypeId
+      // gets changed programatically on initial load and thus calls this method hence this check is required
+      if(this.current.facilityTypeId === this.facilityTypeId) {
+        return;
+      }
+
+      try {
+        const resp = await FacilityService.updateFacility({
+          facilityId: this.facilityId,
+          facilityTypeId: this.facilityTypeId
+        })
+
+        if (!hasError(resp)) {
+          showToast(translate("Facility type updated"))
+          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityTypeId: this.facilityTypeId, parentFacilityTypeId: this.parentFacilityTypeId })
+        } else {
+          throw resp.data
+        }
+      } catch (error) {
+        // if api fails then revert the type selection, and also revert the parentTypeSelection
+        this.parentFacilityTypeId = this.current.parentFacilityTypeId
+        this.facilityTypeId = this.current.facilityTypeId
+        showToast(translate('Failed to update facility type.'))
+        logger.error('Failed to update facility type.', error)
+      }
     }
   },
   setup() {
@@ -1062,6 +1151,8 @@ export default defineComponent({
     return {
       addCircleOutline,
       addOutline,
+      bookmarkOutline,
+      bookmarksOutline,
       closeCircleOutline,
       closeOutline,
       chevronForwardOutline,
@@ -1088,6 +1179,10 @@ section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start;
+}
+
+.facility-details {
+  grid-column: span 2;
 }
 
 ion-modal.date-time-modal {
@@ -1121,7 +1216,7 @@ ion-segment {
   --columns-desktop: 5;
 }
 
-.external-mappings {
+.external-mappings, .facility-info {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start; 
