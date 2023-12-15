@@ -285,7 +285,7 @@
               </ion-card>
 
               <!-- Hardcoded card to shop facility externalId, as externalID is not available as an identification -->
-              <ion-card>
+              <ion-card v-if="current.externalId">
                 <ion-card-header>
                   <ion-card-title>
                     {{ translate('Facility External ID') }}
@@ -293,7 +293,7 @@
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>{{ translate('Identification') }}</ion-label>
-                  <ion-label slot="end">{{ current.externalId ? current.externalId : '-' }}</ion-label>
+                  <ion-label slot="end">{{ current.externalId }}</ion-label>
                 </ion-item>
                 <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
                 and we can't focus two elements at the same time -->

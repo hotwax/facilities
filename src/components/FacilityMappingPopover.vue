@@ -5,6 +5,9 @@
       <ion-item @click="createShopifyFacilityMappingModal" button>
         {{ translate('Shopify') }}
       </ion-item>
+      <ion-item @click="createFacilityExternalId" button>
+        {{ translate('External ID') }}
+      </ion-item>
       <ion-item v-for="(desc, type) in externalMappingTypes" :key="type" @click="addMappingModal(type)" button>
         {{ desc }}
       </ion-item>
@@ -30,6 +33,7 @@ import CustomMappingModal from "./CustomMappingModal.vue";
 import FacilityMappingModal from "./FacilityMappingModal.vue";
 import { mapGetters } from "vuex";
 import FacilityShopifyMappingModal from "./FacilityShopifyMappingModal.vue";
+import FacilityExternalIdModal from './FacilityExternalIdModal.vue';
 
 export default defineComponent({
   name: "FacilityMappingPopover",
@@ -69,7 +73,15 @@ export default defineComponent({
   
       await popoverController.dismiss()
       facilityShopifyMappingModal.present()
-    }
+    },
+    async createFacilityExternalId() {
+      const facilityExternalIdModal = await modalController.create({
+        component: FacilityExternalIdModal
+      })
+
+      await popoverController.dismiss()
+      facilityExternalIdModal.present()
+    },
   },
   setup() {
     return {
