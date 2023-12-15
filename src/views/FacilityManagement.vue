@@ -15,11 +15,11 @@
           </ion-item>
           <ion-item>
             <ion-label>{{ translate('Stores') }}</ion-label>
-            <ion-note slot="end">{{ physicalStoreFacilitiesCount }}</ion-note>
+            <ion-note slot="end">{{ physicalStoresCount }}</ion-note>
           </ion-item>
           <ion-item>
             <ion-label>{{ translate('Warehouses') }}</ion-label>
-            <ion-note slot="end">{{ warehouseFacilitiesCount }}</ion-note>
+            <ion-note slot="end">{{ warehouseCount }}</ion-note>
           </ion-item>
         </ion-card>
 
@@ -120,8 +120,8 @@ export default defineComponent({
   },
   data() {
     return {
-      warehouseFacilitiesCount: 0,
-      physicalStoreFacilitiesCount: 0,
+      warehouseCount: 0,
+      physicalStoresCount: 0,
       brokeringQueueOrderCount: 0,
       backorderParkingOrderCount: 0,
       pickupFacilitiesCount: 0,
@@ -129,9 +129,7 @@ export default defineComponent({
     }
   },
   async ionViewWillEnter() {
-    await this.fetchFacilityTypeCount()
-    await this.fetchParkingsOrderCount()
-    await this.fetchGroupsFacilitiesCount()
+    await Promise.all([this.fetchFacilityTypeCount(), this.fetchOrderCountByParking(), this.fetchFacilitiesCountByGroup()])
   },
   methods: {
     async fetchFacilityTypeCount() {
@@ -160,20 +158,17 @@ export default defineComponent({
           FacilityService.fetchFacilities(warehouseTypePayload),
           FacilityService.fetchFacilities(physicalStoreTypePayload)
         ])
-        
-        const failedResponse = responses.find((response: any) => hasError(response.value) && !response?.data?.count)
-        if (failedResponse) {
-          throw failedResponse
-        }
 
-        const [warehouseFacilitiesResponse, physicalStoreFacilitiesResponse] = responses.map((response: any) => response.value);
-        this.warehouseFacilitiesCount = warehouseFacilitiesResponse.data.count
-        this.physicalStoreFacilitiesCount = physicalStoreFacilitiesResponse.data.count
+        // Not checking for error in responses as in case of error we simply will not have 'count' property in response and we will display 0 as the count
+        // Also, if checking for error then we need to check both the apis separately as there may be a case in which only one api fails
+        const [warehousesResponse, physicalStoresResponse] = responses.map((response: any) => response.value);
+        this.warehouseCount = warehousesResponse.data.count || 0
+        this.physicalStoresCount = physicalStoresResponse.data.count || 0
       } catch (error) {
         logger.error('Failed to fetch facility types count', error)
       }
     },
-    async fetchParkingsOrderCount() {
+    async fetchOrderCountByParking() {
       try {
         const parkingsOrderCount = await FacilityService.fetchOrderCountsByFacility(['_NA_', 'BACKORDER_PARKING'])
         this.brokeringQueueOrderCount = parkingsOrderCount['_NA_'] || 0
@@ -182,13 +177,13 @@ export default defineComponent({
         logger.error('Failed to fetch facility types count', error)
       }
     },
-    async fetchGroupsFacilitiesCount() {
+    async fetchFacilitiesCountByGroup() {
       try {
         const groupsFacilityCount = await FacilityService.fetchFacilityCountByGroup(['PICKUP', 'OMS_FULFILLMENT'])
         this.pickupFacilitiesCount = groupsFacilityCount['PICKUP'] || 0
         this.onlineFacilitiesCount = groupsFacilityCount['OMS_FULFILLMENT'] || 0
       } catch (error) {
-        logger.error('Failed to fetch facility types count', error)
+        logger.error('Failed to fetch facility count for groups', error)
       }
     },
   },
