@@ -22,7 +22,7 @@
               <ion-item>
                 <ion-icon :icon="bookmarkOutline" slot="start"/>
                 <ion-label>{{ translate('Facility Type') }}</ion-label>
-                <ion-select interface="popover" v-model="current.parentFacilityTypeId" @ionChange="getFacilityTypesByParentTypeId()">
+                <ion-select interface="popover" v-model="parentFacilityTypeId" @ionChange="getFacilityTypesByParentTypeId()">
                   <ion-select-option value="PHYSICAL_STORE">{{ translate('Physical Store') }}</ion-select-option>
                   <ion-select-option value="DISTRIBUTION_CENTER">{{ translate('Distribution Center') }}</ion-select-option>
                 </ion-select>
@@ -32,7 +32,7 @@
                 <ion-icon :icon="bookmarksOutline" slot="start"/>
                 <ion-label>{{ translate('Facility SubType') }}</ion-label>
                 <ion-select interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
-                  <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIds" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
+                  <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIdOptions" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
                 </ion-select>
               </ion-item>
             </div>
@@ -527,7 +527,8 @@ export default defineComponent({
       days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
       externalId: '',
       facilityTypeId: '',
-      facilityTypeIds: {} as any
+      parentFacilityTypeId: '',
+      facilityTypeIdOptions: {} as any
     }
   },
   computed: {
@@ -550,24 +551,24 @@ export default defineComponent({
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
-    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
-    await this.store.dispatch('util/fetchFacilityTypes', {
+    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles'), this.store.dispatch('util/fetchFacilityTypes', {
       parentTypeId: 'VIRTUAL_FACILITY',
       parentTypeId_op: 'notEqual',
       facilityTypeId: 'VIRTUAL_FACILITY',
       facilityTypeId_op: 'notEqual'
-    })
+    })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
+    this.parentFacilityTypeId = this.current.parentFacilityTypeId
+    this.facilityTypeId = this.current.facilityTypeId
     // not calling the method (getFacilityTypesByParentTypeId) here, as the method will be called on ionChange of parentType
-    this.facilityTypeIds = this.current.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
-      if (this.facilityTypes[facilityTypeId].parentTypeId === this.current.parentFacilityTypeId) {
+    this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+      if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
         facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
       }
       return facilityTypesByParentTypeId
     }, {}) : this.facilityTypes
-    this.facilityTypeId = this.current.facilityTypeId
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
@@ -1100,17 +1101,21 @@ export default defineComponent({
       await alert.present()
     },
     getFacilityTypesByParentTypeId() {
-      this.facilityTypeIds = this.current.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
-        if (this.facilityTypes[facilityTypeId].parentTypeId === this.current.parentFacilityTypeId) {
+      this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+        if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
           facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
         }
         return facilityTypesByParentTypeId
       }, {}) : this.facilityTypes
 
+      // added this check to stop the programatic execution of this flow on initial load
+      if(this.current.parentFacilityTypeId === this.parentFacilityTypeId) {
+        return;
+      }
       // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
       // as default elements within the list. These elements may appear at any index within the list structure.
       // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
-      this.facilityTypeId = this.facilityTypeIds['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIds['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIds)[0]
+      this.facilityTypeId = this.facilityTypeIdOptions['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIdOptions['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIdOptions)[0]
     },
     async updateFacilityType() {
       // Not updating facility when current selected type and facilityType are same, as the value of facilityTypeId
@@ -1127,11 +1132,14 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           showToast(translate("Facility type updated"))
-          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityTypeId: this.facilityTypeId, parentFacilityTypeId: this.current.parentFacilityTypeId })
+          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityTypeId: this.facilityTypeId, parentFacilityTypeId: this.parentFacilityTypeId })
         } else {
           throw resp.data
         }
       } catch (error) {
+        // if api fails then revert the type selection, and also revert the parentTypeSelection
+        this.parentFacilityTypeId = this.current.parentFacilityTypeId
+        this.facilityTypeId = this.current.facilityTypeId
         showToast(translate('Failed to update facility type.'))
         logger.error('Failed to update facility type.', error)
       }
