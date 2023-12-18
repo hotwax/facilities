@@ -1,8 +1,5 @@
 import { api, client, hasError } from '@/adapter';
 import store from '@/store';
-import { showToast } from '@/utils';
-import { translate } from '@hotwax/dxp-components';
-
 
 const login = async (username: string, password: string): Promise <any> => {
   return api({

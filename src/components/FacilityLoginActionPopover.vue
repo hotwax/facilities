@@ -119,6 +119,7 @@ export default defineComponent({
 
       try {
 
+        //Unlinking user from facility will only remove FAC_LOGIN role from facility
         if (data === 'UNLINK') {
           let resp = await FacilityService.removePartyFromFacility({
             facilityId: this.currentFacilityUser.facilityId,
@@ -134,6 +135,7 @@ export default defineComponent({
           }
         }
 
+        //Blocking user will remove all the roles from facility in which the user is associated, also block the userlogin.
         if (data === 'BLOCK') {
           await this.removePartyFromFacilityCompletely({ facilityId: this.currentFacility.facilityId, partyId: this.currentFacilityUser.partyId }) as any;
           const resp = await UserService.updateUserLoginStatus({
@@ -147,6 +149,7 @@ export default defineComponent({
             throw resp.data;
           }
         }
+        //fetching updated facility logins
         await this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.currentFacility?.facilityId })
       } catch (err) {
         showToast(translate("Failed to remove facility login."))
