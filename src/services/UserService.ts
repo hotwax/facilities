@@ -1,5 +1,8 @@
 import { api, client, hasError } from '@/adapter';
 import store from '@/store';
+import { showToast } from '@/utils';
+import { translate } from '@hotwax/dxp-components';
+
 
 const login = async (username: string, password: string): Promise <any> => {
   return api({
@@ -136,7 +139,7 @@ const getUserProfile = async (token: any): Promise<any> => {
   }
 }
 
-const createFacilityUser = async (payload: any): Promise <any> => {
+const createRelationship = async (payload: any): Promise <any> => {
   return api({
     url: "service/createRelationship", 
     method: "post",
@@ -144,20 +147,144 @@ const createFacilityUser = async (payload: any): Promise <any> => {
   });
 }
 
-const addPartyToFacility = async (payload: any): Promise <any> => {
+const createNewUserLogin = async (payload: any): Promise <any> => {
   return api({
-    url: "service/addPartyToFacility", 
+    url: "service/createNewUserLoginAndSetUserPreference", 
     method: "post",
     data: payload
   });
 }
 
+const addUserToSecurityGroup = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/addSecurityGroupToUserLogin", 
+    method: "post",
+    data: payload
+  });
+}
+
+const checkUserLoginId = async (payload: any): Promise<any> => {
+  return api({
+    url: 'performFind',
+    method: 'POST',
+    data: payload
+  })
+}
+
+const isUserLoginIdExists = async(username: string): Promise<any> => {
+  try {
+    const resp = await api({
+      url: 'performFind',
+      method: 'POST',
+      data: {
+        entityName: "UserLogin",
+        inputFields: {
+          userLoginId: username
+        },
+        viewSize: 1,
+        fieldList: ['userLoginId', 'partyId'],
+        distinct: 'Y',
+        noConditionFind: 'Y'
+      }
+    }) as any;
+
+    if (!hasError(resp) && resp.data.docs.length) {
+      return true
+    }
+    return false
+  } catch(err) {
+    return false
+  }
+}
+
+const createRoleType = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/createRoleType", 
+    method: "post",
+    data: payload
+  });
+}
+
+const isRoleTypeExists = async(roleTypeId: string): Promise<any> => {
+  try {
+
+    const resp = await api({
+      url: 'performFind',
+      method: 'POST',
+      data: {
+        entityName: "RoleType",
+        inputFields: {
+          roleTypeId: roleTypeId
+        },
+        viewSize: 1,
+        fieldList: ['roleTypeId'],
+        noConditionFind: 'Y'
+      }
+    }) as any
+    if (!hasError(resp) && resp.data.docs.length) {
+      return true
+    }
+    return false
+  } catch(err) {
+    return false
+  }
+}
+
+const sendResetPasswordEmail = async (payload: any): Promise <any> => {
+  return api({
+    url: "sendResetPasswordMail", 
+    method: "post",
+    data: payload
+  });
+}
+
+const updateUserLoginStatus = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/updateUserLoginStatus", 
+    method: "post",
+    data: payload
+  });
+}
+
+const createUpdatePartyEmailAddress = async (payload: any): Promise <any> => {
+  return api({
+    url: "service/createUpdatePartyEmailAddress", 
+    method: "post",
+    data: payload
+  });
+}
+
+const fetchUserLoginAndPartyDetails = async (payload: any): Promise<any> => {
+  return api({
+    url: 'performFind',
+    method: 'POST',
+    data: payload
+  })
+}
+
+const fetchUserContactDetails = async (payload: any): Promise<any> => {
+  return api({
+    url: 'performFind',
+    method: 'POST',
+    data: payload
+  })
+}
+
 export const UserService = {
-  addPartyToFacility,
+  addUserToSecurityGroup,
+  createRelationship,
+  createNewUserLogin,
+  createRoleType,
+  createUpdatePartyEmailAddress,
+  isRoleTypeExists,
+  isUserLoginIdExists,
   login,
-  createFacilityUser,
   getAvailableTimeZones,
   getUserProfile,
+  getUserPermissions,
+  fetchUserContactDetails,
+  fetchUserLoginAndPartyDetails,
+  sendResetPasswordEmail,
   setUserTimeZone,
-  getUserPermissions
+  updateUserLoginStatus
 }
