@@ -73,7 +73,6 @@ import { translate } from '@hotwax/dxp-components'
 import { isValidEmail, isValidPassword, showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService";
-import { hasError } from "@hotwax/oms-api";
 import emitter from "@/event-bus";
 
 export default defineComponent({
