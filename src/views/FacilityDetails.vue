@@ -237,6 +237,34 @@
               <ion-label>{{ translate("View order count history") }}</ion-label>
             </ion-item>
           </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>
+                {{ `${facilityTypes[current.parentFacilityTypeId]?.description} logins` }}
+              </ion-card-title>
+              <ion-button v-if="current.facilityLogins?.length" @click="createFacilityLoginModal()" fill="clear">
+                <ion-icon :icon="addCircleOutline" slot="end" />
+                {{ translate("Add") }}
+              </ion-button>
+            </ion-card-header>
+            <ion-item v-for="facilityLogin in current.facilityLogins" :key="facilityLogin.userLoginId">
+              <ion-avatar slot="start" v-if="facilityLogin?.partyImageUrl">
+                <Image :src="facilityLogin.partyImageUrl"/>
+              </ion-avatar>
+              <ion-label>
+                {{ facilityLogin.groupName }}
+                <p>{{ facilityLogin.partyId }}</p>
+                <p>{{ facilityLogin.userLoginId }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" color="medium" @click="openFacilityLoginActionPopover($event, facilityLogin)">
+                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+              </ion-button>
+            </ion-item>
+            <ion-button v-if="!current.facilityLogins?.length" expand="block" fill="outline" @click="createFacilityLoginModal()">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
+          </ion-card>
         </section>
 
         <div class="segments">
@@ -483,6 +511,9 @@ import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
+import FacilityLoginActionPopover from '@/components/FacilityLoginActionPopover.vue'
+import CreateFacilityLoginModal from '@/components/CreateFacilityLoginModal.vue'
+import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
 
 export default defineComponent({
@@ -515,6 +546,7 @@ export default defineComponent({
     IonTitle,
     IonToggle,
     IonToolbar,
+    Image
   },
   data() {
     return {
@@ -557,7 +589,7 @@ export default defineComponent({
       facilityTypeId: 'VIRTUAL_FACILITY',
       facilityTypeId_op: 'notEqual'
     })])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.parentFacilityTypeId = this.current.parentFacilityTypeId
@@ -1143,7 +1175,23 @@ export default defineComponent({
         showToast(translate('Failed to update facility type.'))
         logger.error('Failed to update facility type.', error)
       }
-    }
+    },
+    async openFacilityLoginActionPopover(ev: Event, facilityUser: any) {
+      const popover = await popoverController.create({
+        component: FacilityLoginActionPopover,
+        componentProps: { currentFacility: this.current, currentFacilityUser: facilityUser, parentFacilityTypeDesc: this.facilityTypes[this.current.parentFacilityTypeId]?.description },
+        event: ev,
+        showBackdrop: false
+      });
+      return popover.present()
+    },
+    async createFacilityLoginModal() {
+      const facilityLoginModal = await modalController.create({
+      component: CreateFacilityLoginModal,
+        componentProps: { currentFacility: this.current, parentFacilityTypeDesc: this.facilityTypes[this.current.parentFacilityTypeId]?.description }
+      })
+      facilityLoginModal.present()
+    },
   },
   setup() {
     const store = useStore();
