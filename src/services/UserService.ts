@@ -163,14 +163,6 @@ const addUserToSecurityGroup = async (payload: any): Promise <any> => {
   });
 }
 
-const checkUserLoginId = async (payload: any): Promise<any> => {
-  return api({
-    url: 'performFind',
-    method: 'POST',
-    data: payload
-  })
-}
-
 const isUserLoginIdExists = async(username: string): Promise<any> => {
   try {
     const resp = await api({
