@@ -20,7 +20,7 @@
                 {{ groupType.facilityGroupTypeId }}
                 <p>{{ groupType.description }}</p>
               </ion-label>
-              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" placeholder="Select" :selectedText="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
+              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" :placeholder="translate('Select')" :selectedText="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="groupId" :key="groupId" v-for="groupId in getAvailableFacilityGroups(groupType.facilityGroups)">
                   {{ getFacilityName(groupId) }}
                 </ion-select-option>
@@ -259,9 +259,9 @@ export default defineComponent({
 
       const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
       if (hasFailedResponse) {
-        showToast(translate("Failed to update some facility group types"))
+        showToast(translate("Failed to associate group with sytem group types."))
       } else {
-        showToast(translate("Facility group types updated successfully."))
+        showToast(translate("Group associated to sytem group types."))
       }
 
       await this.fetchGroups()
