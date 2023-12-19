@@ -8,15 +8,36 @@
     </ion-header>
     <ion-content>
       <main v-if="current?.facilityId">
-        <ion-item lines="none" class="ion-margin-top">
-          <ion-label>
-            <h1>
-              {{ current.facilityName }}
-              <ion-icon :icon="pencilOutline" @click="renameFacility()" />
-            </h1>
-            <p>{{ current.facilityId }}</p>
-          </ion-label>
-        </ion-item>
+        <div class="facility-info">
+          <ion-card class="facility-info facility-details">
+            <ion-item lines="none" class="ion-margin-top">
+              <ion-label>
+                <p class="overline">{{ current.facilityId }}</p>
+                <h1>{{ current.facilityName }}</h1>
+              </ion-label>
+              <ion-button @click="renameFacility()" fill="outline">{{ translate('Edit') }}</ion-button>
+            </ion-item>
+
+            <div class="ion-margin-top">
+              <ion-item>
+                <ion-icon :icon="bookmarkOutline" slot="start"/>
+                <ion-label>{{ translate('Facility Type') }}</ion-label>
+                <ion-select interface="popover" v-model="parentFacilityTypeId" @ionChange="getFacilityTypesByParentTypeId()">
+                  <ion-select-option value="PHYSICAL_STORE">{{ translate('Physical Store') }}</ion-select-option>
+                  <ion-select-option value="DISTRIBUTION_CENTER">{{ translate('Distribution Center') }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+
+              <ion-item lines="none" class="ion-margin-bottom">
+                <ion-icon :icon="bookmarksOutline" slot="start"/>
+                <ion-label>{{ translate('Facility SubType') }}</ion-label>
+                <ion-select interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
+                  <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIdOptions" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
+                </ion-select>
+              </ion-item>
+            </div>
+          </ion-card>
+        </div>
 
         <section>
           <div>
@@ -137,19 +158,19 @@
               <ion-card-title>
                 {{ translate("Product Stores") }}
               </ion-card-title>
-              <ion-button v-if="facilityProductStores.length" @click="selectProductStores()" fill="clear">
+              <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
                 {{ translate("Add") }}
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>{{ getProductStore(store.productStoreId)?.storeName }}</ion-label>
-              <ion-badge slot="end" v-if="store.productStoreId === primaryMember.facilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
-            <ion-button v-if="!facilityProductStores.length" expand="block" fill="outline" @click="selectProductStores()">
+            <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
               {{ translate("Add") }}
               <ion-icon slot="end" :icon="addCircleOutline" />
             </ion-button>
@@ -215,6 +236,34 @@
             <ion-item lines="none" detail button @click="openFacilityOrderCountModal">
               <ion-label>{{ translate("View order count history") }}</ion-label>
             </ion-item>
+          </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>
+                {{ `${facilityTypes[current.parentFacilityTypeId]?.description} logins` }}
+              </ion-card-title>
+              <ion-button v-if="current.facilityLogins?.length" @click="createFacilityLoginModal()" fill="clear">
+                <ion-icon :icon="addCircleOutline" slot="end" />
+                {{ translate("Add") }}
+              </ion-button>
+            </ion-card-header>
+            <ion-item v-for="facilityLogin in current.facilityLogins" :key="facilityLogin.userLoginId">
+              <ion-avatar slot="start" v-if="facilityLogin?.partyImageUrl">
+                <Image :src="facilityLogin.partyImageUrl"/>
+              </ion-avatar>
+              <ion-label>
+                {{ facilityLogin.groupName }}
+                <p>{{ facilityLogin.partyId }}</p>
+                <p>{{ facilityLogin.userLoginId }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="clear" color="medium" @click="openFacilityLoginActionPopover($event, facilityLogin)">
+                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+              </ion-button>
+            </ion-item>
+            <ion-button v-if="!current.facilityLogins?.length" expand="block" fill="outline" @click="createFacilityLoginModal()">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
           </ion-card>
         </section>
 
@@ -285,7 +334,7 @@
               </ion-card>
 
               <!-- Hardcoded card to shop facility externalId, as externalID is not available as an identification -->
-              <ion-card>
+              <ion-card v-if="current.externalId">
                 <ion-card-header>
                   <ion-card-title>
                     {{ translate('Facility External ID') }}
@@ -293,7 +342,7 @@
                 </ion-card-header>
                 <ion-item lines="full">
                   <ion-label>{{ translate('Identification') }}</ion-label>
-                  <ion-label slot="end">{{ current.externalId ? current.externalId : '-' }}</ion-label>
+                  <ion-label slot="end">{{ current.externalId }}</ion-label>
                 </ion-item>
                 <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
                 and we can't focus two elements at the same time -->
@@ -412,6 +461,8 @@ import {
   IonRadioGroup,
   IonSegment,
   IonSegmentButton,
+  IonSelect,
+  IonSelectOption,
   IonText,
   IonTitle,
   IonToggle,
@@ -423,6 +474,8 @@ import {
 import { 
   addCircleOutline,
   addOutline,
+  bookmarkOutline,
+  bookmarksOutline,
   closeCircleOutline,
   closeOutline,
   chevronForwardOutline,
@@ -458,6 +511,9 @@ import { showToast } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
+import FacilityLoginActionPopover from '@/components/FacilityLoginActionPopover.vue'
+import CreateFacilityLoginModal from '@/components/CreateFacilityLoginModal.vue'
+import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
 
 export default defineComponent({
@@ -484,22 +540,27 @@ export default defineComponent({
     IonRadioGroup,
     IonSegment,
     IonSegmentButton,
+    IonSelect,
+    IonSelectOption,
     IonText,
     IonTitle,
     IonToggle,
     IonToolbar,
+    Image
   },
   data() {
     return {
       isLoading: true, // shows whether the facility information fetching is completed or not
       segment: 'external-mappings',
       defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
-      primaryMember: {} as any,
       isCalendarFound: true,
       selectedCalendarId: '',
       isRegenerationRequired: false,  // keeping value as false, as initially we does not know whether the zipCode is valid or not, if making it true, the UI changes from danger to normal which is not a good experience
       days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-      externalId: ''
+      externalId: '',
+      facilityTypeId: '',
+      parentFacilityTypeId: '',
+      facilityTypeIdOptions: {} as any
     }
   },
   computed: {
@@ -516,15 +577,30 @@ export default defineComponent({
       productStores: 'util/getProductStores',
       postalAddress: 'facility/getPostalAddress',
       userProfile: 'user/getUserProfile',
+      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
+      facilityTypes: "util/getFacilityTypes"
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
-    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles')])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles'), this.store.dispatch('util/fetchFacilityTypes', {
+      parentTypeId: 'VIRTUAL_FACILITY',
+      parentTypeId_op: 'notEqual',
+      facilityTypeId: 'VIRTUAL_FACILITY',
+      facilityTypeId_op: 'notEqual'
+    })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
-    this.fetchFacilityPrimaryMember()
+    this.parentFacilityTypeId = this.current.parentFacilityTypeId
+    this.facilityTypeId = this.current.facilityTypeId
+    // not calling the method (getFacilityTypesByParentTypeId) here, as the method will be called on ionChange of parentType
+    this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+      if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
+        facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
+      }
+      return facilityTypesByParentTypeId
+    }, {}) : this.facilityTypes
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
@@ -538,16 +614,11 @@ export default defineComponent({
         component: ProductStorePopover,
         componentProps: {
           currentProductStore: store,
-          facilityId: this.facilityId,
-          primaryMember: this.primaryMember
+          facilityId: this.facilityId
         },
         event: ev,
         showBackdrop: false
       });
-
-      popover.onDidDismiss().then(async() => {
-        await this.fetchFacilityPrimaryMember()
-      })
 
       return popover.present()
     },
@@ -665,17 +736,11 @@ export default defineComponent({
           if(hasFailedResponse) {
             showToast(translate("Failed to update some product stores"))
           } else {
-            productStoresToRemove.map((store: any) => {
-              if(store.productStoreId === this.primaryMember.facilityGroupId) {
-                this.revokePrimaryStatusFromStore()
-              }
-            })
             showToast(translate("Product stores updated successfully."))
           }
 
-          // refetching product stores with updated roles and primary Member
+          // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
-          await this.fetchFacilityPrimaryMember()
           emitter.emit('dismissLoader')
         }
       })
@@ -834,18 +899,6 @@ export default defineComponent({
 
       emitter.emit("dismissLoader");
     },
-    async revokePrimaryStatusFromStore() {
-      try {
-        await FacilityService.updateFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": this.primaryMember.facilityGroupId,
-          "fromDate": this.primaryMember.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-      } catch (err) {
-        logger.error(err)
-      }
-    },
     async updateFulfillmentSetting(event: any, facilityGroupId: string) {
       event.stopImmediatePropagation();
 
@@ -910,31 +963,6 @@ export default defineComponent({
       }
 
       emitter.emit('dismissLoader')
-    },
-    async fetchFacilityPrimaryMember() {
-      let primaryMember = {}
-      const payload = {
-        inputFields: {
-          facilityId: this.facilityId,
-          facilityGroupTypeId: 'FEATURING'
-        },
-        entityName: 'FacilityGroupAndMember',
-        filterByDate: 'Y',
-        viewSize: 1,
-      }
-
-      try {
-        const resp = await FacilityService.fetchFacilityPrimaryMember(payload)
-
-        if(!hasError(resp)) {
-          primaryMember = resp.data.docs[0]
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-      this.primaryMember = primaryMember
     },
     async removeFacilityMapping(mapping: any) {
       emitter.emit('presentLoader')
@@ -1103,7 +1131,67 @@ export default defineComponent({
       })
 
       await alert.present()
-    }
+    },
+    getFacilityTypesByParentTypeId() {
+      this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
+        if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
+          facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
+        }
+        return facilityTypesByParentTypeId
+      }, {}) : this.facilityTypes
+
+      // added this check to stop the programatic execution of this flow on initial load
+      if(this.current.parentFacilityTypeId === this.parentFacilityTypeId) {
+        return;
+      }
+      // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
+      // as default elements within the list. These elements may appear at any index within the list structure.
+      // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
+      this.facilityTypeId = this.facilityTypeIdOptions['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIdOptions['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIdOptions)[0]
+    },
+    async updateFacilityType() {
+      // Not updating facility when current selected type and facilityType are same, as the value of facilityTypeId
+      // gets changed programatically on initial load and thus calls this method hence this check is required
+      if(this.current.facilityTypeId === this.facilityTypeId) {
+        return;
+      }
+
+      try {
+        const resp = await FacilityService.updateFacility({
+          facilityId: this.facilityId,
+          facilityTypeId: this.facilityTypeId
+        })
+
+        if (!hasError(resp)) {
+          showToast(translate("Facility type updated"))
+          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityTypeId: this.facilityTypeId, parentFacilityTypeId: this.parentFacilityTypeId })
+        } else {
+          throw resp.data
+        }
+      } catch (error) {
+        // if api fails then revert the type selection, and also revert the parentTypeSelection
+        this.parentFacilityTypeId = this.current.parentFacilityTypeId
+        this.facilityTypeId = this.current.facilityTypeId
+        showToast(translate('Failed to update facility type.'))
+        logger.error('Failed to update facility type.', error)
+      }
+    },
+    async openFacilityLoginActionPopover(ev: Event, facilityUser: any) {
+      const popover = await popoverController.create({
+        component: FacilityLoginActionPopover,
+        componentProps: { currentFacility: this.current, currentFacilityUser: facilityUser, parentFacilityTypeDesc: this.facilityTypes[this.current.parentFacilityTypeId]?.description },
+        event: ev,
+        showBackdrop: false
+      });
+      return popover.present()
+    },
+    async createFacilityLoginModal() {
+      const facilityLoginModal = await modalController.create({
+      component: CreateFacilityLoginModal,
+        componentProps: { currentFacility: this.current, parentFacilityTypeDesc: this.facilityTypes[this.current.parentFacilityTypeId]?.description }
+      })
+      facilityLoginModal.present()
+    },
   },
   setup() {
     const store = useStore();
@@ -1111,6 +1199,8 @@ export default defineComponent({
     return {
       addCircleOutline,
       addOutline,
+      bookmarkOutline,
+      bookmarksOutline,
       closeCircleOutline,
       closeOutline,
       chevronForwardOutline,
@@ -1137,6 +1227,10 @@ section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start;
+}
+
+.facility-details {
+  grid-column: span 2;
 }
 
 ion-modal.date-time-modal {
@@ -1170,7 +1264,7 @@ ion-segment {
   --columns-desktop: 5;
 }
 
-.external-mappings {
+.external-mappings, .facility-info {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   align-items: start; 

@@ -2,6 +2,7 @@ import { api, hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
 import { prepareOrderQuery } from '@/utils/solrHelper';
+import { UserService } from './UserService';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
@@ -242,14 +243,6 @@ const createFacilityLocation = async(payload: any): Promise<any> => {
 const createProductStoreFacility = async (payload: any): Promise <any> => {
   return api({
     url: "service/createProductStoreFacility",
-    method: "post",
-    data: payload
-  });
-}
-
-const fetchFacilityPrimaryMember = async (payload: any): Promise <any> => {
-  return api({
-    url: "performFind",
     method: "post",
     data: payload
   });
@@ -584,6 +577,84 @@ const deleteFacilityGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityLogin = async (payload: any): Promise <any> => {
+  try {
+    //Create role type if not exists. This is required for associating facility login user to facility.
+    if (!await UserService.isRoleTypeExists("FAC_LOGIN")) {
+      const resp = await UserService.createRoleType({
+        "roleTypeId": "FAC_LOGIN",
+        "description": "Facility Login",
+      })
+      if (hasError(resp)) {
+        throw resp.data;
+      }
+    }
+
+    const params = {
+      "groupName": payload.facilityName,
+      "partyTypeId": "PARTY_GROUP",
+      "partyIdFrom": "COMPANY",
+      "roleTypeIdFrom": "INTERNAL_ORGANIZATIO", // not a typo
+      "roleTypeIdTo": "APPLICATION_USER",
+      "partyRelationshipTypeId": "EMPLOYMENT"
+    }
+
+    let resp = await UserService.createRelationship(params);
+    if (hasError(resp)) {
+      throw resp.data;
+    }
+    const partyId = resp.data.partyId;
+
+    resp = await UserService.createNewUserLogin({
+      "partyId": partyId,
+      "userLoginId": payload.username,
+      "currentPassword": payload.password,
+      "currentPasswordVerify": payload.password,
+      "requirePasswordChange": "N",
+      "enabled": "Y",
+      "userPrefTypeId": "ORGANIZATION_PARTY",
+      "userPrefValue": "COMPANY"
+    });
+    if (hasError(resp)) {
+      throw resp.data;
+    }
+
+    const promises = [];
+    promises.push(UserService.addUserToSecurityGroup({
+      "partyIdTo": partyId,
+      "securityGroupId": "STORE_MANAGER",
+    }));
+    if (payload.emailAddress) {
+      promises.push(UserService.createUpdatePartyEmailAddress({
+        "partyId": partyId,
+        "emailAddress": payload.emailAddress,
+        "contactMechPurposeTypeId": "PRIMARY_EMAIL",
+      }));
+    }
+    promises.push(addPartyToFacility({
+      "partyId": partyId,
+      "facilityId": payload.facilityId,
+      "roleTypeId": "WAREHOUSE_MANAGER"
+    }));
+    promises.push(addPartyToFacility({
+      "partyId": partyId,
+      "facilityId": payload.facilityId,
+      "roleTypeId": "FAC_LOGIN"
+    }));
+    await Promise.all(promises).then(responses => {
+      responses.forEach(response => {
+        if (hasError(response)) {
+          throw response.data;
+        }
+      });
+    })
+  } catch (error: any) {
+    return Promise.reject(error)
+  }
+}
+
+
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
@@ -600,6 +671,7 @@ export const FacilityService = {
   createShopifyShopLocation,
   deleteFacilityGroup,
   deleteFacilityLocation,
+  createFacilityLogin,
   deleteShopifyShopLocation,
   fetchArchivedFacilities,
   fetchFacilityGroup,
@@ -613,7 +685,6 @@ export const FacilityService = {
   fetchFacilityGroupInformation,
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
-  fetchFacilityPrimaryMember,
   fetchJobData,
   fetchOrderCountsByFacility,
   getFacilityProductStores,

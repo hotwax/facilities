@@ -8,4 +8,5 @@ export default interface UtilState {
   partyRoles: any[];
   countries: any[];
   states: any;
+  shopifyShopForProductStore: any;
 }

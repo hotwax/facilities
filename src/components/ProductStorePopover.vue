@@ -2,9 +2,9 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ getProductStore(currentProductStore.productStoreId).storeName }}</ion-list-header>
-      <ion-item button @click="makePrimary()">
+      <ion-item button @click="togglePrimary()">
         {{ translate("Primary") }}
-        <ion-icon slot="end"  :color="primaryMember.facilityGroupId === currentProductStore.productStoreId ? 'warning' : ''" :icon="primaryMember.facilityGroupId === currentProductStore.productStoreId ? star : starOutline" />
+        <ion-icon slot="end" :color="current.primaryFacilityGroupId === shopifyShopIdForProductStore(currentProductStore.productStoreId) ? 'warning' : ''" :icon="current.primaryFacilityGroupId === shopifyShopIdForProductStore(currentProductStore.productStoreId) ? star : starOutline" />
       </ion-item>
       <ion-item button lines="none" @click="removeStoreFromFacility()">
         {{ translate("Unlink") }}
@@ -43,12 +43,14 @@ export default defineComponent({
     IonList,
     IonListHeader
   },
-  props: ['currentProductStore', 'facilityId', 'primaryMember'],
+  props: ['currentProductStore', 'facilityId'],
   computed: {
     ...mapGetters({
       facilityProductStores: 'facility/getFacilityProductStores',
       getProductStore: 'util/getProductStore',
-      productStores: 'util/getProductStores'
+      productStores: 'util/getProductStores',
+      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
+      current: 'facility/getCurrent'
     })
   },
   methods: {
@@ -66,9 +68,13 @@ export default defineComponent({
         if(!hasError(resp)) {
           showToast(translate('Store unlinked successfully.'))
 
-          // Removing store from primary Member group if primary.
-          if(this.currentProductStore.productStoreId === this.primaryMember.facilityGroupId){
-            await this.revokePrimaryStatusFromStore()
+          // TODO: need to check if we need to remove primary value from the facility if product store is removed.
+          // Removing primaryFacilityGroupId from the facility, if present
+          if(this.shopifyShopIdForProductStore(this.currentProductStore.productStoreId) === this.current.primaryFacilityGroupId) {
+            await FacilityService.updateFacility({
+              facilityId: this.facilityId,
+              primaryFacilityGroupId: ''
+            })
           }
 
           // refetching product stores with updated roles
@@ -83,61 +89,75 @@ export default defineComponent({
       popoverController.dismiss()
       emitter.emit('dismissLoader')
     },
-    async makePrimary() {
+    async updatePrimaryStore(shopifyShopId = '') {
+      try {
+        const resp = await FacilityService.updateFacility({
+          facilityId: this.facilityId,
+          primaryFacilityGroupId: shopifyShopId
+        })
+        if(!hasError(resp)) {
+          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: shopifyShopId })
+        } else {
+          throw resp.data
+        }
+      } catch(error) {
+        showToast(translate('Failed to update primary product store'))
+        logger.error('Failed to update primary product store', error)
+      }
+    },
+    async togglePrimary() {
+      emitter.emit('presentLoader')
+
       const productStoreId = this.currentProductStore.productStoreId
-      if(this.primaryMember.facilityGroupId === productStoreId) {
-        this.revokePrimaryStatusFromStore()
-        popoverController.dismiss()
+      let shopifyShopId = this.shopifyShopIdForProductStore(productStoreId)
+
+      // if the shopifyShop is not present for productStore inside the facility then fetching the shopify information for productStore
+      if(!shopifyShopId) {
+        shopifyShopId = await this.store.dispatch('util/fetchShopifyShopForProductStores', [productStoreId])
+      }
+
+      // if we does not get shopify shop id for the store then not making product store as primary
+      if(!shopifyShopId) {
         return;
       }
 
-      emitter.emit('presentLoader')
+      // when product store is already primary
+      if(this.current.primaryFacilityGroupId === shopifyShopId) {
+        await this.updatePrimaryStore();
+        popoverController.dismiss()
+        emitter.emit('dismissLoader')
+        return;
+      }
 
-      let resp;
+      // creating for facility group, as group is required when updating primaryFacilityGroupId on facility
+
       let facilityGroupId;
 
-      // Fetching the facility group corresponding to the selected product store.
-      // There should be one facility group where facilityGroupId equals to productStoreId in order
+      // Fetching the facility group corresponding to the shopifyShopId.
+      // There should be one facility group where facilityGroupId equals to shopifyShopId in order
       // to manage primary product store of a facility.
-      facilityGroupId = await this.fetchFacilityGroup(productStoreId)
+      facilityGroupId = await this.fetchFacilityGroup(shopifyShopId)
 
-      // Create one facility group corresponding to the selected product store if not exists.
+      // Create one facility group corresponding to the shopifyShopId if not exists.
       if(!facilityGroupId) {
-        facilityGroupId = await this.createFacilityGroup(productStoreId)
-      } 
+        facilityGroupId = await this.createFacilityGroup(shopifyShopId)
+      }
 
+      // if facilityGroup is still not found, then not update primary store for facility
       if(facilityGroupId) {
-        try {
-          resp = await FacilityService.addFacilityToGroup({
-            facilityId: this.facilityId,
-            facilityGroupId: facilityGroupId
-          })
-
-          if(!hasError(resp)) {
-            // Remove old primary store
-            if(this.primaryMember.facilityGroupId) {
-              await this.revokePrimaryStatusFromStore()
-            }
-          } else {
-            throw resp.data
-          }
-        } catch(err) {
-          showToast(translate("Failed to make product store primary."))
-          logger.error(err)
-        }
+        await this.updatePrimaryStore(shopifyShopId);
       } else {
-        showToast(translate("Failed to make product store primary."))
+        showToast(translate('Failed to make product store primary due to missing group'))
       }
       popoverController.dismiss()
       emitter.emit('dismissLoader')
     },
-    async fetchFacilityGroup(productStoreId: string) {
+    async fetchFacilityGroup(shopifyShopId: string) {
       let facilityGroupId;
-      let resp;
       try {
-        resp = await FacilityService.fetchFacilityGroup({
+        const resp = await FacilityService.fetchFacilityGroup({
           inputFields: {
-            facilityGroupId: productStoreId
+            facilityGroupId: shopifyShopId
           },
           entityName: 'FacilityGroup',
           fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
@@ -149,17 +169,17 @@ export default defineComponent({
         } else {
           throw resp.data
         }
-      } catch(err) {
-        logger.error(err)
+      } catch(error) {
+        logger.error('Failed to fetch facility group', error)
       }
       return facilityGroupId
     },
-    async createFacilityGroup(productStoreId: string) {
+    async createFacilityGroup(shopifyShopId: string) {
       let facilityGroupId;
       try {
         const resp = await FacilityService.createFacilityGroup({
-          facilityGroupId: productStoreId,
-          facilityGroupName: this.getProductStore(productStoreId).storeName,
+          facilityGroupId: shopifyShopId,
+          facilityGroupName: this.getProductStore(this.currentProductStore.productStoreId).storeName,
           facilityGroupTypeId: 'FEATURING'
         })
   
@@ -171,29 +191,7 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
-
       return facilityGroupId
-    },
-    async revokePrimaryStatusFromStore() {
-      emitter.emit('presentLoader')
-
-      let resp;
-      try {
-        resp = await FacilityService.updateFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": this.primaryMember.facilityGroupId,
-          "fromDate": this.primaryMember.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-
-        if(hasError(resp)) {
-          throw resp.data
-        }
-      } catch (err) {
-        logger.error(err)
-      }
-
-      emitter.emit('dismissLoader')
     }
   },
   setup() {
