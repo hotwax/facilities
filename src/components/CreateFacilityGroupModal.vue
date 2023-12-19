@@ -149,6 +149,7 @@ export default defineComponent({
           }
           const updatedFacilityGroups = [...this.groups, createdGroup]
           await this.store.dispatch('facility/updateFacilityGroups', updatedFacilityGroups)
+          await this.store.dispatch('util/fetchFacilityGroupTypes')
         } else {
           throw resp.data;
         }

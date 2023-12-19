@@ -20,9 +20,9 @@
                 {{ groupType.facilityGroupTypeId }}
                 <p>{{ groupType.description }}</p>
               </ion-label>
-              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" placeholder="Select" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
+              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" placeholder="Select" :selectedText="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="groupId" :key="groupId" v-for="groupId in getAvailableFacilityGroups(groupType.facilityGroups)">
-                  {{ groupId }}
+                  {{ getFacilityName(groupId) }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -267,6 +267,9 @@ export default defineComponent({
       await this.fetchGroups()
       await this.store.dispatch('util/fetchFacilityGroupTypes')
       emitter.emit('dismissLoader')
+    },
+    getFacilityName(groupId: string) {
+      return this.groups.find((group: any) => group.facilityGroupId === groupId).facilityGroupName
     }
   },
   setup() {
