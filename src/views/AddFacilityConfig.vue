@@ -96,6 +96,11 @@
                     {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
                   </ion-note>
                 </ion-item>
+                <ion-item>
+                  <ion-label position="floating">{{ translate('Reset password email') }} <ion-text
+                      color="danger">*</ion-text></ion-label>
+                  <ion-input v-model="emailAddress"></ion-input>
+                </ion-item>
               </template>
             </template>
           </ion-list>
@@ -152,7 +157,7 @@ import {
   starOutline
 } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
-import { isValidPassword, showToast } from "@/utils";
+import { isValidPassword, isValidEmail, showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { FacilityService } from "@/services/FacilityService";
@@ -201,6 +206,7 @@ export default defineComponent({
       createLoginCreds: false as any,
       password: '',
       username: '',
+      emailAddress: '',
       selectedProductStores: [] as any,
       primaryFacilityGroupId: ''  // storing productStoreId initially in this, as at this point we don't fetch shopifyShopId
     }
@@ -252,6 +258,7 @@ export default defineComponent({
           "facilityName": this.current.facilityName,
           "username": this.username,
           "password": this.password,
+          "emailAddress": this.emailAddress
         }
 
         await FacilityService.createFacilityLogin(payload);
@@ -262,15 +269,17 @@ export default defineComponent({
     },
     async saveStoreConfig() {
       if (this.createLoginCreds) {
-        if (!this.username) {
-          showToast(translate('Username is required.'))
+
+        if (!this.username ||  !this.password || !this.emailAddress) {
+          showToast(translate('Please fill all the required fields'))
           return
-        } else if (await UserService.isUserLoginIdExists(this.username)) {
+        }
+        if (this.username && await UserService.isUserLoginIdExists(this.username)) {
           showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: this.username }))
           return;
         }
-        if (!this.password) {
-          showToast(translate('Please provide a password.'))
+        if (!isValidEmail(this.emailAddress)) {
+          showToast(translate('Please provide a valid email.'))
           return
         }
       }
