@@ -13,7 +13,7 @@
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
           <ion-list>
             <ion-list-header>
-              {{ translate('Security groups') }}
+              {{ translate('System groups') }}
             </ion-list-header>
             <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
               <ion-label>
