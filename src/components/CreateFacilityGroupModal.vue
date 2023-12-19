@@ -120,10 +120,6 @@ export default defineComponent({
       },
     }
   },
-  mounted() {
-    // setting facilityGroupTypeId as the first groupTypeId
-    this.formData.facilityGroupTypeId = this.facilityGroupTypes[0].facilityGroupTypeId
-  },
   methods: {
     closeModal() {
       modalController.dismiss();
