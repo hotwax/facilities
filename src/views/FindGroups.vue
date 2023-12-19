@@ -237,7 +237,7 @@ export default defineComponent({
       const groupsToAdd = selectedGroups.filter((selectedGroupId: string) => !prevAssociatedGroups.includes(selectedGroupId))
       const groupsToRemove = prevAssociatedGroups.filter((prevGroupId: string) => !selectedGroups.includes(prevGroupId))
 
-      if(!groupsToAdd.length && !groupsToAdd.length) {
+      if(!(groupsToAdd.length || groupsToRemove.length)) {
         return;
       }
 

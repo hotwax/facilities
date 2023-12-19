@@ -16,7 +16,7 @@ const getters: GetterTree<UtilState, RootState> = {
     return state.facilityTypes
   },
   getFacilityGroupTypes(state) {
-    return state.facilityGroupTypes ? JSON.parse(JSON.stringify(state.facilityGroupTypes)) : {}
+    return state.facilityGroupTypes
   },
   getLocationTypes(state) {
     return state.locationTypes
