@@ -22,7 +22,7 @@
               </ion-label>
               <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" :placeholder="translate('Select')" :selectedText="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="groupId" :key="groupId" v-for="groupId in getAvailableFacilityGroups(groupType.facilityGroups)">
-                  {{ getFacilityName(groupId) }}
+                  {{ getFacilityGroupName(groupId) }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -236,6 +236,7 @@ export default defineComponent({
       const selectedGroups = event.detail.value
       const groupsToAdd = selectedGroups.filter((selectedGroupId: string) => !prevAssociatedGroups.includes(selectedGroupId))
       const groupsToRemove = prevAssociatedGroups.filter((prevGroupId: string) => !selectedGroups.includes(prevGroupId))
+      const updateGroupPayloads = [] as any
 
       if(!(groupsToAdd.length || groupsToRemove.length)) {
         return;
@@ -243,23 +244,16 @@ export default defineComponent({
 
       emitter.emit('presentLoader')
 
-      const removeResponses = await Promise.allSettled(groupsToRemove
-        .map(async (facilityGroupId: any) => await FacilityService.updateFacilityGroup({
-          facilityGroupId,
-          facilityGroupTypeId: ''
-        }))
+      groupsToAdd.map((facilityGroupId: any) => updateGroupPayloads.push({facilityGroupId, facilityGroupTypeId}))
+      groupsToRemove.map((facilityGroupId: any) => updateGroupPayloads.push({facilityGroupId, facilityGroupTypeId: ''}))
+
+      const responses = await Promise.allSettled(updateGroupPayloads
+        .map(async (payload: any) => await FacilityService.updateFacilityGroup(payload))
       )
 
-      const addResponses = await Promise.allSettled(groupsToAdd
-        .map(async (facilityGroupId: any) => await FacilityService.updateFacilityGroup({
-          facilityGroupId,
-          facilityGroupTypeId
-        }))
-      )
-
-      const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
+      const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
       if (hasFailedResponse) {
-        showToast(translate("Failed to associate group with sytem group types."))
+        showToast(translate("Failed to associate group with system group types."))
       } else {
         showToast(translate("Group associated to sytem group types."))
       }
@@ -268,7 +262,7 @@ export default defineComponent({
       await this.store.dispatch('util/fetchFacilityGroupTypes')
       emitter.emit('dismissLoader')
     },
-    getFacilityName(groupId: string) {
+    getFacilityGroupName(groupId: string) {
       return this.groups.find((group: any) => group.facilityGroupId === groupId).facilityGroupName
     }
   },
