@@ -255,7 +255,7 @@ export default defineComponent({
       if (hasFailedResponse) {
         showToast(translate("Failed to associate group with system group types."))
       } else {
-        showToast(translate("Group associated to sytem group types."))
+        showToast(translate("Group associated to system group types."))
       }
 
       await this.fetchGroups()
