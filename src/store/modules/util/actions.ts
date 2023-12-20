@@ -66,7 +66,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_FACILITY_TYPES_UPDATED, facilityTypes)
   },
 
-  async fetchFacilityGroupTypes({ commit, state }) {
+  async fetchFacilityGroupTypes({ commit }) {
     let facilityGroupTypes = []
     const params = {
       viewSize: 100,
