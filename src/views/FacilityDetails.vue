@@ -248,8 +248,8 @@
               </ion-button>
             </ion-card-header>
             <ion-item v-for="facilityLogin in current.facilityLogins" :key="facilityLogin.userLoginId">
-              <ion-avatar slot="start" v-if="facilityLogin?.partyImageUrl">
-                <Image :src="facilityLogin.partyImageUrl"/>
+              <ion-avatar slot="start" v-if="facilityLogin.objectInfo">
+                <Image :src="`${baseUrl}/${facilityLogin.objectInfo}`"/>
               </ion-avatar>
               <ion-label>
                 {{ facilityLogin.groupName }}
@@ -578,7 +578,8 @@ export default defineComponent({
       postalAddress: 'facility/getPostalAddress',
       userProfile: 'user/getUserProfile',
       shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
-      facilityTypes: "util/getFacilityTypes"
+      facilityTypes: "util/getFacilityTypes",
+      baseUrl: "user/getBaseUrl"
     })
   },
   props: ["facilityId"],
