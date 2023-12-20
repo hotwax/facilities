@@ -440,6 +440,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import {
+  IonAvatar,
   IonBackButton,
   IonBadge,
   IonButton,
@@ -519,6 +520,7 @@ import emitter from '@/event-bus'
 export default defineComponent({
   name: 'FacilityDetails',
   components: {
+    IonAvatar,
     IonBackButton,
     IonBadge,
     IonButton,
