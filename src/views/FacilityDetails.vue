@@ -249,7 +249,7 @@
             </ion-card-header>
             <ion-item v-for="facilityLogin in current.facilityLogins" :key="facilityLogin.userLoginId">
               <ion-avatar slot="start" v-if="facilityLogin.objectInfo">
-                <Image :src="`${baseUrl}/${facilityLogin.objectInfo}`"/>
+                <Image :src="getImageUrl(facilityLogin.objectInfo)"/>
               </ion-avatar>
               <ion-label>
                 {{ facilityLogin.groupName }}
@@ -605,6 +605,9 @@ export default defineComponent({
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
+    getImageUrl(imageUrl: string) {
+      return (this.baseUrl.startsWith('http') ? this.baseUrl.replace(/api\/?/, "") : `https://${this.baseUrl}.hotwax.io/`) + imageUrl
+    },
     goToLink(link: string) {
       const url = link.startsWith('http') ? link : `https://${link}`
       // opening link in new tab without passing any reference
