@@ -19,9 +19,9 @@
               <ion-label>
                 {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
               </ion-label>
-              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" :placeholder="translate('Select')" :selectedText="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
-                <ion-select-option :value="groupId" :key="groupId" v-for="groupId in getAvailableFacilityGroups(groupType.facilityGroups)">
-                  {{ getFacilityGroupName(groupId) }}
+              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroupTypeId).length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+                <ion-select-option :value="group.facilityGroupId" :key="group.facilityGroupId" v-for="group in getAvailableFacilityGroups(groupType.facilityGroupTypeId)">
+                  {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
@@ -218,16 +218,18 @@ export default defineComponent({
         }
       }
     },
-    getAvailableFacilityGroups(facilityGroups: any) {
-      const updatedFacilityGroups = JSON.parse(JSON.stringify(facilityGroups))
+    getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
+      const associatedfacilityGroupIds = [] as any
 
       this.groups.map((group: any) => {
-        if(!group.facilityGroupTypeId) {
-          updatedFacilityGroups.push(group.facilityGroupId)
+        if(group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
+          associatedfacilityGroupIds.push(group.facilityGroupId)
         }
       })
-
-      return updatedFacilityGroups
+      return associatedfacilityGroupIds
+    },
+    getAvailableFacilityGroups(facilityGroupTypeId: any) {
+      return this.groups.filter((group: any) => (!group.facilityGroupTypeId || group.facilityGroupTypeId === facilityGroupTypeId))
     },
     async updateFacilityGroupAssociation(event: CustomEvent, prevAssociatedGroups: any, facilityGroupTypeId: string) {
       const selectedGroups = event.detail.value
@@ -256,11 +258,7 @@ export default defineComponent({
       }
 
       await this.fetchGroups()
-      await this.store.dispatch('util/fetchFacilityGroupTypes')
       emitter.emit('dismissLoader')
-    },
-    getFacilityGroupName(groupId: string) {
-      return this.groups.find((group: any) => group.facilityGroupId === groupId).facilityGroupName
     }
   },
   setup() {

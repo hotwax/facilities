@@ -78,27 +78,7 @@ const actions: ActionTree<UtilState, RootState> = {
     try {
       const resp = await UtilService.fetchFacilityGroupTypes(params)
       if (!hasError(resp)) {
-        // mapping facility groups to each group type
-        const facilityGroupsByGroupTypes = JSON.parse(JSON.stringify(this.state.facility.facilityGroups.list))
-          .reduce((facilityGroupsByGroupTypes: any, group: any) => {
-            // in case facilityGroupTypeId is not present
-            const parameter = group.facilityGroupTypeId ? group.facilityGroupTypeId : group.facilityGroupId
-            if (facilityGroupsByGroupTypes[parameter]) {
-              facilityGroupsByGroupTypes[parameter].push(group.facilityGroupId)
-            } else {
-              facilityGroupsByGroupTypes[parameter] = [group.facilityGroupId]
-            }
-
-            return facilityGroupsByGroupTypes
-          }, {})
-
-        // add associated facility groups info in types
-        facilityGroupTypes = resp.data.docs.map((type: any) => (
-          {
-            ...type,
-            facilityGroups: facilityGroupsByGroupTypes[type.facilityGroupTypeId] ? facilityGroupsByGroupTypes[type.facilityGroupTypeId] : []
-          }
-        ))
+        facilityGroupTypes = resp.data.docs
       } else {
         throw resp.data
       }
