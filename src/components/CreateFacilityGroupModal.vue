@@ -120,10 +120,6 @@ export default defineComponent({
       },
     }
   },
-  mounted() {
-    // setting facilityGroupTypeId as the first groupTypeId
-    this.formData.facilityGroupTypeId = this.facilityGroupTypes[0].facilityGroupTypeId
-  },
   methods: {
     setFacilityGroupId(event: any) {
       this.formData.facilityGroupId = generateInternalId(event.target.value)
@@ -163,6 +159,7 @@ export default defineComponent({
           }
           const updatedFacilityGroups = [...this.groups, createdGroup]
           await this.store.dispatch('facility/updateFacilityGroups', updatedFacilityGroups)
+          await this.store.dispatch('util/fetchFacilityGroupTypes')
         } else {
           throw resp.data;
         }
