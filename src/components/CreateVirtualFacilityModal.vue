@@ -70,7 +70,7 @@ import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
+import { generateInternalId, showToast } from "@/utils";
 import logger from "@/logger";
 
 export default defineComponent({
@@ -108,7 +108,7 @@ export default defineComponent({
   },
   methods: {
     setFacilityId(event: any) {
-      this.formData.facilityId = event.target.value.trim().toUpperCase().split(' ').join('_');
+      this.formData.facilityId = generateInternalId(event.target.value)
     },
     closeModal() {
       modalController.dismiss();
@@ -127,7 +127,7 @@ export default defineComponent({
       // In case the user does not lose focus from the facility name input
       // and click on create the button, we need to set the internal id manually
       if (!this.formData.facilityId) {
-        this.formData.facilityId = this.formData.facilityName.trimEnd().trimStart().toUpperCase().split(' ').join('_');
+        this.formData.facilityId = generateInternalId(this.formData.facilityName)
       }
 
       try {

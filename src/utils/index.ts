@@ -46,6 +46,12 @@ const isValidPassword = (password : string) => {
   return passwordPattern.test(password);
 }
 
+const isValidEmail = (email : string) => {
+  // Regular expression pattern for a valid email address
+  const emailPattern = /^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/;
+  return emailPattern.test(email);
+}
+
 // will sort the list but keeps the customValues at the beginning
 const customSort = (list: any, customValues: Array<string>, sortParameter: string) => {
   return list.sort((first: any, second: any) => {
@@ -55,4 +61,8 @@ const customSort = (list: any, customValues: Array<string>, sortParameter: strin
   });
 }
 
-export { copyToClipboard, customSort, isValidPassword, showToast }
+const generateInternalId = (name: string) => {
+  return name.trim().toUpperCase().split(' ').join('_');
+}
+
+export { copyToClipboard, customSort, generateInternalId, isValidEmail, isValidPassword, showToast }

@@ -17,7 +17,7 @@
           <ion-label position="floating">
             {{ translate("Name") }} <ion-text color="danger">*</ion-text>
           </ion-label>
-          <ion-input v-model="formData.facilityGroupName"/>
+          <ion-input @ionBlur="setFacilityGroupId($event)" v-model="formData.facilityGroupName"/>
         </ion-item>
         <ion-item ref="facilityGroupId">
           <ion-label position="floating">
@@ -80,7 +80,7 @@ import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
+import { generateInternalId, showToast } from "@/utils";
 import logger from "@/logger";
 
 export default defineComponent({
@@ -121,11 +121,14 @@ export default defineComponent({
     }
   },
   methods: {
+    setFacilityGroupId(event: any) {
+      this.formData.facilityGroupId = generateInternalId(event.target.value)
+    },
     closeModal() {
       modalController.dismiss();
     },
     async createFacilityGroup() {
-      if (!this.formData.facilityGroupId?.trim() || !this.formData.facilityGroupName?.trim()) {
+      if (!this.formData.facilityGroupName?.trim()) {
         showToast(translate('Please fill all the required fields'))
         return;
       }
@@ -133,6 +136,12 @@ export default defineComponent({
       if (this.formData.facilityGroupId.length > 20) {
         showToast(translate('Internal ID cannot be more than 20 characters.'))
         return
+      }
+
+      // In case the user does not lose focus from the facility name input
+      // and click on create the button, we need to set the internal id manually
+      if (!this.formData.facilityGroupId) {
+        this.formData.facilityGroupId = generateInternalId(this.formData.facilityGroupName)
       }
 
       try {
@@ -145,6 +154,7 @@ export default defineComponent({
           showToast(translate("Facility group created."))
           const createdGroup = {
             ...this.formData,
+            facilityGroupId: resp.data.facilityGroupId,
             facilityCount: 0
           }
           const updatedFacilityGroups = [...this.groups, createdGroup]

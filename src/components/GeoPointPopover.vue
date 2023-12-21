@@ -26,6 +26,7 @@ import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import { UtilService } from '@/services/UtilService';
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "LocationDetailsPopover",
@@ -43,6 +44,8 @@ export default defineComponent({
   methods: {
     async regenerateLatitudeAndLongitude() {
       let resp, generatedLatLong;
+
+      emitter.emit('presentLoader')
 
       try {
         resp = await UtilService.generateLatLong({
@@ -80,8 +83,11 @@ export default defineComponent({
       }
 
       popoverController.dismiss({ generatedLatLong })
+      emitter.emit('dismissLoader')
     },
     async removeLatitudeAndLongitude() {
+      emitter.emit('presentLoader')
+
       let resp;
 
       try {
@@ -104,6 +110,7 @@ export default defineComponent({
       }
 
       popoverController.dismiss()
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

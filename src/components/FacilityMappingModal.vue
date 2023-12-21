@@ -11,7 +11,7 @@
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="saveMapping">
+    <form @keyup.enter="type && type === 'update' ? updateMapping() : saveMapping()" @submit.prevent>
       <ion-list>
         <ion-list-header>{{ translate("Facility details") }}</ion-list-header>
         <ion-item>
@@ -67,6 +67,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "FacilityMappingModal",
@@ -113,6 +114,8 @@ export default defineComponent({
         return;
       }
 
+      emitter.emit('presentLoader')
+
       let resp;
 
       try {
@@ -133,12 +136,16 @@ export default defineComponent({
         showToast(translate('Failed to create external mapping'))
         logger.error('Failed to create external mapping', err)
       }
+
+      emitter.emit('dismissLoader')
     },
     async updateMapping() {
       if(!this.mappingValue.trim()) {
         showToast(translate('Please enter a valid value'))
         return;
       }
+
+      emitter.emit('presentLoader')
 
       let resp;
 
@@ -161,6 +168,8 @@ export default defineComponent({
         showToast(translate('Failed to update external mapping'))
         logger.error('Failed to update external mapping', err)
       }
+
+      emitter.emit('dismissLoader')
     }
   },
   setup() {

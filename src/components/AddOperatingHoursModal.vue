@@ -72,6 +72,7 @@ import { DateTime } from "luxon";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
+import emitter from "@/event-bus";
 
 export default defineComponent({
   name: "AddOperatingHoursModal",
@@ -121,6 +122,8 @@ export default defineComponent({
       }
     },
     async addOperatingHours() {
+      emitter.emit('presentLoader')
+
       try {
         const resp = await FacilityService.associateCalendarToFacility({
           facilityId: this.facilityId,
@@ -141,9 +144,13 @@ export default defineComponent({
       }
 
       modalController.dismiss()
+      emitter.emit('dismissLoader')
     },
     async updateOperatingHours() {
+      emitter.emit('presentLoader')
+
       let resp;
+
       try {
         resp = await FacilityService.removeFacilityCalendar({
           facilityId: this.facilityId,
@@ -175,6 +182,7 @@ export default defineComponent({
       }
 
       modalController.dismiss()
+      emitter.emit('dismissLoader')
     },
     getStartAndEndTime(startTime: any, capacity: any) {
       const formatedStartTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('hh:mm a');

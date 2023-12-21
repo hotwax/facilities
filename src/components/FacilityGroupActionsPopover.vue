@@ -81,7 +81,7 @@ export default defineComponent({
       }
 
       try {
-        const resp = FacilityService.deleteFacilityGroup({
+        const resp = await FacilityService.deleteFacilityGroup({
           facilityGroupId: this.group.facilityGroupId
         }) as any
 
