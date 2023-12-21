@@ -75,16 +75,22 @@
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
                 <ion-item lines="full">
-                  <ion-label>{{ translate("Facility zipcode") }}</ion-label>
-                  <p><ion-text :color="isRegenerationRequired ? 'danger' : ''" slot="end">{{ postalAddress.postalCode }}</ion-text></p>
+                  <ion-label>
+                    <p>{{ translate("Facility zipcode") }}</p>
+                  </ion-label>
+                  <ion-label slot="end"><ion-text :color="isRegenerationRequired ? 'danger' : ''">{{ postalAddress.postalCode }}</ion-text></ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ translate("Latitude") }}</ion-label>
-                  <p>{{ postalAddress.latitude }}</p>
+                  <ion-label>
+                    <p>{{ translate("Latitude") }}</p>
+                  </ion-label>
+                  <ion-label slot="end">{{ postalAddress.latitude }}</ion-label>
                 </ion-item>
                 <ion-item lines="full">
-                  <ion-label>{{ translate("Longitude") }}</ion-label>
-                  <p>{{ postalAddress.longitude }}</p>
+                  <ion-label>
+                    <p>{{ translate("Longitude") }}</p>
+                  </ion-label>
+                  <ion-label slot="end">{{ postalAddress.longitude }}</ion-label>
                 </ion-item>
                 <div class="actions">
                   <ion-button fill="clear" :disabled="!postalAddress.address1" @click="openGeoPointModal">{{ translate("Edit") }}</ion-button>
@@ -267,168 +273,166 @@
           </ion-card>
         </section>
 
-        <div class="segments">
-          <ion-segment scrollable v-model="segment">
-            <ion-segment-button value="external-mappings" layout="icon-start">
-              <ion-icon :icon="globeOutline" />
-              <ion-label>{{ translate("External mappings") }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="staff" layout="icon-start">
-              <ion-icon :icon="personOutline" />
-              <ion-label>{{ translate("Staff") }}</ion-label>
-            </ion-segment-button>
-            <ion-segment-button value="locations" layout="icon-start">
-              <ion-icon :icon="locationOutline" />
-              <ion-label>{{ translate("Locations") }}</ion-label>
-            </ion-segment-button>
-          </ion-segment>
+        <ion-segment scrollable v-model="segment">
+          <ion-segment-button value="external-mappings" layout="icon-start">
+            <ion-icon :icon="globeOutline" />
+            <ion-label>{{ translate("External mappings") }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="staff" layout="icon-start">
+            <ion-icon :icon="personOutline" />
+            <ion-label>{{ translate("Staff") }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="locations" layout="icon-start">
+            <ion-icon :icon="locationOutline" />
+            <ion-label>{{ translate("Locations") }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
 
-          <div v-if="segment === 'external-mappings'">
-            <ion-button fill="outline" @click="openExternalMappingPopover">
-              <ion-icon :icon="addCircleOutline" slot="start" />
-              {{ translate("Map facility to an external system") }}
-            </ion-button>
-            <div class="external-mappings">
-              <ion-card v-for="(shopifyFacilityMapping, index) in current.shopifyFacilityMappings" :key="index">
-                <ion-card-header>
-                  <ion-card-title>
-                    {{ translate("Shopify facility") }}
-                  </ion-card-title>
-                </ion-card-header>
-                <ion-item lines="full">
-                  <ion-label>
-                    {{ shopifyFacilityMapping.name }}
-                    <p>{{ shopifyFacilityMapping.shopId }}</p>
-                  </ion-label>
-                </ion-item>
-                <ion-item lines="full">
-                  <ion-label>{{ shopifyFacilityMapping.shopifyLocationId }}</ion-label>
-                </ion-item>
-                <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
-                  <ion-label>{{ shopifyFacilityMapping.myshopifyDomain + '/admin' }}</ion-label>
-                  <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyFacilityMapping.myshopifyDomain + '/admin'}`)">
-                    <ion-icon :icon="openOutline" />
-                  </ion-button>
-                </ion-item>
-                <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
-                  <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
-                  <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
-                    <ion-icon :icon="openOutline" />
-                  </ion-button>
-                </ion-item>
-                <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
-              </ion-card>
-              <ion-card v-for="(mapping, index) in current.facilityMappings" :key="index">
-                <ion-card-header>
-                  <ion-card-title>
-                    {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
-                  </ion-card-title>
-                </ion-card-header>
-                <ion-item lines="full">
-                  <ion-label>{{ translate('Identification') }}</ion-label>
-                  <ion-label slot="end">{{ mapping.idValue }}</ion-label>
-                </ion-item>
-                <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger" @click="removeFacilityMapping(mapping)">{{ translate("Remove") }}</ion-button>
-              </ion-card>
-
-              <!-- Hardcoded card to shop facility externalId, as externalID is not available as an identification -->
-              <ion-card v-if="current.externalId">
-                <ion-card-header>
-                  <ion-card-title>
-                    {{ translate('Facility External ID') }}
-                  </ion-card-title>
-                </ion-card-header>
-                <ion-item lines="full">
-                  <ion-label>{{ translate('Identification') }}</ion-label>
-                  <ion-label slot="end">{{ current.externalId }}</ion-label>
-                </ion-item>
-                <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
-                and we can't focus two elements at the same time -->
-                <ion-button fill="clear" @click="$event.target.blur(); editFacilityExternalId()">{{ translate("Edit") }}</ion-button>
-                <ion-button fill="clear" color="danger" @click="removeFacilityExternalID()">{{ translate("Remove") }}</ion-button>
-              </ion-card>
-            </div>
-          </div>
-
-          <div v-else-if="segment === 'staff'">
-            <ion-button fill="outline" @click="addStaffMemberModal">
-              <ion-icon :icon="addCircleOutline" slot="start" />
-              {{ translate("Add staff member to facility") }}
-            </ion-button>
-
-            <div v-for="(party, index) in facilityParties" class="list-item staff" :key="index">
-              <ion-item lines="none">
-                <ion-icon :icon="personOutline" slot="start" />
+        <template v-if="segment === 'external-mappings'">
+          <ion-button fill="outline" @click="openExternalMappingPopover">
+            <ion-icon :icon="addCircleOutline" slot="start" />
+            {{ translate("Map facility to an external system") }}
+          </ion-button>
+          <div class="external-mappings">
+            <ion-card v-for="(shopifyFacilityMapping, index) in current.shopifyFacilityMappings" :key="index">
+              <ion-card-header>
+                <ion-card-title>
+                  {{ translate("Shopify facility") }}
+                </ion-card-title>
+              </ion-card-header>
+              <ion-item lines="full">
                 <ion-label>
-                  {{ party.fullName }}
-                  <p>{{ party.partyId }}</p>
+                  {{ shopifyFacilityMapping.name }}
+                  <p>{{ shopifyFacilityMapping.shopId }}</p>
                 </ion-label>
               </ion-item>
-
-              <ion-label class="tablet">
-                <ion-chip outline>{{ partyRoles[party.roleTypeId] ? partyRoles[party.roleTypeId] : '-' }}</ion-chip>
-                <p>{{ translate("role") }}</p>
-              </ion-label>
-
-              <ion-label class="tablet">
-                <ion-chip outline>{{ getDate(party.fromDate) }}</ion-chip>
-                <p>{{ "added" }}</p>
-              </ion-label>
-
-              <ion-button @click="removePartyFromFacility(party)" fill="clear" color="medium">
-                <ion-icon slot="icon-only" :icon="closeCircleOutline" />
-              </ion-button>
-            </div>
-          </div>
-
-          <div v-else-if="segment === 'locations'">
-            <ion-button fill="outline" @click="addLocationModal">
-              <ion-icon :icon="addCircleOutline" slot="start" />
-              {{ translate("Add locations to facility") }}
-            </ion-button>
-
-            <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
-              <ion-item lines="none">
-                <ion-icon :icon="locationOutline" slot="start" />
-                <ion-label>
-                  {{ location.locationSeqId }}
-                  <p>{{ locationTypes[location.locationTypeEnumId] }}</p>
-                </ion-label>
+              <ion-item lines="full">
+                <ion-label>{{ shopifyFacilityMapping.shopifyLocationId }}</ion-label>
               </ion-item>
+              <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
+                <ion-label>{{ shopifyFacilityMapping.myshopifyDomain + '/admin' }}</ion-label>
+                <ion-button color="medium" fill="clear" @click="goToLink(`${shopifyFacilityMapping.myshopifyDomain + '/admin'}`)">
+                  <ion-icon :icon="openOutline" />
+                </ion-button>
+              </ion-item>
+              <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
+                <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
+                <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
+                  <ion-icon :icon="openOutline" />
+                </ion-button>
+              </ion-item>
+              <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
+              <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
+            </ion-card>
+            <ion-card v-for="(mapping, index) in current.facilityMappings" :key="index">
+              <ion-card-header>
+                <ion-card-title>
+                  {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
+                </ion-card-title>
+              </ion-card-header>
+              <ion-item lines="full">
+                <ion-label>{{ translate('Identification') }}</ion-label>
+                <ion-label slot="end">{{ mapping.idValue }}</ion-label>
+              </ion-item>
+              <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
+              <ion-button fill="clear" color="danger" @click="removeFacilityMapping(mapping)">{{ translate("Remove") }}</ion-button>
+            </ion-card>
 
-              <ion-label class="tablet">
-                {{ location.areaId }}
-                <p>{{ translate("area") }}</p>
-              </ion-label>
-
-              <ion-label>
-                {{ location.aisleId }}
-                <p>{{ translate("aisle") }}</p>
-              </ion-label>
-
-              <ion-label>
-                {{ location.sectionId }}
-                <p>{{ translate("section") }}</p>
-              </ion-label>
-
-              <ion-label class="tablet">
-                {{ location.levelId }}
-                <p>{{ translate("level") }}</p>
-              </ion-label>
-
-              <ion-label>
-                {{ location.positionId ? location.positionId : '-' }}
-                <p>{{ translate("sequence") }}</p>
-              </ion-label>
-
-              <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover($event, location)">
-                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
-              </ion-button>
-            </div>
+            <!-- Hardcoded card to shop facility externalId, as externalID is not available as an identification -->
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>
+                  {{ translate('Facility External ID') }}
+                </ion-card-title>
+              </ion-card-header>
+              <ion-item lines="full">
+                <ion-label>{{ translate('Identification') }}</ion-label>
+                <ion-label slot="end">{{ current.externalId ? current.externalId : '-' }}</ion-label>
+              </ion-item>
+              <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
+              and we can't focus two elements at the same time -->
+              <ion-button fill="clear" @click="$event.target.blur(); editFacilityExternalId()">{{ translate("Edit") }}</ion-button>
+              <ion-button fill="clear" color="danger" @click="removeFacilityExternalID()">{{ translate("Remove") }}</ion-button>
+            </ion-card>
           </div>
-        </div>
+        </template>
+
+        <template v-else-if="segment === 'staff'">
+          <ion-button fill="outline" @click="addStaffMemberModal">
+            <ion-icon :icon="addCircleOutline" slot="start" />
+            {{ translate("Staff member") }}
+          </ion-button>
+
+          <div v-for="(party, index) in facilityParties" class="list-item staff" :key="index">
+            <ion-item lines="none">
+              <ion-icon :icon="personOutline" slot="start" />
+              <ion-label>
+                {{ party.fullName }}
+                <p>{{ party.partyId }}</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-label class="tablet">
+              <ion-chip outline>{{ partyRoles[party.roleTypeId] ? partyRoles[party.roleTypeId] : '-' }}</ion-chip>
+              <p>{{ translate("role") }}</p>
+            </ion-label>
+
+            <ion-label class="tablet">
+              <ion-chip outline>{{ getDate(party.fromDate) }}</ion-chip>
+              <p>{{ "added" }}</p>
+            </ion-label>
+
+            <ion-button @click="removePartyFromFacility(party)" fill="clear" color="medium">
+              <ion-icon slot="icon-only" :icon="closeCircleOutline" />
+            </ion-button>
+          </div>
+        </template>
+
+        <template v-else-if="segment == 'locations'">
+          <ion-button fill="outline" @click="addLocationModal">
+            <ion-icon :icon="addCircleOutline" slot="start" />
+            {{ translate("Internal locations") }}
+          </ion-button>
+
+          <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
+            <ion-item lines="none">
+              <ion-icon :icon="locationOutline" slot="start" />
+              <ion-label>
+                {{ location.locationSeqId }}
+                <p>{{ locationTypes[location.locationTypeEnumId] }}</p>
+              </ion-label>
+            </ion-item>
+
+            <ion-label class="tablet">
+              {{ location.areaId }}
+              <p>{{ translate("area") }}</p>
+            </ion-label>
+
+            <ion-label>
+              {{ location.aisleId }}
+              <p>{{ translate("aisle") }}</p>
+            </ion-label>
+
+            <ion-label>
+              {{ location.sectionId }}
+              <p>{{ translate("section") }}</p>
+            </ion-label>
+
+            <ion-label class="tablet">
+              {{ location.levelId }}
+              <p>{{ translate("level") }}</p>
+            </ion-label>
+
+            <ion-label>
+              {{ location.positionId ? location.positionId : '-' }}
+              <p>{{ translate("sequence") }}</p>
+            </ion-label>
+
+            <ion-button fill="clear" color="medium" @click="openLocationDetailsPopover($event, location)">
+              <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+            </ion-button>
+          </div>
+        </template>
       </main>
       <main v-else-if="!isLoading" class="ion-text-center ion-padding-top">
         {{ translate("Failed to fetch facility information") }}
@@ -1225,10 +1229,6 @@ export default defineComponent({
 
 <style scoped>
 
-ion-content > main {
-  margin: var(--spacer-lg)
-}
-
 section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1251,23 +1251,15 @@ ion-card-header {
   align-items: center;
 }
 
-
-/*Height of segment is defined now since their are less list items. Will remove it later */
-.segments {
-  height: 400px;
-  margin-top: var(--spacer-2xl);
-}
-
-.segments > div {
-  margin-top: var(--spacer-lg)
-}
-
 ion-segment {
+  margin-top: var(--spacer-2xl);
   justify-content: start;
+  margin-bottom: var(--spacer-lg)
 }
 
 .staff {
   --columns-desktop: 5;
+  padding-block: var(--spacer-xs);
 }
 
 .external-mappings, .facility-info {
@@ -1284,5 +1276,12 @@ ion-card > ion-button[expand="block"] {
 .actions {
   display: flex;
   justify-content: space-between;
+}
+
+@media screen and (min-width: 700px) {
+
+  ion-content > main {
+    margin: var(--spacer-lg)
+  }
 }
 </style>
