@@ -96,6 +96,11 @@
                     {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
                   </ion-note>
                 </ion-item>
+                <ion-item>
+                  <ion-label position="floating">{{ translate('Reset password email') }} <ion-text
+                      color="danger">*</ion-text></ion-label>
+                  <ion-input v-model="emailAddress"></ion-input>
+                </ion-item>
               </template>
             </template>
           </ion-list>
@@ -152,11 +157,11 @@ import {
   starOutline
 } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
-import { isValidPassword, showToast } from "@/utils";
+import { isValidPassword, isValidEmail, showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { FacilityService } from "@/services/FacilityService";
-import { UserService } from "@/services/UserService";
+import { UserService } from "@/services/UserService"
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue';
 import { DateTime } from "luxon";
 
@@ -201,6 +206,7 @@ export default defineComponent({
       createLoginCreds: false as any,
       password: '',
       username: '',
+      emailAddress: '',
       selectedProductStores: [] as any,
       primaryFacilityGroupId: ''  // storing productStoreId initially in this, as at this point we don't fetch shopifyShopId
     }
@@ -209,7 +215,7 @@ export default defineComponent({
   async ionViewWillEnter() {
     await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
     await this.store.dispatch('util/fetchProductStores')
-    this.username = this.current.facilityName
+    this.username = this.current.facilityId
   },
   methods: {
     async saveFulfillmentSettings() {
@@ -243,44 +249,39 @@ export default defineComponent({
         throw { message: translate('Failed to update some fulfillment settings.') }
       }
     },
-    async createFacilityUser() {
-      if (!this.username) {
-        showToast(translate('Username is required.'))
-        return
-      }
+    async createFacilityLogin() {
+      
+
       try {
         const payload = {
-          "groupName": this.username,
-          "facilityId": this.facilityId,
-          "loginPassword": this.password,
-          "partyTypeId": "PARTY_GROUP",
-          "partyIdFrom": "COMPANY",
-          "roleTypeIdFrom": "INTERNAL_ORGANIZATIO", // not a typo
-          "roleTypeIdTo": "APPLICATION_USER",
-          "partyRelationshipTypeId": "EMPLOYMENT"
+          "facilityId" : this.facilityId, 
+          "facilityName": this.current.facilityName,
+          "username": this.username,
+          "password": this.password,
+          "emailAddress": this.emailAddress
         }
 
-        const resp = await UserService.createFacilityUser(payload);
-        if (!hasError(resp)) {
-          const partyId = resp.data.partyId;
-          await UserService.addPartyToFacility({
-            "partyId": partyId,
-            "facilityId": this.facilityId,
-            "roleTypeId": "WAREHOUSE_MANAGER"
-          })
-        } else {
-          throw { message: translate('Failed to create facility login credentials.') }
-        }
-
-        return Promise.resolve(resp.data)
+        await FacilityService.createFacilityLogin(payload);
+        return Promise.resolve()
       } catch (error) {
         return Promise.reject(error);
       }
     },
     async saveStoreConfig() {
-      if (this.createLoginCreds && !this.password) {
-        showToast(translate('Please provide a password.'))
-        return
+      if (this.createLoginCreds) {
+
+        if (!this.username ||  !this.password || !this.emailAddress) {
+          showToast(translate('Please fill all the required fields'))
+          return
+        }
+        if (this.username && await UserService.isUserLoginIdExists(this.username)) {
+          showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: this.username }))
+          return;
+        }
+        if (!isValidEmail(this.emailAddress)) {
+          showToast(translate('Please provide a valid email.'))
+          return
+        }
       }
 
       try {
@@ -289,7 +290,7 @@ export default defineComponent({
         }
 
         if (this.createLoginCreds) {
-          await this.createFacilityUser()
+          await this.createFacilityLogin()
         }
 
         if (this.selectedProductStores) {

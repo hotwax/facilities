@@ -3,6 +3,7 @@ import RootState from '@/store/RootState'
 import FacilityState from './FacilityState'
 import emitter from '@/event-bus'
 import { FacilityService } from '@/services/FacilityService'
+import { UserService } from '@/services/UserService'
 import { hasError } from '@/adapter'
 import * as types from './mutation-types'
 import logger from '@/logger'
@@ -88,7 +89,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "entityName": "FacilityAndProductStore",
       "noConditionFind": "Y",
       "distinct": "Y",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId", 'primaryFacilityGroupId'],
+      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId'],
       ...payload
     }
 
@@ -171,7 +172,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityAndProductStore",
       noConditionFind: "Y",
       distinct: "Y",
-      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', "externalId", 'primaryFacilityGroupId'],
+      fieldList: ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId'],
       viewSize: 1
     }
 
@@ -387,7 +388,9 @@ const actions: ActionTree<FacilityState, RootState> = {
     const params = {
       inputFields: {
         facilityId: payload.facilityId,
-        partyId_op: 'not-empty'
+        partyId_op: 'not-empty',
+        roleTypeId: 'FAC_LOGIN',
+        roleTypeId_op: 'notEqual'
       },
       entityName: "FacilityAndParty",
       filterByDate: 'Y',
@@ -438,6 +441,73 @@ const actions: ActionTree<FacilityState, RootState> = {
       logger.error('Failed to fetch shopify facility mappings', err)
     }
     commit(types.FACILITY_SHOPIFY_MAPPINGS_UPDATED, shopifyFacilityMappings)
+  },
+
+  async fetchFacilityLogins({ commit }, payload) {
+    
+    let facilityLogins = [] as any;
+    let dataList = [] as any;
+
+    try {
+      let resp = await FacilityService.getFacilityParties({
+        inputFields: {
+          "facilityId": payload.facilityId,
+          "roleTypeId": "FAC_LOGIN",
+        },
+        fieldList: ['facilityId', 'partyId', 'roleTypeId', 'fromDate'],
+        entityName: "FacilityParty",
+        distinct: 'Y',
+        noConditionFind: 'Y',
+        filterByDate: 'Y',
+        viewSize: 50
+      })
+      if (!hasError(resp) && resp.data.count > 0) {
+        const facilityParties = resp.data.docs
+        dataList = facilityParties;
+        const partyIds = facilityParties.map((party: any) => party.partyId);
+
+        resp = await UserService.fetchUserLoginAndPartyDetails({
+          inputFields: {
+            "partyId": partyIds,
+            "partyId_op": "in",
+          },
+          fieldList: ['partyId', 'groupName', "userLoginId"],
+          entityName: "UserLoginAndPartyDetails",
+          distinct: 'Y',
+          noConditionFind: 'Y',
+          viewSize: 50
+        })
+        if (!hasError(resp) && resp.data.count > 0) {
+          dataList = [...dataList, ...resp.data.docs]
+          resp = await UserService.fetchUserContactDetails({
+            inputFields: {
+              "partyId": partyIds,
+              "partyId_op": "in",
+              contactMechPurposeTypeId: 'PRIMARY_EMAIL',
+            },
+            viewSize: 100,
+            filterByDate: 'Y',
+            entityName: 'PartyContactDetailByPurpose',
+            fieldList: ['partyId', 'infoString', 'contactMechId', 'contactMechPurposeTypeId']
+          })
+          if (!hasError(resp) && resp.data.count > 0) {
+            dataList = [...dataList, ...resp.data.docs]
+          }
+          const facilityPartyData = dataList.reduce((partyData:any, doc:any) => {
+            const partyId = doc.partyId;
+            partyData[partyId] = { ...partyData[partyId], ...doc };
+            return partyData;
+          }, {});
+    
+          facilityLogins = Object.values(facilityPartyData);
+        }
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch facility parties', err)
+    }
+    commit(types.FACILITY_LOGINS_UPDATED, facilityLogins)
   },
 
   async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
