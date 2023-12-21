@@ -17,7 +17,7 @@
             </ion-list-header>
             <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
               <ion-label>
-                {{ groupType.description }}
+                {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
               </ion-label>
               <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroups).length" :placeholder="translate('Select')" :selectedText="groupType.facilityGroups.length > 1 ? groupType.facilityGroups.length : groupType.facilityGroups[0]" :value="groupType.facilityGroups" @ionChange="updateFacilityGroupAssociation($event, groupType.facilityGroups, groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="groupId" :key="groupId" v-for="groupId in getAvailableFacilityGroups(groupType.facilityGroups)">
