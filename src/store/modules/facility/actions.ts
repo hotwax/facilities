@@ -465,6 +465,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         const facilityParties = resp.data.docs
         dataList = facilityParties;
         const partyIds = facilityParties.map((party: any) => party.partyId);
+        dataList = [...dataList, ...await UserService.fetchLogoImageForParties(partyIds)]
 
         resp = await UserService.fetchUserLoginAndPartyDetails({
           inputFields: {
@@ -491,7 +492,7 @@ const actions: ActionTree<FacilityState, RootState> = {
             fieldList: ['partyId', 'infoString', 'contactMechId', 'contactMechPurposeTypeId']
           })
           if (!hasError(resp) && resp.data.count > 0) {
-            dataList = [...dataList, ...resp.data.docs]
+            dataList = [...dataList, resp.data.docs]
           }
           const facilityPartyData = dataList.reduce((partyData:any, doc:any) => {
             const partyId = doc.partyId;
