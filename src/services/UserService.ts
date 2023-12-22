@@ -259,6 +259,57 @@ const fetchUserContactDetails = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchLogoImageForParties = async (partyIds: any): Promise<any> => {
+  let logoImages = [];
+  try {
+
+    let resp = await api({
+      url: 'performFind',
+      method: 'POST',
+      data: {
+        entityName: "PartyContentDetail",
+        inputFields: {
+          partyId: partyIds,
+          partyId_op: 'in',
+          partyContentTypeId: 'LGOIMGURL'
+        },
+        viewSize: 1,
+        fieldList: ['partyId', 'dataResourceId'],
+        noConditionFind: 'Y',
+        filterByDate: 'Y'
+      }
+    }) as any
+    if (!hasError(resp) && resp.data.count > 0) {
+      const partyContents = resp.data.docs;
+      const dataResourceIds = partyContents.map((partyContent: any) => partyContent.dataResourceId);
+      resp = await api({
+        url: 'performFind',
+        method: 'POST',
+        data: {
+          entityName: "DataResource",
+          inputFields: {
+            dataResourceId: dataResourceIds,
+            dataResourceId_op: 'in'
+          },
+          viewSize: 1,
+          fieldList: ['dataResourceId', 'objectInfo'],
+          noConditionFind: 'Y'
+        }
+      })
+      if (!hasError(resp) && resp.data.count > 0) {
+        logoImages = [...partyContents, ...resp.data.docs].reduce((contentData: any, doc: any) => {
+          const dataResourceId = doc.dataResourceId;
+          contentData[dataResourceId] = { ...contentData[dataResourceId], ...doc };
+          return contentData;
+        }, {});
+      }
+    }
+    return Object.values(logoImages);
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+
 export const UserService = {
   addUserToSecurityGroup,
   createRelationship,
@@ -271,6 +322,7 @@ export const UserService = {
   getAvailableTimeZones,
   getUserProfile,
   getUserPermissions,
+  fetchLogoImageForParties,
   fetchUserContactDetails,
   fetchUserLoginAndPartyDetails,
   sendResetPasswordEmail,

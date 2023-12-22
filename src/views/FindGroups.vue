@@ -11,35 +11,50 @@
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
+          <ion-list>
+            <ion-list-header>
+              {{ translate('System groups') }}
+            </ion-list-header>
+            <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
+              <ion-label>
+                {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
+              </ion-label>
+              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroupTypeId).length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+                <ion-select-option :value="group.facilityGroupId" :key="group.facilityGroupId" v-for="group in getAvailableFacilityGroups(groupType.facilityGroupTypeId)">
+                  {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+          </ion-list>
         </section>
+
         <main v-if="groups.length">
-          <div class="groups">
-            <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
-            <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
-              <ion-item lines="full">
-                <ion-label>
-                  {{ group.facilityGroupName }}
-                  <p>{{ group.facilityGroupId }}</p>
-                </ion-label>
-                <ion-button @click="openFacilityGroupActionsPopover($event, group)" fill="clear" color="medium">
-                  <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
-                </ion-button>
-              </ion-item>
-              <ion-item>
-                <ion-label>{{ translate('Facilities') }}</ion-label>
-                <ion-note slot="end">{{ group.facilityCount }}</ion-note>
-              </ion-item>
-              <ion-item lines="full" v-if="group.description">
-                <ion-label>{{ group.description }}</ion-label>
-              </ion-item>
-            </ion-card> 
-            <ion-card>
-              <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
-                <ion-icon :icon="addOutline" slot="start"/>
-                {{ translate('Create group') }}
+          <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
+          <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
+            <ion-item lines="full">
+              <ion-label>
+                <h1>{{ group.facilityGroupName }}</h1>
+                <p>{{ group.facilityGroupId }}</p>
+              </ion-label>
+              <ion-badge slot="end">{{ group.facilityGroupTypeId }}</ion-badge>
+              <ion-button @click="openFacilityGroupActionsPopover($event, group)" fill="clear" color="medium" slot="end">
+                <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
-            </ion-card>
-          </div>   
+            </ion-item>
+            <ion-item>
+              <ion-label>{{ translate('Facilities') }}</ion-label>
+              <ion-note slot="end">{{ group.facilityCount }}</ion-note>
+            </ion-item>
+            <ion-item lines="full" v-if="group.description">
+              <ion-label>{{ group.description }}</ion-label>
+            </ion-item>
+          </ion-card> 
+          <ion-card>
+            <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
+              <ion-icon :icon="addOutline" slot="start"/>
+              {{ translate('Create group') }}
+            </ion-button>
+          </ion-card>
         </main>
         <main v-else>
           <p class="empty-state">{{ translate("No groups found") }}</p>
@@ -64,6 +79,7 @@
 import {
   IonButton,
   IonBackButton,
+  IonBadge,
   IonCard,
   IonContent,
   IonHeader,
@@ -72,9 +88,13 @@ import {
   IonInfiniteScrollContent,
   IonItem,
   IonLabel,
+  IonList,
+  IonListHeader,
   IonNote,
   IonPage,
   IonSearchbar,
+  IonSelect,
+  IonSelectOption,
   IonTitle,
   IonToolbar,
   modalController,
@@ -91,12 +111,14 @@ import FacilityGroupActionsPopover from '@/components/FacilityGroupActionsPopove
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
+import emitter from '@/event-bus';
 
 export default defineComponent({
   name: 'FindGroups',
   components: {
     IonButton,
     IonBackButton,
+    IonBadge,
     IonCard,
     IonContent,
     IonHeader,
@@ -105,15 +127,20 @@ export default defineComponent({
     IonInfiniteScrollContent,
     IonItem,
     IonLabel,
+    IonList,
+    IonListHeader,
     IonNote,
     IonPage,
     IonSearchbar,
+    IonSelect,
+    IonSelectOption,
     IonTitle,
     IonToolbar
   },
   computed: {
     ...mapGetters({
       groups: "facility/getFacilityGroups",
+      facilityGroupTypes: "util/getFacilityGroupTypes",
       isScrollable: "facility/isFacilityGroupsScrollable",
       query: "facility/getGroupQuery",
     })
@@ -191,6 +218,48 @@ export default defineComponent({
         }
       }
     },
+    getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
+      const associatedfacilityGroupIds = [] as any
+
+      this.groups.map((group: any) => {
+        if(group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
+          associatedfacilityGroupIds.push(group.facilityGroupId)
+        }
+      })
+      return associatedfacilityGroupIds
+    },
+    getAvailableFacilityGroups(facilityGroupTypeId: any) {
+      return this.groups.filter((group: any) => (!group.facilityGroupTypeId || group.facilityGroupTypeId === facilityGroupTypeId))
+    },
+    async updateFacilityGroupAssociation(event: CustomEvent, prevAssociatedGroups: any, facilityGroupTypeId: string) {
+      const selectedGroups = event.detail.value
+      const groupsToAdd = selectedGroups.filter((selectedGroupId: string) => !prevAssociatedGroups.includes(selectedGroupId))
+      const groupsToRemove = prevAssociatedGroups.filter((prevGroupId: string) => !selectedGroups.includes(prevGroupId))
+      const updateGroupPayloads = [] as any
+
+      if(!(groupsToAdd.length || groupsToRemove.length)) {
+        return;
+      }
+
+      emitter.emit('presentLoader')
+
+      groupsToAdd.map((facilityGroupId: any) => updateGroupPayloads.push({facilityGroupId, facilityGroupTypeId}))
+      groupsToRemove.map((facilityGroupId: any) => updateGroupPayloads.push({facilityGroupId, facilityGroupTypeId: ''}))
+
+      const responses = await Promise.allSettled(updateGroupPayloads
+        .map(async (payload: any) => await FacilityService.updateFacilityGroup(payload))
+      )
+
+      const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
+      if (hasFailedResponse) {
+        showToast(translate("Failed to associate group with system group types."))
+      } else {
+        showToast(translate("Group associated to system group types."))
+      }
+
+      await this.fetchGroups()
+      emitter.emit('dismissLoader')
+    }
   },
   setup() {
     const router = useRouter();
@@ -213,9 +282,9 @@ export default defineComponent({
   --columns-desktop: 4;
 }
 
-.groups {
+main:has(ion-card) {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  align-items: start; 
+  align-items: start;
 }
 </style>

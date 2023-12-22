@@ -66,14 +66,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_FACILITY_TYPES_UPDATED, facilityTypes)
   },
 
-  async fetchFacilityGroupTypes({ commit, state }) {
-    const cachedFacilityGroupTypes = JSON.parse(JSON.stringify(state.facilityGroupTypes))
-
-    // not fetching facility group types information again if already present, as it will not be changed so frequently
-    if (cachedFacilityGroupTypes.length) {
-      return;
-    }
-
+  async fetchFacilityGroupTypes({ commit }) {
     let facilityGroupTypes = []
     const params = {
       viewSize: 100,
