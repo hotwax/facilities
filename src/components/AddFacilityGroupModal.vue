@@ -93,12 +93,10 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent',
-      facilityGroupTypes: 'util/getFacilityGroupTypes'
+      current: 'facility/getCurrent'
     })
   },
   async mounted() {
-    await this.store.dispatch('util/fetchFacilityGroupTypes')
     await this.fetchFacilityGroups();
   },
   methods: {

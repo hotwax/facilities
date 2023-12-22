@@ -448,10 +448,10 @@
             <ion-card v-for="(group, index) in current.groupInformation" :key="index">
               <ion-card-header>
                 <div>
-                  <ion-card-title>{{ group.facilityGroupId }}</ion-card-title>
-                  <ion-card-subtitle>{{ group.facilityGroupName }}</ion-card-subtitle>
+                  <ion-card-title>{{ group.facilityGroupName }}</ion-card-title>
+                  <ion-card-subtitle>{{ group.facilityGroupId }}</ion-card-subtitle>
                 </div>
-                <ion-badge>{{ group.facilityGroupTypeId }}</ion-badge>
+                <ion-badge>{{ getFacilityGroupTypeDesc(group.facilityGroupTypeId) }}</ion-badge>
                 <ion-button fill="clear" @click="removeFacilityFromGroup(group.facilityGroupId)">
                   <ion-icon slot="icon-only" :icon="unlinkOutline" />
                 </ion-button>
@@ -619,11 +619,13 @@ export default defineComponent({
       userProfile: 'user/getUserProfile',
       shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
       facilityTypes: "util/getFacilityTypes",
-      baseUrl: "user/getBaseUrl"
+      baseUrl: "user/getBaseUrl",
+      facilityGroupTypes: 'util/getFacilityGroupTypes'
     })
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
+    this.store.dispatch('util/fetchFacilityGroupTypes')
     await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles'), this.store.dispatch('util/fetchFacilityTypes', {
       parentTypeId: 'VIRTUAL_FACILITY',
       parentTypeId_op: 'notEqual',
@@ -1279,6 +1281,9 @@ export default defineComponent({
       })
       facilityLoginModal.present()
     },
+    getFacilityGroupTypeDesc(groupTypeId: string) {
+      return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
+    }
   },
   setup() {
     const store = useStore();
