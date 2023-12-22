@@ -281,6 +281,10 @@
               <ion-icon :icon="locationOutline" />
               <ion-label>{{ translate("Locations") }}</ion-label>
             </ion-segment-button>
+            <ion-segment-button value="groups" layout="icon-start">
+              <ion-icon :icon="albumsOutline" />
+              <ion-label>{{ translate("Groups") }}</ion-label>
+            </ion-segment-button>
           </ion-segment>
 
           <div v-if="segment === 'external-mappings'">
@@ -428,6 +432,31 @@
               </ion-button>
             </div>
           </div>
+
+          <div v-else-if="segment === 'groups'">
+            <ion-button fill="outline" @click="addFacilityGroupModal">
+              <ion-icon :icon="addCircleOutline" slot="start" />
+              {{ translate("Link to groups") }}
+            </ion-button>
+
+            <div class="external-mappings">
+              <ion-card v-for="(group, index) in current.groupInformation" :key="index">
+                <ion-card-header>
+                  <div>
+                    <ion-card-title>{{ group.facilityGroupId }}</ion-card-title>
+                    <ion-card-subtitle>{{ group.facilityGroupName }}</ion-card-subtitle>
+                  </div>
+                  <ion-badge>{{ group.facilityGroupTypeId }}</ion-badge>
+                  <ion-button fill="clear" @click="removeFacilityFromGroup(group.facilityGroupId)">
+                    <ion-icon slot="icon-only" :icon="unlinkOutline" />
+                  </ion-button>
+                </ion-card-header>
+                <ion-item v-if="group.description" lines="none">
+                  <ion-label>{{ group.description }}</ion-label>
+                </ion-item>
+              </ion-card>
+            </div>
+          </div>
         </div>
       </main>
       <main v-else-if="!isLoading" class="ion-text-center ion-padding-top">
@@ -447,6 +476,7 @@ import {
   IonCard,
   IonCardContent,
   IonCardHeader,
+  IonCardSubtitle,
   IonCardTitle,
   IonChip,
   IonContent,
@@ -475,6 +505,7 @@ import {
 import { 
   addCircleOutline,
   addOutline,
+  albumsOutline,
   bookmarkOutline,
   bookmarksOutline,
   closeCircleOutline,
@@ -485,7 +516,8 @@ import {
   locationOutline,
   openOutline,
   pencilOutline,
-  personOutline
+  personOutline,
+  unlinkOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
 import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
@@ -514,6 +546,7 @@ import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
 import FacilityLoginActionPopover from '@/components/FacilityLoginActionPopover.vue'
 import CreateFacilityLoginModal from '@/components/CreateFacilityLoginModal.vue'
+import AddFacilityGroupModal from '@/components/AddFacilityGroupModal.vue'
 import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
 
@@ -527,6 +560,7 @@ export default defineComponent({
     IonCard,
     IonCardContent,
     IonCardHeader,
+    IonCardSubtitle,
     IonCardTitle,
     IonChip,
     IonContent,
@@ -764,6 +798,20 @@ export default defineComponent({
 
       addStaffModal.present()
     },
+    async addFacilityGroupModal() {
+      const addFacilityGroupModal = await modalController.create({
+        component: AddFacilityGroupModal
+      })
+
+      addFacilityGroupModal.present()
+
+      // fetch the latest facilityGroups information only if facility is linked to some new groups
+      addFacilityGroupModal.onDidDismiss().then((result: any) => {
+        if(result?.data?.fetchGroups) {
+          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+        }
+      })
+    },
     async addOperatingHours() {
       const addOperatingHoursModal = await modalController.create({
         component: AddOperatingHoursModal,
@@ -939,6 +987,35 @@ export default defineComponent({
       } catch (err) {
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
+      }
+
+      emitter.emit("dismissLoader");
+    },
+    async removeFacilityFromGroup(facilityGroupId: string) {
+      emitter.emit("presentLoader");
+
+      let resp;
+
+      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
+
+      try {
+
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.current.facilityId,
+          "facilityGroupId": facilityGroupId,
+          "fromDate": groupInformation.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+
+        if (!hasError(resp)) {
+          showToast(translate('Group unlinked from facility'))
+          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        showToast(translate('Failed to unlink group'))
+        logger.error('Failed to unlink group', err)
       }
 
       emitter.emit("dismissLoader");
@@ -1201,6 +1278,7 @@ export default defineComponent({
     return {
       addCircleOutline,
       addOutline,
+      albumsOutline,
       bookmarkOutline,
       bookmarksOutline,
       closeCircleOutline,
@@ -1213,7 +1291,8 @@ export default defineComponent({
       pencilOutline,
       personOutline,
       store,
-      translate
+      translate,
+      unlinkOutline
     }
   }
 });
