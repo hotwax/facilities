@@ -13,7 +13,7 @@
   <ion-content>
     <ion-item>
       <ion-textarea
-        placeholder="{{ tranlate('group description') }}"
+        :placeholder="translate('group description')"
         :auto-grow="true"
         v-model="facilityGroupDescription"
       >
