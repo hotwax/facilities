@@ -298,9 +298,11 @@ export default defineComponent({
 
         if (!hasError(resp)) {
           // updating the facilities state instead of refetching
+          const facilityGroupInformation = await FacilityService.fetchFacilityGroupInformation([facility.facilityId]);
           const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
             if (facility.facilityId === facilityData.facilityId) {
               facilityData.sellOnline = !facility.sellOnline
+              facilityData.groupInformation = facilityGroupInformation[facility.facilityId]
             }
             return facilityData
           })
