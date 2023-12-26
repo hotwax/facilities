@@ -223,7 +223,7 @@
   "Parking renamed successfully.": "Parking renamed successfully.",
   "Parking unarchived successfully.": "Parking unarchived successfully.",
   "Party Id": "Party Id",
-  "Party was removed from facility.": "Party was removed from facility.",
+  "Party was removed from facility.": "{partyName} was removed from {facilityName}.",
   "Password": "Password",
   "Password reset email sent successfully.": "Password reset email sent successfully.",
   "Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.": "Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.",
