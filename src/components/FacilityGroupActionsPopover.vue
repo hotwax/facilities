@@ -7,6 +7,9 @@
       <ion-item button @click="renameFacilityGroup()">
         {{ translate("Rename") }}
       </ion-item>
+      <ion-item button @click="updateGroupDescriptionModal()">
+        {{ group?.description ? translate("Edit description") : translate("Add description") }}
+      </ion-item>
       <ion-item button @click="deleteFacilityGroup()" lines="none">
         {{ translate("Delete") }}
       </ion-item>
@@ -21,7 +24,8 @@ import {
   IonItem,
   IonList,
   IonListHeader,
-  popoverController
+  popoverController,
+  modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from '@hotwax/dxp-components'
@@ -30,6 +34,7 @@ import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { mapGetters, useStore } from "vuex";
 import logger from "@/logger";
+import FacilityGroupDescriptionModal from "./FacilityGroupDescriptionModal.vue";
 
 export default defineComponent({
   name: "FacilityGroupActionsPopover",
@@ -66,6 +71,13 @@ export default defineComponent({
         }]
       })
       await alert.present()
+    },
+    async updateGroupDescriptionModal() {
+      const facilityLoginModal = await modalController.create({
+        component: FacilityGroupDescriptionModal,
+        componentProps: { facilityGroup: this.group }
+      })
+      facilityLoginModal.present()
     },
     async deleteFacilityGroup() {
       if (this.group.facilityCount) {
