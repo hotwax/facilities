@@ -823,7 +823,7 @@ export default defineComponent({
         })
 
         if(!hasError(resp)){
-          showToast(translate("Party was removed from facility."))
+          showToast(translate("Party was removed from facility.", {"partyName": party.fullName, "facilityName": this.current.facilityName}))
 
           // Refreshes the parties in facility
           await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
