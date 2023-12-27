@@ -93,6 +93,9 @@ export default defineComponent({
       }
 
       try {
+        //First delete all the Inactive FacilityGroupMember records
+        await this.deleteInactiveFacilityGroupAssociations(this.group.facilityGroupId);
+
         const resp = await FacilityService.deleteFacilityGroup({
           facilityGroupId: this.group.facilityGroupId
         }) as any
@@ -111,6 +114,24 @@ export default defineComponent({
       }
       popoverController.dismiss()
     },
+    async deleteInactiveFacilityGroupAssociations(groupId: string) {
+      const members = await FacilityService.fetchInactiveFacilityGroupAssociations(groupId);
+      let promises = [] as any;
+      members.forEach((member:any) => {
+        promises.push(FacilityService.removeFacilityFromGroup({
+          facilityGroupId: member.facilityGroupId,
+          facilityId: member.facilityId,
+          fromDate: member.fromDate
+        }));
+      });
+      await Promise.all(promises).then(responses => {
+        responses.forEach(response => {
+          if (hasError(response)) {
+            throw response.data;
+          }
+        });
+      })
+    }
   },
   setup() {
     const store = useStore();
