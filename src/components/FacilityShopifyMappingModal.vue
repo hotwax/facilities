@@ -116,7 +116,8 @@ export default defineComponent({
   props: ["shopifyFacilityMapping", "type"],
   async mounted() {
     this.shopifyLocationId = this.shopifyFacilityMapping?.shopifyLocationId
-    await this.fetchShopifyShops() 
+    await this.fetchShopifyShops()
+    this.shopId = this.shopifyShops[0]?.shopId
   },
   methods: {
     closeModal() {
