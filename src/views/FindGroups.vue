@@ -41,7 +41,7 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item @click="viewFacilities(group.facilityGroupId)" button>
               <ion-label>{{ translate('Facilities') }}</ion-label>
               <ion-note slot="end">{{ group.facilityCount }}</ion-note>
             </ion-item>
@@ -143,6 +143,7 @@ export default defineComponent({
       facilityGroupTypes: "util/getFacilityGroupTypes",
       isScrollable: "facility/isFacilityGroupsScrollable",
       query: "facility/getGroupQuery",
+      facilityQuery: "facility/getFacilityQuery",
     })
   },
   async mounted() {
@@ -153,6 +154,10 @@ export default defineComponent({
     async updateQuery() {
       await this.store.dispatch('facility/updateGroupQuery', this.query)
       this.fetchGroups();
+    },
+    async viewFacilities(facilityGroupId: string) {
+      await this.store.dispatch('facility/updateFacilityQuery', {...this.facilityQuery, facilityGroupId })
+      this.$router.push({ path: `/find-facilities`})
     },
     async fetchGroups(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;

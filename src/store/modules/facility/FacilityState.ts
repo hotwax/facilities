@@ -2,7 +2,8 @@ export default interface FacilityState {
   facilityQuery: {
     queryString: string,
     productStoreId: string,
-    facilityTypeId: string
+    facilityTypeId: string,
+    facilityGroupId: string
   },
   groupQuery: {
     queryString: string

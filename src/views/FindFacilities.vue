@@ -40,6 +40,16 @@
                 </ion-select-option>
               </ion-select>
             </ion-item>
+            <ion-item lines="none">
+              <ion-icon :icon="albumsOutline" slot="start" />
+              <ion-label>{{ translate("Group") }}</ion-label>
+              <ion-select interface="popover" v-model="query.facilityGroupId" @ionChange="updateQuery()">
+                <ion-select-option value="">{{ translate("All") }}</ion-select-option>
+                <ion-select-option :value="group.facilityGroupId" :key="group.facilityGroupId" v-for="group in facilityGroups">
+                  {{ group.facilityGroupName }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
           </ion-list>
         </aside>
 
@@ -143,6 +153,7 @@ import {
 import { defineComponent } from 'vue';
 import {
   addOutline,
+  albumsOutline,
   businessOutline,
   filterOutline,
   globeOutline,
@@ -189,6 +200,11 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  data() {
+    return {
+      facilityGroups: [] as any
+    }
+  },
   computed: {
     ...mapGetters({
       facilities: "facility/getFacilities",
@@ -201,6 +217,7 @@ export default defineComponent({
   async mounted() {
     // We only need to fetch those types whose parent is not virtual facility
     await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY', parentTypeId_op: 'notEqual', facilityTypeId: 'VIRTUAL_FACILITY', facilityTypeId_op: 'notEqual' }), this.store.dispatch('util/fetchProductStores')])
+    await this.fetchFacilityGroups();
   },
   async ionViewWillEnter() {
     // fetching facilities information in the ionViewWillEnter hook as when updating facilityGroup or fulfillment limit
@@ -316,6 +333,27 @@ export default defineComponent({
         logger.error('Failed to update fulfillment setting', error)
       }
     },
+    async fetchFacilityGroups() {
+      const params = {
+        entityName: "FacilityGroup",
+        noConditionFind: 'Y',
+        orderBy: "facilityGroupTypeId ASC",
+        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+        viewSize: 50
+      }
+
+      try {
+        const resp = await FacilityService.fetchFacilityGroups(params);
+
+        if (!hasError(resp) && resp.data?.docs?.length > 0) {
+          this.facilityGroups = resp.data.docs;
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        logger.error('Failed to find facility groups', err)
+      }
+    }
   },
   setup() {
     const router = useRouter();
@@ -323,6 +361,7 @@ export default defineComponent({
 
     return {
       addOutline,
+      albumsOutline,
       businessOutline,
       filterOutline,
       globeOutline,
