@@ -13,7 +13,7 @@
   <ion-content>
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findGroups()"/>
 
-    <form @keyup.enter="updateGroupsToAdd">
+    <form @keyup.enter="updateGroups">
       <ion-list>
         <ion-item-group v-for="(groups, typeId) in filteredFacilityGroupsByType" :key="typeId">
           <ion-item-divider color="medium">{{ typeId }}</ion-item-divider>
@@ -23,13 +23,12 @@
           </ion-item>
         </ion-item-group>
       </ion-list>
-
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="updateGroups" @keyup.enter.stop>
-          <ion-icon :icon="linkOutline" />
-        </ion-fab-button>
-      </ion-fab>
     </form>
+    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+      <ion-fab-button @click="updateGroups">
+        <ion-icon :icon="linkOutline" />
+      </ion-fab-button>
+    </ion-fab>
   </ion-content>
 </template>
 
@@ -186,7 +185,7 @@ export default defineComponent({
       }
     },
     isFacilityGroupLinked(facilityGroupId: string) {
-      return this.current.groupInformation.some((group: any) => group.facilityGroupId === facilityGroupId)
+      return this.current.groupInformation?.some((group: any) => group.facilityGroupId === facilityGroupId)
     },
     findGroups() {
       // when searched empty return the same list again

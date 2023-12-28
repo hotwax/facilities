@@ -457,7 +457,7 @@
                 </ion-button>
               </ion-card-header>
               <ion-item v-if="group.description" lines="none">
-                <ion-label>{{ group.description }}</ion-label>
+                <ion-label class="ion-text-wrap">{{ group.description }}</ion-label>
               </ion-item>
             </ion-card>
           </div>
