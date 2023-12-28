@@ -6,7 +6,7 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ `Create ${parentFacilityTypeDesc} login` }}</ion-title>
+      <ion-title>{{ translate(`Create ${facilityTypeDesc} login`) }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -100,7 +100,7 @@ export default defineComponent({
       emailAddress: '',
     }
   },
-  props: ["currentFacility", "parentFacilityTypeDesc"],
+  props: ["currentFacility", "facilityTypeDesc"],
   methods: {
     closeModal() {
       modalController.dismiss({ dismissed: true });

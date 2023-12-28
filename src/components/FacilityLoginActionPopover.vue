@@ -49,7 +49,7 @@ export default defineComponent({
     IonList,
     IonListHeader
   },
-  props: ['currentFacility', 'currentFacilityUser', "parentFacilityTypeDesc"],
+  props: ['currentFacility', 'currentFacilityUser', "facilityTypeDesc"],
   methods: {
     async viewDetails() {
       const userDetailUrl = `${process.env.VUE_APP_USERS_APPLICATION_URL}/user-details/${this.currentFacilityUser.partyId}`
@@ -161,7 +161,7 @@ export default defineComponent({
     async unlinkFacilityLoginAlert() {
       const message = 'Unlinking this login as an official facility login will not prevent this user from being used to login at this facility. Do you also want to block this user from logging into this facility?'
       const alert = await alertController.create({
-        header: translate(`Unlink ${this.parentFacilityTypeDesc} login`),
+        header: translate(`Unlink ${this.facilityTypeDesc} login`),
         message: translate(message, { space: "<br><br>" }),
         inputs: [
           {

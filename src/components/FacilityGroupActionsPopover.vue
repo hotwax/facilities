@@ -7,6 +7,9 @@
       <ion-item button @click="renameFacilityGroup()">
         {{ translate("Rename") }}
       </ion-item>
+      <ion-item button @click="updateGroupDescriptionModal()">
+        {{ group?.description ? translate("Edit description") : translate("Add description") }}
+      </ion-item>
       <ion-item button @click="deleteFacilityGroup()" lines="none">
         {{ translate("Delete") }}
       </ion-item>
@@ -21,7 +24,8 @@ import {
   IonItem,
   IonList,
   IonListHeader,
-  popoverController
+  popoverController,
+  modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from '@hotwax/dxp-components'
@@ -30,6 +34,7 @@ import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { mapGetters, useStore } from "vuex";
 import logger from "@/logger";
+import FacilityGroupDescriptionModal from "./FacilityGroupDescriptionModal.vue";
 
 export default defineComponent({
   name: "FacilityGroupActionsPopover",
@@ -67,6 +72,13 @@ export default defineComponent({
       })
       await alert.present()
     },
+    async updateGroupDescriptionModal() {
+      const facilityLoginModal = await modalController.create({
+        component: FacilityGroupDescriptionModal,
+        componentProps: { facilityGroup: this.group }
+      })
+      facilityLoginModal.present()
+    },
     async deleteFacilityGroup() {
       if (this.group.facilityCount) {
         const linkFacilitiesAlert = await alertController.create({
@@ -81,6 +93,9 @@ export default defineComponent({
       }
 
       try {
+        //First delete all the Inactive FacilityGroupMember records
+        await this.deleteInactiveFacilityGroupAssociations(this.group.facilityGroupId);
+
         const resp = await FacilityService.deleteFacilityGroup({
           facilityGroupId: this.group.facilityGroupId
         }) as any
@@ -99,6 +114,24 @@ export default defineComponent({
       }
       popoverController.dismiss()
     },
+    async deleteInactiveFacilityGroupAssociations(groupId: string) {
+      const members = await FacilityService.fetchInactiveFacilityGroupAssociations(groupId);
+      let promises = [] as any;
+      members.forEach((member:any) => {
+        promises.push(FacilityService.removeFacilityFromGroup({
+          facilityGroupId: member.facilityGroupId,
+          facilityId: member.facilityId,
+          fromDate: member.fromDate
+        }));
+      });
+      await Promise.all(promises).then(responses => {
+        responses.forEach(response => {
+          if (hasError(response)) {
+            throw response.data;
+          }
+        });
+      })
+    }
   },
   setup() {
     const store = useStore();

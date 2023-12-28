@@ -246,7 +246,7 @@
           <ion-card>
             <ion-card-header>
               <ion-card-title>
-                {{ `${facilityTypes[current.parentFacilityTypeId]?.description} logins` }}
+                {{ translate(`${facilityTypes[current.facilityTypeId]?.description} logins`) }}
               </ion-card-title>
               <ion-button v-if="current.facilityLogins?.length" @click="createFacilityLoginModal()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
@@ -342,8 +342,8 @@
               <ion-button fill="clear" color="danger" @click="removeFacilityMapping(mapping)">{{ translate("Remove") }}</ion-button>
             </ion-card>
 
-            <!-- Hardcoded card to shop facility externalId, as externalID is not available as an identification -->
-            <ion-card>
+            <!-- Hardcoded card to show facility externalId, as externalID is not available as an identification -->
+            <ion-card v-if="current.externalId">
               <ion-card-header>
                 <ion-card-title>
                   {{ translate('Facility External ID') }}
@@ -351,7 +351,7 @@
               </ion-card-header>
               <ion-item lines="full">
                 <ion-label>{{ translate('Identification') }}</ion-label>
-                <ion-label slot="end">{{ current.externalId ? current.externalId : '-' }}</ion-label>
+                <ion-label slot="end">{{ current.externalId }}</ion-label>
               </ion-item>
               <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
               and we can't focus two elements at the same time -->
@@ -873,7 +873,7 @@ export default defineComponent({
         })
 
         if(!hasError(resp)){
-          showToast(translate("Party successfully removed from facility."))
+          showToast(translate("Party was removed from facility.", {"partyName": party.fullName, "facilityName": this.current.facilityName}))
 
           // Refreshes the parties in facility
           await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
@@ -1268,7 +1268,7 @@ export default defineComponent({
     async openFacilityLoginActionPopover(ev: Event, facilityUser: any) {
       const popover = await popoverController.create({
         component: FacilityLoginActionPopover,
-        componentProps: { currentFacility: this.current, currentFacilityUser: facilityUser, parentFacilityTypeDesc: this.facilityTypes[this.current.parentFacilityTypeId]?.description },
+        componentProps: { currentFacility: this.current, currentFacilityUser: facilityUser, facilityTypeDesc: this.facilityTypes[this.current.facilityTypeId]?.description },
         event: ev,
         showBackdrop: false
       });
@@ -1277,7 +1277,7 @@ export default defineComponent({
     async createFacilityLoginModal() {
       const facilityLoginModal = await modalController.create({
       component: CreateFacilityLoginModal,
-        componentProps: { currentFacility: this.current, parentFacilityTypeDesc: this.facilityTypes[this.current.parentFacilityTypeId]?.description }
+        componentProps: { currentFacility: this.current, facilityTypeDesc: this.facilityTypes[this.current.facilityTypeId]?.description }
       })
       facilityLoginModal.present()
     },

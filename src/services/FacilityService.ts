@@ -67,6 +67,38 @@ const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise
   return facilitiesGroupInformation;
 }
 
+const fetchInactiveFacilityGroupAssociations = async (groupId: string): Promise<any> => {
+  let facilitiesGroupMembers = []
+
+  const params = {
+    inputFields: {
+      facilityGroupId: groupId,
+      thruDate: DateTime.now().toMillis(),
+      thruDate_op: 'opLessThan' 
+    },
+    fieldList: ['facilityGroupId', 'facilityId', "fromDate", "thruDate"],
+    entityName: "FacilityGroupMember",
+    viewSize: 100
+  }
+
+  try {
+    const resp = await api({
+      url: "performFind",
+      method: "post",
+      data: params
+    }) as any;
+
+    if (!hasError(resp) && resp.data.count > 0) {
+      facilitiesGroupMembers = resp.data.docs
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err)
+  }
+  return facilitiesGroupMembers;
+}
+
 const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any> => {
   let facilitiesOrderCount = {}, resp: any;
   try {
@@ -211,6 +243,14 @@ const fetchFacilityLocations = async(payload: any): Promise<any> => {
 const addFacilityToGroup = async (payload: any): Promise<any> => {
   return api({
     url: "service/addFacilityToGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+const removeFacilityFromGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/removeFacilityFromGroup",
     method: "post",
     data: payload
   })
@@ -685,6 +725,7 @@ export const FacilityService = {
   fetchFacilityGroupInformation,
   fetchFacilityMappings,
   fetchFacilityOrderCounts,
+  fetchInactiveFacilityGroupAssociations,
   fetchJobData,
   fetchOrderCountsByFacility,
   getFacilityProductStores,
@@ -692,6 +733,7 @@ export const FacilityService = {
   getFacilityParties,
   getPartyRoleAndPartyDetails,
   removeFacilityCalendar,
+  removeFacilityFromGroup,
   removePartyFromFacility,
   updateFacility,
   updateFacilityGroup,
