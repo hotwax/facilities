@@ -19,8 +19,8 @@
               <ion-label>
                 {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
               </ion-label>
-              <ion-select v-if="getAvailableFacilityGroups(groupType.facilityGroupTypeId).length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
-                <ion-select-option :value="group.facilityGroupId" :key="group.facilityGroupId" v-for="group in getAvailableFacilityGroups(groupType.facilityGroupTypeId)">
+              <ion-select v-if="groups.length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+                <ion-select-option :value="group.facilityGroupId" :disabled="group.facilityGroupTypeId && group.facilityGroupTypeId !== groupType.facilityGroupTypeId" :key="group.facilityGroupId" v-for="group in groups">
                   {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
                 </ion-select-option>
               </ion-select>
@@ -227,9 +227,6 @@ export default defineComponent({
         }
       })
       return associatedfacilityGroupIds
-    },
-    getAvailableFacilityGroups(facilityGroupTypeId: any) {
-      return this.groups.filter((group: any) => (!group.facilityGroupTypeId || group.facilityGroupTypeId === facilityGroupTypeId))
     },
     async updateFacilityGroupAssociation(event: CustomEvent, prevAssociatedGroups: any, facilityGroupTypeId: string) {
       const selectedGroups = event.detail.value
