@@ -11,7 +11,8 @@ const facilityModule: Module<FacilityState, RootState> = {
     facilityQuery: {
       queryString: '',
       productStoreId: '',
-      facilityTypeId: ''
+      facilityTypeId: '',
+      facilityGroupId: ''
     },
     groupQuery: {
       queryString: ''

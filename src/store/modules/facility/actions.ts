@@ -79,16 +79,31 @@ const actions: ActionTree<FacilityState, RootState> = {
       filters['facilityName_value'] = state.facilityQuery.queryString
       filters['facilityName_op'] = 'contains'
       filters['facilityName_ic'] = 'Y'
-      filters['facilityName_grp'] = '2'
+      filters['facilityName_grp'] = '1'
+      filters['grp_op_1'] = 'OR'
+    }
+
+    if (state.facilityQuery.facilityGroupId) {
+      filters['facilityGroupId'] = state.facilityQuery.facilityGroupId
+      filters['facilityGroupId_op'] = 'equals'
+      filters['facilityGroupId_grp'] = '2'
+      filters['primaryFacilityGroupId'] = state.facilityQuery.facilityGroupId
+      filters['primaryFacilityGroupId_op'] = 'equals'
+      filters['primaryFacilityGroupId_grp'] = '2'
+      filters['grp_op_2'] = 'OR'
     }
 
     const params = {
       "inputFields": {
+        "grp_op": "AND",
         ...filters
       },
-      "entityName": "FacilityAndProductStore",
+      "entityName": "FacilityView",
       "noConditionFind": "Y",
       "distinct": "Y",
+      "fromDateName": "facilityGroupFromDate",
+      "thruDateName": "facilityGroupThruDate",
+      "filterByDate": "Y",
       "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId'],
       ...payload
     }
