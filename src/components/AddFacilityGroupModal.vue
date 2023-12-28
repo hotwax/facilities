@@ -16,17 +16,17 @@
     <form @keyup.enter="updateGroups">
       <ion-list>
         <ion-item-group v-for="(groups, typeId) in filteredFacilityGroupsByType" :key="typeId">
-          <ion-item-divider color="medium">{{ typeId }}</ion-item-divider>
+          <ion-item-divider color="medium">{{ getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
           <ion-item v-for="group in groups" :key="group.facilityGroupId">
             <ion-label>{{ group.facilityGroupName }}</ion-label>
-            <ion-checkbox :disabled="isFacilityGroupLinked(group.facilityGroupId)" :checked="isFacilityGroupLinked(group.facilityGroupId)" @ion-change="updateGroupsToAdd(group.facilityGroupId)"/>
+            <ion-checkbox :checked="isFacilityGroupLinked(group.facilityGroupId)" @ion-change="updateGroupsForFacility(group.facilityGroupId)"/>
           </ion-item>
         </ion-item-group>
       </ion-list>
     </form>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
       <ion-fab-button @click="updateGroups">
-        <ion-icon :icon="linkOutline" />
+        <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
   </ion-content>
@@ -53,7 +53,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, linkOutline } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@hotwax/oms-api";
@@ -61,6 +61,7 @@ import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { showToast } from "@/utils";
+import { DateTime } from "luxon";
 
 export default defineComponent({
   name: "AddFacilityGroupModal",
@@ -87,12 +88,14 @@ export default defineComponent({
       facilityGroupsByType: {},
       filteredFacilityGroupsByType: {} as any,
       groupsToAdd: [] as Array<string>,
+      groupsToRemove: [] as Array<string>,
       queryString: ''
     }
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      facilityGroupTypes: 'util/getFacilityGroupTypes'
     })
   },
   async mounted() {
@@ -102,7 +105,17 @@ export default defineComponent({
     closeModal(fetchGroups = false) {
       modalController.dismiss({ fetchGroups });
     },
-    async updateGroupsToAdd(facilityGroupId: string) {
+    async updateGroupsForFacility(facilityGroupId: string) {
+      // if clicked on an already added group
+      if(this.isFacilityGroupLinked(facilityGroupId)) {
+        if(this.groupsToRemove.includes(facilityGroupId)) {
+          this.groupsToRemove.splice(this.groupsToRemove.indexOf(facilityGroupId), 1)
+        } else {
+          this.groupsToRemove.push(facilityGroupId)
+        }
+        return;
+      }
+
       if(this.groupsToAdd.includes(facilityGroupId)) {
         this.groupsToAdd.splice(this.groupsToAdd.indexOf(facilityGroupId), 1)
       } else {
@@ -110,8 +123,8 @@ export default defineComponent({
       }
     },
     async updateGroups() {
-      if(!this.groupsToAdd.length) {
-        showToast(translate('Please select groups to link'))
+      if(!this.groupsToAdd.length && !this.groupsToRemove.length) {
+        showToast(translate('Please select/de-select groups to link/unlink from facility'))
         return;
       }
 
@@ -130,10 +143,18 @@ export default defineComponent({
         }
       }
 
+      for(let groupId of this.groupsToRemove) {
+        try {
+          await this.removeFacilityFromGroup(groupId);
+        } catch {
+          isFacilityGroupRespHasError = true;
+        }
+      }
+
       if(isFacilityGroupRespHasError) {
-        showToast(translate('Failed to add some groups to facility'))
+        showToast(translate('Failed to update some groups for facility'))
       } else {
-        showToast(translate('Groups linked to facility'))
+        showToast(translate('Updated groups for facility'))
       }
       emitter.emit("dismissLoader");
       this.closeModal(true);
@@ -152,6 +173,29 @@ export default defineComponent({
         return Promise.resolve(resp.data)
       } catch (err) {
         logger.error('Failed to add group to facility', err)
+        return Promise.reject(err)
+      }
+    },
+    async removeFacilityFromGroup(facilityGroupId: string) {
+      let resp;
+
+      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
+
+      try {
+
+        resp = await FacilityService.updateFacilityToGroup({
+          "facilityId": this.current.facilityId,
+          "facilityGroupId": facilityGroupId,
+          "fromDate": groupInformation.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        })
+
+        if (hasError(resp)) {
+          throw resp.data;
+        }
+        return Promise.resolve(resp.data)
+      } catch (err) {
+        logger.error('Failed to remove group from facility', err)
         return Promise.reject(err)
       }
     },
@@ -209,6 +253,9 @@ export default defineComponent({
         })
         return filteredGroups
       }, {})
+    },
+    getFacilityGroupTypeDesc(groupTypeId: any) {
+      return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
     }
   },
   setup() {
@@ -216,7 +263,7 @@ export default defineComponent({
 
     return {
       closeOutline,
-      linkOutline,
+      saveOutline,
       store,
       translate
     };
