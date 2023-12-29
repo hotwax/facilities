@@ -79,6 +79,7 @@
   "External mapping updated successfully": "External mapping updated successfully",
   "External mappings": "External mappings",
   "Facilities": "Facilities",
+  "Facilities:": "Facilities: {count}",
   "Facilities associated to group successfully.": "Facilities associated to group successfully.",
   "Facility": "Facility",
   "Facility address created successfully.": "Facility address created successfully.",
