@@ -66,6 +66,8 @@ import { hasError } from "@/adapter";
 import logger from "@/logger"
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
+import { DateTime } from "luxon";
+import { showToast } from "@/utils";
 
 export default defineComponent({
   name: "EditPickersModal",
@@ -91,8 +93,10 @@ export default defineComponent({
     return {
       queryString: '',
       facilities: [] as any,
-      associatedFacilityIds: [],
-      associatedFacilityIdValues: [] as any
+      associatedFacilityIds: [] as any,
+      associatedFacilityIdValues: [] as any,
+      selectedFacilities: [] as any,
+      selectedFacilityValues: [] as any
     }
   },
   props: ['group'],
@@ -129,7 +133,7 @@ export default defineComponent({
         "fromDateName": "facilityGroupFromDate",
         "thruDateName": "facilityGroupThruDate",
         "filterByDate": "Y",
-        "fieldList": ["facilityId", "facilityName", "facilityTypeId", "maximumOrderLimit", "defaultDaysToShip", "externalId", "primaryFacilityGroupId", "parentFacilityTypeId"],
+        "fieldList": ["facilityId", "facilityName", "fromDate"],
         "viewSize": 20
       }
 
@@ -146,8 +150,6 @@ export default defineComponent({
       }
     },
     async fetchAssociatedFacilities() {
-      let associatedFacilityIds = [] as any
-
       try {
         const resp = await FacilityService.fetchAssociatedFacilitiesToGroup({
           inputFields: {
@@ -157,13 +159,12 @@ export default defineComponent({
           entityName: 'FacilityGroupAndMember',
           noConditionFind: "Y",
           filterByDate: 'Y',
-          fieldList: ['facilityId']
+          fieldList: ['facilityId', 'fromDate']
         })
 
         if(!hasError(resp)) {
-          resp.data.docs.map((facility: any) => associatedFacilityIds.push(facility.facilityId))
-          this.associatedFacilityIds = associatedFacilityIds
-          this.associatedFacilityIdValues = JSON.parse(JSON.stringify(associatedFacilityIds))
+          this.selectedFacilities = resp.data.docs
+          this.selectedFacilityValues = JSON.parse(JSON.stringify(resp.data.docs))
         } else {
           throw resp.data
         }
@@ -173,24 +174,55 @@ export default defineComponent({
     },
     updateSelectedFacilities(id: string) {
       const facility = this.isFacilitySelected(id)
+
       if (facility) {
         // if facility is already selected then removing that facility from the list on click
-        this.associatedFacilityIdValues.pop(id)
+        this.selectedFacilityValues = this.selectedFacilityValues.filter((facility: any) => facility.facilityId !== id)
       } else {
-        this.associatedFacilityIdValues.push(id)
+        this.selectedFacilityValues.push(this.facilities.find((facility: any) => facility.facilityId == id))
       }
     },
     isFacilitySelected(facilityId: any) {
-      return this.associatedFacilityIdValues.includes(facilityId)
+      return this.selectedFacilityValues.some((facility: any) => facility.facilityId === facilityId)
     },
-    confirmSave() {
-      console.log('save');
-      const facilitiesToRemove = this.associatedFacilityIds.filter((facilityId: string) => !this.associatedFacilityIdValues.includes(facilityId))
-      const facilitiesToAdd = this.associatedFacilityIdValues.filter((facilityId: string) => !this.associatedFacilityIds.includes(facilityId))
-      console.log('remove', facilitiesToRemove)
-      console.log('add', facilitiesToAdd)
-      
-    }
+    async confirmSave() {
+      const facilitiesToAdd = this.selectedFacilityValues.filter((selectedFacility: any) => !this.selectedFacilities.some((facility: any) => facility.facilityId === selectedFacility.facilityId))
+      const facilitiesToRemove = this.selectedFacilities.filter((facility: any) => !this.selectedFacilityValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
+
+      const removeResponses = await Promise.allSettled(facilitiesToRemove
+        .map(async (facility: any) => await FacilityService.updateFacilityToGroup({
+          facilityId: facility.facilityId,
+          "facilityGroupId": this.group.facilityGroupId,
+          "fromDate": facility.fromDate,
+          "thruDate": DateTime.now().toMillis()
+        }))
+      )
+
+      const addResponses = await Promise.allSettled(facilitiesToAdd
+        .map(async (facility: any) => await FacilityService.addFacilityToGroup({
+          facilityId: facility.facilityId,
+          "facilityGroupId": this.group.facilityGroupId
+        }))
+      )
+
+      const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
+      if (hasFailedResponse) {
+        showToast(translate("Failed to associate some facilites to group."))
+      } else {
+        showToast(translate("Facilities associated to group successfully."))
+      }
+      this.fetchGroups()
+      modalController.dismiss()
+    },
+    async fetchGroups(vSize?: any, vIndex?: any) {
+      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
+      const viewIndex = vIndex ? vIndex : 0;
+      const payload = {
+        viewSize,
+        viewIndex
+      };
+      await this.store.dispatch('facility/fetchFacilityGroups', payload)
+    },
   },
   setup() {
     const store = useStore();
