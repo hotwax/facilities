@@ -8,7 +8,7 @@
         {{ translate("View facilities") }}
         <ion-icon :icon="openOutline" color="primary" slot="end" />
       </ion-item>
-      <ion-item button lines="none" @click="openAddFacilityToGroupsModal(group)">
+      <ion-item button lines="none" @click="openAddFacilityToGroupsModal(group.facilityGroupId)">
         {{ translate("Quick edit") }}
       </ion-item>
     </ion-list>
@@ -53,10 +53,10 @@ export default defineComponent({
       this.$router.push({ path: `/find-facilities` })
       popoverController.dismiss()
     },
-    async openAddFacilityToGroupsModal(group: any) {
+    async openAddFacilityToGroupsModal(facilityGroupId: any) {
       const modal = await modalController.create({
         component: AddFacilityToGroupsModal,
-        componentProps: { facilityGroupId: group.facilityGroupId }
+        componentProps: { facilityGroupId }
       })
 
       modal.onDidDismiss().then(() =>{
