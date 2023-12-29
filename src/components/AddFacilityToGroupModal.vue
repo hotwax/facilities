@@ -13,11 +13,11 @@
   <ion-content class="ion-padding">
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; fetchFacilities()" />
     <ion-chip outline>
-      {{ translate("Count:") }} {{ associatedFacilityIdValues.length }}
+      {{ translate("Count:") }} {{ selectedFacilityValues.length }}
     </ion-chip>
 
     <ion-list>
-      <ion-list-header>{{ translate("Staff") }}</ion-list-header>
+      <ion-list-header>{{ translate("Facilities") }}</ion-list-header>
       <div class="ion-padding" v-if="!facilities.length">
         {{ translate("No facility found") }}
       </div>
@@ -93,8 +93,6 @@ export default defineComponent({
     return {
       queryString: '',
       facilities: [] as any,
-      associatedFacilityIds: [] as any,
-      associatedFacilityIdValues: [] as any,
       selectedFacilities: [] as any,
       selectedFacilityValues: [] as any
     }
