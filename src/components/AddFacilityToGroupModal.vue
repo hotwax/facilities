@@ -94,7 +94,7 @@ export default defineComponent({
       selectedFacilityValues: [] as any
     }
   },
-  props: ['group'],
+  props: ['facilityGroupId'],
   mounted() {
     Promise.all([this.fetchFacilities(), this.fetchAssociatedFacilities()])
   },
@@ -148,7 +148,7 @@ export default defineComponent({
       try {
         const resp = await FacilityService.fetchAssociatedFacilitiesToGroup({
           inputFields: {
-            facilityGroupId: this.group.facilityGroupId
+            facilityGroupId: this.facilityGroupId
           },
           viewSize: 250, // maximum view size
           entityName: 'FacilityGroupAndMember',
@@ -187,7 +187,7 @@ export default defineComponent({
       const removeResponses = await Promise.allSettled(facilitiesToRemove
         .map(async (facility: any) => await FacilityService.updateFacilityToGroup({
           facilityId: facility.facilityId,
-          "facilityGroupId": this.group.facilityGroupId,
+          "facilityGroupId": this.facilityGroupId,
           "fromDate": facility.fromDate,
           "thruDate": DateTime.now().toMillis()
         }))
@@ -196,7 +196,7 @@ export default defineComponent({
       const addResponses = await Promise.allSettled(facilitiesToAdd
         .map(async (facility: any) => await FacilityService.addFacilityToGroup({
           facilityId: facility.facilityId,
-          "facilityGroupId": this.group.facilityGroupId
+          "facilityGroupId": this.facilityGroupId
         }))
       )
 

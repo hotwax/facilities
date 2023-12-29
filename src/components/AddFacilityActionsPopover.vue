@@ -56,7 +56,7 @@ export default defineComponent({
     async openAddFacilityToGroupsModal(group: any) {
       const modal = await modalController.create({
         component: AddFacilityToGroupsModal,
-        componentProps: { group }
+        componentProps: { facilityGroupId: group.facilityGroupId }
       })
 
       modal.onDidDismiss().then(() =>{
