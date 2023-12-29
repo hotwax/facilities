@@ -8,7 +8,7 @@
         {{ translate("View facilities") }}
         <ion-icon :icon="openOutline" color="primary" slot="end" />
       </ion-item>
-      <ion-item button lines="none">
+      <ion-item button lines="none" @click="openAddFacilityToGroupsModal(group)">
         {{ translate("Quick edit") }}
       </ion-item>
     </ion-list>
@@ -22,15 +22,17 @@ import {
   IonItem,
   IonList,
   IonListHeader,
+  modalController,
   popoverController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { translate } from '@hotwax/dxp-components'
 import { mapGetters, useStore } from "vuex";
 import { openOutline } from 'ionicons/icons'
+import AddFacilityToGroupsModal from '@/components/AddFacilityToGroupModal.vue'
 
 export default defineComponent({
-  name: "FacilityGroupActionsPopover",
+  name: "AddFacilityActionsPopover",
   components: {
     IonContent,
     IonIcon,
@@ -50,6 +52,17 @@ export default defineComponent({
       await this.store.dispatch('facility/updateFacilityQuery', { ...this.facilityQuery, facilityGroupId })
       this.$router.push({ path: `/find-facilities` })
       popoverController.dismiss()
+    },
+    async openAddFacilityToGroupsModal(group: any) {
+      const modal = await modalController.create({
+        component: AddFacilityToGroupsModal,
+        componentProps: { group }
+      })
+
+      modal.onDidDismiss().then(() =>{
+        popoverController.dismiss()
+      })
+      modal.present()
     },
   },
   setup() {
