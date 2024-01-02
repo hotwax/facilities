@@ -191,10 +191,6 @@
               </ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ translate("Sell Inventory Online") }}</ion-label>
-              <ion-toggle :checked="current.sellOnline" slot="end" @click="updateFulfillmentSetting($event, 'FAC_GRP')"/>
-            </ion-item>
-            <ion-item>
               <ion-label>{{ translate("Allow pickup") }}</ion-label>
               <ion-toggle :checked="current.allowPickup" slot="end" @click="updateFulfillmentSetting($event, 'PICKUP')"/>
             </ion-item>
@@ -213,6 +209,20 @@
             <ion-button fill="outline" expand="block" @click="updateDefaultDaysToShip">
               {{ translate("Update days to ship") }}
             </ion-button>
+          </ion-card>
+          <ion-card>
+            <ion-card-header>
+              <ion-card-title>
+                {{ translate("Sell inventory online") }}
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              {{ translate("Select which channels this facility publishes inventory too.") }}
+            </ion-card-content>
+            <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
+              <ion-label>{{ inventoryGroup?.facilityGroupName }}</ion-label>
+              <ion-toggle :checked="inventoryGroup.isChecked" slot="end" @click="updateSellInventoryOnlineSetting($event, inventoryGroup)"/>
+            </ion-item>
           </ion-card>
 
           <ion-card>
@@ -625,7 +635,7 @@ export default defineComponent({
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
-    this.store.dispatch('util/fetchFacilityGroupTypes')
+    await Promise.all([this.store.dispatch('util/fetchFacilityGroupTypes'), this.store.dispatch('util/fetchInventoryGroups')])
     await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles'), this.store.dispatch('util/fetchFacilityTypes', {
       parentTypeId: 'VIRTUAL_FACILITY',
       parentTypeId_op: 'notEqual',
@@ -936,58 +946,30 @@ export default defineComponent({
   
       facilityOrderCountModal.present()
     },
-    async addFacilityToGroup(facilityGroupId: string) {
-      emitter.emit("presentLoader");
 
-      let resp;
-      try {
-        resp = await FacilityService.addFacilityToGroup({
-          "facilityId": this.current.facilityId,
-          "facilityGroupId": facilityGroupId
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate('Fulfillment setting updated successfully'))
-          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        showToast(translate('Failed to update fulfillment setting'))
-        logger.error('Failed to update fulfillment setting', err)
-      }
-
-      emitter.emit("dismissLoader");
-    },
     async updateFulfillmentSetting(event: any, facilityGroupId: string) {
       event.stopImmediatePropagation();
+      emitter.emit("presentLoader");
 
       // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
       const isChecked = !event.target.checked;
 
-      
-      if(isChecked) {
-        this.addFacilityToGroup(facilityGroupId)
-      } else {
-        this.updateFacilityToGroup(facilityGroupId)
-      }
-    },
-    async updateFacilityToGroup(facilityGroupId: string) {
-      emitter.emit("presentLoader");
-
-      let resp;
-
-      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
-
       try {
-        
-        resp = await FacilityService.updateFacilityToGroup({
-          "facilityId": this.current.facilityId,
-          "facilityGroupId": facilityGroupId,
-          "fromDate": groupInformation.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-
+        let resp;
+        if (isChecked) {
+          resp = await FacilityService.addFacilityToGroup({
+            "facilityId": this.current.facilityId,
+            "facilityGroupId": facilityGroupId
+          });
+        } else {
+          const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
+          resp = await await FacilityService.updateFacilityToGroup({
+            "facilityId": this.current.facilityId,
+            "facilityGroupId": facilityGroupId,
+            "fromDate": groupInformation.fromDate,
+            "thruDate": DateTime.now().toMillis()
+          })
+        }
         if (!hasError(resp)) {
           showToast(translate('Fulfillment setting updated successfully'))
           await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
@@ -998,7 +980,45 @@ export default defineComponent({
         showToast(translate('Failed to update fulfillment setting'))
         logger.error('Failed to update fulfillment setting', err)
       }
+      emitter.emit("dismissLoader");
+    },
 
+    async updateSellInventoryOnlineSetting(event: any, facilityGroup: any) {
+      event.stopImmediatePropagation();
+      emitter.emit("presentLoader");
+
+      // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
+      const isChecked = !event.target.checked;
+
+      try {
+        let resp;
+        let successMessage;
+        if (isChecked) {
+          resp = await FacilityService.addFacilityToGroup({
+            "facilityId": this.current.facilityId,
+            "facilityGroupId": facilityGroup.facilityGroupId
+          });
+          successMessage = translate('is now selling on', { "facilityName": this.current.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
+        } else {
+          const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
+          resp = await await FacilityService.updateFacilityToGroup({
+            "facilityId": this.current.facilityId,
+            "facilityGroupId": facilityGroup.facilityGroupId,
+            "fromDate": groupInformation.fromDate,
+            "thruDate": DateTime.now().toMillis()
+          })
+          successMessage = translate('no longer sells on', { "facilityName": this.current.facilityName, "facilityGroupId": facilityGroup.facilityGroupName })
+        }
+        if (!hasError(resp)) {
+          showToast(successMessage)
+          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update sell inventory online setting'))
+        logger.error('Failed to update sell inventory online setting', err)
+      }
       emitter.emit("dismissLoader");
     },
     async removeFacilityFromGroup(facilityGroupId: string) {

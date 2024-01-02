@@ -9,4 +9,5 @@ export default interface UtilState {
   countries: any[];
   states: any;
   shopifyShopForProductStore: any;
+  inventoryGroups: [];
 }

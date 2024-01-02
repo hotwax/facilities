@@ -113,6 +113,14 @@ const fetchShopifyShop = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchInventoryGroups = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "POST",
+    data: payload
+  })
+}
+
 export const UtilService = {
   fetchCalendars,
   fetchCalendarWeekTimings,
@@ -120,6 +128,7 @@ export const UtilService = {
   fetchExternalMappingTypes,
   fetchFacilityGroupTypes,
   fetchFacilityTypes,
+  fetchInventoryGroups,
   fetchLocationTypes,
   fetchProductStores,
   fetchShopifyShop,

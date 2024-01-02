@@ -40,6 +40,9 @@ const mutations: MutationTree<UtilState> = {
     payload.map((shopifyShop: any) => {
       state.shopifyShopForProductStore[shopifyShop.productStoreId] = shopifyShop.shopifyShopId
     })
+  },
+  [types.UTIL_INVENTORY_GROUP_UPDATED](state, payload) {
+    state.inventoryGroups = payload
   }
 }
 export default mutations;
