@@ -331,6 +331,32 @@ const actions: ActionTree<UtilState, RootState> = {
     return shopifyShops[0].shopifyShopId
   },
 
+  async fetchInventoryGroups({ commit }) {
+    let inventoryGroups = []
+    const params = {
+      entityName: "FacilityGroup",
+      inputFields: {
+        facilityGroupTypeId: 'CHANNEL_FAC_GROUP'
+      },
+      noConditionFind: 'Y',
+      orderBy: "facilityGroupName ASC",
+      fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+      viewSize: 50
+    }
+
+    try {
+      const resp = await UtilService.fetchInventoryGroups(params)
+      if (!hasError(resp)) {
+        inventoryGroups = resp.data.docs
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+    commit(types.UTIL_INVENTORY_GROUP_UPDATED, inventoryGroups)
+  },
+
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
     commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
@@ -339,6 +365,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_LOCATION_TYPES_UPDATED, {})
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
     commit(types.UTIL_SHOPIFY_SHOP_UPDATED, [])
+    commit(types.UTIL_INVENTORY_GROUP_UPDATED, [])
   },
 }
 

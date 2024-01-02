@@ -17,7 +17,8 @@ const utilModule: Module<UtilState, RootState> = {
     externalMappingTypes: {},
     countries: [],
     states: {},
-    shopifyShopForProductStore: {}
+    shopifyShopForProductStore: {},
+    inventoryGroups: []
   },
   getters,
   actions,

@@ -137,9 +137,10 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
-  async fetchFacilityAdditionalInformation({ commit, state }) {
+  async fetchFacilityAdditionalInformation({ commit, state, rootGetters }) {
     const facility = JSON.parse(JSON.stringify(state.current))
-
+    const inventoryGroups = rootGetters['util/getInventoryGroups'];
+    
     const [facilityGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation([facility.facilityId]), FacilityService.fetchFacilitiesOrderCount([facility.facilityId])])
 
     const fulfillmentOrderLimit = facility.maximumOrderLimit
@@ -156,7 +157,6 @@ const actions: ActionTree<FacilityState, RootState> = {
     const facilityGroupInfo = facilityGroupInformation[facility.facilityId]
     if (facilityGroupInfo?.length) {
       facility.groupInformation = facilityGroupInfo
-      facility.sellOnline = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
       facility.useOMSFulfillment = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
       facility.generateShippingLabel = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
       facility.allowPickup = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
@@ -168,10 +168,16 @@ const actions: ActionTree<FacilityState, RootState> = {
       facility.allowPickup = false
     }
 
+    //inventory groups
+    inventoryGroups.forEach((group: any) => {
+      const isChecked = (facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
+      group.isChecked = isChecked ? isChecked : false;
+    });
+    facility.inventoryGroups = inventoryGroups;
     commit(types.FACILITY_CURRENT_UPDATED, facility)
   },
 
-  async fetchCurrentFacility({ commit, state }, payload) {
+  async fetchCurrentFacility({ commit, dispatch, state }, payload) {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
@@ -198,29 +204,6 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       if(!hasError(resp) && resp.data.count > 0) {
         facility = resp.data.docs[0]
-
-        const [facilityGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation([facility.facilityId]), FacilityService.fetchFacilitiesOrderCount([facility.facilityId])])
-
-        const fulfillmentOrderLimit = facility.maximumOrderLimit
-        if (fulfillmentOrderLimit === 0) {
-          facility.orderLimitType = 'no-capacity'
-        } else if (fulfillmentOrderLimit) {
-          facility.orderLimitType = 'custom'
-        } else {
-          facility.orderLimitType = 'unlimited'
-        }
-
-        facility.orderCount = facilityOrderCount[facility.facilityId] ? facilityOrderCount[facility.facilityId] : 0;
-
-        const facilityGroupInfo = facilityGroupInformation[facility.facilityId]
-
-        if(facilityGroupInfo.length) {
-          facility.groupInformation = facilityGroupInfo
-          facility.sellOnline = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
-          facility.useOMSFulfillment = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
-          facility.generateShippingLabel = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
-          facility.allowPickup = (facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
-        }
       } else {
         throw resp.data
       }
@@ -229,6 +212,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     commit(types.FACILITY_CURRENT_UPDATED, { ...state.current, ...facility });
+    await dispatch('fetchFacilityAdditionalInformation', payload);
   },
 
   updateCurrentFacility({ commit }, facility) {

@@ -35,6 +35,9 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getShopifyShopIdForProductStore: (state) => (productStoreId: string) => {
     return state.shopifyShopForProductStore[productStoreId] ? state.shopifyShopForProductStore[productStoreId] : ''
+  },
+  getInventoryGroups(state) {
+    return state.inventoryGroups;
   }
 }
 export default getters;
