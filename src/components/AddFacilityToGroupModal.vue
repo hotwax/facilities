@@ -40,21 +40,21 @@
 
 <script lang="ts">
 import {
-  IonButtons,
   IonButton,
+  IonButtons,
   IonCheckbox,
   IonChip,
   IonContent,
-  IonHeader,
-  IonIcon,
   IonFab,
   IonFabButton,
-  IonTitle,
-  IonToolbar,
-  IonLabel,
+  IonHeader,
+  IonIcon,
   IonItem,
+  IonLabel,
   IonList,
   IonSearchbar,
+  IonTitle,
+  IonToolbar,
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
@@ -68,23 +68,23 @@ import { DateTime } from "luxon";
 import { showToast } from "@/utils";
 
 export default defineComponent({
-  name: "EditPickersModal",
+  name: "AddFacilityToGroupModal",
   components: {
     IonButtons,
     IonButton,
     IonCheckbox,
     IonChip,
     IonContent,
-    IonHeader,
-    IonIcon,
     IonFab,
     IonFabButton,
-    IonTitle,
-    IonToolbar,
-    IonLabel,
+    IonHeader,
+    IonIcon,
     IonItem,
+    IonLabel,
     IonList,
     IonSearchbar,
+    IonTitle,
+    IonToolbar,
   },
   data() {
     return {
@@ -119,7 +119,6 @@ export default defineComponent({
 
       const params = {
         "inputFields": {
-          "grp_op": "AND",
           ...filters
         },
         "entityName": "FacilityView",
@@ -129,6 +128,7 @@ export default defineComponent({
         "thruDateName": "facilityGroupThruDate",
         "filterByDate": "Y",
         "fieldList": ["facilityId", "facilityName", "fromDate"],
+        // By default we show only 20 facilities, others get rendered on search query.
         "viewSize": 20
       }
 
@@ -141,20 +141,21 @@ export default defineComponent({
           throw resp.data
         }
       } catch (error) {
+        this.facilities = []
         logger.error(error)
       }
     },
     async fetchAssociatedFacilities() {
       try {
         const resp = await FacilityService.fetchAssociatedFacilitiesToGroup({
-          inputFields: {
-            facilityGroupId: this.facilityGroupId
+          "inputFields": {
+            "facilityGroupId": this.facilityGroupId
           },
-          viewSize: 250, // maximum view size
-          entityName: 'FacilityGroupAndMember',
-          noConditionFind: "Y",
-          filterByDate: 'Y',
-          fieldList: ['facilityId', 'fromDate']
+          "viewSize": 250, // maximum view size
+          "entityName": 'FacilityGroupAndMember',
+          "noConditionFind": "Y",
+          "filterByDate": 'Y',
+          "fieldList": ['facilityId', 'fromDate']
         })
 
         if(!hasError(resp)) {
@@ -186,7 +187,7 @@ export default defineComponent({
 
       const removeResponses = await Promise.allSettled(facilitiesToRemove
         .map(async (facility: any) => await FacilityService.updateFacilityToGroup({
-          facilityId: facility.facilityId,
+          "facilityId": facility.facilityId,
           "facilityGroupId": this.facilityGroupId,
           "fromDate": facility.fromDate,
           "thruDate": DateTime.now().toMillis()
@@ -195,7 +196,7 @@ export default defineComponent({
 
       const addResponses = await Promise.allSettled(facilitiesToAdd
         .map(async (facility: any) => await FacilityService.addFacilityToGroup({
-          facilityId: facility.facilityId,
+          "facilityId": facility.facilityId,
           "facilityGroupId": this.facilityGroupId
         }))
       )

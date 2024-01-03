@@ -41,9 +41,9 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
-            <ion-item button>
+            <ion-item>
               <ion-label>{{ translate('Facilities') }}</ion-label>
-              <ion-chip outline slot="end" @click="openAddFacilityActionsPopover($event, group)">
+              <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
                 {{ group.facilityCount }}
               </ion-chip>
             </ion-item>
@@ -114,7 +114,7 @@ import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
 import emitter from '@/event-bus';
-import AddFacilityActionsPopover from '@/components/AddFacilityActionsPopover.vue';
+import GroupActionsPopover from '@/components/GroupActionsPopover.vue';
 
 export default defineComponent({
   name: 'FindGroups',
@@ -221,15 +221,15 @@ export default defineComponent({
         }
       }
     },
-    async openAddFacilityActionsPopover(event: Event, group: any) {
-      const addFacilityActionsPopover = await popoverController.create({
-        component: AddFacilityActionsPopover,
+    async openGroupActionsPopover(event: Event, group: any) {
+      const groupActionsPopover = await popoverController.create({
+        component: GroupActionsPopover,
         event,
         showBackdrop: false,
         componentProps: { group }
       });
 
-      addFacilityActionsPopover.present();
+      groupActionsPopover.present();
     },
     getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
       const associatedfacilityGroupIds = [] as any

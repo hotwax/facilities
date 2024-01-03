@@ -32,7 +32,7 @@ import { openOutline } from 'ionicons/icons'
 import AddFacilityToGroupsModal from '@/components/AddFacilityToGroupModal.vue'
 
 export default defineComponent({
-  name: "AddFacilityActionsPopover",
+  name: "GroupActionsPopover",
   components: {
     IonContent,
     IonIcon,
