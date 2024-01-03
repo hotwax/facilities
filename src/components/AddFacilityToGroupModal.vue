@@ -103,6 +103,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async fetchFacilities() {
+      this.facilities = []
       let filters = {} as any;
 
       if(this.queryString) {
@@ -141,7 +142,6 @@ export default defineComponent({
           throw resp.data
         }
       } catch (error) {
-        this.facilities = []
         logger.error(error)
       }
     },
