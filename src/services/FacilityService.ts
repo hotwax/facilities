@@ -693,7 +693,13 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
   }
 }
 
-
+const fetchAssociatedFacilitiesToGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
 
 export const FacilityService = {
   addFacilityToGroup,
@@ -714,6 +720,7 @@ export const FacilityService = {
   createFacilityLogin,
   deleteShopifyShopLocation,
   fetchArchivedFacilities,
+  fetchAssociatedFacilitiesToGroup,
   fetchFacilityGroup,
   fetchFacilityGroups,
   fetchFacilityLocations,

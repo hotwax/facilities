@@ -41,9 +41,11 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
-            <ion-item @click="viewFacilities(group.facilityGroupId)" button>
+            <ion-item>
               <ion-label>{{ translate('Facilities') }}</ion-label>
-              <ion-note slot="end">{{ group.facilityCount }}</ion-note>
+              <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
+                {{ group.facilityCount }}
+              </ion-chip>
             </ion-item>
             <ion-item lines="full" v-if="group.description">
               <ion-label>{{ group.description }}</ion-label>
@@ -81,6 +83,7 @@ import {
   IonBackButton,
   IonBadge,
   IonCard,
+  IonChip,
   IonContent,
   IonHeader,
   IonIcon,
@@ -90,7 +93,6 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
-  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -112,6 +114,7 @@ import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
 import emitter from '@/event-bus';
+import GroupActionsPopover from '@/components/GroupActionsPopover.vue';
 
 export default defineComponent({
   name: 'FindGroups',
@@ -120,6 +123,7 @@ export default defineComponent({
     IonBackButton,
     IonBadge,
     IonCard,
+    IonChip,
     IonContent,
     IonHeader,
     IonIcon,
@@ -129,7 +133,6 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonListHeader,
-    IonNote,
     IonPage,
     IonSearchbar,
     IonSelect,
@@ -143,7 +146,6 @@ export default defineComponent({
       facilityGroupTypes: "util/getFacilityGroupTypes",
       isScrollable: "facility/isFacilityGroupsScrollable",
       query: "facility/getGroupQuery",
-      facilityQuery: "facility/getFacilityQuery",
     })
   },
   async mounted() {
@@ -154,10 +156,6 @@ export default defineComponent({
     async updateQuery() {
       await this.store.dispatch('facility/updateGroupQuery', this.query)
       this.fetchGroups();
-    },
-    async viewFacilities(facilityGroupId: string) {
-      await this.store.dispatch('facility/updateFacilityQuery', {...this.facilityQuery, facilityGroupId })
-      this.$router.push({ path: `/find-facilities`})
     },
     async fetchGroups(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
@@ -222,6 +220,16 @@ export default defineComponent({
           logger.error('Failed to rename facility group.', error)
         }
       }
+    },
+    async openGroupActionsPopover(event: Event, group: any) {
+      const groupActionsPopover = await popoverController.create({
+        component: GroupActionsPopover,
+        event,
+        showBackdrop: false,
+        componentProps: { group }
+      });
+
+      groupActionsPopover.present();
     },
     getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
       const associatedfacilityGroupIds = [] as any
