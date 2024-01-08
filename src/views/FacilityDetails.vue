@@ -1339,6 +1339,7 @@ ion-modal.date-time-modal {
 
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
