@@ -117,8 +117,9 @@
             </ion-card-content>
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
-                <ion-label class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }}</ion-label>
-                <ion-radio slot="end" :value="calendar.calendarId"/>
+                <ion-radio :value="calendar.calendarId">
+                  <div class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }} {{ 'TEST CALENDAR THIS' }}</div>
+                </ion-radio>
               </ion-item>
             </ion-radio-group>
             <ion-item button lines="none" v-if="calendars?.length > 3"  @click="addOperatingHours">
