@@ -13,20 +13,18 @@
   <ion-content>
     <form @keyup.enter="saveGeoPoint">
       <ion-item class="ion-margin-bottom">
-        <ion-input :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
-        <ion-button fill="outline" @click="generateLatLong">
+        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
+        <ion-button slot="end" fill="outline" @click="generateLatLong">
           {{ translate("Generate") }}
           <ion-icon v-if="!isGeneratingLatLong" slot="end" :icon="colorWandOutline" />
           <ion-spinner v-else data-spinner-size="small"/>
         </ion-button>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Latitude") }}</ion-label>
-        <ion-input v-model="geoPoint.latitude" />
+        <ion-input label-placement="floating" :label="translate('Latitude')" v-model="geoPoint.latitude" />
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Longitude") }}</ion-label>
-        <ion-input v-model="geoPoint.longitude" />
+        <ion-input label-placement="floating" :label="translate('Longitude')" v-model="geoPoint.longitude" />
       </ion-item>
     </form>
   </ion-content>
@@ -49,7 +47,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonSpinner,
   IonTitle,
   IonToolbar,
@@ -78,7 +75,6 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonSpinner,
     IonTitle,
     IonToolbar,

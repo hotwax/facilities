@@ -356,6 +356,10 @@ hr {
   justify-self: start
 }
 
+ion-item > ion-label:not([slot="end"]) {
+  width: unset;
+}
+
 @media (min-width: 700px) {
   .list-item {
     --col-calc: var(--columns-tablet);

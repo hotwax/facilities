@@ -12,14 +12,12 @@
   
   <ion-content>
     <ion-item>
-      <ion-label>
-        {{ translate("Name") }} <ion-text color="danger">*</ion-text>
-      </ion-label>
-      <ion-input v-model="selectedTimesForWeek.description" />
+      <ion-input v-model="selectedTimesForWeek.description">
+        <ion-label slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></ion-label>
+      </ion-input>
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">
-      <ion-label>{{ translate("Daily timings") }}</ion-label>
-      <ion-toggle :checked="isDailyTimingsChecked" @ionChange="updateDailyTimings" slot="end" />
+      <ion-toggle :checked="isDailyTimingsChecked" @ionChange="updateDailyTimings">{{ translate("Daily timings") }}</ion-toggle>
     </ion-item>
 
     <ion-list lines="none" v-if="isDailyTimingsChecked">
@@ -62,7 +60,7 @@
       show-default-buttons
       hour-cycle="h12"
       presentation="time"
-      :value="selectedTimesForWeek[selectedDayTime] ? selectedTimesForWeek[selectedDayTime] : ''"
+      :value="selectedTimesForWeek[selectedDayTime] ? selectedTimesForWeek[selectedDayTime] : DateTime.now().toUTC().toISO()"
       @ionChange="updateTime($event)"
     />
   </ion-modal>
@@ -268,6 +266,7 @@ export default defineComponent({
     return {
       closeCircle,
       closeOutline,
+      DateTime,
       saveOutline,
       store,
       translate

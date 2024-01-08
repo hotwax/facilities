@@ -13,32 +13,30 @@
   <ion-content>
     <form @keyup.enter="saveAddress()">
       <ion-item>
-        <ion-label position="floating">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="address.address1" />
+        <ion-input label-placement="floating" v-model="address.address1">
+          <ion-label slot="label">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
+        </ion-input>
       </ion-item>
       <ion-item class="ion-margin-bottom">
-        <ion-label position="floating">{{ translate("Address line 2") }}</ion-label>
-        <ion-input v-model="address.address2" />
+        <ion-input label-placement="floating" :label="translate('Address line 2')" v-model="address.address2" />
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="address.city" />
+        <ion-input label-placement="floating" v-model="address.city">
+          <ion-label slot="label">{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
+        </ion-input>
       </ion-item>
       <ion-item @keyup.enter.stop>
-        <ion-label position="floating">{{ translate("Country") }}</ion-label>
-        <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
+        <ion-select label-placement="floating" :label="translate('Country')" interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
           <ion-select-option v-for="country in countries" :key="country.geoId" :value="country.geoId">{{ country.geoName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item @keyup.enter.stop>
-        <ion-label position="floating">{{ translate("State") }}</ion-label>
-        <ion-select interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
+        <ion-select label-placement="floating" :label="translate('State')" interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
           <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">{{ state.geoName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Zipcode") }}</ion-label>
-        <ion-input v-model="address.postalCode" />
+        <ion-input label-placement="floating" :label="translate('Zipcode')" v-model="address.postalCode" />
       </ion-item>
     </form>
   </ion-content>
