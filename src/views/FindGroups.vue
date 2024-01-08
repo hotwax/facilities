@@ -19,7 +19,7 @@
               <ion-label>
                 {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
               </ion-label>
-              <ion-select v-if="groups.length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+              <ion-select v-if="groups.length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', {count:getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length}) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="group.facilityGroupId" :disabled="group.facilityGroupTypeId && group.facilityGroupTypeId !== groupType.facilityGroupTypeId" :key="group.facilityGroupId" v-for="group in groups">
                   {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
                 </ion-select-option>
