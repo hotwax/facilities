@@ -56,8 +56,8 @@ import {
   IonLabel,
   IonList,
   IonNote,
-  IonTitle,
   IonText,
+  IonTitle,
   IonToolbar,
   modalController
 } from "@ionic/vue";
@@ -91,9 +91,9 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonNote,
+    IonText,
     IonTitle,
     IonToolbar,
-    IonText,
   },
   data() {
     return {
