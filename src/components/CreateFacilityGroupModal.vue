@@ -14,33 +14,24 @@
     <form @keyup.enter="createFacilityGroup">
       <ion-list>
         <ion-item>
-          <ion-label position="floating">
-            {{ translate("Name") }} <ion-text color="danger">*</ion-text>
-          </ion-label>
-          <ion-input @ionBlur="setFacilityGroupId($event)" v-model="formData.facilityGroupName"/>
-        </ion-item>
-        <ion-item ref="facilityGroupId">
-          <ion-label position="floating">
-            {{ translate("Internal ID") }}
-          </ion-label>
-          <ion-input v-model="formData.facilityGroupId" @ionChange="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" />
-          <ion-note slot="error">
-            {{ translate('Internal ID cannot be more than 20 characters.') }}
-          </ion-note>
+          <ion-input label-placement="floating" @ionBlur="setFacilityGroupId($event)" v-model="formData.facilityGroupName">
+            <ion-label slot="label">
+              {{ translate("Name") }} <ion-text color="danger">*</ion-text>
+            </ion-label>
+          </ion-input>
         </ion-item>
         <ion-item lines="none">
-          <ion-label>{{ translate("System group type") }}</ion-label>
-          <ion-select interface="popover" v-model="formData.facilityGroupTypeId">
+          <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionChange="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
+        </ion-item>
+        <ion-item lines="none">
+          <ion-select :label="translate('System group type')" interface="popover" v-model="formData.facilityGroupTypeId">
             <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
               {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
             </ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
-          <ion-label position="floating">
-            {{ translate("Description") }}
-          </ion-label>
-          <ion-input v-model="formData.description"/>
+          <ion-input :label="translate('Description')" label-placement="floating" v-model="formData.description"/>
         </ion-item>
       </ion-list>
 
@@ -66,7 +57,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonNote,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -97,7 +87,6 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
-    IonNote,
     IonSelect,
     IonSelectOption,
     IonText,
