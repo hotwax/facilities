@@ -169,6 +169,7 @@
   "Group": "Group",
   "Group associated to system group types.": "Group associated to system group types.",
   "Group unlinked from facility": "Group unlinked from facility",
+  "groups": "{count} groups",
   "Groups": "Groups",
   "group description": "group description",
   "Group description updated.": "Group description updated.",
