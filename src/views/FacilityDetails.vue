@@ -256,7 +256,7 @@
           <ion-card>
             <ion-card-header>
               <ion-card-title>
-                {{ facilityTypes[current.facilityTypeId]?.description ? translate(`${facilityTypes[current.facilityTypeId]?.description} logins`) : translate('logins',{ facilitytype:`${current.facilityTypeId}` }) }}
+                {{ facilityTypes[current.facilityTypeId]?.description ? translate(`${facilityTypes[current.facilityTypeId]?.description} logins`) : translate('logins', { facilitytype:`${current.facilityTypeId}` }) }}
               </ion-card-title>
               <ion-button v-if="current.facilityLogins?.length" @click="createFacilityLoginModal()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
