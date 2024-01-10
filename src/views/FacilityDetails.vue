@@ -116,7 +116,7 @@
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-radio :value="calendar.calendarId">
-                  <div class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }} {{ 'TEST CALENDAR THIS' }}</div>
+                  <div class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }}</div>
                 </ion-radio>
               </ion-item>
             </ion-radio-group>

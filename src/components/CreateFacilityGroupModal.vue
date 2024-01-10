@@ -21,7 +21,7 @@
           </ion-input>
         </ion-item>
         <ion-item lines="none">
-          <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionChange="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
+          <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
         </ion-item>
         <ion-item lines="none">
           <ion-select :label="translate('System group type')" interface="popover" v-model="formData.facilityGroupTypeId">

@@ -20,7 +20,7 @@
               <h1>{{ facility.facilityName }}</h1>
               <p>{{ facility.facilityId }}</p>
             </ion-label>
-            <ion-button slot="end" fill="clear" color="medium" @click="openVirtualFacilityActionsPopover($event, facility)">
+            <ion-button fill="clear" color="medium" @click="openVirtualFacilityActionsPopover($event, facility)">
               <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
             </ion-button>
           </ion-item>
@@ -39,8 +39,7 @@
             <ion-note slot="end">{{ facility.orderCount }}</ion-note>
           </ion-item>
           <ion-item lines="full" v-if="['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId)">
-            <ion-label>{{ translate('Auto release') }}</ion-label>
-            <ion-toggle :checked="facility.autoReleaseJob" :disabled="true" slot="end" />
+            <ion-toggle :checked="facility.autoReleaseJob" :disabled="true">{{ translate('Auto release') }}</ion-toggle>
           </ion-item>
           <ion-item lines="full" v-if="facility.description && !['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId) && facility.facilityId !== '_NA_'">
             <ion-label>{{ facility.description }}</ion-label>
