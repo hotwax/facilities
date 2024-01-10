@@ -14,44 +14,34 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Address line 1') }} <ion-text color="danger">*</ion-text>
-              </ion-label>
-              <ion-input v-model="formData.address1" />
+              <ion-input label-placement="floating" v-model="formData.address1">
+                <ion-label slot="label">
+                  {{ translate('Address line 1') }} <ion-text color="danger">*</ion-text>
+                </ion-label>
+              </ion-input>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Address line 2') }}
-              </ion-label>
-              <ion-input v-model="formData.address2" />
+              <ion-input :label="translate('Address line 2')" label-placement="floating" v-model="formData.address2" />
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('City') }} <ion-text color="danger">*</ion-text>
-              </ion-label>
-              <ion-input v-model="formData.city" />
+              <ion-input label-placement="floating" v-model="formData.city">
+                <ion-label slot="label">
+                  {{ translate('City') }} <ion-text color="danger">*</ion-text>
+                </ion-label>
+              </ion-input>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Zipcode') }}
-              </ion-label>
-              <ion-input v-model="formData.postalCode" />
+              <ion-input :label="translate('Zipcode')" label-placement="floating" v-model="formData.postalCode" />
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Country') }}
-              </ion-label>
-              <ion-select interface="popover" :placeholder="translate('Select country')" @ionChange="updateState($event)" v-model="formData.countryGeoId">
+              <ion-select :label="translate('Country')" label-placement="floating" interface="popover" :placeholder="translate('Select country')" @ionChange="updateState($event)" v-model="formData.countryGeoId">
                 <ion-select-option v-for="country in countries" :key="country.geoId" :value="country.geoId">
                   {{ country.geoName }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('State') }}
-              </ion-label>
-              <ion-select interface="popover" :disabled="!formData.countryGeoId" :placeholder="translate('Select state')" v-model="formData.stateProvinceGeoId">
+              <ion-select :label="translate('State')" label-placement="floating" interface="popover" :disabled="!formData.countryGeoId" :placeholder="translate('Select state')" v-model="formData.stateProvinceGeoId">
                 <ion-select-option v-for="state in states[formData.countryGeoId]" :key="state.geoId" :value="state.geoId">
                   {{ state.geoName }}
                 </ion-select-option>
@@ -66,23 +56,17 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
-              <ion-input v-model="formData.postalCode" :placeholder="translate('Zipcode')" />
+              <ion-input aria-label="zipcode" v-model="formData.postalCode" :placeholder="translate('Zipcode')" />
               <ion-button :disabled="!formData.postalCode || !formData.address1 || !formData.city" @click="generateLatLong()" slot="end" fill="outline">
                 <ion-icon slot="end" :icon='colorWandOutline' />
                 {{ translate('Generate') }}
               </ion-button>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Latitude') }}
-              </ion-label>
-              <ion-input :disabled="!formData.address1 || !formData.city" v-model="formData.latitude" />
+              <ion-input :label="translate('Latitude')" label-placement="floating" :disabled="!formData.address1 || !formData.city" v-model="formData.latitude" />
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Longitude') }}
-              </ion-label>
-              <ion-input :disabled="!formData.address1 || !formData.city" v-model="formData.longitude" />
+              <ion-input :label="translate('Longitude')" label-placement="floating" :disabled="!formData.address1 || !formData.city" v-model="formData.longitude" />
             </ion-item>
           </ion-list>
         </ion-card>

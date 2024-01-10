@@ -14,33 +14,32 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
-              <ion-label>{{ translate("Type") }}</ion-label>
-              <ion-select interface="popover" v-model="selectedFacilityTypeId">
+              <ion-select :label="translate('Type')" interface="popover" v-model="selectedFacilityTypeId">
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
                   {{ type.description ? type.description : facilityTypeId }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Name') }} <ion-text color="danger">*</ion-text>
-              </ion-label>
-              <ion-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName" />
+              <ion-input label-placement="floating" @ionBlur="setFacilityId($event)" v-model="formData.facilityName">
+                <ion-label slot="label">
+                  {{ translate('Name') }} <ion-text color="danger">*</ion-text>
+                </ion-label>
+              </ion-input>
             </ion-item>
-            <ion-item ref="facilityId">
-              <ion-label position="floating">
-                {{ translate('Internal ID') }}
-              </ion-label>
-              <ion-input v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" />
-              <ion-note slot="error">
-                {{ translate('Internal ID cannot be more than 20 characters.') }}
-              </ion-note>
+            <ion-item lines="none">
+              <ion-input label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" error-text="translate('Internal ID cannot be more than 20 characters.')">
+                <ion-label slot="label">
+                  {{ translate('Internal ID') }}
+                </ion-label>
+              </ion-input>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('External ID') }}
-              </ion-label>
-              <ion-input v-model="formData.externalId" />
+              <ion-input label-placement="floating" v-model="formData.externalId">
+                <ion-label slot="label">
+                  {{ translate('External ID') }}
+                </ion-label>
+              </ion-input>
             </ion-item>
           </ion-list>
         </ion-card>
@@ -70,7 +69,6 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonNote,
   IonPage,
   IonSelect,
   IonSelectOption,
@@ -103,7 +101,6 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
-    IonNote,
     IonPage,
     IonSelect,
     IonSelectOption,
