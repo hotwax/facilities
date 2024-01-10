@@ -215,7 +215,7 @@
               {{ translate("Select which channels this facility publishes inventory too.") }}
             </ion-card-content>
             <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
-              <ion-toggle :checked="inventoryGroup.isChecked" slot="end" @click.prevent="updateSellInventoryOnlineSetting($event, inventoryGroup)">{{ inventoryGroup?.facilityGroupName }}</ion-toggle>
+              <ion-toggle :checked="inventoryGroup.isChecked" @click.prevent="updateSellInventoryOnlineSetting($event, inventoryGroup)">{{ inventoryGroup?.facilityGroupName }}</ion-toggle>
             </ion-item>
           </ion-card>
 
