@@ -15,7 +15,7 @@ import { mapGetters, useStore } from 'vuex';
 import { initialise, resetConfig } from '@/adapter'
 import { useRouter } from 'vue-router';
 import { Settings } from 'luxon'
-import { translate } from '@hotwax/dxp-components';
+import { initialiseFirebaseApp, translate } from '@hotwax/dxp-components';
 
 export default defineComponent({
   name: 'App',
@@ -96,6 +96,9 @@ export default defineComponent({
     if (this.userProfile && this.userProfile.userTimeZone) {
       Settings.defaultZone = this.userProfile.userTimeZone;
     }
+
+    // Todo: Need not to initialise if already initialised during login.
+    this.initialiseFirebaseApp(JSON.parse(process.env.VUE_APP_FIREBASE_CONFIG), '', '', '');
   },
   unmounted() {
     emitter.off('presentLoader', this.presentLoader);
@@ -106,6 +109,7 @@ export default defineComponent({
     const store = useStore();
     const router = useRouter();
     return {
+      initialiseFirebaseApp,
       router,
       store,
       translate

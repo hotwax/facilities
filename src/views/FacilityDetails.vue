@@ -533,7 +533,7 @@ import {
   personOutline,
   unlinkOutline
 } from 'ionicons/icons'
-import { translate } from '@hotwax/dxp-components';
+import { addDocument, translate } from '@hotwax/dxp-components';
 import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
 import FacilityAddressModal from '@/components/FacilityAddressModal.vue'
@@ -630,7 +630,8 @@ export default defineComponent({
       shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
       facilityTypes: "util/getFacilityTypes",
       baseUrl: "user/getBaseUrl",
-      facilityGroupTypes: 'util/getFacilityGroupTypes'
+      facilityGroupTypes: 'util/getFacilityGroupTypes',
+      instanceUrl: 'user/getInstanceUrl'
     })
   },
   props: ["facilityId"],
@@ -1012,6 +1013,7 @@ export default defineComponent({
         if (!hasError(resp)) {
           showToast(successMessage)
           await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
+          await this.updateFacilityPreferenceInFirestore();
         } else {
           throw resp.data
         }
@@ -1020,6 +1022,9 @@ export default defineComponent({
         logger.error('Failed to update sell inventory online setting', err)
       }
       emitter.emit("dismissLoader");
+    },
+    async updateFacilityPreferenceInFirestore() {
+      this.addDocument(this.instanceUrl, 'facilityPreference', { inventoryGroups: this.current.inventoryGroups.filter((group: any) => group.isChecked) })
     },
     async removeFacilityFromGroup(facilityGroupId: string) {
       emitter.emit("presentLoader");
@@ -1310,6 +1315,7 @@ export default defineComponent({
 
     return {
       addCircleOutline,
+      addDocument,
       addOutline,
       albumsOutline,
       bookmarkOutline,
