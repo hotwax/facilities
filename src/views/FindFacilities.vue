@@ -60,7 +60,7 @@
               <ion-label class="ion-text-wrap">
                 <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId].description : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
-                <p class="ion-text-wrap">{{ facility.facilityId }}</p>
+                <p>{{ facility.facilityId }}</p>
               </ion-label>
             </ion-item>
 
