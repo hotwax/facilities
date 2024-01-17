@@ -183,6 +183,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
     if(current?.facilityId && !payload.skipState) {
       commit(types.FACILITY_CURRENT_UPDATED, current);
+      await dispatch('fetchFacilityAdditionalInformation', payload);
       return;
     }
 
