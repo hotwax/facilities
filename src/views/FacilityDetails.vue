@@ -329,12 +329,6 @@
                   <ion-icon :icon="openOutline" />
                 </ion-button>
               </ion-item>
-              <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
-                <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
-                <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
-                  <ion-icon :icon="openOutline" />
-                </ion-button>
-              </ion-item>
               <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
               <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
             </ion-card>
