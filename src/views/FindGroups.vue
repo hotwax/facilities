@@ -28,7 +28,7 @@
           </ion-list>
         </section>
 
-        <main v-if="groups.length">
+        <div v-if="groups.length">
           <!-- custom sorting in the UI to keep OMS_FULFILLMENT and PICKUP types first -->
           <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
             <ion-item lines="full">
@@ -55,10 +55,10 @@
               {{ translate('Create group') }}
             </ion-button>
           </ion-card>
-        </main>
-        <main v-else>
+        </div>
+        <div v-else>
           <p class="empty-state">{{ translate("No groups found") }}</p>
-        </main>
+        </div>
       </div>
 
       <ion-infinite-scroll
