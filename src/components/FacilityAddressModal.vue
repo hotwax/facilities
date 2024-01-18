@@ -34,7 +34,7 @@
         <ion-label position="floating">{{ translate("State") }}</ion-label>
         <ion-select interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
           <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">
-            {{ state.wellKnownText ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
+            {{ state.wellKnownText && state.wellKnownText !== state.geoName ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
           </ion-select-option>
         </ion-select>
       </ion-item>
