@@ -279,10 +279,11 @@ const actions: ActionTree<UtilState, RootState> = {
 
     const params = {
       inputFields: {
-        geoIdFrom: payload.geoId
+        geoIdFrom: payload.geoId,
+        geoAssocTypeId: 'REGIONS'
       },
       entityName: 'GeoAssocAndGeoTo',
-      fieldList: ['geoName', 'geoId'],
+      fieldList: ['geoName', 'geoId', 'wellKnownText'],
       noConditionFind: 'Y',
       viewSize: 100
     } as any

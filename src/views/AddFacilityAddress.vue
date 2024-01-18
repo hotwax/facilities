@@ -53,7 +53,7 @@
               </ion-label>
               <ion-select interface="popover" :disabled="!formData.countryGeoId" :placeholder="translate('Select state')" v-model="formData.stateProvinceGeoId">
                 <ion-select-option v-for="state in states[formData.countryGeoId]" :key="state.geoId" :value="state.geoId">
-                  {{ state.geoName }}
+                  {{ state.wellKnownText && state.wellKnownText !== state.geoName ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
