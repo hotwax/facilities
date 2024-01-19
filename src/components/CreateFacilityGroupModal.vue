@@ -30,7 +30,7 @@
         </ion-item>
         <ion-item lines="none">
           <ion-label>{{ translate("System group type") }}</ion-label>
-          <ion-select interface="popover" v-model="formData.facilityGroupTypeId">
+          <ion-select :disabled="isFacilityGroupTypeDisabled" interface="popover" v-model="formData.facilityGroupTypeId">
             <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
               {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
             </ion-select-option>
@@ -118,6 +118,14 @@ export default defineComponent({
         facilityGroupTypeId: '',
         description: '',
       },
+      isFacilityGroupTypeDisabled: false,
+    }
+  },
+  props: ['selectedFacilityGroupTypeId'],
+  mounted() {
+    if(this.selectedFacilityGroupTypeId) {
+      this.formData.facilityGroupTypeId = this.selectedFacilityGroupTypeId
+      this.isFacilityGroupTypeDisabled = true
     }
   },
   methods: {
