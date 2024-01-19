@@ -639,7 +639,8 @@ export default defineComponent({
       shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
       facilityTypes: "util/getFacilityTypes",
       baseUrl: "user/getBaseUrl",
-      facilityGroupTypes: 'util/getFacilityGroupTypes'
+      facilityGroupTypes: 'util/getFacilityGroupTypes',
+      inventoryGroups: 'util/getInventoryGroups'
     })
   },
   props: ["facilityId"],
@@ -1321,7 +1322,7 @@ export default defineComponent({
 
       createInventoryGroup.onDidDismiss().then(async() => {
         await this.store.dispatch('util/fetchInventoryGroups')
-        await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+        await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, inventoryGroups: this.inventoryGroups })
       })
 
       createInventoryGroup.present()
