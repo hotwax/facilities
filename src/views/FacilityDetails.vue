@@ -407,7 +407,7 @@
             <ion-icon :icon="addCircleOutline" slot="start" />
             {{ translate("Internal locations") }}
           </ion-button>
-    
+
           <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
             <ion-item lines="none">
               <ion-icon :icon="locationOutline" slot="start" />
