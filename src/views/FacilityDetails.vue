@@ -1326,8 +1326,7 @@ export default defineComponent({
         const inventoryGroups = JSON.parse(JSON.stringify(this.inventoryGroups));
         // Creating a key called 'isChecked' for inventory groups already associated with current facility.
         inventoryGroups.forEach((group: any) => {
-          const isChecked = (this.current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
-          group.isChecked = isChecked ? isChecked : false;
+          group['isChecked'] = (this.current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
         });
 
         await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, inventoryGroups })

@@ -170,8 +170,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     //inventory groups
     inventoryGroups.forEach((group: any) => {
-      const isChecked = (facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
-      group.isChecked = isChecked ? isChecked : false;
+      group.isChecked = (facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
     });
     facility.inventoryGroups = inventoryGroups;
     commit(types.FACILITY_CURRENT_UPDATED, facility)
@@ -187,8 +186,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       const inventoryGroups = rootGetters['util/getInventoryGroups'];
       // Creating a key called 'isChecked' for inventory groups already associated with current facility.
       inventoryGroups.forEach((group: any) => {
-        const isChecked = (current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
-        group.isChecked = isChecked ? isChecked : false;
+        group.isChecked = (current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
       });
       current.inventoryGroups = inventoryGroups;
       commit(types.FACILITY_CURRENT_UPDATED, current);
