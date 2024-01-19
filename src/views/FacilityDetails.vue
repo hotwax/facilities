@@ -1320,6 +1320,7 @@ export default defineComponent({
       })
 
       createInventoryGroup.onDidDismiss().then(async() => {
+        await this.store.dispatch('util/fetchInventoryGroups')
         await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
       })
 

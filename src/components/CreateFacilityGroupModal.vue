@@ -123,7 +123,6 @@ export default defineComponent({
   },
   props: ['selectedFacilityGroupTypeId'],
   mounted() {
-    this.isFacilityGroupTypeDisabled = false
     if(this.selectedFacilityGroupTypeId) {
       this.formData.facilityGroupTypeId = this.selectedFacilityGroupTypeId
       this.isFacilityGroupTypeDisabled = true
