@@ -215,14 +215,22 @@
               <ion-card-title>
                 {{ translate("Sell inventory online") }}
               </ion-card-title>
+              <ion-button v-if="current.inventoryGroups?.length" @click="openCreateInventoryGroupModal()" fill="clear">
+                <ion-icon :icon="addCircleOutline" slot="end" />
+                {{ translate("Add") }}
+              </ion-button>
             </ion-card-header>
             <ion-card-content>
-              {{ translate("Select which channels this facility publishes inventory too.") }}
+              {{ current.inventoryGroups?.length ? translate("Select which channels this facility publishes inventory too.") : translate("There are no inventory channels setup yet") }}
             </ion-card-content>
             <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
               <ion-label>{{ inventoryGroup?.facilityGroupName }}</ion-label>
               <ion-toggle :checked="inventoryGroup.isChecked" slot="end" @click="updateSellInventoryOnlineSetting($event, inventoryGroup)"/>
             </ion-item>
+            <ion-button v-if="!current.inventoryGroups?.length" expand="block" fill="outline" @click="openCreateInventoryGroupModal()">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
           </ion-card>
 
           <ion-card>
@@ -563,6 +571,7 @@ import CreateFacilityLoginModal from '@/components/CreateFacilityLoginModal.vue'
 import AddFacilityGroupModal from '@/components/AddFacilityGroupModal.vue'
 import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
+import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -1303,7 +1312,19 @@ export default defineComponent({
     },
     getFacilityGroupTypeDesc(groupTypeId: string) {
       return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
-    }
+    },
+    async openCreateInventoryGroupModal() {
+      const createInventoryGroup = await modalController.create({
+        component: CreateFacilityGroupModal,
+        componentProps: { selectedFacilityGroupTypeId: 'CHANNEL_FAC_GROUP' }
+      })
+
+      createInventoryGroup.onDidDismiss().then(async() => {
+        await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
+      })
+
+      createInventoryGroup.present()
+    },
   },
   setup() {
     const store = useStore();
