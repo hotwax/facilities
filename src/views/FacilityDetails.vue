@@ -1322,7 +1322,15 @@ export default defineComponent({
 
       createInventoryGroup.onDidDismiss().then(async() => {
         await this.store.dispatch('util/fetchInventoryGroups')
-        await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, inventoryGroups: this.inventoryGroups })
+
+        const inventoryGroups = JSON.parse(JSON.stringify(this.inventoryGroups));
+        // Creating a key called 'isChecked' for inventory groups already associated with current facility.
+        inventoryGroups.forEach((group: any) => {
+          const isChecked = (this.current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
+          group.isChecked = isChecked ? isChecked : false;
+        });
+
+        await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, inventoryGroups })
       })
 
       createInventoryGroup.present()
