@@ -217,7 +217,7 @@
               </ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              {{ translate("Select which channels this facility publishes inventory too.") }}
+              {{ current.inventoryGroups?.length ? translate("Select which channels this facility publishes inventory too.") : translate("No channels found for publishing inventory.") }}
             </ion-card-content>
             <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
               <ion-label>{{ inventoryGroup?.facilityGroupName }}</ion-label>
@@ -407,7 +407,7 @@
             <ion-icon :icon="addCircleOutline" slot="start" />
             {{ translate("Internal locations") }}
           </ion-button>
-
+    
           <div class="list-item" v-for="location in current.locations" :key="location.locationSeqId">
             <ion-item lines="none">
               <ion-icon :icon="locationOutline" slot="start" />
