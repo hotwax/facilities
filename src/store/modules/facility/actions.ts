@@ -185,6 +185,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       // As inventory channels are fetched while fetching additional facility info
       // But here we already have additional facility info, so just getting and adding inventory groups to current.
       const inventoryGroups = rootGetters['util/getInventoryGroups'];
+      // Creating a key called 'isChecked' for inventory groups already associated with current facility.
       inventoryGroups.forEach((group: any) => {
         const isChecked = (current.facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
         group.isChecked = isChecked ? isChecked : false;
