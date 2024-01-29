@@ -131,7 +131,7 @@ export default defineComponent({
         this.formData.facilityId = generateInternalId(this.formData.facilityName)
       }
 
-      if(this.formData.facilityId && this.isFacilityAlreadyExists()) {
+      if(await this.isFacilityAlreadyExists()) {
         showToast(translate('Failed to create parking. Facility with ID already exists.'))
         return
       }
@@ -176,8 +176,30 @@ export default defineComponent({
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');
     },
-    isFacilityAlreadyExists() {
-      return this.virtualFacilities.some((facility: any) => facility.facilityId === this.formData.facilityId) || this.archivedFacilities.some((facility: any) => facility.facilityId === this.formData.facilityId)
+    async isFacilityAlreadyExists() {
+      let facilitiesCount = 0;
+
+      try {
+        const params = {
+          inputFields: {
+            facilityId: this.formData.facilityId
+          },
+          entityName: "FacilityAndProductStore",
+          viewSize: 1
+        }
+
+        const resp = await FacilityService.fetchFacilities(params)
+
+        if (!hasError(resp)) {
+          facilitiesCount = resp.data.docs.length
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+
+      return facilitiesCount
     }
   },
   setup() {
