@@ -180,15 +180,13 @@ export default defineComponent({
       let facilitiesCount = 0;
 
       try {
-        const params = {
+        const resp = await FacilityService.fetchFacilities({
           inputFields: {
             facilityId: this.formData.facilityId
           },
           entityName: "FacilityAndProductStore",
           viewSize: 1
-        }
-
-        const resp = await FacilityService.fetchFacilities(params)
+        })
 
         if (!hasError(resp)) {
           facilitiesCount = resp.data.docs.length
