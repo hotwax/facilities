@@ -120,6 +120,7 @@
   "Failed to create facility.": "Failed to create facility.",
   "Failed to create facility login." : "Failed to create facility login.",
   "Failed to create parking.": "Failed to create parking.",
+  "Failed to create parking. Facility with ID already exists.": "Failed to create parking. Facility with ID already exists.",
   "Failed to create facility address.": "Failed to create facility address.",
   "Failed to create facility group.": "Failed to create facility group.",
   "Failed to create facility location": "Failed to create facility location",

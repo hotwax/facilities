@@ -95,6 +95,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
+      archivedFacilities: 'facility/getArchivedFacilities',
     })
   },
   data() {
@@ -128,6 +129,11 @@ export default defineComponent({
       // and click on create the button, we need to set the internal id manually
       if (!this.formData.facilityId) {
         this.formData.facilityId = generateInternalId(this.formData.facilityName)
+      }
+
+      if(this.formData.facilityId && this.isFacilityAlreadyExists()) {
+        showToast(translate('Failed to create parking. Facility with ID already exists.'))
+        return
       }
 
       try {
@@ -170,6 +176,9 @@ export default defineComponent({
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');
     },
+    isFacilityAlreadyExists() {
+      return this.virtualFacilities.some((facility: any) => facility.facilityId === this.formData.facilityId) || this.archivedFacilities.some((facility: any) => facility.facilityId === this.formData.facilityId)
+    }
   },
   setup() {
     const store = useStore();
