@@ -51,7 +51,7 @@
               <ion-label>{{ group.description }}</ion-label>
             </ion-item>
           </ion-card> 
-          <ion-card>
+          <ion-card class="button-card">
             <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
               <ion-icon :icon="addOutline" slot="start"/>
               {{ translate('Create group') }}
