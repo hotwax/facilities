@@ -17,9 +17,9 @@
     <form @keyup.enter="setUserTimeZone">
       <div class="empty-state" v-if="isLoading">
         <ion-item lines="none">
-        <ion-spinner color="secondary" name="crescent" slot="start" />
-        {{ $t("Fetching time zones") }}
-      </ion-item>
+          <ion-spinner color="secondary" name="crescent" slot="start" />
+          {{ translate("Fetching time zones") }}
+        </ion-item>
       </div>
 
       <!-- Empty state -->
