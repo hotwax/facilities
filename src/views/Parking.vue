@@ -46,12 +46,14 @@
             <ion-label>{{ facility.description }}</ion-label>
           </ion-item>
         </ion-card> 
-        <ion-card class="button-card">
-          <ion-button color="medium" fill="clear" @click="openCreateVirtualFacilityModal()">
-            <ion-icon :icon="addOutline" slot="start"/>
-            {{ translate('Add new parking') }}
-          </ion-button>
-        </ion-card>
+        <div>
+          <ion-card class="button-card">
+            <ion-button color="medium" fill="clear" @click="openCreateVirtualFacilityModal()">
+              <ion-icon :icon="addOutline" slot="start"/>
+              {{ translate('Add new parking') }}
+              </ion-button>
+          </ion-card>
+        </div>
       </main>
       <ion-infinite-scroll
         @ionInfinite="loadMoreFacilities($event)"
