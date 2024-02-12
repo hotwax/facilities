@@ -270,7 +270,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['contactMechId', 'contactNumber'],
+      fieldList: ['contactMechId', 'contactNumber', 'countryCode'],
       viewSize: 1
     }
 

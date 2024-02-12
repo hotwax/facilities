@@ -49,16 +49,16 @@
         <ion-label>{{ translate("Contact details") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-label position="stacked">{{ translate("Contact number") }}</ion-label>
+        <ion-label :position="countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
         <ion-input v-model="contactNumber">
-          <ion-text>+91</ion-text>
+          <ion-text>{{ countryCode }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveContact()" :disabled="!isAddressUpdated() && contactNumber === telecomNumber.contactNumber">
+    <ion-fab-button @click="saveContact()" :disabled="!isAddressUpdated() && !isTelecomNumberUpdated()">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -89,7 +89,7 @@ import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from '@/services/FacilityService';
-import { hasError } from "@/adapter";
+import { getTelecomCode, hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
 import emitter from "@/event-bus";
@@ -125,16 +125,21 @@ export default defineComponent({
   data() {
     return {
       address: {} as any,
-      contactNumber: ''
+      contactNumber: '',
+      countryCode: '' as any
     }
   },
   props: ['facilityId'],
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
+    this.contactNumber = this.telecomNumber?.contactNumber
   },
   async mounted() {
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
-    this.contactNumber = JSON.parse(JSON.stringify(this.telecomNumber)).contactNumber
+    if(this.address.countryGeoId) {
+      const country = this.countries.find((country: any) => country.geoId === this.address.countryGeoId)
+      this.countryCode = getTelecomCode(country.geoCode)
+    }
   },
   methods: {
     closeModal() {
@@ -151,11 +156,13 @@ export default defineComponent({
       emitter.emit('presentLoader')
 
       try {
+        const isTelecomNumberUpdated = this.isTelecomNumberUpdated()
+
         if(this.isAddressUpdated()){
           postalAddress = await this.saveAddress()
         }
 
-        if(this.contactNumber !== this.telecomNumber.contactNumber) await this.saveTelecomNumber()
+        if(isTelecomNumberUpdated) await this.saveTelecomNumber()
 
         showToast(translate("Facility contact updated successfully."))
       } catch(err) {
@@ -192,13 +199,15 @@ export default defineComponent({
           facilityId: this.facilityId,
           contactMechPurposeTypeId: 'PRIMARY_PHONE',
           contactNumber: this.contactNumber.trim(),
-          contactMechId: this.telecomNumber.contactMechId
+          contactMechId: this.telecomNumber.contactMechId,
+          countryCode: this.countryCode
         })
       } else {
         resp = await FacilityService.createFacilityTelecomNumber({
           facilityId: this.facilityId,
           contactMechPurposeTypeId: 'PRIMARY_PHONE',
-          contactNumber: this.contactNumber.trim()
+          contactNumber: this.contactNumber.trim(),
+          countryCode: this.countryCode
         })
       }
 
@@ -209,6 +218,8 @@ export default defineComponent({
     },
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
+      const country = this.countries.find((country: any) => country.geoId === ev.detail.value)
+      this.countryCode = getTelecomCode(country.geoCode)
     },
     isAddressUpdated() {
       // in case postal address is not there - new facility is created
@@ -216,6 +227,9 @@ export default defineComponent({
       return Object.keys(this.postalAddress).length
         ? Object.entries(this.postalAddress).some(([addressKey, addressValue]) => this.address[addressKey] !== addressValue)
         : true
+    },
+    isTelecomNumberUpdated() {
+      return this.contactNumber !== this.telecomNumber.contactNumber || this.address.countryGeoId !== this.postalAddress.countryGeoId
     }
   },
   setup() {
@@ -225,6 +239,7 @@ export default defineComponent({
       closeOutline,
       saveOutline,
       store,
+      getTelecomCode,
       translate
     };
   },
