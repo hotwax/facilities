@@ -57,6 +57,12 @@
                 </ion-select-option>
               </ion-select>
             </ion-item>
+            <ion-item>
+              <ion-label position="stacked">{{ translate("Contact number") }}</ion-label>
+              <ion-input v-model="contactNumber">
+                <ion-text>+91</ion-text>
+              </ion-input>
+            </ion-item>
           </ion-list>
         </ion-card>
 
@@ -171,7 +177,8 @@ export default defineComponent({
         countryGeoId: '',
         latitude: '',
         longitude: '',
-      }
+      },
+      contactNumber: ''
     }
   },
   props: ['facilityId'],
@@ -190,15 +197,28 @@ export default defineComponent({
         contactMechPurposeTypeId: 'PRIMARY_LOCATION',
         ...this.formData
       }
-
+      
       try {
         resp = await FacilityService.createFacilityPostalAddress(payload)
         if (!hasError(resp)) {
           showToast(translate("Facility address created successfully."))
+
+          if (this.contactNumber)
+            resp = await FacilityService.createFacilityTelecomNumber({
+              facilityId: this.facilityId,
+              contactMechPurposeTypeId: 'PRIMARY_PHONE',
+              contactNumber: this.contactNumber.trim()
+            })
+
+          if (hasError(resp)) {
+            logger.error("failed to create telecom number", resp.data)
+          }
+
           this.router.replace(`/add-facility-config/${this.facilityId}`)
         } else {
           throw resp.data
         }
+        
       } catch (error) {
         showToast(translate("Failed to create facility address."))
         logger.error("Failed to create facility address.", error)

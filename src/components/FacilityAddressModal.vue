@@ -6,17 +6,20 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate("Address") }}</ion-title>
+      <ion-title>{{ translate("Address and contact details") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
     <form @keyup.enter="saveAddress()">
+      <ion-item-divider color="light">
+        <ion-label>{{ translate("Address") }}</ion-label>
+      </ion-item-divider>
       <ion-item>
         <ion-label position="floating">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
         <ion-input v-model="address.address1" />
       </ion-item>
-      <ion-item class="ion-margin-bottom">
+      <ion-item>
         <ion-label position="floating">{{ translate("Address line 2") }}</ion-label>
         <ion-input v-model="address.address2" />
       </ion-item>
@@ -42,6 +45,15 @@
         <ion-label position="floating">{{ translate("Zipcode") }}</ion-label>
         <ion-input v-model="address.postalCode" />
       </ion-item>
+      <ion-item-divider color="light">
+        <ion-label>{{ translate("Contact details") }}</ion-label>
+      </ion-item-divider>
+      <ion-item>
+        <ion-label position="stacked">{{ translate("Contact number") }}</ion-label>
+        <ion-input v-model="contactNumber">
+          <ion-text>+91</ion-text>
+        </ion-input>
+      </ion-item>
     </form>
   </ion-content>
 
@@ -63,6 +75,7 @@ import {
   IonIcon,
   IonInput,
   IonItem,
+  IonItemDivider,
   IonLabel,
   IonSelect,
   IonSelectOption,
@@ -93,6 +106,7 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonSelect,
     IonSelectOption,
@@ -109,7 +123,8 @@ export default defineComponent({
   },
   data() {
     return {
-      address: {} as any
+      address: {} as any,
+      contactNumber: ''
     }
   },
   props: ['facilityId'],
@@ -118,6 +133,8 @@ export default defineComponent({
   },
   async mounted() {
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
+    console.log(this.countries);
+    
   },
   methods: {
     closeModal() {
@@ -136,20 +153,56 @@ export default defineComponent({
       try {
         if (this.address.contactMechId) {
           resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
+
+          if(!hasError(resp)) {
+            postalAddress = this.address
+
+
+            if (this.contactNumber) {
+              resp = await FacilityService.updateFacilityTelecomNumber({
+                facilityId: this.facilityId,
+                contactMechPurposeTypeId: 'PRIMARY_PHONE',
+                contactNumber: this.contactNumber.trim(),
+                contactMechId: this.address.contactMechId
+              })
+            }
+
+            if (hasError(resp)) {
+              logger.error("failed to update telecom number", resp.data)
+            }
+
+            showToast(translate("Facility address updated successfully."))
+            await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          } else {
+            throw resp.data
+          }
         } else {
           resp = await FacilityService.createFacilityPostalAddress({
             ...this.address,
             facilityId: this.facilityId,
             contactMechPurposeTypeId: 'PRIMARY_LOCATION'
           })
-        }
 
-        if(!hasError(resp)) {
-          postalAddress = this.address
-          showToast(translate("Facility address updated successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
+          if(!hasError(resp)) {
+            postalAddress = this.address
+
+            if (this.contactNumber) {
+              resp = await FacilityService.createFacilityTelecomNumber({
+                facilityId: this.facilityId,
+                contactMechPurposeTypeId: 'PRIMARY_PHONE',
+                contactNumber: this.contactNumber.trim()
+              })
+            }
+
+            if (hasError(resp)) {
+              logger.error("failed to update telecom number", resp.data)
+            }
+
+            showToast(translate("Facility address updated successfully."))
+            await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          } else {
+            throw resp.data
+          }
         }
       } catch(err) {
         showToast(translate("Failed to update facility address."))
@@ -159,6 +212,8 @@ export default defineComponent({
       emitter.emit('dismissLoader')
     },
     updateState(ev: CustomEvent) {
+      console.log(ev);
+      
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
     },
     isAddressUpdated() {

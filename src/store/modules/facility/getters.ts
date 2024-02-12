@@ -50,6 +50,9 @@ const getters: GetterTree <FacilityState, RootState> = {
   },
   getPostalAddress(state) {
     return state.current?.postalAddress ? JSON.parse(JSON.stringify(state.current.postalAddress)) : {}
+  },
+  getFacilityContactNumber(state) {
+    return state.current?.contactNumber
   }
 }
 export default getters;
