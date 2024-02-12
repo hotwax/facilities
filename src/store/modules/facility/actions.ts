@@ -278,7 +278,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityContactDetails(params)
       if(!hasError(resp)) {
         telecomNumber = resp.data.docs[0]
-        commit(types.FACILITY_CONTACT_NUMBER_UPDATED , telecomNumber.contactNumber);
+        commit(types.FACILITY_TELECOM_NUMBER_UPDATED , telecomNumber);
       } else {
         throw resp.data
       }
