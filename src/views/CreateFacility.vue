@@ -188,9 +188,9 @@ export default defineComponent({
         } else {
           throw resp.data;
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error(error)
-        showToast(translate('Failed to create facility.'))
+        showToast(translate(error.response.data.error?.message))
         return;
       }
 
