@@ -49,9 +49,9 @@
         <ion-label>{{ translate("Contact details") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-label :position="countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
-        <ion-input v-model="contactNumber">
-          <ion-text>{{ countryCode }}</ion-text>
+        <ion-label :position="telecomNumberValue?.countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
+        <ion-input v-model="telecomNumberValue.contactNumber">
+          <ion-text>{{ telecomNumberValue?.countryCode }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
@@ -125,20 +125,19 @@ export default defineComponent({
   data() {
     return {
       address: {} as any,
-      contactNumber: '',
-      countryCode: '' as any
+      telecomNumberValue: {} as any
     }
   },
   props: ['facilityId'],
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
-    this.contactNumber = this.telecomNumber?.contactNumber
+    this.telecomNumberValue = JSON.parse(JSON.stringify(this.telecomNumber))
   },
   async mounted() {
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
     if(this.address.countryGeoId) {
       const country = this.countries.find((country: any) => country.geoId === this.address.countryGeoId)
-      this.countryCode = getTelecomCode(country.geoCode)
+      this.telecomNumberValue.countryCode = getTelecomCode(country.geoCode)
     }
   },
   methods: {
@@ -197,8 +196,8 @@ export default defineComponent({
       const payload = {
         facilityId: this.facilityId,
         contactMechPurposeTypeId: 'PRIMARY_PHONE',
-        contactNumber: this.contactNumber.trim(),
-        countryCode: this.countryCode
+        contactNumber: this.telecomNumberValue.contactNumber.trim(),
+        countryCode: this.telecomNumberValue.countryCode
       }
 
       if(this.telecomNumber?.contactMechId) {
@@ -218,7 +217,7 @@ export default defineComponent({
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
       const country = this.countries.find((country: any) => country.geoId === ev.detail.value)
-      this.countryCode = getTelecomCode(country.geoCode)
+      this.telecomNumberValue.countryCode = getTelecomCode(country.geoCode)
     },
     isAddressUpdated() {
       // in case postal address is not there - new facility is created
@@ -228,8 +227,7 @@ export default defineComponent({
         : true
     },
     isTelecomNumberUpdated() {
-      // Checking whether countryGeoId is changed which implies that country telecom code is also changed.
-      return this.contactNumber !== this.telecomNumber?.contactNumber || this.address.countryGeoId !== this.postalAddress.countryGeoId
+      return JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
     }
   },
   setup() {

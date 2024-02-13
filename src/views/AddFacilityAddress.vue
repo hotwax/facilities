@@ -163,8 +163,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       countries: 'util/getCountries',
-      states: 'util/getStates',
-      telecomNumber: 'facility/getTelecomNumber'
+      states: 'util/getStates'
     })
   },
   data() {
