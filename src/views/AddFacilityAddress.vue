@@ -199,7 +199,7 @@ export default defineComponent({
         contactMechPurposeTypeId: 'PRIMARY_LOCATION',
         ...this.formData
       }
-      
+
       try {
         resp = await FacilityService.createFacilityPostalAddress(payload)
         if (!hasError(resp)) {
@@ -210,7 +210,6 @@ export default defineComponent({
         } else {
           throw resp.data
         }
-        
       } catch (error) {
         showToast(translate("Failed to create facility address."))
         logger.error("Failed to create facility address.", error)

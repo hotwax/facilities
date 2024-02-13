@@ -194,21 +194,20 @@ export default defineComponent({
     async saveTelecomNumber() {
       let resp = {} as any;
 
-      if (this.telecomNumber.contactMechId) {
+      const payload = {
+        facilityId: this.facilityId,
+        contactMechPurposeTypeId: 'PRIMARY_PHONE',
+        contactNumber: this.contactNumber.trim(),
+        countryCode: this.countryCode
+      }
+
+      if(this.telecomNumber?.contactMechId) {
         resp = await FacilityService.updateFacilityTelecomNumber({
-          facilityId: this.facilityId,
-          contactMechPurposeTypeId: 'PRIMARY_PHONE',
-          contactNumber: this.contactNumber.trim(),
+          ...payload,
           contactMechId: this.telecomNumber.contactMechId,
-          countryCode: this.countryCode
         })
       } else {
-        resp = await FacilityService.createFacilityTelecomNumber({
-          facilityId: this.facilityId,
-          contactMechPurposeTypeId: 'PRIMARY_PHONE',
-          contactNumber: this.contactNumber.trim(),
-          countryCode: this.countryCode
-        })
+        resp = await FacilityService.createFacilityTelecomNumber(payload)
       }
 
       if (hasError(resp)) {
@@ -229,7 +228,8 @@ export default defineComponent({
         : true
     },
     isTelecomNumberUpdated() {
-      return this.contactNumber !== this.telecomNumber.contactNumber || this.address.countryGeoId !== this.postalAddress.countryGeoId
+      // Checking whether countryGeoId is changed which implies that country telecom code is also changed.
+      return this.contactNumber !== this.telecomNumber?.contactNumber || this.address.countryGeoId !== this.postalAddress.countryGeoId
     }
   },
   setup() {

@@ -667,7 +667,6 @@ export default defineComponent({
       return facilityTypesByParentTypeId
     }, {}) : this.facilityTypes
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
-    
   },
   methods: {
     getImageUrl(imageUrl: string) {
