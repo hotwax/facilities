@@ -58,9 +58,9 @@
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label position="stacked">{{ translate("Contact number") }}</ion-label>
+              <ion-label :position="countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
               <ion-input v-model="contactNumber">
-                <ion-text>+91</ion-text>
+                <ion-text>{{ countryCode }}</ion-text>
               </ion-input>
             </ion-item>
           </ion-list>
@@ -134,7 +134,7 @@ import { colorWandOutline, locationOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
 import { showToast } from "@/utils";
 import logger from "@/logger";
-import { hasError } from "@/adapter";
+import { getTelecomCode, hasError } from "@/adapter";
 import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
 
@@ -163,7 +163,8 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       countries: 'util/getCountries',
-      states: 'util/getStates'
+      states: 'util/getStates',
+      telecomNumber: 'facility/getTelecomNumber'
     })
   },
   data() {
@@ -178,7 +179,8 @@ export default defineComponent({
         latitude: '',
         longitude: '',
       },
-      contactNumber: ''
+      contactNumber: '',
+      countryCode: ''
     }
   },
   props: ['facilityId'],
@@ -201,19 +203,9 @@ export default defineComponent({
       try {
         resp = await FacilityService.createFacilityPostalAddress(payload)
         if (!hasError(resp)) {
+          await this.saveTelecomNumber()
+
           showToast(translate("Facility address created successfully."))
-
-          if (this.contactNumber)
-            resp = await FacilityService.createFacilityTelecomNumber({
-              facilityId: this.facilityId,
-              contactMechPurposeTypeId: 'PRIMARY_PHONE',
-              contactNumber: this.contactNumber.trim()
-            })
-
-          if (hasError(resp)) {
-            logger.error("failed to create telecom number", resp.data)
-          }
-
           this.router.replace(`/add-facility-config/${this.facilityId}`)
         } else {
           throw resp.data
@@ -248,7 +240,24 @@ export default defineComponent({
     },
     async updateState(event: CustomEvent) {
       await this.store.dispatch('util/fetchStates', { geoId: event.detail.value })
-    } 
+      const country = this.countries.find((country: any) => country.geoId === event.detail.value)
+      this.countryCode = getTelecomCode(country.geoCode)
+    },
+    async saveTelecomNumber() {
+      const resp = await FacilityService.createFacilityTelecomNumber({
+        facilityId: this.facilityId,
+        contactMechPurposeTypeId: 'PRIMARY_PHONE',
+        contactNumber: this.contactNumber.trim(),
+        countryCode: this.countryCode
+      })
+
+      if (hasError(resp)) {
+        logger.error(resp.data)
+        return;
+      }
+
+      await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
+    },
   },
   setup() {
     const store = useStore();
