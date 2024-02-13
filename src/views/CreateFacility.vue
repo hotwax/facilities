@@ -190,7 +190,7 @@ export default defineComponent({
         }
       } catch (error: any) {
         logger.error(error)
-        showToast(translate(error.response.data.error?.message))
+        showToast(error.response.data.error?.message)
         return;
       }
 
