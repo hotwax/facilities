@@ -145,7 +145,7 @@ export default defineComponent({
       modalController.dismiss()
     },
     async saveContact() {
-      let postalAddress = '';
+      let resp, postalAddress = '';
 
       if(!this.address?.address1 || !this.address?.city) {
         showToast("Please fill all the required fields.")
@@ -153,42 +153,37 @@ export default defineComponent({
       }
 
       emitter.emit('presentLoader')
+      const isTelecomNumberUpdated = this.isTelecomNumberUpdated()
 
-      try {
-        const isTelecomNumberUpdated = this.isTelecomNumberUpdated()
+      if(this.isAddressUpdated()) {
+        try {
+          if (this.address.contactMechId) {
+            resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
+          } else {
+            resp = await FacilityService.createFacilityPostalAddress({
+              ...this.address,
+              facilityId: this.facilityId,
+              contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+            })
+          }
 
-        if(this.isAddressUpdated()){
-          postalAddress = await this.saveAddress()
+          if (!hasError(resp)) {
+            postalAddress = this.address
+            await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+            showToast(translate("Facility contact updated successfully."))
+          } else {
+            throw resp.data
+          }
+        } catch(err) {
+          showToast(translate("Failed to update facility contact."))
+          logger.error(err)
         }
-
-        if(isTelecomNumberUpdated) await this.saveTelecomNumber()
-
-        showToast(translate("Facility contact updated successfully."))
-      } catch(err) {
-        showToast(translate("Failed to update facility contact."))
-        logger.error(err)
       }
+
+      if(isTelecomNumberUpdated) this.saveTelecomNumber()
+
       modalController.dismiss({ postalAddress })
       emitter.emit('dismissLoader')
-    },
-    async saveAddress() {
-      let resp = {} as any;
-
-      if (this.address.contactMechId) {
-        resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
-      } else {
-        resp = await FacilityService.createFacilityPostalAddress({
-          ...this.address,
-          facilityId: this.facilityId,
-          contactMechPurposeTypeId: 'PRIMARY_LOCATION'
-        })
-      }
-
-      if (hasError(resp)) {
-        throw resp.data
-      }
-      await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
-      return this.address
     },
     async saveTelecomNumber() {
       let resp = {} as any;
@@ -200,19 +195,24 @@ export default defineComponent({
         countryCode: this.telecomNumberValue.countryCode
       }
 
-      if(this.telecomNumber?.contactMechId) {
-        resp = await FacilityService.updateFacilityTelecomNumber({
-          ...payload,
-          contactMechId: this.telecomNumber.contactMechId,
-        })
-      } else {
-        resp = await FacilityService.createFacilityTelecomNumber(payload)
-      }
+      try {
+        if(this.telecomNumber?.contactMechId) {
+          resp = await FacilityService.updateFacilityTelecomNumber({
+            ...payload,
+            contactMechId: this.telecomNumber.contactMechId,
+          })
+        } else {
+          resp = await FacilityService.createFacilityTelecomNumber(payload)
+        }
 
-      if (hasError(resp)) {
-        throw resp.data
+        if(!hasError(resp)) {
+          await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
       }
-      await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
     },
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })

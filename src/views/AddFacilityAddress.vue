@@ -202,8 +202,6 @@ export default defineComponent({
       try {
         resp = await FacilityService.createFacilityPostalAddress(payload)
         if (!hasError(resp)) {
-          await this.saveTelecomNumber()
-
           showToast(translate("Facility address created successfully."))
           this.router.replace(`/add-facility-config/${this.facilityId}`)
         } else {
@@ -213,6 +211,7 @@ export default defineComponent({
         showToast(translate("Failed to create facility address."))
         logger.error("Failed to create facility address.", error)
       }
+      this.saveTelecomNumber()
     },
     async generateLatLong() {
       const payload = {
@@ -242,19 +241,22 @@ export default defineComponent({
       this.countryCode = getTelecomCountryCode(country.geoCode)
     },
     async saveTelecomNumber() {
-      const resp = await FacilityService.createFacilityTelecomNumber({
-        facilityId: this.facilityId,
-        contactMechPurposeTypeId: 'PRIMARY_PHONE',
-        contactNumber: this.contactNumber.trim(),
-        countryCode: this.countryCode
-      })
+      try {
+        const resp = await FacilityService.createFacilityTelecomNumber({
+          facilityId: this.facilityId,
+          contactMechPurposeTypeId: 'PRIMARY_PHONE',
+          contactNumber: this.contactNumber.trim(),
+          countryCode: this.countryCode
+        })
 
-      if (hasError(resp)) {
-        logger.error(resp.data)
-        return;
+        if(!hasError(resp)) {
+          await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
+        } else {
+          throw resp.data;
+        }
+      } catch(err) {
+        logger.error(err)
       }
-
-      await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
     },
   },
   setup() {
