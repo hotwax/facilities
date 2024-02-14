@@ -190,8 +190,8 @@ export default defineComponent({
         }
       } catch (error: any) {
         logger.error(error)
-        if(error.response.data.error?.message) {
-          showToast(error?.response?.data?.error?.message)
+        if(error?.response?.data?.error?.message) {
+          showToast(error.response.data.error.message)
         } else {
           showToast(translate('Failed to create facility.'))
         }
