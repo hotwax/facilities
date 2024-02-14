@@ -367,9 +367,12 @@
                 <ion-card-title>
                   {{ translate('Facility External ID') }}
                 </ion-card-title>
+                <ion-button fill="clear" @click="copyToClipboard(current.externalId, 'Copied to clipboard')">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
               </ion-card-header>
               <ion-item lines="full">
-                <ion-label>{{ translate('Identification') }}</ion-label>
+                <ion-label slot="start">{{ translate('Identification') }}</ion-label>
                 <ion-label slot="end">{{ current.externalId }}</ion-label>
               </ion-item>
               <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
@@ -533,6 +536,7 @@ import {
   bookmarksOutline,
   closeCircleOutline,
   closeOutline,
+  copyOutline,
   chevronForwardOutline,
   ellipsisVerticalOutline,
   globeOutline,
@@ -573,6 +577,7 @@ import AddFacilityGroupModal from '@/components/AddFacilityGroupModal.vue'
 import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
 import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
+import { copyToClipboard } from '@/utils';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -1348,6 +1353,8 @@ export default defineComponent({
       bookmarksOutline,
       closeCircleOutline,
       closeOutline,
+      copyOutline,
+      copyToClipboard,
       chevronForwardOutline,
       ellipsisVerticalOutline,
       globeOutline,
