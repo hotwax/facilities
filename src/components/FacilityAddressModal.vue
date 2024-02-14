@@ -131,7 +131,7 @@ export default defineComponent({
   props: ['facilityId'],
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
-    this.telecomNumberValue = JSON.parse(JSON.stringify(this.telecomNumber))
+    this.telecomNumberValue = this.telecomNumber ? JSON.parse(JSON.stringify(this.telecomNumber)) : {}
   },
   async mounted() {
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
@@ -227,7 +227,7 @@ export default defineComponent({
         : true
     },
     isTelecomNumberUpdated() {
-      return JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
+      return this.telecomNumberValue.contactNumber && JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
     }
   },
   setup() {
