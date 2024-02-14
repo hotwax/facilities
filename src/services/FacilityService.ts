@@ -701,6 +701,22 @@ const fetchAssociatedFacilitiesToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityTelecomNumber = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityTelecomNumber",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityTelecomNumber",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
@@ -713,6 +729,7 @@ export const FacilityService = {
   createFacilityCalendar,
   createFacilityIdentification,
   createFacilityPostalAddress,
+  createFacilityTelecomNumber,
   createProductStoreFacility,
   createShopifyShopLocation,
   deleteFacilityGroup,
@@ -747,6 +764,7 @@ export const FacilityService = {
   updateFacilityIdentification,
   updateFacilityLocation,
   updateFacilityPostalAddress,
+  updateFacilityTelecomNumber,
   updateFacilityToGroup,
   updateProductStoreFacility,
   updateShopifyShopLocation

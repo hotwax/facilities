@@ -259,6 +259,33 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
   },
+  async fetchFacilityTelecomNumber({ commit }, payload) {
+    let telecomNumber;
+    const params = {
+      inputFields: {
+        contactMechPurposeTypeId: 'PRIMARY_PHONE',
+        contactMechTypeId: 'TELECOM_NUMBER',
+        facilityId: payload.facilityId
+      },
+      entityName: "FacilityContactDetailByPurpose",
+      orderBy: 'fromDate DESC',
+      filterByDate: 'Y',
+      fieldList: ['contactMechId', 'contactNumber', 'countryCode'],
+      viewSize: 1
+    }
+
+    try {
+      const resp = await FacilityService.fetchFacilityContactDetails(params)
+      if(!hasError(resp)) {
+        telecomNumber = resp.data.docs[0]
+        commit(types.FACILITY_TELECOM_NUMBER_UPDATED , telecomNumber);
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch the contact number for the facility', err)
+    }
+  },
 
   updateFacilityQuery({ commit }, query) {
     commit(types.FACILITY_QUERY_UPDATED, query)

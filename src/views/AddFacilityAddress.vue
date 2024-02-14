@@ -57,6 +57,12 @@
                 </ion-select-option>
               </ion-select>
             </ion-item>
+            <ion-item lines="none">
+              <ion-label :position="countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
+              <ion-input v-model="contactNumber">
+                <ion-text>{{ countryCode }}</ion-text>
+              </ion-input>
+            </ion-item>
           </ion-list>
         </ion-card>
 
@@ -128,7 +134,7 @@ import { colorWandOutline, locationOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
 import { showToast } from "@/utils";
 import logger from "@/logger";
-import { hasError } from "@/adapter";
+import { getTelecomCountryCode, hasError } from "@/adapter";
 import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
 
@@ -171,7 +177,9 @@ export default defineComponent({
         countryGeoId: '',
         latitude: '',
         longitude: '',
-      }
+      },
+      contactNumber: '',
+      countryCode: ''
     }
   },
   props: ['facilityId'],
@@ -203,6 +211,7 @@ export default defineComponent({
         showToast(translate("Failed to create facility address."))
         logger.error("Failed to create facility address.", error)
       }
+      if(this.contactNumber) this.saveTelecomNumber()
     },
     async generateLatLong() {
       const payload = {
@@ -228,7 +237,25 @@ export default defineComponent({
     },
     async updateState(event: CustomEvent) {
       await this.store.dispatch('util/fetchStates', { geoId: event.detail.value })
-    } 
+      const country = this.countries.find((country: any) => country.geoId === event.detail.value)
+      this.countryCode = getTelecomCountryCode(country.geoCode)
+    },
+    async saveTelecomNumber() {
+      try {
+        const resp = await FacilityService.createFacilityTelecomNumber({
+          facilityId: this.facilityId,
+          contactMechPurposeTypeId: 'PRIMARY_PHONE',
+          contactNumber: this.contactNumber.trim(),
+          countryCode: this.countryCode
+        })
+
+        if(hasError(resp)) {
+          throw resp.data;
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+    },
   },
   setup() {
     const store = useStore();
