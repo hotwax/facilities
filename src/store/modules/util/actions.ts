@@ -250,7 +250,7 @@ const actions: ActionTree<UtilState, RootState> = {
         geoIdTo: "DBIC"
       },
       entityName: 'GeoAssocAndGeoFrom',
-      fieldList: ['geoName', 'geoId', "geoCode"],
+      fieldList: ['geoName', 'geoId', 'geoCode'],
       noConditionFind: 'Y',
     } as any
 

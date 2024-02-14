@@ -249,9 +249,7 @@ export default defineComponent({
           countryCode: this.countryCode
         })
 
-        if(!hasError(resp)) {
-          await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
-        } else {
+        if(hasError(resp)) {
           throw resp.data;
         }
       } catch(err) {

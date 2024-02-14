@@ -157,7 +157,7 @@ export default defineComponent({
 
       if(this.isAddressUpdated()) {
         try {
-          if (this.address.contactMechId) {
+          if(this.address.contactMechId) {
             resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
           } else {
             resp = await FacilityService.createFacilityPostalAddress({
@@ -167,7 +167,7 @@ export default defineComponent({
             })
           }
 
-          if (!hasError(resp)) {
+          if(!hasError(resp)) {
             postalAddress = this.address
             await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
             showToast(translate("Facility contact updated successfully."))
