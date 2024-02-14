@@ -89,7 +89,7 @@ import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from '@/services/FacilityService';
-import { getTelecomCode, hasError } from "@/adapter";
+import { getTelecomCountryCode, hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
 import emitter from "@/event-bus";
@@ -137,7 +137,7 @@ export default defineComponent({
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
     if(this.address.countryGeoId) {
       const country = this.countries.find((country: any) => country.geoId === this.address.countryGeoId)
-      this.telecomNumberValue.countryCode = getTelecomCode(country.geoCode)
+      this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
     }
   },
   methods: {
@@ -217,7 +217,7 @@ export default defineComponent({
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
       const country = this.countries.find((country: any) => country.geoId === ev.detail.value)
-      this.telecomNumberValue.countryCode = getTelecomCode(country.geoCode)
+      this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
     },
     isAddressUpdated() {
       // in case postal address is not there - new facility is created
@@ -237,7 +237,7 @@ export default defineComponent({
       closeOutline,
       saveOutline,
       store,
-      getTelecomCode,
+      getTelecomCountryCode,
       translate
     };
   },

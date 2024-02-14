@@ -134,7 +134,7 @@ import { colorWandOutline, locationOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
 import { showToast } from "@/utils";
 import logger from "@/logger";
-import { getTelecomCode, hasError } from "@/adapter";
+import { getTelecomCountryCode, hasError } from "@/adapter";
 import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
 
@@ -239,7 +239,7 @@ export default defineComponent({
     async updateState(event: CustomEvent) {
       await this.store.dispatch('util/fetchStates', { geoId: event.detail.value })
       const country = this.countries.find((country: any) => country.geoId === event.detail.value)
-      this.countryCode = getTelecomCode(country.geoCode)
+      this.countryCode = getTelecomCountryCode(country.geoCode)
     },
     async saveTelecomNumber() {
       const resp = await FacilityService.createFacilityTelecomNumber({
