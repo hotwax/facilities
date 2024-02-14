@@ -211,7 +211,7 @@ export default defineComponent({
         showToast(translate("Failed to create facility address."))
         logger.error("Failed to create facility address.", error)
       }
-      this.saveTelecomNumber()
+      if(this.contactNumber) this.saveTelecomNumber()
     },
     async generateLatLong() {
       const payload = {
