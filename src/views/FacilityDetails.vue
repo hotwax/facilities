@@ -54,7 +54,7 @@
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
-                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}${telecomNumber.contactNumber}` }}</p>
+                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}-${telecomNumber.contactNumber}` }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
