@@ -180,7 +180,7 @@ export default defineComponent({
         }
       }
 
-      if(isTelecomNumberUpdated) this.saveTelecomNumber()
+      if(isTelecomNumberUpdated) await this.saveTelecomNumber()
 
       modalController.dismiss({ postalAddress })
       emitter.emit('dismissLoader')

@@ -354,7 +354,7 @@
                 </ion-card-title>
               </ion-card-header>
               <ion-item lines="full">
-                <ion-label>{{ translate('Identification') }}</ion-label>
+                <ion-label slot="start">{{ translate('Identification') }}</ion-label>
                 <ion-label slot="end">{{ mapping.idValue }}</ion-label>
               </ion-item>
               <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
