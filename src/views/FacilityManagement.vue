@@ -93,7 +93,6 @@ import {
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { translate } from '@hotwax/dxp-components'
-import { hasError } from '@/adapter';
 import logger from '@/logger';
 import { FacilityService } from '@/services/FacilityService';
 import { mapGetters } from 'vuex';

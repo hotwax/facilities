@@ -58,7 +58,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
@@ -232,7 +232,6 @@ export default defineComponent({
     const store = useStore()
 
     return {
-      closeCircle,
       closeOutline,
       saveOutline,
       store,
