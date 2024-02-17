@@ -299,7 +299,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_QUERY_UPDATED, {
       queryString: '',
       productStoreId: '',
-      facilityTypeId: ''
+      facilityTypeId: '',
+      facilityGroupId: ''
     })
     commit(types.FACILITY_GROUP_QUERY_UPDATED, {
       queryString: '',
