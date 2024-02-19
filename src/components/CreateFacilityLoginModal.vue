@@ -64,10 +64,7 @@ import {
 import { defineComponent } from "vue";
 import {
   closeOutline,
-  eyeOutline,
-  eyeOffOutline,
-  lockClosedOutline,
-  mailOutline
+  lockClosedOutline
 } from "ionicons/icons";
 import { useStore } from "vuex";
 import { translate } from '@hotwax/dxp-components'
@@ -151,19 +148,13 @@ export default defineComponent({
     markPasswordTouched() {
       (this as any).$refs.password.$el.classList.add('ion-touched');
     },
-    markConfirmPasswordTouched() {
-      (this as any).$refs.confirmPassword.$el.classList.add('ion-touched');
-    },
   },
   setup() {
     const store = useStore();
 
     return {
       closeOutline,
-      eyeOutline,
-      eyeOffOutline,
       lockClosedOutline,
-      mailOutline,
       store,
       translate
     };

@@ -89,7 +89,7 @@ import {
   modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { codeWorkingOutline, ellipsisVerticalOutline, globeOutline, openOutline, timeOutline } from 'ionicons/icons'
+import { openOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import TimezoneModal from '@/components/TimezoneModal.vue'
@@ -170,11 +170,7 @@ export default defineComponent({
 
     return {
       Actions,
-      codeWorkingOutline,
-      ellipsisVerticalOutline,
-      globeOutline,
       openOutline,
-      timeOutline,
       router,
       store,
       hasPermission,

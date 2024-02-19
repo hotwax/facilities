@@ -42,7 +42,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { closeOutline, saveOutline } from "ionicons/icons";
+import { closeOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 
@@ -79,7 +79,6 @@ export default defineComponent({
   setup() {
     return {
       closeOutline,
-      saveOutline,
       translate
     };
   },

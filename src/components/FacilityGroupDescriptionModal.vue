@@ -45,10 +45,7 @@ import {
 import { defineComponent } from "vue";
 import {
   closeOutline,
-  eyeOutline,
-  eyeOffOutline,
-  lockClosedOutline,
-  mailOutline
+  lockClosedOutline
 } from "ionicons/icons";
 import { mapGetters, useStore } from "vuex";
 import { translate } from '@hotwax/dxp-components'
@@ -121,10 +118,7 @@ export default defineComponent({
 
     return {
       closeOutline,
-      eyeOutline,
-      eyeOffOutline,
       lockClosedOutline,
-      mailOutline,
       store,
       translate
     };
