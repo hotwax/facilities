@@ -51,7 +51,7 @@
       <ion-item>
         <ion-label :position="telecomNumberValue?.countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
         <ion-input v-model="telecomNumberValue.contactNumber">
-          <ion-text>{{ telecomNumberValue?.countryCode }}</ion-text>
+          <ion-text>{{ `${telecomNumberValue?.countryCode}-` }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
@@ -180,7 +180,7 @@ export default defineComponent({
         }
       }
 
-      if(isTelecomNumberUpdated) this.saveTelecomNumber()
+      if(isTelecomNumberUpdated) await this.saveTelecomNumber()
 
       modalController.dismiss({ postalAddress })
       emitter.emit('dismissLoader')

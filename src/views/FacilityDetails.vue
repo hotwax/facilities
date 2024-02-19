@@ -54,7 +54,7 @@
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
-                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}${telecomNumber.contactNumber}` }}</p>
+                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}-${telecomNumber.contactNumber}` }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
@@ -352,6 +352,9 @@
                 <ion-card-title>
                   {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
                 </ion-card-title>
+                <ion-button fill="clear" @click="copyToClipboard(mapping.idValue, 'Copied to clipboard')">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
               </ion-card-header>
               <ion-item lines="full">
                 <ion-label>{{ translate('Identification') }}</ion-label>
@@ -372,7 +375,7 @@
                 </ion-button>
               </ion-card-header>
               <ion-item lines="full">
-                <ion-label slot="start">{{ translate('Identification') }}</ion-label>
+                <ion-label>{{ translate('Identification') }}</ion-label>
                 <ion-label slot="end">{{ current.externalId }}</ion-label>
               </ion-item>
               <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
