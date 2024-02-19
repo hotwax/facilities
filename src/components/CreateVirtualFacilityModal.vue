@@ -177,7 +177,7 @@ export default defineComponent({
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');
     },
     async isFacilityAlreadyExists() {
-      let facilitiesCount = 0;
+      let isFacilityExists = false;
 
       try {
         const resp = await FacilityService.fetchFacilities({
@@ -189,7 +189,7 @@ export default defineComponent({
         })
 
         if (!hasError(resp)) {
-          facilitiesCount = resp.data.docs.length
+          isFacilityExists = resp.data.docs.length ? true : false
         } else {
           throw resp.data
         }
@@ -197,7 +197,7 @@ export default defineComponent({
         logger.error(err)
       }
 
-      return facilitiesCount > 0
+      return isFacilityExists
     }
   },
   setup() {
