@@ -352,9 +352,12 @@
                 <ion-card-title>
                   {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
                 </ion-card-title>
+                <ion-button fill="clear" @click="copyToClipboard(mapping.idValue, 'Copied to clipboard')">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
               </ion-card-header>
               <ion-item lines="full">
-                <ion-label slot="start">{{ translate('Identification') }}</ion-label>
+                <ion-label>{{ translate('Identification') }}</ion-label>
                 <ion-label slot="end">{{ mapping.idValue }}</ion-label>
               </ion-item>
               <ion-button fill="clear" @click="editFacilityMapping(mapping)">{{ translate("Edit") }}</ion-button>
@@ -372,7 +375,7 @@
                 </ion-button>
               </ion-card-header>
               <ion-item lines="full">
-                <ion-label slot="start">{{ translate('Identification') }}</ion-label>
+                <ion-label>{{ translate('Identification') }}</ion-label>
                 <ion-label slot="end">{{ current.externalId }}</ion-label>
               </ion-item>
               <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
