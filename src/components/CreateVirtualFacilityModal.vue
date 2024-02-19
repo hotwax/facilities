@@ -197,7 +197,7 @@ export default defineComponent({
         logger.error(err)
       }
 
-      return facilitiesCount
+      return facilitiesCount > 0
     }
   },
   setup() {
