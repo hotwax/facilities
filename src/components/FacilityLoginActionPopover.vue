@@ -53,7 +53,7 @@ export default defineComponent({
   props: ['currentFacility', 'currentFacilityUser', "facilityTypeDesc"],
   methods: {
     async viewDetails() {
-      const userDetailUrl = `${process.env.VUE_APP_USERS_APPLICATION_URL}/login/?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&partyId=${this.currentFacilityUser.partyId}`
+      const userDetailUrl = `${process.env.VUE_APP_USERS_LOGIN_URL}?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&partyId=${this.currentFacilityUser.partyId}`
       window.location.href = userDetailUrl
       popoverController.dismiss()
     },
