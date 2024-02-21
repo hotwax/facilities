@@ -39,6 +39,7 @@ import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useAuthStore } from '@hotwax/dxp-components'
 
 export default defineComponent({
   name: "ProductStorePopover",
@@ -52,7 +53,7 @@ export default defineComponent({
   props: ['currentFacility', 'currentFacilityUser', "facilityTypeDesc"],
   methods: {
     async viewDetails() {
-      const userDetailUrl = `${process.env.VUE_APP_USERS_APPLICATION_URL}/user-details/${this.currentFacilityUser.partyId}`
+      const userDetailUrl = `${process.env.VUE_APP_USERS_APPLICATION_URL}?oms=${this.authStore.oms}&token=${this.authStore.token.value}&expirationTime=${this.authStore.token.expiration}&partyId=${this.currentFacilityUser.partyId}`
       window.location.href = userDetailUrl
       popoverController.dismiss()
     },
@@ -193,8 +194,10 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const authStore = useAuthStore()
 
     return {
+      authStore,
       removeCircleOutline,
       keyOutline,
       mailOutline,
