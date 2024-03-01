@@ -72,7 +72,7 @@
             </div>
 
             <div class="tablet">
-              <template class="ion-text-center" v-if="facility.orderLimitType === 'custom'">
+              <template v-if="facility.orderLimitType === 'custom'">
                 <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
                   <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
                 </ion-chip>
