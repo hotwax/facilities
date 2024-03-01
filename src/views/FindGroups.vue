@@ -51,12 +51,6 @@
               <ion-label>{{ group.description }}</ion-label>
             </ion-item>
           </ion-card> 
-          <ion-card class="button-card">
-            <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
-              <ion-icon :icon="addOutline" slot="start"/>
-              {{ translate('Create group') }}
-            </ion-button>
-          </ion-card>
         </main>
         <main v-else>
           <p class="empty-state">{{ translate("No groups found") }}</p>
@@ -73,6 +67,11 @@
           :loading-text="translate('Loading')"
         />
       </ion-infinite-scroll>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="openCreateFacilityGroupModal()">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>

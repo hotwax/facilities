@@ -65,7 +65,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { addOutline, closeOutline } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { mapGetters, useStore } from 'vuex'
