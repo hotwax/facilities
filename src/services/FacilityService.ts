@@ -601,6 +601,57 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
   }, {})
 }
 
+const fetchProductStoreCountByGroup = async (facilityGroupIds: any): Promise<any> => {
+  if (!facilityGroupIds.length) return []
+  const requests = []
+
+  const facilityGroupIdList = facilityGroupIds
+  while (facilityGroupIdList.length) {
+    const batch = facilityGroupIdList.splice(0, 10)
+    const params = {
+      inputFields: {
+        facilityGroupId: batch
+      },
+      viewSize: 250, // maximum view size
+      entityName: 'ProductStoreFacilityGroup',
+      noConditionFind: "Y",
+      filterByDate: 'Y',
+      fieldList: ['facilityGroupId', 'productStoreId']
+    }
+    requests.push(params)
+  }
+
+  const productStoreCountResponse = await Promise.allSettled(requests.map((params) => api({
+    url: 'performFind',
+    method: 'POST',
+    data: params
+  })))
+
+  const hasFailedResponse = productStoreCountResponse.some((response: any) => hasError(response.value) && !response?.data?.count)
+
+  if (hasFailedResponse) {
+    logger.error('Failed to fetch product store count for some groups')
+  }
+
+  // taking out the response from Promise.allSettled's 'value' field first 
+  const allResponseData = productStoreCountResponse.map((response: any) => response.value)
+    .reduce((responseData: any, response: any) => {
+      if (!hasError(response)) {
+        responseData.push(...response.data.docs)
+      }
+      return responseData
+    }, [])
+
+  return allResponseData.reduce((productStoreCountByGroup: any, responseData: any) => {
+    if (productStoreCountByGroup[responseData.facilityGroupId]) {
+      productStoreCountByGroup[responseData.facilityGroupId] += 1
+    } else {
+      productStoreCountByGroup[responseData.facilityGroupId] = 1
+    }
+    return productStoreCountByGroup
+  }, {})
+}
+
 const updateFacilityGroup = async (payload: any): Promise<any> => {
   return api({
     url: "service/updateFacilityGroup",
@@ -701,6 +752,14 @@ const fetchAssociatedFacilitiesToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const fetchAssociatedProductStoresToGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "performFind",
+    method: "post",
+    data: payload
+  })
+}
+
 const createFacilityTelecomNumber = async (payload: any): Promise<any> => {
   return api({
     url: "service/createFacilityTelecomNumber",
@@ -717,9 +776,26 @@ const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
   })
 }
 
+const addProductStoreToFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/addProductStoreToFacilityGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateProductStoreToFacilityGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateProductStoreToFacilityGroup",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
+  addProductStoreToFacilityGroup,
   associateCalendarToFacility,
   createFacilityGroup,
   createFacility,
@@ -738,6 +814,7 @@ export const FacilityService = {
   deleteShopifyShopLocation,
   fetchArchivedFacilities,
   fetchAssociatedFacilitiesToGroup,
+  fetchAssociatedProductStoresToGroup,
   fetchFacilityGroup,
   fetchFacilityGroups,
   fetchFacilityLocations,
@@ -752,6 +829,7 @@ export const FacilityService = {
   fetchInactiveFacilityGroupAssociations,
   fetchJobData,
   fetchOrderCountsByFacility,
+  fetchProductStoreCountByGroup,
   getFacilityProductStores,
   fetchShopifyFacilityMappings,
   getFacilityParties,
@@ -767,5 +845,6 @@ export const FacilityService = {
   updateFacilityTelecomNumber,
   updateFacilityToGroup,
   updateProductStoreFacility,
+  updateProductStoreToFacilityGroup,
   updateShopifyShopLocation
 }
