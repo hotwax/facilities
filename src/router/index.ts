@@ -56,7 +56,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '',
-        redirect: '/find-facilities'
+        redirect: '/tabs/find-facilities'
       }, {
         path: 'find-facilities',
         component: () => import('@/views/FindFacilities.vue'),
