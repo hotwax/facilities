@@ -119,13 +119,13 @@ export default defineComponent({
     isSelected(productStoreId: any) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
     },
-    toggleProductStoreSelection(updatedStore: any) {
-      let selectedStore = this.selectedProductStoreValues.some((store: any) => store.productStoreId === updatedStore.productStoreId);
+    toggleProductStoreSelection(store: any) {
+      let selectedStore = this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === store.productStoreId);
 
       if(selectedStore) {
-        this.selectedProductStoreValues = this.selectedProductStoreValues.filter((store: any) => store.productStoreId !== updatedStore.productStoreId);
+        this.selectedProductStoreValues = this.selectedProductStoreValues.filter((productStore: any) => productStore.productStoreId !== store.productStoreId);
       } else {
-        this.selectedProductStoreValues.push(updatedStore);
+        this.selectedProductStoreValues.push(store);
       }
     },
     async saveProductStores() {
