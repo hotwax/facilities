@@ -10,23 +10,24 @@
     </ion-toolbar>
   </ion-header>
 
-  <ion-content class="ion-padding">
-    <form @keyup.enter="saveGroupType()">
+  <ion-content>
+    <form @keyup.enter="saveGroupType()"  class="ion-margin-top">
       <!-- Empty state -->
-      <div class="empty-state" v-if="facilityGroupTypes.length === 0">
+      <div class="empty-state" v-if="!facilityGroupTypes.length">
         <p>{{ translate("No group types found")}}</p>
       </div>
 
       <div v-else>
+        <ion-radio-group v-model="facilityGroupValue.facilityGroupTypeId">
+          <ion-item :key="groupType.facilityGroupTypeId" v-for="groupType in facilityGroupTypes">
+            <ion-label>
+              {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
+              <p>{{ groupType.facilityGroupTypeId }}</p>
+            </ion-label>
+            <ion-radio :value="groupType.facilityGroupTypeId" slot="end" />
+          </ion-item>
+        </ion-radio-group>
         <ion-list>
-          <ion-radio-group v-model="facilityGroupValues.facilityGroupTypeId">
-            <ion-item :key="groupType.facilityGroupTypeId" v-for="groupType in facilityGroupTypes">
-              <ion-label>
-                {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
-              </ion-label>
-              <ion-radio :value="groupType.facilityGroupTypeId" slot="start" />
-            </ion-item>
-          </ion-radio-group>
         </ion-list>
       </div>
     </form>
@@ -63,10 +64,9 @@ import { useStore } from "@/store";
 import { translate } from "@hotwax/dxp-components";
 import { mapGetters } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@hotwax/oms-api";
+import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
-import { popoverController } from "@ionic/core";
 
 export default defineComponent({
   name: "GroupTypeModal",
@@ -88,7 +88,7 @@ export default defineComponent({
   },
   data() {
     return {
-      facilityGroupValues: JSON.parse(JSON.stringify(this.facilityGroup))
+      facilityGroupValue: JSON.parse(JSON.stringify(this.facilityGroup))
     }
   },
   props: ["facilityGroup"],
@@ -105,15 +105,15 @@ export default defineComponent({
     async saveGroupType() {
       try {
         const resp = await FacilityService.updateFacilityGroup({
-          facilityGroupId: this.facilityGroupValues.facilityGroupId,
-          facilityGroupTypeId: this.facilityGroupValues.facilityGroupTypeId
+          facilityGroupId: this.facilityGroupValue.facilityGroupId,
+          facilityGroupTypeId: this.facilityGroupValue.facilityGroupTypeId
         })
 
         if(!hasError(resp)) {
           showToast(translate("Facility group type updated successfully."))
           this.groups.map((group: any) => {
-            if(group.facilityGroupId === this.facilityGroupValues.facilityGroupId) {
-              group.facilityGroupTypeId = this.facilityGroupValues.facilityGroupTypeId
+            if(group.facilityGroupId === this.facilityGroupValue.facilityGroupId) {
+              group.facilityGroupTypeId = this.facilityGroupValue.facilityGroupTypeId
             }
           })
           await this.store.dispatch('facility/updateFacilityGroups', this.groups)
@@ -138,3 +138,9 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+ion-content {
+  --padding-bottom: 80px;
+}
+</style>

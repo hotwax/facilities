@@ -10,7 +10,7 @@
       <ion-item button @click="updateGroupDescriptionModal()">
         {{ group?.description ? translate("Edit description") : translate("Add description") }}
       </ion-item>
-      <ion-item button @click="openUpdateGroupTypeModal()">
+      <ion-item button @click="updateGroupTypeModal()">
         {{ translate("Select type") }}
       </ion-item>
       <ion-item button @click="deleteFacilityGroup()" lines="none">
@@ -38,7 +38,7 @@ import { hasError } from "@/adapter";
 import { mapGetters, useStore } from "vuex";
 import logger from "@/logger";
 import FacilityGroupDescriptionModal from "@/components/FacilityGroupDescriptionModal.vue";
-import GroupTypeModal from "@/components/GroupTypeModal.vue"
+import GroupTypeModal from "@/components/GroupTypeModal.vue";
 
 export default defineComponent({
   name: "FacilityGroupActionsPopover",
@@ -136,7 +136,7 @@ export default defineComponent({
         });
       })
     },
-    async openUpdateGroupTypeModal() {
+    async updateGroupTypeModal() {
       const updateGroupTypeModal = await modalController.create({
         component: GroupTypeModal,
         componentProps: { facilityGroup: this.group }
