@@ -105,7 +105,6 @@ export default defineComponent({
           "filterByDate": 'Y'
         })
 
-        console.log(resp);
         if(!hasError(resp)) {
           this.selectedProductStores = resp.data.docs
           this.selectedProductStoreValues = JSON.parse(JSON.stringify(resp.data.docs))
