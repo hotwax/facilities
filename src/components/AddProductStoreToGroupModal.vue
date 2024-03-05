@@ -21,7 +21,7 @@
       </ion-item>
     </ion-list>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button @click="saveProductStores()">
+      <ion-fab-button :disabled="!areProductStoresUpdated()" @click="saveProductStores()">
         <ion-icon :icon="saveOutline" />  
       </ion-fab-button>
     </ion-fab>
@@ -133,18 +133,19 @@ export default defineComponent({
       const productStoresToRemove = this.selectedProductStores.filter((store: any) => !this.selectedProductStoreValues.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId))
 
       const removeResponses = await Promise.allSettled(productStoresToRemove
-        .map(async (store: any) => await FacilityService.updateFacilityToGroup({
-          "facilityId": store.facilityId,
-          "facilityGroupId": store.facilityGroupId,
+        .map(async (store: any) => await FacilityService.updateProductStoreFacilityGroup({
+          "productStoreId": store.productStoreId,
+          "facilityGroupId": this.group.facilityGroupId,
           "fromDate": store.fromDate,
           "thruDate": DateTime.now().toMillis()
         }))
       )
 
       const addResponses = await Promise.allSettled(productStoresToAdd
-        .map(async (store: any) => await FacilityService.addFacilityToGroup({
+        .map(async (store: any) => await FacilityService.createProductStoreFacilityGroup({
           "productStoreId": store.productStoreId,
-          "facilityGroupId": store.facilityGroupId
+          "facilityGroupId": this.group.facilityGroupId,
+          "fromDate": DateTime.now().toMillis()
         }))
       )
 
@@ -154,8 +155,21 @@ export default defineComponent({
       } else {
         showToast(translate("Product stores associated to group successfully."))
       }
+      this.fetchGroups()
       modalController.dismiss()
     },
+    async fetchGroups(vSize?: any, vIndex?: any) {
+      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
+      const viewIndex = vIndex ? vIndex : 0;
+      const payload = {
+        viewSize,
+        viewIndex
+      };
+      await this.store.dispatch('facility/fetchFacilityGroups', payload)
+    },
+    areProductStoresUpdated() {
+      return JSON.stringify(this.selectedProductStoreValues) !== JSON.stringify(this.selectedProductStores)
+    }
   },
   setup() {
     const store = useStore()

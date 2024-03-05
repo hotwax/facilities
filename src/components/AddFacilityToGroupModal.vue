@@ -186,7 +186,7 @@ export default defineComponent({
       const facilitiesToRemove = this.selectedFacilities.filter((facility: any) => !this.selectedFacilityValues.some((selectedFacility: any) => facility.facilityId === selectedFacility.facilityId))
 
       const removeResponses = await Promise.allSettled(facilitiesToRemove
-        .map(async (facility: any) => await FacilityService.updateProductStoreToFacilityGroup({
+        .map(async (facility: any) => await FacilityService.updateFacilityToGroup({
           "facilityId": facility.facilityId,
           "facilityGroupId": this.facilityGroupId,
           "fromDate": facility.fromDate,
@@ -195,7 +195,7 @@ export default defineComponent({
       )
 
       const addResponses = await Promise.allSettled(facilitiesToAdd
-        .map(async (facility: any) => await FacilityService.addProductStoreToFacilityGroup({
+        .map(async (facility: any) => await FacilityService.addFacilityToGroup({
           "facilityId": facility.facilityId,
           "facilityGroupId": this.facilityGroupId
         }))

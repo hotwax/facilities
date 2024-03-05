@@ -776,17 +776,17 @@ const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
   })
 }
 
-const addProductStoreToFacilityGroup = async (payload: any): Promise<any> => {
+const createProductStoreFacilityGroup = async (payload: any): Promise<any> => {
   return api({
-    url: "service/addProductStoreToFacilityGroup",
+    url: "service/createProductStoreFacilityGroup",
     method: "post",
     data: payload
   })
 }
 
-const updateProductStoreToFacilityGroup = async (payload: any): Promise<any> => {
+const updateProductStoreFacilityGroup = async (payload: any): Promise<any> => {
   return api({
-    url: "service/updateProductStoreToFacilityGroup",
+    url: "service/updateProductStoreFacilityGroup",
     method: "post",
     data: payload
   })
@@ -795,7 +795,6 @@ const updateProductStoreToFacilityGroup = async (payload: any): Promise<any> => 
 export const FacilityService = {
   addFacilityToGroup,
   addPartyToFacility,
-  addProductStoreToFacilityGroup,
   associateCalendarToFacility,
   createFacilityGroup,
   createFacility,
@@ -807,6 +806,7 @@ export const FacilityService = {
   createFacilityPostalAddress,
   createFacilityTelecomNumber,
   createProductStoreFacility,
+  createProductStoreFacilityGroup,
   createShopifyShopLocation,
   deleteFacilityGroup,
   deleteFacilityLocation,
@@ -845,6 +845,6 @@ export const FacilityService = {
   updateFacilityTelecomNumber,
   updateFacilityToGroup,
   updateProductStoreFacility,
-  updateProductStoreToFacilityGroup,
+  updateProductStoreFacilityGroup,
   updateShopifyShopLocation
 }
