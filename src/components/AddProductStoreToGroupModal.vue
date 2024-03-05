@@ -77,6 +77,7 @@ export default defineComponent({
     ...mapGetters({
       productStores: 'util/getProductStores',
       facilityProductStores: 'facility/getFacilityProductStores',
+      groups: "facility/getFacilityGroups"
     })
   },
   data() {
@@ -154,17 +155,17 @@ export default defineComponent({
       } else {
         showToast(translate("Product stores associated to group successfully."))
       }
-      this.fetchGroups()
+      this.fetchGroupsCount()
       modalController.dismiss()
     },
-    async fetchGroups(vSize?: any, vIndex?: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
-      const payload = {
-        viewSize,
-        viewIndex
-      };
-      await this.store.dispatch('facility/fetchFacilityGroups', payload)
+    async fetchGroupsCount() {
+      const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup([this.group.facilityGroupId])
+      this.groups.map((group: any) => {
+        if(group.facilityGroupId === this.group.facilityGroupId) {
+          group.productStoreCount = productStoreCountByGroup[this.group.facilityGroupId]
+        }
+      })
+      await this.store.dispatch('facility/updateFacilityGroups', this.groups)
     },
     areProductStoresUpdated() {
       return JSON.stringify(this.selectedProductStoreValues) !== JSON.stringify(this.selectedProductStores)
