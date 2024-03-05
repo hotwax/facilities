@@ -560,7 +560,8 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
     const batch = facilityGroupIdList.splice(0, 10)
     const params = {
       inputFields: {
-        facilityGroupId: batch
+        facilityGroupId: batch,
+        facilityGroupId_op: "in"
       },
       viewSize: 250, // maximum view size
       entityName: 'FacilityGroupAndMember',
@@ -610,7 +611,8 @@ const fetchProductStoreCountByGroup = async (facilityGroupIds: any): Promise<any
     const batch = facilityGroupIdList.splice(0, 10)
     const params = {
       inputFields: {
-        facilityGroupId: batch
+        facilityGroupId: batch,
+        facilityGroupId_op: "in"
       },
       viewSize: 250, // maximum view size
       entityName: 'ProductStoreFacilityGroup',
