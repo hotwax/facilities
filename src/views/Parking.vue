@@ -110,6 +110,8 @@ export default defineComponent({
     IonButtons,
     IonCard,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader, 
     IonIcon,
     IonInfiniteScroll,

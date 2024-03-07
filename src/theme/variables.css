@@ -394,10 +394,4 @@ hr {
     display: none;
   }
 
-  .button-card {
-    display: grid;
-    place-items: center;
-    align-self: stretch;
-  }
-
 }
