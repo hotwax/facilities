@@ -602,8 +602,8 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
   }, {})
 }
 
-const fetchProductStoreCountByGroup = async (facilityGroupIds: any): Promise<any> => {
-  if (!facilityGroupIds.length) return []
+const fetchProductStoreCountByGroup = async (facilityGroupIds: Array<string>): Promise<any> => {
+  if (!facilityGroupIds.length) return {}
   const requests = []
 
   const facilityGroupIdList = facilityGroupIds

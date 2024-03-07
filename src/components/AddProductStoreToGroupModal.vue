@@ -120,9 +120,7 @@ export default defineComponent({
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
     },
     toggleProductStoreSelection(store: any) {
-      let selectedStore = this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === store.productStoreId);
-
-      if(selectedStore) {
+      if(this.isSelected(store.productStoreId)) {
         this.selectedProductStoreValues = this.selectedProductStoreValues.filter((productStore: any) => productStore.productStoreId !== store.productStoreId);
       } else {
         this.selectedProductStoreValues.push(store);
@@ -160,11 +158,9 @@ export default defineComponent({
     },
     async fetchGroupsCount() {
       const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup([this.group.facilityGroupId])
-      this.groups.map((group: any) => {
-        if(group.facilityGroupId === this.group.facilityGroupId) {
-          group.productStoreCount = productStoreCountByGroup[this.group.facilityGroupId]
-        }
-      })
+      const currentGroup = this.groups.find((group: any) => group.facilityGroupId === this.group.facilityGroupId)
+      currentGroup.productStoreCount = productStoreCountByGroup[this.group.facilityGroupId]
+
       await this.store.dispatch('facility/updateFacilityGroups', this.groups)
     },
     areProductStoresUpdated() {
