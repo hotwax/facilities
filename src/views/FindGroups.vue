@@ -42,6 +42,14 @@
               </ion-button>
             </ion-item>
             <ion-item>
+              <ion-icon :icon="bagHandleOutline" slot="start"/>
+              <ion-label>{{ translate('Product stores') }}</ion-label>
+              <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">
+                {{ group.productStoreCount }}
+              </ion-chip>
+            </ion-item>
+            <ion-item>
+              <ion-icon :icon="businessOutline" slot="start"/>
               <ion-label>{{ translate('Facilities') }}</ion-label>
               <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
                 {{ group.facilityCount }}
@@ -103,7 +111,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { ellipsisVerticalOutline, addOutline } from 'ionicons/icons';
+import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
@@ -115,6 +123,7 @@ import { hasError } from '@/adapter';
 import logger from '@/logger';
 import emitter from '@/event-bus';
 import GroupActionsPopover from '@/components/GroupActionsPopover.vue';
+import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 
 export default defineComponent({
   name: 'FindGroups',
@@ -269,6 +278,14 @@ export default defineComponent({
 
       await this.fetchGroups()
       emitter.emit('dismissLoader')
+    },
+    async openAddProductStoreToGroupModal(group: any) {
+      const addProductStoreToGroupModal = await modalController.create({
+        component: AddProductStoreToGroupModal,
+        componentProps: { group }
+      })
+
+      addProductStoreToGroupModal.present()
     }
   },
   setup() {
@@ -277,6 +294,8 @@ export default defineComponent({
 
     return {
       addOutline,
+      bagHandleOutline,
+      businessOutline,
       customSort,
       ellipsisVerticalOutline,
       router,

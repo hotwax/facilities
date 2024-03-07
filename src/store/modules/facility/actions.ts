@@ -744,9 +744,16 @@ const actions: ActionTree<FacilityState, RootState> = {
     stateGroups = stateGroups.filter((group: any) => !facilityGroupIds.includes(group.facilityGroupId))
 
     try {
-      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(facilityGroupIds)
+      // facilityGroupIds is list of ids which gets empty at the end of below api call
+      // We again want's to use this facilityGroupIds in another api hence deep cloning it.
+      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(JSON.parse(JSON.stringify(facilityGroupIds)))
       groups.map((group: any) => {
         group.facilityCount = facilityCountByGroup[group.facilityGroupId] || 0
+      })
+
+      const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup(facilityGroupIds)
+      groups.map((group: any) => {
+        group.productStoreCount = productStoreCountByGroup[group.facilityGroupId] || 0
       })
     } catch (error) {
       logger.error(error)
