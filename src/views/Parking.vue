@@ -45,12 +45,6 @@
           <ion-item lines="full" v-if="facility.description && !['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId) && facility.facilityId !== '_NA_'">
             <ion-label>{{ facility.description }}</ion-label>
           </ion-item>
-        </ion-card> 
-        <ion-card class="button-card">
-          <ion-button color="medium" fill="clear" @click="openCreateVirtualFacilityModal()">
-            <ion-icon :icon="addOutline" slot="start"/>
-            {{ translate('Add new parking') }}
-          </ion-button>
         </ion-card>
       </main>
       <ion-infinite-scroll
@@ -63,6 +57,11 @@
           :loading-text="translate('Loading')"
         />
       </ion-infinite-scroll>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="openCreateVirtualFacilityModal()">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -75,6 +74,8 @@ import {
   IonButtons,
   IonCard,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonHeader, 
   IonIcon,
   IonInfiniteScroll,
@@ -109,6 +110,8 @@ export default defineComponent({
     IonButtons,
     IonCard,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader, 
     IonIcon,
     IonInfiniteScroll,
