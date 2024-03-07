@@ -3,7 +3,7 @@
     <ion-toolbar>
       <ion-buttons slot="start">
         <ion-button @click="closeModal()"> 
-          <ion-icon :icon="closeOutline" />
+          <ion-icon :icon="closeOutline" slot="icon-only" />
         </ion-button>
       </ion-buttons>
       <ion-title>{{ translate("Group type") }}</ion-title>
@@ -27,8 +27,6 @@
             <ion-radio :value="groupType.facilityGroupTypeId" slot="end" />
           </ion-item>
         </ion-radio-group>
-        <ion-list>
-        </ion-list>
       </div>
     </form>
 
@@ -60,9 +58,8 @@ import {
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { useStore } from "@/store";
 import { translate } from "@hotwax/dxp-components";
-import { mapGetters } from "vuex";
+import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
@@ -111,11 +108,9 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate("Facility group type updated successfully."))
-          this.groups.map((group: any) => {
-            if(group.facilityGroupId === this.facilityGroupValue.facilityGroupId) {
-              group.facilityGroupTypeId = this.facilityGroupValue.facilityGroupTypeId
-            }
-          })
+          const currentGroup = this.groups.find((group: any) => group.facilityGroupId === this.facilityGroupValue.facilityGroupId)
+          currentGroup.facilityGroupTypeId = this.facilityGroupValue.facilityGroupTypeId
+
           await this.store.dispatch('facility/updateFacilityGroups', this.groups)
           modalController.dismiss()
         } else {
