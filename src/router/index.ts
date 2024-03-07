@@ -7,14 +7,10 @@ import { showToast } from '@/utils'
 import 'vue-router'
 import { useAuthStore, DxpLogin, translate } from '@hotwax/dxp-components'
 import { loader } from '@/utils/user';
-import FacilityManagement from '@/views/FacilityManagement.vue'
-import Settings from '@/views/Settings.vue';
-import Parking from '@/views/Parking.vue';
-import FindFacilities from '@/views/FindFacilities.vue';
-import FindGroups from '@/views/FindGroups.vue';
 import CreateFacility from '@/views/CreateFacility.vue';
 import AddFacilityAddress from '@/views/AddFacilityAddress.vue';
 import AddFacilityConfig from '@/views/AddFacilityConfig.vue';
+import Tabs from '@/components/Tabs.vue'
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -46,7 +42,7 @@ const loginGuard = (to: any, from: any, next: any) => {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/facility-management'
+    redirect: '/tabs/find-facilities'
   },
   {
     path: '/login',
@@ -55,16 +51,27 @@ const routes: Array<RouteRecordRaw> = [
     beforeEnter: loginGuard
   },
   {
-    path: '/facility-management',
-    name: 'FacilityManagement',
-    component: FacilityManagement,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/find-facilities',
-    name: 'FindFacilities',
-    component: FindFacilities,
-    beforeEnter: authGuard
+    path: '/tabs',
+    component: Tabs,
+    children: [
+      {
+        path: '',
+        redirect: '/tabs/find-facilities'
+      }, {
+        path: 'find-facilities',
+        component: () => import('@/views/FindFacilities.vue'),
+      }, {
+        path: 'parking',
+        component: () => import('@/views/Parking.vue')
+      }, {
+        path: 'find-groups',
+        component: () => import('@/views/FindGroups.vue')
+      }, {
+        path: 'settings',
+        component: () => import('@/views/Settings.vue')
+      },
+    ],
+    beforeEnter: authGuard,
   },
   {
     path: "/facility-details/:facilityId",
@@ -91,24 +98,6 @@ const routes: Array<RouteRecordRaw> = [
     name: "Add Facility Config",
     component: AddFacilityConfig,
     props: true,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/parking',
-    name: 'Parking',
-    component: Parking,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/find-groups',
-    name: 'FindGroups',
-    component: FindGroups,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: Settings,
     beforeEnter: authGuard
   }
 ]
