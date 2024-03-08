@@ -2,7 +2,6 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Groups") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -87,7 +86,6 @@
 <script lang="ts">
 import {
   IonButton,
-  IonBackButton,
   IonBadge,
   IonCard,
   IonChip,
@@ -130,7 +128,6 @@ export default defineComponent({
   name: 'FindGroups',
   components: {
     IonButton,
-    IonBackButton,
     IonBadge,
     IonCard,
     IonChip,

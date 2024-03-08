@@ -2,7 +2,6 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/"/>
         <ion-title>{{ translate("Parking") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="openArchivedFacilityModal()">
@@ -69,7 +68,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import {
-  IonBackButton,
   IonButton,
   IonButtons,
   IonCard,
@@ -105,7 +103,6 @@ import logger from "@/logger";
 export default defineComponent({
   name: 'Parking',
   components: {
-    IonBackButton,
     IonButton,
     IonButtons,
     IonCard,
