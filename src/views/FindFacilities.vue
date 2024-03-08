@@ -4,7 +4,6 @@
 
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Find Facilities") }}</ion-title>
         <ion-buttons slot="end" class="mobile-only">
           <ion-menu-button menu="end">
@@ -126,7 +125,6 @@
 
 <script lang="ts">
 import {
-  IonBackButton,
   IonButtons,
   IonChip,
   IonContent,
@@ -177,7 +175,6 @@ export default defineComponent({
   name: 'FindFacilities',
   components: {
     FacilityFilters,
-    IonBackButton,
     IonButtons,
     IonChip,
     IonContent,
