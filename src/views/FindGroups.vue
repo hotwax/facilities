@@ -236,7 +236,7 @@ export default defineComponent({
 
       this.groups.map((group: any) => {
         if(group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
-          associatedfacilityGroupIds.push(group.facilityGroupId)
+          associatedfacilityGroupIds.push(group.facilityGroupName)
         }
       })
       return associatedfacilityGroupIds
