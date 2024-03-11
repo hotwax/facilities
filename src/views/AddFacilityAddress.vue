@@ -192,7 +192,7 @@ export default defineComponent({
   },
   props: ['facilityId'],
   async ionViewWillEnter() {
-    this.formData.toName = this.current.facilityName
+    this.formData.toName = this.current?.facilityName ? this.current.facilityName : ''
     await this.store.dispatch('util/fetchCountries', { countryGeoId: "USA" })
   },
   methods: {
