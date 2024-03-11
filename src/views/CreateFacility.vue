@@ -184,6 +184,7 @@ export default defineComponent({
         if (!hasError(resp)) {
           const { facilityId } = resp.data
           showToast(translate("Facility created successfully."))
+          this.store.dispatch('facility/updateCurrentFacility', payload),
           this.router.replace(`/add-facility-address/${facilityId}`)
         } else {
           throw resp.data;

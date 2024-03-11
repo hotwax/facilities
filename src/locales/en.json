@@ -324,6 +324,7 @@
   "Settings": "Settings",
   "Setting fulfillment capacity to 0 disables new order from being allocated to this facility. Leave this empty if this facility's fulfillment capacity is unrestricted.": "Setting fulfillment capacity to 0 disables new order from being allocated to this facility. Leave this empty if this facility's fulfillment capacity is unrestricted.",
   "Setup Store": "Setup Store",
+  "Shipping name": "Shipping name",
   "Shopify": "Shopify",
   "Shopify facility": "Shopify facility",
   "Shopify location": "Shopify location",
