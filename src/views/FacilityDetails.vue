@@ -1218,7 +1218,8 @@ export default defineComponent({
         header: translate("Rename facility"),
         inputs: [{
           name: "facilityName",
-          value: this.current.facilityName
+          value: this.current.facilityName,
+          id: "facilityName"
         }],
         buttons: [{
           text: translate('Cancel'),
@@ -1253,7 +1254,11 @@ export default defineComponent({
         }]
       })
 
-      await alert.present()
+      await alert.present().then(() => {
+        // Using js to find and focus on the element as the ionic alert does not have support to set the focus on inputs
+        // https://github.com/ionic-team/ionic-framework/issues/16941
+        document.getElementById('facilityName')?.focus();
+      })
     },
     getFacilityTypesByParentTypeId() {
       this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
