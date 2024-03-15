@@ -50,6 +50,7 @@
               <template v-if="postalAddress?.address1">
                 <ion-item lines="full">
                   <ion-label>
+                    <h3>{{ postalAddress.toName }}</h3>
                     <h3>{{ postalAddress.address1 }}</h3>
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
@@ -739,7 +740,7 @@ export default defineComponent({
     async openAddressModal() {
       const addressModal = await modalController.create({
         component: FacilityAddressModal,
-        componentProps: { facilityId: this.facilityId }
+        componentProps: { facilityId: this.facilityId, facilityName: this.current.facilityName }
       })
 
       addressModal.onDidDismiss().then(async(result) => {

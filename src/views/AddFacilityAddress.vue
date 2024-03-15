@@ -15,6 +15,12 @@
           <ion-list>
             <ion-item>
               <ion-label position="floating">
+                {{ translate('Shipping name') }}
+              </ion-label>
+              <ion-input v-model="formData.toName" />
+            </ion-item>
+            <ion-item>
+              <ion-label position="floating">
                 {{ translate('Address line 1') }} <ion-text color="danger">*</ion-text>
               </ion-label>
               <ion-input v-model="formData.address1" />
@@ -163,12 +169,14 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       countries: 'util/getCountries',
-      states: 'util/getStates'
+      states: 'util/getStates',
+      current: 'facility/getCurrent',
     })
   },
   data() {
     return {
       formData: {
+        toName: '',
         address1: '',
         address2: '',
         city: '',
@@ -184,6 +192,7 @@ export default defineComponent({
   },
   props: ['facilityId'],
   async ionViewWillEnter() {
+    this.formData.toName = this.current?.facilityName ? this.current.facilityName : ''
     await this.store.dispatch('util/fetchCountries', { countryGeoId: "USA" })
   },
   methods: {

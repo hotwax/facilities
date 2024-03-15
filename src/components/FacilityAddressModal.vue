@@ -16,6 +16,10 @@
         <ion-label>{{ translate("Address") }}</ion-label>
       </ion-item-divider>
       <ion-item>
+        <ion-label position="floating">{{ translate("Shipping name") }}</ion-label>
+        <ion-input v-model="address.toName" />
+      </ion-item>
+      <ion-item>
         <ion-label position="floating">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
         <ion-input v-model="address.address1" />
       </ion-item>
@@ -128,7 +132,7 @@ export default defineComponent({
       telecomNumberValue: {} as any
     }
   },
-  props: ['facilityId'],
+  props: ['facilityId', 'facilityName'],
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
     this.telecomNumberValue = this.telecomNumber ? JSON.parse(JSON.stringify(this.telecomNumber)) : {}
@@ -138,6 +142,9 @@ export default defineComponent({
     if(this.address.countryGeoId) {
       const country = this.countries.find((country: any) => country.geoId === this.address.countryGeoId)
       this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
+    }
+    if(!this.address.toName) {
+      this.address.toName = this.facilityName
     }
   },
   methods: {
@@ -243,3 +250,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+ion-content {
+  --padding-bottom: 80px;
+}
+</style>
