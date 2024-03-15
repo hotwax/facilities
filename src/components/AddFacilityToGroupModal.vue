@@ -122,13 +122,10 @@ export default defineComponent({
         "inputFields": {
           ...filters
         },
-        "entityName": "FacilityView",
+        "entityName": "Facility",
         "noConditionFind": "Y",
         "distinct": "Y",
-        "fromDateName": "facilityGroupFromDate",
-        "thruDateName": "facilityGroupThruDate",
-        "filterByDate": "Y",
-        "fieldList": ["facilityId", "facilityName", "fromDate"],
+        "fieldList": ["facilityId", "facilityName"],
         // By default we show only 20 facilities, others get rendered on search query.
         "viewSize": 20
       }
