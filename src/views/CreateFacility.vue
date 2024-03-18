@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button default-href="/find-facilities" slot="start" />
+        <ion-back-button default-href="/tabs/find-facilities" slot="start" />
         <ion-title>{{ translate("Add Store") }}</ion-title>
       </ion-toolbar>
     </ion-header>
