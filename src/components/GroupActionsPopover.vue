@@ -50,7 +50,7 @@ export default defineComponent({
   methods: {
     async viewFacilities(facilityGroupId: string) {
       await this.store.dispatch('facility/updateFacilityQuery', { ...this.facilityQuery, facilityGroupId })
-      this.$router.push({ path: `/find-facilities` })
+      this.$router.push({ path: `/tabs/find-facilities` })
       popoverController.dismiss()
     },
     async openAddFacilityToGroupsModal(facilityGroupId: any) {
