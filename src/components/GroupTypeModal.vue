@@ -31,7 +31,7 @@
     </form>
 
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button :disabled="!areGroupTypesUpdated()" @click="saveGroupType()">
+      <ion-fab-button :disabled="!isGroupTypeUpdated()" @click="saveGroupType()">
         <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
@@ -119,7 +119,7 @@ export default defineComponent({
         logger.error(err)
       }
     },
-    areGroupTypesUpdated() {
+    isGroupTypeUpdated() {
       return this.facilityGroup.facilityGroupTypeId !== this.facilityGroupValue.facilityGroupTypeId
     }
   },
