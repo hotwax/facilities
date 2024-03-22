@@ -31,7 +31,7 @@
       </div>
     </ion-list>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button @click="confirmSave()">
+      <ion-fab-button :disabled="!areFacilitiesUpdated()" @click="confirmSave()">
         <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
@@ -216,6 +216,11 @@ export default defineComponent({
       };
       await this.store.dispatch('facility/fetchFacilityGroups', payload)
     },
+    areFacilitiesUpdated() {
+      if(this.selectedFacilities.length !== this.selectedFacilityValues.length) return true;
+
+      return this.selectedFacilityValues.some((selectedFacility: any) => !this.selectedFacilities.find((facility: any) => facility.facilityId === selectedFacility.facilityId))
+    }
   },
   setup() {
     const store = useStore();

@@ -31,7 +31,7 @@
     </form>
 
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button @click="saveGroupType()">
+      <ion-fab-button :disabled="!isGroupTypeUpdated()" @click="saveGroupType()">
         <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
@@ -118,6 +118,9 @@ export default defineComponent({
         showToast(translate("Failed to update facility group type."))
         logger.error(err)
       }
+    },
+    isGroupTypeUpdated() {
+      return this.facilityGroup.facilityGroupTypeId !== this.facilityGroupValue.facilityGroupTypeId
     }
   },
   setup() {
