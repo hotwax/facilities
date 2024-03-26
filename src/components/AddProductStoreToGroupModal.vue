@@ -164,7 +164,9 @@ export default defineComponent({
       await this.store.dispatch('facility/updateFacilityGroups', this.groups)
     },
     areProductStoresUpdated() {
-      return JSON.stringify(this.selectedProductStoreValues) !== JSON.stringify(this.selectedProductStores)
+      if(this.selectedProductStores.length !== this.selectedProductStoreValues.length) return true;
+
+      return this.selectedProductStoreValues.some((selectedProductStore: any) => !this.selectedProductStores.find((productStore: any) => productStore.productStoreId === selectedProductStore.productStoreId))
     }
   },
   setup() {
