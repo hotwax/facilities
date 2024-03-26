@@ -36,7 +36,7 @@
       </div>
 
       <section>
-        <OmsInstanceNavigator />
+        <DxpOmsInstanceNavigator />
       </section>
 
       <hr />
@@ -61,7 +61,7 @@
           </ion-item>
         </ion-card>
 
-        <LanguageSwitcher />
+        <DxpLanguageSwitcher />
       </section>
     </ion-content>
   </ion-page>
