@@ -14,10 +14,11 @@
       <ion-radio-group v-model="selectedCalendarId">
         <ion-accordion v-for="calendar in calendars" :key="calendar.calendarId" :value="calendar.calendarId">
           <ion-item slot="header">
-            <ion-radio :value="calendar.calendarId" slot="start" />
-            <ion-label class="ion-text-wrap">
-              {{ calendar.description ? calendar.description : calendar.calendarId }}
-            </ion-label>
+            <ion-radio label-placement="end" justify="start" :value="calendar.calendarId">
+              <ion-label class="ion-text-wrap">
+                {{ calendar.description ? calendar.description : calendar.calendarId }}
+              </ion-label>
+            </ion-radio>
           </ion-item>
           <div class="ion-padding" slot="content">
             <ion-list lines="none">

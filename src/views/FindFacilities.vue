@@ -23,16 +23,14 @@
           <ion-list>
             <ion-item lines="none">
               <ion-icon :icon="globeOutline" slot="start" />
-              <ion-label>{{ translate("Product Store") }}</ion-label>
-              <ion-select interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
+              <ion-select :label="translate('Product Store')" interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName }}</ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item lines="none">
               <ion-icon :icon="businessOutline" slot="start" />
-              <ion-label>{{ translate("Type") }}</ion-label>
-              <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
+              <ion-select :label="translate('Type')" interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypes">
                   {{ type.description }}
@@ -41,8 +39,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-icon :icon="albumsOutline" slot="start" />
-              <ion-label>{{ translate("Group") }}</ion-label>
-              <ion-select interface="popover" v-model="query.facilityGroupId" @ionChange="updateQuery()">
+              <ion-select :label="translate('Group')" interface="popover" v-model="query.facilityGroupId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option :value="group.facilityGroupId" :key="group.facilityGroupId" v-for="group in facilityGroups">
                   {{ group.facilityGroupName }}

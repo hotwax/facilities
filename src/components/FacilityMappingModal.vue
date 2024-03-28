@@ -27,8 +27,7 @@
       <ion-list>
         <ion-list-header>{{ externalMappingTypes[mappingId] }}</ion-list-header>
         <ion-item>
-          <ion-label>{{ translate("Identification") }}</ion-label>
-          <ion-input v-model="mappingValue" placeholder="Mapping Value" />
+          <ion-input :label="translate('Identification')" v-model="mappingValue" placeholder="Mapping Value" />
         </ion-item>
       </ion-list>
 

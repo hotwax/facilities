@@ -19,11 +19,11 @@
     <ion-list v-else>
       <ion-list-header>{{ translate("Staff") }}</ion-list-header>
       <ion-item v-for="(party, index) in parties" :key="index">
-        <ion-label>
-          {{ party.fullName }}
-          <p>{{ party.partyId }}</p>
-        </ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
+          <ion-label slot="label">
+            {{ party.fullName }}
+            <p>{{ party.partyId }}</p>
+          </ion-label>
           <ion-select-option v-for="(description, roleTypeId) in partyRoles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
         </ion-select>
       </ion-item>

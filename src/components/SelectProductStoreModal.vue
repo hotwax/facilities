@@ -13,11 +13,12 @@
   <ion-content>
     <ion-list>
       <ion-item v-for="productStore in productStores" :key="productStore.productStoreId">
-        <ion-label>
-          {{ productStore.storeName }}
-          <p>{{ productStore.productStoreId }}</p>
-        </ion-label>
-        <ion-checkbox slot="end" :checked="isSelected(productStore.productStoreId)" @ionChange="toggleProductStoreSelection(productStore)" />
+        <ion-checkbox :checked="isSelected(productStore.productStoreId)" @ionChange="toggleProductStoreSelection(productStore)">
+          <ion-label>
+            {{ productStore.storeName }}
+            <p>{{ productStore.productStoreId }}</p>
+          </ion-label>
+        </ion-checkbox>
       </ion-item>
     </ion-list>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">

@@ -20,11 +20,12 @@
       <div v-else>
         <ion-radio-group v-model="facilityGroupValue.facilityGroupTypeId">
           <ion-item :key="groupType.facilityGroupTypeId" v-for="groupType in facilityGroupTypes">
-            <ion-label>
-              {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
-              <p>{{ groupType.facilityGroupTypeId }}</p>
-            </ion-label>
-            <ion-radio :value="groupType.facilityGroupTypeId" slot="end" />
+            <ion-radio :value="groupType.facilityGroupTypeId">
+              <ion-label>
+                {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
+                <p>{{ groupType.facilityGroupTypeId }}</p>
+              </ion-label>
+            </ion-radio>
           </ion-item>
         </ion-radio-group>
       </div>

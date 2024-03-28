@@ -27,17 +27,16 @@
       <ion-list>
         <ion-list-header>{{ translate('Shopify location') }}</ion-list-header>
         <ion-item @keyup.enter.stop>
-          <ion-label>{{ translate("Shopify store") }}</ion-label>
+          <ion-label v-if="type && type === 'update'">{{ translate("Shopify store") }}</ion-label>
           <ion-label slot="end" v-if="type && type === 'update'">{{ shopifyFacilityMapping.shopId }}</ion-label>
-          <ion-select v-else interface="popover" :placeholder="translate('Select')" v-model="shopId">
+          <ion-select v-else :label="translate('Shopify store')" interface="popover" :placeholder="translate('Select')" v-model="shopId">
             <ion-select-option v-for="shop in shopifyShops" :key="shop.shopId" :value="shop.shopId">
               {{ shop.name ? shop.name : shop.shopId }}
             </ion-select-option>
           </ion-select>
         </ion-item>
         <ion-item>
-          <ion-label>{{ translate("Location ID") }}</ion-label>
-          <ion-input :placeholder="translate('Add your location ID from Shopify')" v-model="shopifyLocationId" />
+          <ion-input :label="translate('Location ID')" :placeholder="translate('Add your location ID from Shopify')" v-model="shopifyLocationId" />
         </ion-item>
       </ion-list>
 
