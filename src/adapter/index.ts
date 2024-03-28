@@ -1,9 +1,10 @@
-import { api, client, getConfig, getTelecomCountryCode, getUserFacilities, hasError, initialise, logout, resetConfig, setUserLocale, updateInstanceUrl, updateToken } from '@hotwax/oms-api'
+import { api, client, getAvailableTimeZones, getConfig, getTelecomCountryCode, getUserFacilities, hasError, initialise, logout, resetConfig, setUserLocale, updateInstanceUrl, updateToken, setUserTimeZone } from '@hotwax/oms-api'
 
 export {
   api,
   client,
   getConfig,
+  getAvailableTimeZones,
   getTelecomCountryCode,
   getUserFacilities,
   hasError,
@@ -12,5 +13,6 @@ export {
   resetConfig,
   setUserLocale,
   updateInstanceUrl,
-  updateToken
+  updateToken,
+  setUserTimeZone
 }
