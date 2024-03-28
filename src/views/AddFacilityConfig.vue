@@ -82,8 +82,8 @@
                     <div slot="label">{{ translate('Username') }} <ion-text color="danger">*</ion-text></div>
                   </ion-input>
                 </ion-item>
-                <ion-item lines="none" ref="password">
-                  <ion-input label-placement="floating" v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" helper-text="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
+                <ion-item lines="none">
+                  <ion-input label-placement="floating" v-model="password" ref="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" helper-text="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
                     <div slot="label">{{ translate('Password') }} <ion-text color="danger">*</ion-text></div>
                   </ion-input>
                 </ion-item>
