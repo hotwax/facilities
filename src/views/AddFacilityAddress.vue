@@ -18,9 +18,7 @@
             </ion-item>
             <ion-item>
               <ion-input label-placement="floating" v-model="formData.address1">
-                <ion-label>
-                  {{ translate('Address line 1') }} <ion-text color="danger">*</ion-text>
-                </ion-label>
+                <div slot="label">{{ translate('Address line 1') }} <ion-text color="danger">*</ion-text></div>
               </ion-input>
             </ion-item>
             <ion-item>
@@ -28,9 +26,7 @@
             </ion-item>
             <ion-item>
               <ion-input label-placement="floating" v-model="formData.city">
-                <ion-label slot="label">
-                  {{ translate('City') }} <ion-text color="danger">*</ion-text>
-                </ion-label>
+                <div slot="label">{{ translate('City') }} <ion-text color="danger">*</ion-text></div>
               </ion-input>
             </ion-item>
             <ion-item>
@@ -64,11 +60,12 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
-              <ion-input aria-label="zipcode" v-model="formData.postalCode" :placeholder="translate('Zipcode')" />
-              <ion-button :disabled="!formData.postalCode || !formData.address1 || !formData.city" @click="generateLatLong()" slot="end" fill="outline">
-                <ion-icon slot="end" :icon='colorWandOutline' />
-                {{ translate('Generate') }}
-              </ion-button>
+              <ion-input v-model="formData.postalCode" :placeholder="translate('Zipcode')">
+                <ion-button :disabled="!formData.postalCode || !formData.address1 || !formData.city" @click="generateLatLong()" slot="end" fill="outline">
+                  <ion-icon slot="end" :icon='colorWandOutline' />
+                  {{ translate('Generate') }}
+                </ion-button>
+              </ion-input>
             </ion-item>
             <ion-item>
               <ion-input :label="translate('Latitude')" label-placement="floating" :disabled="!formData.address1 || !formData.city" v-model="formData.latitude" />
@@ -104,7 +101,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
   IonPage,
   IonSelect,
@@ -137,7 +133,6 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
     IonPage,
     IonSelect,
