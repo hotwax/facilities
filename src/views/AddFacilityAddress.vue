@@ -39,7 +39,7 @@
             </ion-item>
             <ion-item>
               <ion-label position="floating">
-                {{ translate('Zipcode') }}
+                {{ translate('Zipcode') }} <ion-text color="danger">*</ion-text>
               </ion-label>
               <ion-input v-model="formData.postalCode" />
             </ion-item>
@@ -198,7 +198,7 @@ export default defineComponent({
   methods: {
     async addAddress() {
       let resp;
-      if (!this.formData.address1 || !this.formData.city) {
+      if (!this.formData.address1 || !this.formData.city || !this.formData.postalCode) {
         showToast("Please fill all the required fields.")
         return
       }

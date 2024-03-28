@@ -46,7 +46,7 @@
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Zipcode") }}</ion-label>
+        <ion-label position="floating">{{ translate("Zipcode") }} <ion-text color="danger">*</ion-text></ion-label>
         <ion-input v-model="address.postalCode" />
       </ion-item>
       <ion-item-divider color="light">
@@ -154,7 +154,7 @@ export default defineComponent({
     async saveContact() {
       let resp, postalAddress = '';
 
-      if(!this.address?.address1 || !this.address?.city) {
+      if(!this.address?.address1 || !this.address?.city || !this.address?.postalCode) {
         showToast("Please fill all the required fields.")
         return
       }
