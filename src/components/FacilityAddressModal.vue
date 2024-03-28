@@ -16,8 +16,7 @@
         <ion-label>{{ translate("Address") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-label position="floating">{{ translate("Shipping name") }}</ion-label>
-        <ion-input v-model="address.toName" />
+        <ion-input :label="translate('Shipping name')" label-placement="floating" v-model="address.toName" />
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="address.address1">
@@ -51,9 +50,8 @@
         <ion-label>{{ translate("Contact details") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-label :position="telecomNumberValue?.countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
-        <ion-input v-model="telecomNumberValue.contactNumber">
-          <ion-text>{{ `${telecomNumberValue?.countryCode}-` }}</ion-text>
+        <ion-input :label="translate('Contact number')" :label-placement="telecomNumberValue?.countryCode ? 'stacked' : 'floating'" v-model="telecomNumberValue.contactNumber">
+          <ion-text slot="start">{{ telecomNumberValue?.countryCode }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
