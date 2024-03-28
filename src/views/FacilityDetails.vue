@@ -1266,6 +1266,7 @@ export default defineComponent({
       // as default elements within the list. These elements may appear at any index within the list structure.
       // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
       this.facilityTypeId = this.facilityTypeIdOptions['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIdOptions['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIdOptions)[0]
+      this.updateFacilityType()
     },
     async updateFacilityType() {
       try {
