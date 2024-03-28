@@ -2,7 +2,6 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/"/>
         <ion-title>{{ translate("Parking") }}</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="openArchivedFacilityModal()">
@@ -44,12 +43,6 @@
           <ion-item lines="full" v-if="facility.description && !['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId) && facility.facilityId !== '_NA_'">
             <ion-label>{{ facility.description }}</ion-label>
           </ion-item>
-        </ion-card> 
-        <ion-card>
-          <ion-button color="medium" fill="clear" @click="openCreateVirtualFacilityModal()">
-            <ion-icon :icon="addOutline" slot="start"/>
-            {{ translate('Add new parking') }}
-          </ion-button>
         </ion-card>
       </main>
       <ion-infinite-scroll
@@ -62,6 +55,11 @@
           :loading-text="translate('Loading')"
         />
       </ion-infinite-scroll>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="openCreateVirtualFacilityModal()">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -69,11 +67,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import {
-  IonBackButton,
   IonButton,
   IonButtons,
   IonCard,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonHeader, 
   IonIcon,
   IonInfiniteScroll,
@@ -103,11 +102,12 @@ import logger from "@/logger";
 export default defineComponent({
   name: 'Parking',
   components: {
-    IonBackButton,
     IonButton,
     IonButtons,
     IonCard,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader, 
     IonIcon,
     IonInfiniteScroll,

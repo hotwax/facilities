@@ -6,19 +6,26 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ translate("Address") }}</ion-title>
+      <ion-title>{{ translate("Address and contact details") }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="saveAddress()">
+    <form @keyup.enter="saveContact()">
+      <ion-item-divider color="light">
+        <ion-label>{{ translate("Address") }}</ion-label>
+      </ion-item-divider>
+      <ion-item>
+        <ion-label position="floating">{{ translate("Shipping name") }}</ion-label>
+        <ion-input v-model="address.toName" />
+      </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="address.address1">
           <ion-label slot="label">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
         </ion-input>
       </ion-item>
-      <ion-item class="ion-margin-bottom">
-        <ion-input label-placement="floating" :label="translate('Address line 2')" v-model="address.address2" />
+      <ion-item>
+        <ion-input :label="translate('Address line 2')" label-placement="floating" v-model="address.address2" />
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="address.city">
@@ -32,17 +39,28 @@
       </ion-item>
       <ion-item @keyup.enter.stop>
         <ion-select label-placement="floating" :label="translate('State')" interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
-          <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">{{ state.geoName }}</ion-select-option>
+          <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">
+            {{ state.wellKnownText && state.wellKnownText !== state.geoName ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
+          </ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" :label="translate('Zipcode')" v-model="address.postalCode" />
       </ion-item>
+      <ion-item-divider color="light">
+        <ion-label>{{ translate("Contact details") }}</ion-label>
+      </ion-item-divider>
+      <ion-item>
+        <ion-label :position="telecomNumberValue?.countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
+        <ion-input v-model="telecomNumberValue.contactNumber">
+          <ion-text>{{ `${telecomNumberValue?.countryCode}-` }}</ion-text>
+        </ion-input>
+      </ion-item>
     </form>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveAddress()" :disabled="!isAddressUpdated()">
+    <ion-fab-button @click="saveContact()" :disabled="!isAddressUpdated() && !isTelecomNumberUpdated()">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -59,6 +77,7 @@ import {
   IonIcon,
   IonInput,
   IonItem,
+  IonItemDivider,
   IonLabel,
   IonSelect,
   IonSelectOption,
@@ -72,7 +91,7 @@ import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from '@/services/FacilityService';
-import { hasError } from "@/adapter";
+import { getTelecomCountryCode, hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
 import emitter from "@/event-bus";
@@ -89,6 +108,7 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
+    IonItemDivider,
     IonLabel,
     IonSelect,
     IonSelectOption,
@@ -100,26 +120,36 @@ export default defineComponent({
     ...mapGetters({
       postalAddress: 'facility/getPostalAddress',
       countries: 'util/getCountries',
-      states: 'util/getStates'
+      states: 'util/getStates',
+      telecomNumber: 'facility/getTelecomNumber'
     })
   },
   data() {
     return {
-      address: {} as any
+      address: {} as any,
+      telecomNumberValue: {} as any
     }
   },
-  props: ['facilityId'],
+  props: ['facilityId', 'facilityName'],
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
+    this.telecomNumberValue = this.telecomNumber ? JSON.parse(JSON.stringify(this.telecomNumber)) : {}
   },
   async mounted() {
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
+    if(this.address.countryGeoId) {
+      const country = this.countries.find((country: any) => country.geoId === this.address.countryGeoId)
+      this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
+    }
+    if(!this.address.toName) {
+      this.address.toName = this.facilityName
+    }
   },
   methods: {
     closeModal() {
       modalController.dismiss()
     },
-    async saveAddress() {
+    async saveContact() {
       let resp, postalAddress = '';
 
       if(!this.address?.address1 || !this.address?.city) {
@@ -128,34 +158,71 @@ export default defineComponent({
       }
 
       emitter.emit('presentLoader')
+      const isTelecomNumberUpdated = this.isTelecomNumberUpdated()
+
+      if(this.isAddressUpdated()) {
+        try {
+          if(this.address.contactMechId) {
+            resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
+          } else {
+            resp = await FacilityService.createFacilityPostalAddress({
+              ...this.address,
+              facilityId: this.facilityId,
+              contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+            })
+          }
+
+          if(!hasError(resp)) {
+            postalAddress = this.address
+            await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+            showToast(translate("Facility contact updated successfully."))
+          } else {
+            throw resp.data
+          }
+        } catch(err) {
+          showToast(translate("Failed to update facility contact."))
+          logger.error(err)
+        }
+      }
+
+      if(isTelecomNumberUpdated) await this.saveTelecomNumber()
+
+      modalController.dismiss({ postalAddress })
+      emitter.emit('dismissLoader')
+    },
+    async saveTelecomNumber() {
+      let resp = {} as any;
+
+      const payload = {
+        facilityId: this.facilityId,
+        contactMechPurposeTypeId: 'PRIMARY_PHONE',
+        contactNumber: this.telecomNumberValue.contactNumber.trim(),
+        countryCode: this.telecomNumberValue.countryCode
+      }
 
       try {
-        if (this.address.contactMechId) {
-          resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
-        } else {
-          resp = await FacilityService.createFacilityPostalAddress({
-            ...this.address,
-            facilityId: this.facilityId,
-            contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+        if(this.telecomNumber?.contactMechId) {
+          resp = await FacilityService.updateFacilityTelecomNumber({
+            ...payload,
+            contactMechId: this.telecomNumber.contactMechId,
           })
+        } else {
+          resp = await FacilityService.createFacilityTelecomNumber(payload)
         }
 
         if(!hasError(resp)) {
-          postalAddress = this.address
-          showToast(translate("Facility address updated successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate("Failed to update facility address."))
         logger.error(err)
       }
-      modalController.dismiss({ postalAddress })
-      emitter.emit('dismissLoader')
     },
     updateState(ev: CustomEvent) {
       this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
+      const country = this.countries.find((country: any) => country.geoId === ev.detail.value)
+      this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
     },
     isAddressUpdated() {
       // in case postal address is not there - new facility is created
@@ -163,6 +230,9 @@ export default defineComponent({
       return Object.keys(this.postalAddress).length
         ? Object.entries(this.postalAddress).some(([addressKey, addressValue]) => this.address[addressKey] !== addressValue)
         : true
+    },
+    isTelecomNumberUpdated() {
+      return this.telecomNumberValue.contactNumber && JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
     }
   },
   setup() {
@@ -172,8 +242,15 @@ export default defineComponent({
       closeOutline,
       saveOutline,
       store,
+      getTelecomCountryCode,
       translate
     };
   },
 });
 </script>
+
+<style scoped>
+ion-content {
+  --padding-bottom: 80px;
+}
+</style>

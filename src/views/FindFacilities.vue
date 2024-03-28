@@ -4,7 +4,6 @@
 
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Find Facilities") }}</ion-title>
         <ion-buttons slot="end" class="mobile-only">
           <ion-menu-button menu="end">
@@ -54,7 +53,7 @@
           <div class="list-item" v-for="(facility, index) in facilities" :key="index" @click="viewFacilityDetails(facility.facilityId)">
             <ion-item lines="none">
               <ion-icon slot="start" :icon="facilityTypes[facility.facilityTypeId]?.parentTypeId === 'DISTRIBUTION_CENTER' ? businessOutline : storefrontOutline" />
-              <ion-label>
+              <ion-label class="ion-text-wrap">
                 <p class="overline">{{ facility.facilityTypeId ? facilityTypes[facility.facilityTypeId] ? facilityTypes[facility.facilityTypeId].description : facilityTypes.facilityTypeId : '' }}</p>
                 {{ facility.facilityName }}
                 <p>{{ facility.facilityId }}</p>
@@ -69,12 +68,12 @@
             </div>
 
             <div class="tablet">
-              <div class="ion-text-center" v-if="facility.orderLimitType === 'custom'">
+              <template v-if="facility.orderLimitType === 'custom'">
                 <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
                   <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
                 </ion-chip>
-                <ion-note>{{ translate('threshold consumed') }}</ion-note>
-              </div>
+                <ion-note class="config-label">{{ translate('threshold consumed') }}</ion-note>
+              </template>
 
               <ion-chip outline v-else-if="facility.orderLimitType === 'unlimited'" @click.stop="changeOrderLimitPopover($event, facility)">
                 <ion-label>{{ translate("Unlimited orders") }}</ion-label>
@@ -123,7 +122,6 @@
 
 <script lang="ts">
 import {
-  IonBackButton,
   IonButtons,
   IonChip,
   IonContent,
@@ -174,7 +172,6 @@ export default defineComponent({
   name: 'FindFacilities',
   components: {
     FacilityFilters,
-    IonBackButton,
     IonButtons,
     IonChip,
     IonContent,
@@ -377,5 +374,10 @@ export default defineComponent({
 <style scoped>
 .list-item {
   --columns-desktop: 4;
+}
+
+config-note {
+  display: block;
+  text-align: center;
 }
 </style>

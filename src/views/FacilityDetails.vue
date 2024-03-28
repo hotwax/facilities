@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/find-facilities"/>
+        <ion-back-button slot="start" default-href="/tabs/find-facilities"/>
         <ion-title>{{ translate("Facility details") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -42,16 +42,18 @@
             <ion-card>
               <ion-card-header>
                 <ion-card-title>
-                  {{ translate("Address") }}
+                  {{ translate("Address and contact details") }}
                 </ion-card-title>
               </ion-card-header>
               <template v-if="postalAddress?.address1">
                 <ion-item lines="full">
                   <ion-label>
+                    <h3>{{ postalAddress.toName }}</h3>
                     <h3>{{ postalAddress.address1 }}</h3>
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
+                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}-${telecomNumber.contactNumber}` }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
@@ -210,13 +212,21 @@
               <ion-card-title>
                 {{ translate("Sell inventory online") }}
               </ion-card-title>
+              <ion-button v-if="current.inventoryGroups?.length" @click="openCreateInventoryGroupModal()" fill="clear">
+                <ion-icon :icon="addCircleOutline" slot="end" />
+                {{ translate("Add") }}
+              </ion-button>
             </ion-card-header>
             <ion-card-content>
-              {{ translate("Select which channels this facility publishes inventory too.") }}
+              {{ current.inventoryGroups?.length ? translate("Select which channels this facility publishes inventory too.") : translate("There are no inventory channels setup yet") }}
             </ion-card-content>
             <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
               <ion-toggle :checked="inventoryGroup.isChecked" @click.prevent="updateSellInventoryOnlineSetting($event, inventoryGroup)">{{ inventoryGroup?.facilityGroupName }}</ion-toggle>
             </ion-item>
+            <ion-button v-if="!current.inventoryGroups?.length" expand="block" fill="outline" @click="openCreateInventoryGroupModal()">
+              {{ translate("Add") }}
+              <ion-icon slot="end" :icon="addCircleOutline" />
+            </ion-button>
           </ion-card>
 
           <ion-card>
@@ -250,7 +260,7 @@
           <ion-card>
             <ion-card-header>
               <ion-card-title>
-                {{ translate(`${facilityTypes[current.facilityTypeId]?.description} logins`) }}
+                {{ facilityTypes[current.facilityTypeId]?.description ? translate(`${facilityTypes[current.facilityTypeId]?.description} logins`) : translate('logins', { facilitytype:`${current.facilityTypeId}` }) }}
               </ion-card-title>
               <ion-button v-if="current.facilityLogins?.length" @click="createFacilityLoginModal()" fill="clear">
                 <ion-icon :icon="addCircleOutline" slot="end" />
@@ -323,12 +333,6 @@
                   <ion-icon :icon="openOutline" />
                 </ion-button>
               </ion-item>
-              <ion-item v-if="shopifyFacilityMapping.myshopifyDomain" lines="full">
-                <ion-label>{{ shopifyFacilityMapping.myshopifyDomain }}</ion-label>
-                <ion-button color="medium" fill="clear" @click="goToLink(shopifyFacilityMapping.myshopifyDomain)">
-                  <ion-icon :icon="openOutline" />
-                </ion-button>
-              </ion-item>
               <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
               <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
             </ion-card>
@@ -337,6 +341,9 @@
                 <ion-card-title>
                   {{ externalMappingTypes[mapping.facilityIdenTypeId] }}
                 </ion-card-title>
+                <ion-button fill="clear" @click="copyToClipboard(mapping.idValue, 'Copied to clipboard')">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
               </ion-card-header>
               <ion-item lines="full">
                 <ion-label>{{ translate('Identification') }}</ion-label>
@@ -352,6 +359,9 @@
                 <ion-card-title>
                   {{ translate('Facility External ID') }}
                 </ion-card-title>
+                <ion-button fill="clear" @click="copyToClipboard(current.externalId, 'Copied to clipboard')">
+                  <ion-icon slot="icon-only" :icon="copyOutline" />
+                </ion-button>
               </ion-card-header>
               <ion-item lines="full">
                 <ion-label>{{ translate('Identification') }}</ion-label>
@@ -518,6 +528,7 @@ import {
   bookmarksOutline,
   closeCircleOutline,
   closeOutline,
+  copyOutline,
   chevronForwardOutline,
   ellipsisVerticalOutline,
   globeOutline,
@@ -557,6 +568,8 @@ import CreateFacilityLoginModal from '@/components/CreateFacilityLoginModal.vue'
 import AddFacilityGroupModal from '@/components/AddFacilityGroupModal.vue'
 import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
+import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
+import { copyToClipboard } from '@/utils';
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -624,7 +637,9 @@ export default defineComponent({
       shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
       facilityTypes: "util/getFacilityTypes",
       baseUrl: "user/getBaseUrl",
-      facilityGroupTypes: 'util/getFacilityGroupTypes'
+      facilityGroupTypes: 'util/getFacilityGroupTypes',
+      inventoryGroups: 'util/getInventoryGroups',
+      telecomNumber: 'facility/getTelecomNumber'
     })
   },
   props: ["facilityId"],
@@ -636,7 +651,7 @@ export default defineComponent({
       facilityTypeId: 'VIRTUAL_FACILITY',
       facilityTypeId_op: 'notEqual'
     })])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.parentFacilityTypeId = this.current.parentFacilityTypeId
@@ -719,7 +734,7 @@ export default defineComponent({
     async openAddressModal() {
       const addressModal = await modalController.create({
         component: FacilityAddressModal,
-        componentProps: { facilityId: this.facilityId }
+        componentProps: { facilityId: this.facilityId, facilityName: this.current.facilityName }
       })
 
       addressModal.onDidDismiss().then(async(result) => {
@@ -1291,7 +1306,27 @@ export default defineComponent({
     },
     getFacilityGroupTypeDesc(groupTypeId: string) {
       return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
-    }
+    },
+    async openCreateInventoryGroupModal() {
+      const createInventoryGroup = await modalController.create({
+        component: CreateFacilityGroupModal,
+        componentProps: { selectedFacilityGroupTypeId: 'CHANNEL_FAC_GROUP' }
+      })
+
+      createInventoryGroup.onDidDismiss().then(async() => {
+        await this.store.dispatch('util/fetchInventoryGroups')
+
+        const inventoryGroups = JSON.parse(JSON.stringify(this.inventoryGroups));
+        // Creating a key called 'isChecked' for inventory groups already associated with current facility.
+        inventoryGroups.forEach((group: any) => {
+          group['isChecked'] = (this.current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
+        });
+
+        await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, inventoryGroups })
+      })
+
+      createInventoryGroup.present()
+    },
   },
   setup() {
     const store = useStore();
@@ -1304,6 +1339,8 @@ export default defineComponent({
       bookmarksOutline,
       closeCircleOutline,
       closeOutline,
+      copyOutline,
+      copyToClipboard,
       chevronForwardOutline,
       ellipsisVerticalOutline,
       globeOutline,

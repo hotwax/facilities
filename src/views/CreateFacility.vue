@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button default-href="/find-facilities" slot="start" />
+        <ion-back-button default-href="/tabs/find-facilities" slot="start" />
         <ion-title>{{ translate("Add Store") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -181,13 +181,18 @@ export default defineComponent({
         if (!hasError(resp)) {
           const { facilityId } = resp.data
           showToast(translate("Facility created successfully."))
+          this.store.dispatch('facility/updateCurrentFacility', payload),
           this.router.replace(`/add-facility-address/${facilityId}`)
         } else {
           throw resp.data;
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error(error)
-        showToast(translate('Failed to create facility.'))
+        if(error?.response?.data?.error?.message) {
+          showToast(error.response.data.error.message)
+        } else {
+          showToast(translate('Failed to create facility.'))
+        }
         return;
       }
 

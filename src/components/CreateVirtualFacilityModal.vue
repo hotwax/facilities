@@ -30,7 +30,7 @@
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button @click="createVirtualFacility" @keyup.enter.stop>
-          <ion-icon :icon="addOutline" />
+          <ion-icon :icon="saveOutline" />
         </ion-fab-button>
       </ion-fab>
     </form>
@@ -56,7 +56,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { addOutline, closeOutline } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { mapGetters, useStore } from 'vuex'
@@ -165,9 +165,9 @@ export default defineComponent({
     const store = useStore();
 
     return {
-      addOutline,
       closeOutline,
       store,
+      saveOutline,
       translate
     };
   },

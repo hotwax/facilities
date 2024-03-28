@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button default-href="/find-facilities" slot="start" />
+        <ion-back-button default-href="/tabs/find-facilities" slot="start" />
         <ion-title>{{ translate("Add Store Address") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -14,8 +14,11 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
+              <ion-input :label="translate('Shipping name')" label-placement="floating" v-model="formData.toName" />
+            </ion-item>
+            <ion-item>
               <ion-input label-placement="floating" v-model="formData.address1">
-                <ion-label slot="label">
+                <ion-label>
                   {{ translate('Address line 1') }} <ion-text color="danger">*</ion-text>
                 </ion-label>
               </ion-input>
@@ -43,9 +46,15 @@
             <ion-item>
               <ion-select :label="translate('State')" label-placement="floating" interface="popover" :disabled="!formData.countryGeoId" :placeholder="translate('Select state')" v-model="formData.stateProvinceGeoId">
                 <ion-select-option v-for="state in states[formData.countryGeoId]" :key="state.geoId" :value="state.geoId">
-                  {{ state.geoName }}
+                  {{ state.wellKnownText && state.wellKnownText !== state.geoName ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
                 </ion-select-option>
               </ion-select>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-label :position="countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
+              <ion-input v-model="contactNumber">
+                <ion-text>{{ `${countryCode}-` }}</ion-text>
+              </ion-input>
             </ion-item>
           </ion-list>
         </ion-card>
@@ -112,7 +121,7 @@ import { colorWandOutline, locationOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
 import { showToast } from "@/utils";
 import logger from "@/logger";
-import { hasError } from "@/adapter";
+import { getTelecomCountryCode, hasError } from "@/adapter";
 import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
 
@@ -141,12 +150,14 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       countries: 'util/getCountries',
-      states: 'util/getStates'
+      states: 'util/getStates',
+      current: 'facility/getCurrent',
     })
   },
   data() {
     return {
       formData: {
+        toName: '',
         address1: '',
         address2: '',
         city: '',
@@ -155,11 +166,14 @@ export default defineComponent({
         countryGeoId: '',
         latitude: '',
         longitude: '',
-      }
+      },
+      contactNumber: '',
+      countryCode: ''
     }
   },
   props: ['facilityId'],
-  async ionViewWillEnter() {
+  async ionViewDidEnter() {
+    this.formData.toName = this.current?.facilityName ? this.current.facilityName : ''
     await this.store.dispatch('util/fetchCountries', { countryGeoId: "USA" })
   },
   methods: {
@@ -187,6 +201,7 @@ export default defineComponent({
         showToast(translate("Failed to create facility address."))
         logger.error("Failed to create facility address.", error)
       }
+      if(this.contactNumber) this.saveTelecomNumber()
     },
     async generateLatLong() {
       const payload = {
@@ -212,7 +227,25 @@ export default defineComponent({
     },
     async updateState(event: CustomEvent) {
       await this.store.dispatch('util/fetchStates', { geoId: event.detail.value })
-    } 
+      const country = this.countries.find((country: any) => country.geoId === event.detail.value)
+      this.countryCode = getTelecomCountryCode(country.geoCode)
+    },
+    async saveTelecomNumber() {
+      try {
+        const resp = await FacilityService.createFacilityTelecomNumber({
+          facilityId: this.facilityId,
+          contactMechPurposeTypeId: 'PRIMARY_PHONE',
+          contactNumber: this.contactNumber.trim(),
+          countryCode: this.countryCode
+        })
+
+        if(hasError(resp)) {
+          throw resp.data;
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+    },
   },
   setup() {
     const store = useStore();

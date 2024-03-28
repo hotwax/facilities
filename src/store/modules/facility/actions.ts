@@ -170,18 +170,25 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     //inventory groups
     inventoryGroups.forEach((group: any) => {
-      const isChecked = (facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
-      group.isChecked = isChecked ? isChecked : false;
+      group.isChecked = (facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
     });
     facility.inventoryGroups = inventoryGroups;
     commit(types.FACILITY_CURRENT_UPDATED, facility)
   },
 
-  async fetchCurrentFacility({ commit, dispatch, state }, payload) {
+  async fetchCurrentFacility({ commit, dispatch, rootGetters, state }, payload) {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
     if(current?.facilityId && !payload.skipState) {
+      // As inventory channels are fetched while fetching additional facility info
+      // But here we already have additional facility info, so just getting and adding inventory groups to current.
+      const inventoryGroups = rootGetters['util/getInventoryGroups'];
+      // Creating a key called 'isChecked' for inventory groups already associated with current facility.
+      inventoryGroups.forEach((group: any) => {
+        group.isChecked = (current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
+      });
+      current.inventoryGroups = inventoryGroups;
       commit(types.FACILITY_CURRENT_UPDATED, current);
       return;
     }
@@ -230,7 +237,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName'],
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
       viewSize: 1
     }
 
@@ -252,6 +259,33 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
   },
+  async fetchFacilityTelecomNumber({ commit }, payload) {
+    let telecomNumber;
+    const params = {
+      inputFields: {
+        contactMechPurposeTypeId: 'PRIMARY_PHONE',
+        contactMechTypeId: 'TELECOM_NUMBER',
+        facilityId: payload.facilityId
+      },
+      entityName: "FacilityContactDetailByPurpose",
+      orderBy: 'fromDate DESC',
+      filterByDate: 'Y',
+      fieldList: ['contactMechId', 'contactNumber', 'countryCode'],
+      viewSize: 1
+    }
+
+    try {
+      const resp = await FacilityService.fetchFacilityContactDetails(params)
+      if(!hasError(resp)) {
+        telecomNumber = resp.data.docs[0]
+        commit(types.FACILITY_TELECOM_NUMBER_UPDATED , telecomNumber);
+      } else {
+        throw resp.data
+      }
+    } catch(err) {
+      logger.error('Failed to fetch the contact number for the facility', err)
+    }
+  },
 
   updateFacilityQuery({ commit }, query) {
     commit(types.FACILITY_QUERY_UPDATED, query)
@@ -265,7 +299,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_QUERY_UPDATED, {
       queryString: '',
       productStoreId: '',
-      facilityTypeId: ''
+      facilityTypeId: '',
+      facilityGroupId: ''
     })
     commit(types.FACILITY_GROUP_QUERY_UPDATED, {
       queryString: '',
@@ -709,9 +744,16 @@ const actions: ActionTree<FacilityState, RootState> = {
     stateGroups = stateGroups.filter((group: any) => !facilityGroupIds.includes(group.facilityGroupId))
 
     try {
-      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(facilityGroupIds)
+      // facilityGroupIds is list of ids which gets empty at the end of below api call
+      // We again want's to use this facilityGroupIds in another api hence deep cloning it.
+      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(JSON.parse(JSON.stringify(facilityGroupIds)))
       groups.map((group: any) => {
         group.facilityCount = facilityCountByGroup[group.facilityGroupId] || 0
+      })
+
+      const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup(facilityGroupIds)
+      groups.map((group: any) => {
+        group.productStoreCount = productStoreCountByGroup[group.facilityGroupId] || 0
       })
     } catch (error) {
       logger.error(error)

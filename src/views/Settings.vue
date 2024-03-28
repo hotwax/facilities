@@ -2,7 +2,6 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Settings") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -37,7 +36,7 @@
       </div>
 
       <section>
-        <OmsInstanceNavigator />
+        <DxpOmsInstanceNavigator />
       </section>
 
       <hr />
@@ -62,7 +61,7 @@
           </ion-item>
         </ion-card>
 
-        <LanguageSwitcher />
+        <DxpLanguageSwitcher />
       </section>
     </ion-content>
   </ion-page>
@@ -71,7 +70,6 @@
 <script lang="ts">
 import { 
   IonAvatar,
-  IonBackButton,
   IonButton, 
   IonCard, 
   IonCardContent,
@@ -102,7 +100,6 @@ export default defineComponent({
   name: 'Settings',
   components: {
     IonAvatar,
-    IonBackButton,
     IonButton,
     IonCard,
     IonCardContent,

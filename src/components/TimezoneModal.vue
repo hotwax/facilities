@@ -16,8 +16,10 @@
   <ion-content class="ion-padding">
     <form @keyup.enter="setUserTimeZone">
       <div class="empty-state" v-if="isLoading">
-        <ion-spinner name="crescent" />
-        <p>{{ translate("Fetching TimeZones")}}</p>
+        <ion-item lines="none">
+          <ion-spinner color="secondary" name="crescent" slot="start" />
+          {{ translate("Fetching time zones") }}
+        </ion-item>
       </div>
 
       <!-- Empty state -->

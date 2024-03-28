@@ -2,7 +2,6 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Groups") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -16,7 +15,7 @@
               {{ translate('System groups') }}
             </ion-list-header>
             <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
-              <ion-select :label="groupType.description ? groupType.description : groupType.facilityGroupTypeId" v-if="groups.length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+              <ion-select v-if="groups.length" :label="groupType.description ? groupType.description : groupType.facilityGroupTypeId" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', { count: getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length }) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="group.facilityGroupId" :disabled="group.facilityGroupTypeId && group.facilityGroupTypeId !== groupType.facilityGroupTypeId" :key="group.facilityGroupId" v-for="group in groups">
                   {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
                 </ion-select-option>
@@ -38,20 +37,24 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
-            <ion-item :lines="group.description ? 'inset' : 'none'" @click="viewFacilities(group.facilityGroupId)" button>
+            <ion-item :lines="group.description ? 'inset' : 'none'">
+              <ion-icon :icon="bagHandleOutline" slot="start"/>
+              <ion-label>{{ translate('Product stores') }}</ion-label>
+              <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">
+                {{ group.productStoreCount }}
+              </ion-chip>
+            </ion-item>
+            <ion-item>
+              <ion-icon :icon="businessOutline" slot="start"/>
               <ion-label>{{ translate('Facilities') }}</ion-label>
-              <ion-note slot="end">{{ group.facilityCount }}</ion-note>
+              <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
+                {{ group.facilityCount }}
+              </ion-chip>
             </ion-item>
             <ion-item lines="full" v-if="group.description">
               <ion-label>{{ group.description }}</ion-label>
             </ion-item>
           </ion-card> 
-          <ion-card>
-            <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
-              <ion-icon :icon="addOutline" slot="start"/>
-              {{ translate('Create group') }}
-            </ion-button>
-          </ion-card>
         </main>
         <main v-else>
           <p class="empty-state">{{ translate("No groups found") }}</p>
@@ -68,6 +71,11 @@
           :loading-text="translate('Loading')"
         />
       </ion-infinite-scroll>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="openCreateFacilityGroupModal()">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -75,10 +83,12 @@
 <script lang="ts">
 import {
   IonButton,
-  IonBackButton,
   IonBadge,
   IonCard,
+  IonChip,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
   IonInfiniteScroll,
@@ -87,7 +97,6 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
-  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -98,7 +107,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { ellipsisVerticalOutline, addOutline } from 'ionicons/icons';
+import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
@@ -109,15 +118,19 @@ import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
 import emitter from '@/event-bus';
+import GroupActionsPopover from '@/components/GroupActionsPopover.vue';
+import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 
 export default defineComponent({
   name: 'FindGroups',
   components: {
     IonButton,
-    IonBackButton,
     IonBadge,
     IonCard,
+    IonChip,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader,
     IonIcon,
     IonInfiniteScroll,
@@ -126,7 +139,6 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonListHeader,
-    IonNote,
     IonPage,
     IonSearchbar,
     IonSelect,
@@ -140,7 +152,6 @@ export default defineComponent({
       facilityGroupTypes: "util/getFacilityGroupTypes",
       isScrollable: "facility/isFacilityGroupsScrollable",
       query: "facility/getGroupQuery",
-      facilityQuery: "facility/getFacilityQuery",
     })
   },
   async mounted() {
@@ -151,10 +162,6 @@ export default defineComponent({
     async updateQuery() {
       await this.store.dispatch('facility/updateGroupQuery', this.query)
       this.fetchGroups();
-    },
-    async viewFacilities(facilityGroupId: string) {
-      await this.store.dispatch('facility/updateFacilityQuery', {...this.facilityQuery, facilityGroupId })
-      this.$router.push({ path: `/find-facilities`})
     },
     async fetchGroups(vSize?: any, vIndex?: any) {
       const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
@@ -220,6 +227,16 @@ export default defineComponent({
         }
       }
     },
+    async openGroupActionsPopover(event: Event, group: any) {
+      const groupActionsPopover = await popoverController.create({
+        component: GroupActionsPopover,
+        event,
+        showBackdrop: false,
+        componentProps: { group }
+      });
+
+      groupActionsPopover.present();
+    },
     getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
       const associatedfacilityGroupIds = [] as any
 
@@ -258,6 +275,14 @@ export default defineComponent({
 
       await this.fetchGroups()
       emitter.emit('dismissLoader')
+    },
+    async openAddProductStoreToGroupModal(group: any) {
+      const addProductStoreToGroupModal = await modalController.create({
+        component: AddProductStoreToGroupModal,
+        componentProps: { group }
+      })
+
+      addProductStoreToGroupModal.present()
     }
   },
   setup() {
@@ -266,6 +291,8 @@ export default defineComponent({
 
     return {
       addOutline,
+      bagHandleOutline,
+      businessOutline,
       customSort,
       ellipsisVerticalOutline,
       router,

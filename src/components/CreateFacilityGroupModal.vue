@@ -24,7 +24,7 @@
           <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
         </ion-item>
         <ion-item lines="none">
-          <ion-select :label="translate('System group type')" interface="popover" v-model="formData.facilityGroupTypeId">
+          <ion-select :label="translate('System group type')" :disabled="isFacilityGroupTypeDisabled" interface="popover" v-model="formData.facilityGroupTypeId">
             <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
               {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
             </ion-select-option>
@@ -37,7 +37,7 @@
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button @click="createFacilityGroup" @keyup.enter.stop>
-          <ion-icon :icon="addOutline" />
+          <ion-icon :icon="saveOutline" />
         </ion-fab-button>
       </ion-fab>
     </form>
@@ -65,7 +65,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { defineComponent } from "vue";
-import { addOutline, closeOutline } from "ionicons/icons";
+import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { mapGetters, useStore } from 'vuex'
@@ -107,6 +107,14 @@ export default defineComponent({
         facilityGroupTypeId: '',
         description: '',
       },
+      isFacilityGroupTypeDisabled: false,
+    }
+  },
+  props: ['selectedFacilityGroupTypeId'],
+  mounted() {
+    if(this.selectedFacilityGroupTypeId) {
+      this.formData.facilityGroupTypeId = this.selectedFacilityGroupTypeId
+      this.isFacilityGroupTypeDisabled = true
     }
   },
   methods: {
@@ -177,8 +185,8 @@ export default defineComponent({
     const store = useStore();
 
     return {
-      addOutline,
       closeOutline,
+      saveOutline,
       store,
       translate
     };

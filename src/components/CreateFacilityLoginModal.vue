@@ -56,6 +56,7 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonText,
   IonTitle,
   IonToolbar,
   modalController
@@ -89,6 +90,7 @@ export default defineComponent({
     IonItem,
     IonLabel,
     IonList,
+    IonText,
     IonTitle,
     IonToolbar,
   },
