@@ -55,7 +55,7 @@
       <ion-item>
         <ion-label :position="telecomNumberValue?.countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
         <ion-input v-model="telecomNumberValue.contactNumber">
-          <ion-text>{{ `${telecomNumberValue?.countryCode}-` }}</ion-text>
+          <ion-text v-if="telecomNumberValue?.countryCode">{{ `${telecomNumberValue.countryCode}-` }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
