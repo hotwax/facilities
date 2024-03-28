@@ -79,24 +79,17 @@
               <template v-if="createLoginCreds">
                 <ion-item>
                   <ion-input label-placement="floating" v-model="username">
-                    <ion-label slot="label">
-                      {{ translate('Username') }} <ion-text color="danger">*</ion-text>
-                    </ion-label>
+                    <div slot="label">{{ translate('Username') }} <ion-text color="danger">*</ion-text></div>
                   </ion-input>
                 </ion-item>
                 <ion-item lines="none" ref="password">
                   <ion-input label-placement="floating" v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" helper-text="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
-                    <ion-label slot="label">
-                      {{ translate('Password') }} <ion-text color="danger">*</ion-text>
-                    </ion-label>
+                    <div slot="label">{{ translate('Password') }} <ion-text color="danger">*</ion-text></div>
                   </ion-input>
                 </ion-item>
                 <ion-item>
                   <ion-input label-placement="floating" v-model="emailAddress">
-                    <ion-label slot="label">
-                      {{ translate('Reset password email') }}
-                      <ion-text color="danger">*</ion-text>
-                    </ion-label>
+                    <div slot="label">{{ translate('Reset password email') }} <ion-text color="danger">*</ion-text></div>
                   </ion-input>
                 </ion-item>
               </template>

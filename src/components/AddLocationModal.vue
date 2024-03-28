@@ -21,22 +21,22 @@
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="locationInfo.areaId">
-          <ion-label slot="label">{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
+          <div slot="label">{{ translate("Area") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="locationInfo.aisleId">
-          <ion-label slot="label">{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
+          <div slot="label">{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="locationInfo.sectionId">
-          <ion-label slot="label">{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
+          <div slot="label">{{ translate("Section") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="locationInfo.levelId">
-          <ion-label slot="label">{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
+          <div slot="label">{{ translate("Level") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
       <ion-item>
@@ -63,7 +63,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -93,7 +92,6 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonSelect,
     IonSelectOption,
     IonText,

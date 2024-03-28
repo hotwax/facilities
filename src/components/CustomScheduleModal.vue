@@ -13,7 +13,7 @@
   <ion-content>
     <ion-item>
       <ion-input v-model="selectedTimesForWeek.description">
-        <ion-label slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></ion-label>
+        <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
       </ion-input>
     </ion-item>
     <ion-item lines="full" class="ion-margin-top">

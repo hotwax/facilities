@@ -22,24 +22,14 @@
             </ion-item>
             <ion-item>
               <ion-input label-placement="floating" @ionBlur="setFacilityId($event)" v-model="formData.facilityName">
-                <ion-label slot="label">
-                  {{ translate('Name') }} <ion-text color="danger">*</ion-text>
-                </ion-label>
+                <div slot="label">{{ translate('Name') }} <ion-text color="danger">*</ion-text></div>
               </ion-input>
             </ion-item>
             <ion-item lines="none">
-              <ion-input label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" error-text="translate('Internal ID cannot be more than 20 characters.')">
-                <ion-label slot="label">
-                  {{ translate('Internal ID') }}
-                </ion-label>
-              </ion-input>
+              <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" error-text="translate('Internal ID cannot be more than 20 characters.')" />
             </ion-item>
             <ion-item>
-              <ion-input label-placement="floating" v-model="formData.externalId">
-                <ion-label slot="label">
-                  {{ translate('External ID') }}
-                </ion-label>
-              </ion-input>
+              <ion-input :label="translate('External ID')" label-placement="floating" v-model="formData.externalId" />
             </ion-item>
           </ion-list>
         </ion-card>
@@ -67,7 +57,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
   IonPage,
   IonSelect,
@@ -99,7 +88,6 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
     IonPage,
     IonSelect,

@@ -15,9 +15,7 @@
       <ion-list>
         <ion-item>
           <ion-input label-placement="floating" @ionBlur="setFacilityGroupId($event)" v-model="formData.facilityGroupName">
-            <ion-label slot="label">
-              {{ translate("Name") }} <ion-text color="danger">*</ion-text>
-            </ion-label>
+            <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
           </ion-input>
         </ion-item>
         <ion-item lines="none">
@@ -55,7 +53,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
   IonSelect,
   IonSelectOption,
@@ -85,7 +82,6 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
     IonSelect,
     IonSelectOption,

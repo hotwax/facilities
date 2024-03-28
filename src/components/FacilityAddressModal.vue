@@ -20,7 +20,7 @@
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="address.address1">
-          <ion-label slot="label">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
+          <div slot="label">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
       <ion-item>
@@ -28,7 +28,7 @@
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="address.city">
-          <ion-label slot="label">{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
+          <div slot="label">{{ translate("City") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
       <ion-item @keyup.enter.stop>
