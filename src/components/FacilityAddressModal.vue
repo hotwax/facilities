@@ -234,7 +234,7 @@ export default defineComponent({
         : true
     },
     isTelecomNumberUpdated() {
-      return JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
+      return this.telecomNumberValue.contactNumber && JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
     }
   },
   setup() {
