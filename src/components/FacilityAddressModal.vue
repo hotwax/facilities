@@ -44,14 +44,16 @@
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Zipcode')" v-model="address.postalCode" />
+        <ion-input label-placement="floating" v-model="address.postalCode">
+          <div position="floating">{{ translate("Zipcode") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item-divider color="light">
         <ion-label>{{ translate("Contact details") }}</ion-label>
       </ion-item-divider>
       <ion-item>
         <ion-input :label="translate('Contact number')" :label-placement="telecomNumberValue?.countryCode ? 'stacked' : 'floating'" v-model="telecomNumberValue.contactNumber">
-          <ion-text slot="start">{{ telecomNumberValue?.countryCode }}</ion-text>
+          <ion-text slot="start" v-if="telecomNumberValue?.countryCode">{{ telecomNumberValue?.countryCode }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
@@ -150,7 +152,7 @@ export default defineComponent({
     async saveContact() {
       let resp, postalAddress = '';
 
-      if(!this.address?.address1 || !this.address?.city) {
+      if(!this.address?.address1 || !this.address?.city || !this.address?.postalCode) {
         showToast("Please fill all the required fields.")
         return
       }

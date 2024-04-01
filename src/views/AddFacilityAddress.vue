@@ -30,7 +30,9 @@
               </ion-input>
             </ion-item>
             <ion-item>
-              <ion-input :label="translate('Zipcode')" label-placement="floating" v-model="formData.postalCode" />
+              <ion-input label-placement="floating" v-model="formData.postalCode">
+                <div>{{ translate('Zipcode') }} <ion-text color="danger">*</ion-text></div>
+              </ion-input>
             </ion-item>
             <ion-item>
               <ion-select :label="translate('Country')" label-placement="floating" interface="popover" :placeholder="translate('Select country')" @ionChange="updateState($event)" v-model="formData.countryGeoId">
@@ -48,7 +50,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-input :label="translate('Contact number')" :label-placement="countryCode ? 'stacked' : 'floating'" v-model="contactNumber">
-                <ion-text slot="start">{{ countryCode }}</ion-text>
+                <ion-text slot="start" v-if=countryCode>{{ countryCode }}</ion-text>
               </ion-input>
             </ion-item>
           </ion-list>
@@ -173,7 +175,7 @@ export default defineComponent({
   methods: {
     async addAddress() {
       let resp;
-      if (!this.formData.address1 || !this.formData.city) {
+      if (!this.formData.address1 || !this.formData.city || !this.formData.postalCode) {
         showToast("Please fill all the required fields.")
         return
       }
