@@ -568,6 +568,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
+        distinct: 'Y',
         fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
         ...payload
       }
