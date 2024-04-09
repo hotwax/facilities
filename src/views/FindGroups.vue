@@ -15,10 +15,7 @@
               {{ translate('System groups') }}
             </ion-list-header>
             <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
-              <ion-label>
-                {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
-              </ion-label>
-              <ion-select v-if="groups.length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', { count: getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length }) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+              <ion-select v-if="groups.length" :label="groupType.description ? groupType.description : groupType.facilityGroupTypeId" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', { count: getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length }) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="group.facilityGroupId" :disabled="group.facilityGroupTypeId && group.facilityGroupTypeId !== groupType.facilityGroupTypeId" :key="group.facilityGroupId" v-for="group in groups">
                   {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
                 </ion-select-option>
@@ -40,7 +37,7 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
-            <ion-item>
+            <ion-item :lines="group.description ? 'inset' : 'none'">
               <ion-icon :icon="bagHandleOutline" slot="start"/>
               <ion-label>{{ translate('Product stores') }}</ion-label>
               <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">

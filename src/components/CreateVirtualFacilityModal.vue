@@ -14,25 +14,15 @@
     <form @keyup.enter="createVirtualFacility">
       <ion-list>
         <ion-item>
-          <ion-label position="floating">
-            {{ translate("Name") }} <ion-text color="danger">*</ion-text>
-          </ion-label>
-          <ion-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName"/>
+          <ion-input label-placement="floating" @ionBlur="setFacilityId($event)" v-model="formData.facilityName">
+            <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
+          </ion-input>
         </ion-item>
-        <ion-item ref="facilityId">
-          <ion-label position="floating">
-            {{ translate("Internal ID") }}
-          </ion-label>
-          <ion-input v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" />
-          <ion-note slot="error">
-            {{ translate('Internal ID cannot be more than 20 characters.') }}
-          </ion-note>
+        <ion-item lines="none">
+          <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionInput="validateFacilityId" @ionBlur="markFacilityIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')"/>
         </ion-item>
         <ion-item>
-          <ion-label position="floating">
-            {{ translate("Description") }}
-          </ion-label>
-          <ion-input v-model="formData.description"/>
+          <ion-input label-placement="floating" :label="translate('Description')" v-model="formData.description"/>
         </ion-item>
       </ion-list>
 
@@ -56,9 +46,7 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
-  IonNote,
   IonText,
   IonTitle,
   IonToolbar,
@@ -85,9 +73,7 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
-    IonNote,
     IonText,
     IonTitle,
     IonToolbar

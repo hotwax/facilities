@@ -16,46 +16,44 @@
         <ion-label>{{ translate("Address") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-label position="floating">{{ translate("Shipping name") }}</ion-label>
-        <ion-input v-model="address.toName" />
+        <ion-input :label="translate('Shipping name')" label-placement="floating" v-model="address.toName" />
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="address.address1" />
+        <ion-input label-placement="floating" v-model="address.address1">
+          <div slot="label">{{ translate("Address line 1") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Address line 2") }}</ion-label>
-        <ion-input v-model="address.address2" />
+        <ion-input :label="translate('Address line 2')" label-placement="floating" v-model="address.address2" />
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("City") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="address.city" />
+        <ion-input label-placement="floating" v-model="address.city">
+          <div slot="label">{{ translate("City") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item @keyup.enter.stop>
-        <ion-label position="floating">{{ translate("Country") }}</ion-label>
-        <ion-select interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
+        <ion-select label-placement="floating" :label="translate('Country')" interface="popover" :placeholder="translate('Select')" @ionChange="updateState($event)" v-model="address.countryGeoId">
           <ion-select-option v-for="country in countries" :key="country.geoId" :value="country.geoId">{{ country.geoName }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item @keyup.enter.stop>
-        <ion-label position="floating">{{ translate("State") }}</ion-label>
-        <ion-select interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
+        <ion-select label-placement="floating" :label="translate('State')" interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
           <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">
             {{ state.wellKnownText && state.wellKnownText !== state.geoName ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
           </ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Zipcode") }}</ion-label>
-        <ion-input v-model="address.postalCode" />
+        <ion-input label-placement="floating" v-model="address.postalCode">
+          <div position="floating">{{ translate("Zipcode") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item-divider color="light">
         <ion-label>{{ translate("Contact details") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-label :position="telecomNumberValue?.countryCode ? 'stacked' : 'floating'">{{ translate("Contact number") }}</ion-label>
-        <ion-input v-model="telecomNumberValue.contactNumber">
-          <ion-text>{{ `${telecomNumberValue?.countryCode}-` }}</ion-text>
+        <ion-input :label="translate('Contact number')" :label-placement="telecomNumberValue?.countryCode ? 'stacked' : 'floating'" v-model="telecomNumberValue.contactNumber">
+          <ion-text slot="start" v-if="telecomNumberValue?.countryCode">{{ telecomNumberValue?.countryCode }}</ion-text>
         </ion-input>
       </ion-item>
     </form>
@@ -154,7 +152,7 @@ export default defineComponent({
     async saveContact() {
       let resp, postalAddress = '';
 
-      if(!this.address?.address1 || !this.address?.city) {
+      if(!this.address?.address1 || !this.address?.city || !this.address?.postalCode) {
         showToast("Please fill all the required fields.")
         return
       }

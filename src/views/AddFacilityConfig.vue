@@ -64,42 +64,33 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
-              <ion-label>{{ translate("Sell Inventory Online") }}</ion-label>
-              <ion-toggle v-model="fulfillmentSettings.FAC_GRP" slot="end"/>
+              <ion-toggle v-model="fulfillmentSettings.FAC_GRP">{{ translate("Sell Inventory Online") }}</ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle v-model="fulfillmentSettings.PICKUP" slot="end"/>
+              <ion-toggle v-model="fulfillmentSettings.PICKUP">{{ translate("Allow pickup") }}</ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
-              <ion-toggle v-model="fulfillmentSettings.OMS_FULFILLMENT" slot="end" @ionChange="createLoginCreds = true"/>
+              <ion-toggle v-model="fulfillmentSettings.OMS_FULFILLMENT" @ionChange="createLoginCreds = true">{{ translate("Uses native fulfillment app") }}</ion-toggle>
             </ion-item>
             <template v-if="fulfillmentSettings.OMS_FULFILLMENT">
               <ion-item>
-                <ion-label>{{ translate("Create login credentials") }}</ion-label>
-                <ion-toggle v-model="createLoginCreds" slot="end" />
+                <ion-toggle v-model="createLoginCreds">{{ translate("Create login credentials") }}</ion-toggle>
               </ion-item>
               <template v-if="createLoginCreds">
                 <ion-item>
-                  <ion-label position="floating">
-                    {{ translate('Username') }} <ion-text color="danger">*</ion-text>
-                  </ion-label>
-                  <ion-input v-model="username" />
+                  <ion-input label-placement="floating" v-model="username">
+                    <div slot="label">{{ translate('Username') }} <ion-text color="danger">*</ion-text></div>
+                  </ion-input>
                 </ion-item>
-                <ion-item ref="password">
-                  <ion-label position="floating">
-                    {{ translate('Password') }} <ion-text color="danger">*</ion-text>
-                  </ion-label>
-                  <ion-input v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password"/>
-                  <ion-note slot="helper">
-                    {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
-                  </ion-note>
+                <ion-item lines="none">
+                  <ion-input label-placement="floating" v-model="password" ref="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" helper-text="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
+                    <div slot="label">{{ translate('Password') }} <ion-text color="danger">*</ion-text></div>
+                  </ion-input>
                 </ion-item>
                 <ion-item>
-                  <ion-label position="floating">{{ translate('Reset password email') }} <ion-text
-                      color="danger">*</ion-text></ion-label>
-                  <ion-input v-model="emailAddress"></ion-input>
+                  <ion-input label-placement="floating" v-model="emailAddress">
+                    <div slot="label">{{ translate('Reset password email') }} <ion-text color="danger">*</ion-text></div>
+                  </ion-input>
                 </ion-item>
               </template>
             </template>
@@ -136,7 +127,6 @@ import {
   IonLabel,
   IonList,
   IonListHeader,
-  IonNote,
   IonPage,
   IonPopover,
   IonText,
@@ -182,7 +172,6 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonListHeader,
-    IonNote,
     IonPage,
     IonPopover,
     IonText,
@@ -435,6 +424,7 @@ export default defineComponent({
 <style scoped>
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
