@@ -13,24 +13,19 @@
   <ion-content>
     <ion-list>
       <ion-item>
-        <ion-label class="ion-text-wrap" position="floating">
-          {{ translate('Username') }} <ion-text color="danger">*</ion-text>
-        </ion-label>
-        <ion-input v-model="username" />
+        <ion-input label-placement="floating" v-model="username">
+          <div class="ion-text-wrap" slot="label">{{ translate('Username') }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
-      <ion-item ref="password">
-        <ion-label class="ion-text-wrap" position="floating">
-          {{ translate('Password') }} <ion-text color="danger">*</ion-text>
-        </ion-label>
-        <ion-input v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" />
-        <ion-note slot="helper">
-          {{ translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.') }}
-        </ion-note>
+      <ion-item ref="password" lines="none">
+        <ion-input label-placement="floating" v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" :helperText="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
+          <div slot="label">{{ translate('Password') }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate('Reset password email') }} <ion-text
-            color="danger">*</ion-text></ion-label>
-        <ion-input v-model="emailAddress"></ion-input>
+        <ion-input label-placement="floating" v-model="emailAddress">
+          <div slot="label">{{ translate('Reset password email') }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
     </ion-list>
 
@@ -53,9 +48,7 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
-  IonNote,
   IonText,
   IonTitle,
   IonToolbar,
@@ -88,9 +81,7 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
-    IonNote,
     IonText,
     IonTitle,
     IonToolbar,

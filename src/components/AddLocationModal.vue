@@ -15,30 +15,32 @@
       <!-- Using stop for enter key as when using keyboard for opening the select we need to use enter and the same key submits the form
       so to prevent form submission on using enter key on select used stop -->
       <ion-item @keyup.enter.stop>
-        <ion-label position="floating">{{ translate("Type") }}</ion-label>
-        <ion-select interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
+        <ion-select label-placement="floating" :label="translate('Type')" interface="popover" :placeholder="translate('Select')" v-model="locationInfo.locationTypeEnumId">
           <ion-select-option v-for="(description, type) in locationTypes" :key="type" :value="type">{{ description }}</ion-select-option>
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Area") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="locationInfo.areaId"/>
+        <ion-input label-placement="floating" v-model="locationInfo.areaId">
+          <div slot="label">{{ translate("Area") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="locationInfo.aisleId"/>
+        <ion-input label-placement="floating" v-model="locationInfo.aisleId">
+          <div slot="label">{{ translate("Aisle") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Section") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="locationInfo.sectionId"/>
+        <ion-input label-placement="floating" v-model="locationInfo.sectionId">
+          <div slot="label">{{ translate("Section") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Level") }} <ion-text color="danger">*</ion-text></ion-label>
-        <ion-input v-model="locationInfo.levelId"/>
+        <ion-input label-placement="floating" v-model="locationInfo.levelId">
+          <div slot="label">{{ translate("Level") }} <ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-label position="floating">{{ translate("Sequence") }}</ion-label>
-        <ion-input v-model="locationInfo.positionId"/>
+        <ion-input :label="translate('Sequence')" label-placement="floating" v-model="locationInfo.positionId" />
       </ion-item>
 
       <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -61,7 +63,6 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -91,7 +92,6 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonSelect,
     IonSelectOption,
     IonText,

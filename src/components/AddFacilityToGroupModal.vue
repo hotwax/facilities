@@ -22,11 +22,12 @@
       </div>
       <div v-else>
         <ion-item v-for="(facility, index) in facilities" :key="index" @click="updateSelectedFacilities(facility.facilityId)" lines="none">
-          <ion-label>
-            {{ facility.facilityName }}
-            <p>{{ facility.facilityId }}</p>
-          </ion-label>
-          <ion-checkbox :checked="isFacilitySelected(facility.facilityId)" />
+          <ion-checkbox :checked="isFacilitySelected(facility.facilityId)">
+            <ion-label>
+              {{ facility.facilityName }}
+              <p>{{ facility.facilityId }}</p>
+            </ion-label>
+          </ion-checkbox>
         </ion-item>
       </div>
     </ion-list>

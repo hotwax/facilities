@@ -26,16 +26,13 @@
       <ion-list>
         <ion-list-header>{{ translate("Custom mapping") }}</ion-list-header>
         <ion-item>
-          <ion-label>{{ translate("Mapping ID") }}</ion-label>
-          <ion-input v-model="mappingId" placeholder="Mapping ID" />
+          <ion-input :label="translate('Mapping ID')" v-model="mappingId" placeholder="Mapping ID" />
         </ion-item>
         <ion-item>
-          <ion-label>{{ translate("Mapping Name") }}</ion-label>
-          <ion-input v-model="mappingName" placeholder="Mapping name" />
+          <ion-input :label="translate('Mapping Name')" v-model="mappingName" placeholder="Mapping name" />
         </ion-item>
         <ion-item>
-          <ion-label>{{ translate("Identification") }}</ion-label>
-          <ion-input v-model="mappingValue" placeholder="Mapping Value" />
+          <ion-input :label="translate('Identification')" v-model="mappingValue" placeholder="Mapping Value" />
         </ion-item>
       </ion-list>
 

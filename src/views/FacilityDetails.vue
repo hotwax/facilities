@@ -21,8 +21,7 @@
             <div class="ion-margin-top">
               <ion-item>
                 <ion-icon :icon="bookmarkOutline" slot="start"/>
-                <ion-label>{{ translate('Facility Type') }}</ion-label>
-                <ion-select interface="popover" v-model="parentFacilityTypeId" @ionChange="getFacilityTypesByParentTypeId()">
+                <ion-select :label="translate('Facility Type')" interface="popover" v-model="parentFacilityTypeId" @ionChange="getFacilityTypesByParentTypeId()">
                   <ion-select-option value="PHYSICAL_STORE">{{ translate('Physical Store') }}</ion-select-option>
                   <ion-select-option value="DISTRIBUTION_CENTER">{{ translate('Distribution Center') }}</ion-select-option>
                 </ion-select>
@@ -30,8 +29,7 @@
 
               <ion-item lines="none" class="ion-margin-bottom">
                 <ion-icon :icon="bookmarksOutline" slot="start"/>
-                <ion-label>{{ translate('Facility SubType') }}</ion-label>
-                <ion-select interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
+                <ion-select :label="translate('Facility SubType')" interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
                   <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIdOptions" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
                 </ion-select>
               </ion-item>
@@ -119,8 +117,9 @@
             </ion-card-content>
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
-                <ion-label class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }}</ion-label>
-                <ion-radio slot="end" :value="calendar.calendarId"/>
+                <ion-radio :value="calendar.calendarId">
+                  <div class="ion-text-wrap">{{ calendar.description ? calendar.description : calendar.calendarId }}</div>
+                </ion-radio>
               </ion-item>
             </ion-radio-group>
             <ion-item button lines="none" v-if="calendars?.length > 3"  @click="addOperatingHours">
@@ -193,20 +192,16 @@
               </ion-card-title>
             </ion-card-header>
             <ion-item>
-              <ion-label>{{ translate("Allow pickup") }}</ion-label>
-              <ion-toggle :checked="current.allowPickup" slot="end" @click="updateFulfillmentSetting($event, 'PICKUP')"/>
+              <ion-toggle :checked="current.allowPickup" @click.prevent="updateFulfillmentSetting($event, 'PICKUP')">{{ translate("Allow pickup") }}</ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label>{{ translate("Uses native fulfillment app") }}</ion-label>
-              <ion-toggle :checked="current.useOMSFulfillment" slot="end" @click="updateFulfillmentSetting($event, 'OMS_FULFILLMENT')"/>
+              <ion-toggle :checked="current.useOMSFulfillment" @click.prevent="updateFulfillmentSetting($event, 'OMS_FULFILLMENT')">{{ translate("Uses native fulfillment app") }}</ion-toggle>
             </ion-item>
             <ion-item>
-              <ion-label>{{ translate("Generate shipping labels") }}</ion-label>
-              <ion-toggle :checked="current.generateShippingLabel" slot="end" @click="updateFulfillmentSetting($event, 'AUTO_SHIPPING_LABEL')"/>
+              <ion-toggle :checked="current.generateShippingLabel" @click.prevent="updateFulfillmentSetting($event, 'AUTO_SHIPPING_LABEL')">{{ translate("Generate shipping labels") }}</ion-toggle>
             </ion-item>
             <ion-item lines="full">
-              <ion-label>{{ translate("Days to ship") }}</ion-label>
-              <ion-input v-model="defaultDaysToShip" type="number" min="0" :placeholder="translate('days to ship')"/>
+              <ion-input :label="translate('Days to ship')" v-model="defaultDaysToShip" type="number" min="0" :placeholder="translate('days to ship')"/>
             </ion-item>
             <ion-button fill="outline" expand="block" @click="updateDefaultDaysToShip">
               {{ translate("Update days to ship") }}
@@ -226,8 +221,7 @@
               {{ current.inventoryGroups?.length ? translate("Select which channels this facility publishes inventory too.") : translate("There are no inventory channels setup yet") }}
             </ion-card-content>
             <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
-              <ion-label>{{ inventoryGroup?.facilityGroupName }}</ion-label>
-              <ion-toggle :checked="inventoryGroup.isChecked" slot="end" @click="updateSellInventoryOnlineSetting($event, inventoryGroup)"/>
+              <ion-toggle :checked="inventoryGroup.isChecked" @click.prevent="updateSellInventoryOnlineSetting($event, inventoryGroup)">{{ inventoryGroup?.facilityGroupName }}</ion-toggle>
             </ion-item>
             <ion-button v-if="!current.inventoryGroups?.length" expand="block" fill="outline" @click="openCreateInventoryGroupModal()">
               {{ translate("Add") }}
@@ -1272,14 +1266,9 @@ export default defineComponent({
       // as default elements within the list. These elements may appear at any index within the list structure.
       // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
       this.facilityTypeId = this.facilityTypeIdOptions['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIdOptions['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIdOptions)[0]
+      this.updateFacilityType()
     },
     async updateFacilityType() {
-      // Not updating facility when current selected type and facilityType are same, as the value of facilityTypeId
-      // gets changed programatically on initial load and thus calls this method hence this check is required
-      if(this.current.facilityTypeId === this.facilityTypeId) {
-        return;
-      }
-
       try {
         const resp = await FacilityService.updateFacility({
           facilityId: this.facilityId,
@@ -1388,6 +1377,7 @@ ion-modal.date-time-modal {
 
 ion-card-header {
   display: flex;
+  flex-direction: row;
   justify-content: space-between;
   align-items: center;
 }
