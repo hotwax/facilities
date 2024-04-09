@@ -12,22 +12,6 @@ const login = async (username: string, password: string): Promise <any> => {
   });
 }
 
-const getAvailableTimeZones = async (): Promise <any>  => {
-  return api({
-    url: "getAvailableTimeZones",
-    method: "get",
-    cache: true
-  });
-}
-
-const setUserTimeZone = async (payload: any): Promise <any>  => {
-  return api({
-    url: "setUserTimeZone",
-    method: "post",
-    data: payload
-  });
-}
-
 const getUserPermissions = async (payload: any, token: any): Promise<any> => {
   const baseURL = store.getters['user/getBaseUrl'];
   let serverPermissions = [] as any;
@@ -319,13 +303,11 @@ export const UserService = {
   isRoleTypeExists,
   isUserLoginIdExists,
   login,
-  getAvailableTimeZones,
   getUserProfile,
   getUserPermissions,
   fetchLogoImageForParties,
   fetchUserContactDetails,
   fetchUserLoginAndPartyDetails,
   sendResetPasswordEmail,
-  setUserTimeZone,
   updateUserLoginStatus
 }
