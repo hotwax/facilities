@@ -31,7 +31,7 @@
             </ion-item>
             <ion-item>
               <ion-input label-placement="floating" v-model="formData.postalCode">
-                <div>{{ translate('Zipcode') }} <ion-text color="danger">*</ion-text></div>
+                <div slot="label">{{ translate('Zipcode') }} <ion-text color="danger">*</ion-text></div>
               </ion-input>
             </ion-item>
             <ion-item>
