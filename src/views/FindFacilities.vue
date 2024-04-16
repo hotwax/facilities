@@ -110,6 +110,7 @@
         @ionInfinite="loadMoreFacilities($event)"
         threshold="100px"
         :disabled="!isScrollable"
+        :key="query.queryString"
       >
         <ion-infinite-scroll-content
           loading-spinner="crescent"
