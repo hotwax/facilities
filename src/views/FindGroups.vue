@@ -6,7 +6,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content id="filter-content">
+    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
@@ -64,8 +64,8 @@
       <ion-infinite-scroll
         @ionInfinite="loadMoreGroups($event)"
         threshold="100px"
-        :disabled="!isScrollable"
-        :key="query.queryString"
+        v-show="isScrollingEnabled && isScrollable"
+        ref="infiniteScrollRef"
       >
         <ion-infinite-scroll-content
           loading-spinner="crescent"
@@ -147,6 +147,11 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  data() {
+    return {
+      isScrollingEnabled: false
+    }
+  },
   computed: {
     ...mapGetters({
       groups: "facility/getFacilityGroups",
@@ -158,6 +163,9 @@ export default defineComponent({
   async mounted() {
     await this.fetchGroups();
     await this.store.dispatch('util/fetchFacilityGroupTypes')
+  },
+  async ionViewWillEnter() {
+    this.isScrollingEnabled = false;
   },
   methods: {
     async updateQuery() {
@@ -173,14 +181,25 @@ export default defineComponent({
       };
       await this.store.dispatch('facility/fetchFacilityGroups', payload)
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreGroups(event: any) {
       this.fetchGroups(
         undefined,
         Math.ceil(
           this.groups?.length / (process.env.VUE_APP_VIEW_SIZE as any)
         ).toString()
-      ).then(() => {
-        event.target.complete();
+      ).then(async () => {
+        await event.target.complete();
       });
     },
     async openCreateFacilityGroupModal() {
