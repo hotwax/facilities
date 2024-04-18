@@ -108,16 +108,19 @@ const actions: ActionTree<FacilityState, RootState> = {
       ...payload
     }
 
-    let facilities = [], total = 0, facilityList = [];
+    const facilities = JSON.parse(JSON.stringify(state.facilities.list));
+    let total = 0, facilityList = [];
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
 
       if(!hasError(resp) && resp.data.count) {
-        facilities = resp.data.docs
+        if(payload.viewIndex && payload.viewIndex > 0) {
+          facilityList = facilities.concat(resp.data.docs)
+        } else {
+          facilityList = resp.data.docs
+        }
         total = resp.data.count
-
-        if(payload.viewIndex && payload.viewIndex > 0) facilityList = JSON.parse(JSON.stringify(state.facilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -546,13 +549,14 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
-    let facilities = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
 
     let archivedFacilityIds = []
     if (state.archivedFacilities.length) {
       archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities)).map((facility: any) => facility.facilityId)
     }
+    
+    let facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)), total = 0;
 
     try {
       const params = {
@@ -575,11 +579,13 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       const resp = await FacilityService.fetchFacilities(params)
 
-      if (!hasError(resp) && resp.data.count) {
-        facilities = resp.data.docs
+      if (!hasError(resp) && resp.data.count) {    
+        if (payload.viewIndex && payload.viewIndex > 0){
+          facilities = facilities.concat(resp.data.docs)
+        } else {
+          facilities = resp.data.docs
+        }
         total = resp.data.count
-
-        if (payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -676,10 +682,9 @@ const actions: ActionTree<FacilityState, RootState> = {
 
   updateArchivedFacilities({ commit }, facilities) {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
-  },
+  },  
 
   async fetchFacilityGroups({ commit, state, dispatch }, payload) {
-    let groups = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
 
     const filters = {} as any
@@ -695,6 +700,9 @@ const actions: ActionTree<FacilityState, RootState> = {
       filters['facilityGroupName_ic'] = 'Y'
       filters['facilityGroupName_grp'] = '2'
     }
+
+    let groups = JSON.parse(JSON.stringify(state.facilityGroups.list)) , total = 0;
+
     try {
       const params = {
         inputFields: {
@@ -710,12 +718,13 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityGroups(params)
 
       if (!hasError(resp) && resp.data.count) {
-        groups = resp.data.docs
-        total = resp.data.count
 
         if (payload.viewIndex && payload.viewIndex > 0) {
-          groups = JSON.parse(JSON.stringify(state.facilityGroups.list)).concat(groups)
+          groups = groups.concat(resp.data.docs)
+        } else { 
+          groups = resp.data.docs
         }
+        total = resp.data.count
       } else {
         throw resp.data
       }
