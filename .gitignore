@@ -34,3 +34,6 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+
+.history
+.firebase
