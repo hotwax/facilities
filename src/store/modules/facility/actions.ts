@@ -117,8 +117,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       if(!hasError(resp) && resp.data.count) {
         if(payload.viewIndex && payload.viewIndex > 0) {
           facilityList = facilities.concat(resp.data.docs)
-        } 
-        else {
+        } else {
           facilityList = resp.data.docs
         }
         total = resp.data.count
@@ -583,7 +582,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       if (!hasError(resp) && resp.data.count) {    
         if (payload.viewIndex && payload.viewIndex > 0){
           facilities = facilities.concat(resp.data.docs)
-        } else{
+        } else {
           facilities = resp.data.docs
         }
         total = resp.data.count
@@ -683,6 +682,10 @@ const actions: ActionTree<FacilityState, RootState> = {
 
   updateArchivedFacilities({ commit }, facilities) {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
+  },  async ionViewWillEnter() {
+    console.log('confirm',this.partyId);
+    console.log('getting', this.selectedUser);
+    await this.store.dispatch("user/getSelectedUserDetails", { partyId: this.partyId });
   },
 
   async fetchFacilityGroups({ commit, state, dispatch }, payload) {
