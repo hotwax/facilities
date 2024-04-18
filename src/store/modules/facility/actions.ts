@@ -108,7 +108,8 @@ const actions: ActionTree<FacilityState, RootState> = {
       ...payload
     }
 
-    let facilities = JSON.parse(JSON.stringify(state.facilities.list)) , total = 0, facilityList = [];
+    const facilities = JSON.parse(JSON.stringify(state.facilities.list));
+    let total = 0, facilityList = [];
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
