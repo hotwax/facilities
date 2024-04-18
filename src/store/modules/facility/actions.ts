@@ -682,11 +682,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
   updateArchivedFacilities({ commit }, facilities) {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
-  },  async ionViewWillEnter() {
-    console.log('confirm',this.partyId);
-    console.log('getting', this.selectedUser);
-    await this.store.dispatch("user/getSelectedUserDetails", { partyId: this.partyId });
-  },
+  },  
 
   async fetchFacilityGroups({ commit, state, dispatch }, payload) {
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
