@@ -248,7 +248,6 @@ export default defineComponent({
       this.router.push({ path: `/facility-details/${facilityId}` })
     },
     enableScrolling() {
-      console.log('scroll');
       const parentElement = (this as any).$refs.contentRef.$el
       const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
       let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
