@@ -252,6 +252,7 @@ const actions: ActionTree<UtilState, RootState> = {
       entityName: 'GeoAssocAndGeoFrom',
       fieldList: ['geoName', 'geoId', 'geoCode'],
       noConditionFind: 'Y',
+      viewSize: 250
     } as any
 
     try {
@@ -285,7 +286,7 @@ const actions: ActionTree<UtilState, RootState> = {
       entityName: 'GeoAssocAndGeoTo',
       fieldList: ['geoName', 'geoId', 'wellKnownText'],
       noConditionFind: 'Y',
-      viewSize: 100
+      viewSize: 250
     } as any
 
     try {
