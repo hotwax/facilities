@@ -268,7 +268,7 @@
               </ion-button>
             </ion-card-header>
             <ion-item v-for="facilityLogin in current.facilityLogins" :key="facilityLogin.userLoginId">
-              <ion-avatar slot="start" v-if="facilityLogin.objectInfo">
+              <ion-avatar slot="start">
                 <Image :src="getImageUrl(facilityLogin.objectInfo)"/>
               </ion-avatar>
               <ion-label>
