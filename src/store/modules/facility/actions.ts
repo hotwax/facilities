@@ -129,7 +129,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList.length ? facilityList : facilities, total });
+    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList, total });
 
     if(facilities.length) {
       await dispatch('fetchFacilitiesAdditionalInformation', payload)
