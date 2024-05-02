@@ -21,10 +21,10 @@
         </ion-button>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Latitude')" v-model="geoPoint.latitude" />
+        <ion-input label-placement="floating" :label="translate('Latitude')" type="number" v-model="geoPoint.latitude"/>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Longitude')" v-model="geoPoint.longitude" />
+        <ion-input label-placement="floating" :label="translate('Longitude')" type="number" v-model="geoPoint.longitude"/>
       </ion-item>
     </form>
   </ion-content>
