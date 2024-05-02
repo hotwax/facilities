@@ -21,10 +21,14 @@
         </ion-button>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Latitude')" type="number" v-model="geoPoint.latitude"/>
+        <ion-input label-placement="floating" type="number" v-model="geoPoint.latitude">
+          <div slot="label">{{ translate("Latitude")}}<ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Longitude')" type="number" v-model="geoPoint.longitude"/>
+        <ion-input label-placement="floating" type="number" v-model="geoPoint.longitude">
+          <div slot="label">{{ translate("Longitude")}}<ion-text color="danger">*</ion-text></div>
+        </ion-input>  
       </ion-item>
     </form>
   </ion-content>
@@ -99,6 +103,10 @@ export default defineComponent({
       modalController.dismiss()
     },
     async generateLatLong() {
+      if(!this.geoPoint.postalCode) {
+        showToast("Please fill the required Zipcode")
+        return;
+      }
       this.isGeneratingLatLong = true
       const payload = {
         json: {

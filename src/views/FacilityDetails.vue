@@ -69,7 +69,7 @@
                   {{ translate("Latitude & Longitude") }}
                 </ion-card-title>
               </ion-card-header>
-              <template v-if="postalAddress.latitude || postalAddress.latitude == 0">
+              <template v-if="postalAddress?.latitude || postalAddress.latitude == 0">
                 <ion-card-content>
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
