@@ -63,7 +63,6 @@
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
             </ion-card>
-            {{ postalAddress }}
             <ion-card>
               <ion-card-header>
                 <ion-card-title>
