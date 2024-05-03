@@ -109,7 +109,6 @@ export default defineComponent({
           "noConditionFind": "Y",
           "filterByDate": 'Y'
         })
-        emitter.emit('dismissLoader');
 
         if(!hasError(resp)) {
           this.selectedProductStores = resp.data.docs
@@ -120,6 +119,7 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
+      emitter.emit('dismissLoader');
     },
     isSelected(productStoreId: any) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
