@@ -13,7 +13,7 @@
   <ion-content>
     <form @keyup.enter="saveGeoPoint">
       <ion-item class="ion-margin-bottom">
-        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
+        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" @keydown="validateZipCode($event)"/>
         <ion-button slot="end" fill="outline" @click="generateLatLong">
           {{ translate("Generate") }}
           <ion-icon v-if="!isGeneratingLatLong" slot="end" :icon="colorWandOutline" />
@@ -101,6 +101,12 @@ export default defineComponent({
   methods: {
     closeModal() {
       modalController.dismiss()
+    },
+    validateZipCode(e: any) {
+      if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
+        e.preventDefault();
+        return false;
+      } 
     },
     async generateLatLong() {
       if(!this.geoPoint.postalCode) {
