@@ -225,10 +225,11 @@ export default defineComponent({
       return this.getParty(partyId) ? this.getParty(partyId).roleTypeId : ''
     },
     isRoleUpdated() {
-      return this.parties.some((party: any) => {
-        const selectedParty = this.selectedPartyValues.find((p: any) => p.partyId === party.partyId);
-        return selectedParty?.roleTypeId !== party.roleTypeId;
-     });
+      const lengthChanged = this.selectedPartyValues.length !== this.selectedParties.length;
+      return lengthChanged || this.selectedPartyValues.some((selectedParty: any) => {
+        const originalParty = this.selectedParties.find((party: any) => party.partyId === selectedParty.partyId);
+        return originalParty && selectedParty.roleTypeId !== originalParty.roleTypeId;
+      });
     },
   },
   async mounted() {
