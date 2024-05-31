@@ -10,6 +10,7 @@ import logger from '@/logger'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { translate, useAuthStore, useUserStore } from '@hotwax/dxp-components'
 import emitter from '@/event-bus'
+import router from '@/router'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -61,6 +62,11 @@ const actions: ActionTree<UserState, RootState> = {
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
       updateToken(token)
+
+      const productStoreId = router.currentRoute.value?.query?.productStoreId
+      if (productStoreId) {
+        return `/tabs/find-facilities?productStoreId=${productStoreId}`;
+      }
     } catch (err: any) {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
