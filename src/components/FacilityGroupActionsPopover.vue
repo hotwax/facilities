@@ -72,7 +72,7 @@ export default defineComponent({
           handler: (data) => {
             const { facilityGroupName } = data
             if (facilityGroupName.length <= 0) {
-              showToast(translate('Please enter a group name'));
+              showToast(translate('Facility group name cannot be empty'));
               return false;    
             }
             popoverController.dismiss(facilityGroupName)
