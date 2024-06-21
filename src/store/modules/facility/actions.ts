@@ -183,7 +183,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
-    if(current?.facilityId && !payload.skipState) {
+    if(current?.facilityId && !payload.skipState && current["groupInformation"]) {
       // As inventory channels are fetched while fetching additional facility info
       // But here we already have additional facility info, so just getting and adding inventory groups to current.
       const inventoryGroups = rootGetters['util/getInventoryGroups'];
