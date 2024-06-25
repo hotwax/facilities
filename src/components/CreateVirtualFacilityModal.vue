@@ -81,6 +81,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
+      organizationPartyId: 'util/getOrganizationPartyID'
     })
   },
   data() {
@@ -120,7 +121,7 @@ export default defineComponent({
         const payload = {
           ...this.formData,
           facilityTypeId: 'VIRTUAL_FACILITY',
-          ownerPartyId: "COMPANY"
+          ownerPartyId: this.organizationPartyId
         }
 
         const resp = await FacilityService.createVirtualFacility(payload);

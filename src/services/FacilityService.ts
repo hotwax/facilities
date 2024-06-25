@@ -3,6 +3,7 @@ import logger from '@/logger';
 import { DateTime } from 'luxon';
 import { prepareOrderQuery } from '@/utils/solrHelper';
 import { UserService } from './UserService';
+import store from '@/store';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
@@ -671,6 +672,8 @@ const deleteFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const createFacilityLogin = async (payload: any): Promise <any> => {
+  const organizationPartyID = store.getters['util/getOrganizationPartyID'];
+
   try {
     //Create role type if not exists. This is required for associating facility login user to facility.
     if (!await UserService.isRoleTypeExists("FAC_LOGIN")) {
@@ -686,7 +689,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
     const params = {
       "groupName": payload.facilityName,
       "partyTypeId": "PARTY_GROUP",
-      "partyIdFrom": "COMPANY",
+      "partyIdFrom": organizationPartyID,
       "roleTypeIdFrom": "INTERNAL_ORGANIZATIO", // not a typo
       "roleTypeIdTo": "APPLICATION_USER",
       "partyRelationshipTypeId": "EMPLOYMENT"
@@ -706,7 +709,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
       "requirePasswordChange": "N",
       "enabled": "Y",
       "userPrefTypeId": "ORGANIZATION_PARTY",
-      "userPrefValue": "COMPANY"
+      "userPrefValue": organizationPartyID
     });
     if (hasError(resp)) {
       throw resp.data;
