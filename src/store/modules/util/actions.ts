@@ -368,7 +368,7 @@ const actions: ActionTree<UtilState, RootState> = {
         roleTypeId: 'INTERNAL_ORGANIZATIO'
       },
       noConditionFind: 'Y',
-      // fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+      fieldList: ["partyId"],
       viewSize: 1
     }
 

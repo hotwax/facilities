@@ -21,7 +21,7 @@ const actions: ActionTree<UserState, RootState> = {
     try {
       const {token, oms} = payload;
       dispatch("setUserInstanceUrl", oms);
-      
+
       // Getting the permissions list from server
       const permissionId = process.env.VUE_APP_PERMISSION_ID;
       // Prepare permissions list
@@ -47,16 +47,16 @@ const actions: ActionTree<UserState, RootState> = {
           return Promise.reject(new Error(permissionError));
         }
       }
-      
+
       const userProfile = await UserService.getUserProfile(token);
-      
+
       /*  ---- Guard clauses ends here --- */
-      
+
       setPermissions(appPermissions);
       if (userProfile.userTimeZone) {
         Settings.defaultZone = userProfile.userTimeZone;
       }
-      
+
       // TODO user single mutation
       commit(types.USER_INFO_UPDATED, userProfile);
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
