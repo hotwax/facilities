@@ -45,7 +45,7 @@ const mutations: MutationTree<UtilState> = {
     state.inventoryGroups = payload
   },
   [types.UTIL_ORGANIZATION_PARTY_ID_UPDATED](state, payload) {
-    state.organizationPartyID = payload
+    state.organizationPartyId = payload
   }
 }
 export default mutations;

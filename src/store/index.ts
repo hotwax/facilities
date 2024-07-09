@@ -20,7 +20,7 @@ const state: any = {
 }
 
 const persistState = createPersistedState({
-    paths: ['user', 'util.organizationPartyID'],
+    paths: ['user', 'util.organizationPartyId'],
     fetchBeforeUse: true
 })
 

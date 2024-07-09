@@ -99,7 +99,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       facilityTypes: "util/getFacilityTypes",
-      organizationPartyId: "util/getOrganizationPartyID"
+      organizationPartyId: "util/getOrganizationPartyId"
     })
   },
   data() {

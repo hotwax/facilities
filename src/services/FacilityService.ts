@@ -672,7 +672,7 @@ const deleteFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const createFacilityLogin = async (payload: any): Promise <any> => {
-  const organizationPartyID = store.getters['util/getOrganizationPartyID'];
+  const organizationPartyId = store.getters['util/getOrganizationPartyId'];
 
   try {
     //Create role type if not exists. This is required for associating facility login user to facility.
@@ -689,7 +689,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
     const params = {
       "groupName": payload.facilityName,
       "partyTypeId": "PARTY_GROUP",
-      "partyIdFrom": organizationPartyID,
+      "partyIdFrom": organizationPartyId,
       "roleTypeIdFrom": "INTERNAL_ORGANIZATIO", // not a typo
       "roleTypeIdTo": "APPLICATION_USER",
       "partyRelationshipTypeId": "EMPLOYMENT"
@@ -709,7 +709,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
       "requirePasswordChange": "N",
       "enabled": "Y",
       "userPrefTypeId": "ORGANIZATION_PARTY",
-      "userPrefValue": organizationPartyID
+      "userPrefValue": organizationPartyId
     });
     if (hasError(resp)) {
       throw resp.data;

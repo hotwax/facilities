@@ -81,7 +81,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
-      organizationPartyId: 'util/getOrganizationPartyID'
+      organizationPartyId: 'util/getOrganizationPartyId'
     })
   },
   data() {

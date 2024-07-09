@@ -10,5 +10,5 @@ export default interface UtilState {
   states: any;
   shopifyShopForProductStore: any;
   inventoryGroups: [];
-  organizationPartyID: string;
+  organizationPartyId: string;
 }
