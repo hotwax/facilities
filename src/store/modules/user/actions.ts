@@ -62,6 +62,7 @@ const actions: ActionTree<UserState, RootState> = {
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
       updateToken(token)
+      this.dispatch('util/fetchOrganizationPartyId')
 
       const productStoreId = router.currentRoute.value?.query?.productStoreId
       if (productStoreId) {

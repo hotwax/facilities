@@ -98,7 +98,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      facilityTypes: "util/getFacilityTypes"
+      facilityTypes: "util/getFacilityTypes",
+      organizationPartyId: "util/getOrganizationPartyId"
     })
   },
   data() {
@@ -162,7 +163,7 @@ export default defineComponent({
         const payload = {
           ...this.formData,
           facilityTypeId: this.selectedFacilityTypeId,
-          ownerPartyId: "COMPANY"
+          ownerPartyId: this.organizationPartyId
         }
 
         const resp = await FacilityService.createFacility(payload);
