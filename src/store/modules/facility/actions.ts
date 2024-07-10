@@ -103,28 +103,36 @@ const actions: ActionTree<FacilityState, RootState> = {
       ...payload
     }
 
-    const facilities = JSON.parse(JSON.stringify(state.facilities.list));
-    let total = 0, facilityList = [];
+    let facilities = JSON.parse(JSON.stringify(state.facilities.list));
+    let total = 0;
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
-
-      if(!hasError(resp) && resp.data.count) {
-        if(payload.viewIndex && payload.viewIndex > 0) {
-          facilityList = facilities.concat(resp.data.docs)
-        } else {
-          facilityList = resp.data.docs
+      
+      if(!hasError(resp)){
+        if(resp.data.count > 0){
+          if(payload.viewIndex && payload.viewIndex > 0) {
+            facilities = facilities.concat(resp.data.docs)
+          } else {
+            facilities = resp.data.docs
+          }
+          total = resp.data.count
         }
-        total = resp.data.count
-      } else {
+      }else {
         throw resp.data
       }
     } catch(error) {
-      logger.error(error)
+      if (payload.viewIndex === 0) { 
+        facilities = []; 
+        total = 0; 
+      } else {
+        facilities = state.facilities.list;
+        total = state.facilities.total;
+      }
     }
 
+    commit(types.FACILITY_LIST_UPDATED , { facilities, total });
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList, total });
 
     if(facilities.length) {
       await dispatch('fetchFacilitiesAdditionalInformation', payload)
