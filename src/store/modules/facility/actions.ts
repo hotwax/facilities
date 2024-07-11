@@ -125,9 +125,6 @@ const actions: ActionTree<FacilityState, RootState> = {
       if (payload.viewIndex === 0) { 
         facilities = []; 
         total = 0; 
-      } else {
-        facilities = state.facilities.list;
-        total = state.facilities.total;
       }
     }
 
