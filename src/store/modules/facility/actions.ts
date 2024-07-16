@@ -713,14 +713,12 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       const resp = await FacilityService.fetchFacilityGroups(params)
 
-      if (!hasError(resp)) {
-        if(resp.data.count > 0){
+      if (!hasError(resp) && resp.data.count > 0) {
           if (payload.viewIndex && payload.viewIndex > 0) {
             groups = groups.concat(resp.data.docs)
           } else { 
             groups = resp.data.docs
           }
-        }
         total = resp.data.count
       } else {
         throw resp.data
