@@ -109,15 +109,13 @@ const actions: ActionTree<FacilityState, RootState> = {
     try {
       const resp = await FacilityService.fetchFacilities(params)
       
-      if(!hasError(resp)){
-        if(resp.data.count > 0){
+      if(!hasError(resp) && resp.data.count > 0){
           if(payload.viewIndex && payload.viewIndex > 0) {
             facilities = facilities.concat(resp.data.docs)
           } else {
             facilities = resp.data.docs
           }
-          total = resp.data.count
-        }
+        total = resp.data.count
       }else {
         throw resp.data
       }
