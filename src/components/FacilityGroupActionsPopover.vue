@@ -71,11 +71,11 @@ export default defineComponent({
           text: translate('Apply'),
           handler: (data) => {
             const { facilityGroupName } = data
-            if (facilityGroupName.length <= 0) {
+            if (facilityGroupName.trim().length <= 0) {
               showToast(translate('Facility group name cannot be empty'));
               return false;    
             }
-            popoverController.dismiss(facilityGroupName)
+            popoverController.dismiss(facilityGroupName.trim())
           }
         }]
       })
