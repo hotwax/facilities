@@ -225,8 +225,8 @@ export default defineComponent({
       return this.getParty(partyId) ? this.getParty(partyId).roleTypeId : ''
     },
     isRoleUpdated() {
-      const lengthChanged = this.selectedPartyValues.length !== this.selectedParties.length;
-      return lengthChanged || this.selectedPartyValues.some((selectedParty: any) => {
+      const arePartiesUpdated = this.selectedPartyValues.length !== this.selectedParties.length;
+      return arePartiesUpdated || this.selectedPartyValues.some((selectedParty: any) => {
         const originalParty = this.selectedParties.find((party: any) => party.partyId === selectedParty.partyId);
         return originalParty && selectedParty.roleTypeId !== originalParty.roleTypeId;
       });
