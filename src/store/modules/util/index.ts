@@ -18,7 +18,8 @@ const utilModule: Module<UtilState, RootState> = {
     countries: [],
     states: {},
     shopifyShopForProductStore: {},
-    inventoryGroups: []
+    inventoryGroups: [],
+    organizationPartyId: ""
   },
   getters,
   actions,

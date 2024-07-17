@@ -38,6 +38,9 @@ const getters: GetterTree<UtilState, RootState> = {
   },
   getInventoryGroups(state) {
     return state.inventoryGroups;
+  },
+  getOrganizationPartyId(state) {
+    return state.organizationPartyId;
   }
 }
 export default getters;
