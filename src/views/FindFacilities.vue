@@ -228,6 +228,10 @@ export default defineComponent({
     // from the details page and again coming to the list page, the UI does not gets updated when fetching information in
     // the mounted hook
     this.isScrollingEnabled = false;
+    if(this.router.currentRoute.value?.query?.productStoreId) {
+      this.query.productStoreId = this.router.currentRoute.value.query.productStoreId
+      await this.store.dispatch('facility/updateFacilityQuery', this.query)
+    }
     await this.fetchFacilities();
   },
   methods: {

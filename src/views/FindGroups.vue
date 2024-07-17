@@ -41,7 +41,7 @@
               <ion-icon :icon="bagHandleOutline" slot="start"/>
               <ion-label>{{ translate('Product stores') }}</ion-label>
               <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">
-                {{ group.productStoreCount }}
+                {{ group.productStoreCount || 0 }}
               </ion-chip>
             </ion-item>
             <ion-item>
