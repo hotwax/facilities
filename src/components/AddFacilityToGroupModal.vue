@@ -22,16 +22,17 @@
       </div>
       <div v-else>
         <ion-item v-for="(facility, index) in facilities" :key="index" @click="updateSelectedFacilities(facility.facilityId)" lines="none">
-          <ion-label>
-            {{ facility.facilityName }}
-            <p>{{ facility.facilityId }}</p>
-          </ion-label>
-          <ion-checkbox :checked="isFacilitySelected(facility.facilityId)" />
+          <ion-checkbox :checked="isFacilitySelected(facility.facilityId)">
+            <ion-label>
+              {{ facility.facilityName }}
+              <p>{{ facility.facilityId }}</p>
+            </ion-label>
+          </ion-checkbox>
         </ion-item>
       </div>
     </ion-list>
     <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button @click="confirmSave()">
+      <ion-fab-button :disabled="!areFacilitiesUpdated()" @click="confirmSave()">
         <ion-icon :icon="saveOutline" />
       </ion-fab-button>
     </ion-fab>
@@ -122,13 +123,10 @@ export default defineComponent({
         "inputFields": {
           ...filters
         },
-        "entityName": "FacilityView",
+        "entityName": "Facility",
         "noConditionFind": "Y",
         "distinct": "Y",
-        "fromDateName": "facilityGroupFromDate",
-        "thruDateName": "facilityGroupThruDate",
-        "filterByDate": "Y",
-        "fieldList": ["facilityId", "facilityName", "fromDate"],
+        "fieldList": ["facilityId", "facilityName"],
         // By default we show only 20 facilities, others get rendered on search query.
         "viewSize": 20
       }
@@ -219,6 +217,11 @@ export default defineComponent({
       };
       await this.store.dispatch('facility/fetchFacilityGroups', payload)
     },
+    areFacilitiesUpdated() {
+      if(this.selectedFacilities.length !== this.selectedFacilityValues.length) return true;
+
+      return this.selectedFacilityValues.some((selectedFacility: any) => !this.selectedFacilities.find((facility: any) => facility.facilityId === selectedFacility.facilityId))
+    }
   },
   setup() {
     const store = useStore();

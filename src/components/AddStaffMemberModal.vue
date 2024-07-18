@@ -19,11 +19,11 @@
     <ion-list v-else>
       <ion-list-header>{{ translate("Staff") }}</ion-list-header>
       <ion-item v-for="(party, index) in parties" :key="index">
-        <ion-label>
-          {{ party.fullName }}
-          <p>{{ party.partyId }}</p>
-        </ion-label>
         <ion-select interface="popover" :placeholder="translate('Select')" :value="getPartyRoleTypeId(party.partyId)" @ion-change="updateSelectedParties($event, party.partyId)" required>
+          <ion-label slot="label">
+            {{ party.fullName }}
+            <p>{{ party.partyId }}</p>
+          </ion-label>
           <ion-select-option v-for="(description, roleTypeId) in partyRoles" :key='roleTypeId' :value="roleTypeId">{{ description }}</ion-select-option>
         </ion-select>
       </ion-item>
@@ -31,7 +31,7 @@
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveParties">
+    <ion-fab-button :disabled="!isRoleUpdated()" @click="saveParties">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -223,7 +223,14 @@ export default defineComponent({
     },
     getPartyRoleTypeId(partyId: string) {
       return this.getParty(partyId) ? this.getParty(partyId).roleTypeId : ''
-    }
+    },
+    isRoleUpdated() {
+      const arePartiesUpdated = this.selectedPartyValues.length !== this.selectedParties.length;
+      return arePartiesUpdated || this.selectedPartyValues.some((selectedParty: any) => {
+        const originalParty = this.selectedParties.find((party: any) => party.partyId === selectedParty.partyId);
+        return originalParty && selectedParty.roleTypeId !== originalParty.roleTypeId;
+      });
+    },
   },
   async mounted() {
     await this.findParties()

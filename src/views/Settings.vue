@@ -2,7 +2,6 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Settings") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -37,7 +36,7 @@
       </div>
 
       <section>
-        <OmsInstanceNavigator />
+        <DxpOmsInstanceNavigator />
       </section>
 
       <hr />
@@ -45,24 +44,8 @@
       <DxpAppVersionInfo />
 
       <section>
-        <ion-card>
-          <ion-card-header>
-            <ion-card-title>
-              {{ translate('Timezone') }}
-            </ion-card-title>
-          </ion-card-header>
-
-          <ion-card-content>
-            {{ translate('The timezone you select is used to ensure automations you schedule are always accurate to the time you select.') }}
-          </ion-card-content>
-
-          <ion-item lines="none">
-            <ion-label> {{ userProfile && userProfile.userTimeZone ? userProfile.userTimeZone : '-' }} </ion-label>
-            <ion-button @click="changeTimeZone()" slot="end" fill="outline" color="dark">{{ translate("Change") }}</ion-button>
-          </ion-item>
-        </ion-card>
-
-        <LanguageSwitcher />
+        <DxpTimeZoneSwitcher @timeZoneUpdated="timeZoneUpdated" />
+        <DxpLanguageSwitcher />
       </section>
     </ion-content>
   </ion-page>
@@ -71,10 +54,8 @@
 <script lang="ts">
 import { 
   IonAvatar,
-  IonBackButton,
   IonButton, 
   IonCard, 
-  IonCardContent,
   IonCardHeader,
   IonCardTitle,
   IonCardSubtitle,
@@ -82,17 +63,14 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
-  IonLabel,
   IonPage,
   IonTitle,
   IonToolbar,
-  modalController
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
 import { codeWorkingOutline, ellipsisVerticalOutline, globeOutline, openOutline, timeOutline } from 'ionicons/icons'
 import { mapGetters, useStore } from 'vuex';
 import { useRouter } from 'vue-router';
-import TimezoneModal from '@/components/TimezoneModal.vue'
 import { translate } from '@hotwax/dxp-components';
 import { Actions, hasPermission } from '@/authorization'
 import { DateTime } from 'luxon';
@@ -102,10 +80,8 @@ export default defineComponent({
   name: 'Settings',
   components: {
     IonAvatar,
-    IonBackButton,
     IonButton,
     IonCard,
-    IonCardContent,
     IonCardHeader,
     IonCardTitle,
     IonCardSubtitle,
@@ -113,7 +89,6 @@ export default defineComponent({
     IonHeader,
     IonIcon,
     IonItem,
-    IonLabel,
     IonPage,
     IonTitle,
     IonToolbar,
@@ -151,11 +126,8 @@ export default defineComponent({
     goToLaunchpad() {
       window.location.href = `${process.env.VUE_APP_LOGIN_URL}`
     },
-    async changeTimeZone() {
-      const timeZoneModal = await modalController.create({
-        component: TimezoneModal,
-      });
-      return timeZoneModal.present();
+    async timeZoneUpdated(tzId: string) {
+      await this.store.dispatch("user/setUserTimeZone", tzId)
     },
     getDateTime(time: any) {
       return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);

@@ -252,6 +252,7 @@ const actions: ActionTree<UtilState, RootState> = {
       entityName: 'GeoAssocAndGeoFrom',
       fieldList: ['geoName', 'geoId', 'geoCode'],
       noConditionFind: 'Y',
+      viewSize: 250
     } as any
 
     try {
@@ -285,7 +286,7 @@ const actions: ActionTree<UtilState, RootState> = {
       entityName: 'GeoAssocAndGeoTo',
       fieldList: ['geoName', 'geoId', 'wellKnownText'],
       noConditionFind: 'Y',
-      viewSize: 100
+      viewSize: 250
     } as any
 
     try {
@@ -329,7 +330,7 @@ const actions: ActionTree<UtilState, RootState> = {
       logger.error(error)
     }
     commit(types.UTIL_SHOPIFY_SHOP_UPDATED, shopifyShops)
-    return shopifyShops[0].shopifyShopId
+    return shopifyShops[0]?.shopifyShopId
   },
 
   async fetchInventoryGroups({ commit }) {
@@ -358,6 +359,32 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_INVENTORY_GROUP_UPDATED, inventoryGroups)
   },
 
+  async fetchOrganizationPartyId({ commit }) {
+    let partyId = ""
+
+    const params = {
+      entityName: "PartyRole",
+      inputFields: {
+        roleTypeId: 'INTERNAL_ORGANIZATIO'
+      },
+      noConditionFind: 'Y',
+      fieldList: ["partyId"],
+      viewSize: 1
+    }
+
+    try {
+      const resp = await UtilService.fetchOrganizationPartyId(params)
+      if (!hasError(resp)) {
+        partyId = resp.data.docs[0]?.partyId
+      } else {
+        throw resp.data
+      }
+    } catch (error) {
+      logger.error(error)
+    }
+    commit(types.UTIL_ORGANIZATION_PARTY_ID_UPDATED, partyId)
+  },
+
   clearUtilState({ commit }) {
     commit(types.UTIL_PRODUCT_STORES_UPDATED, [])
     commit(types.UTIL_FACILITY_TYPES_UPDATED, [])
@@ -367,6 +394,7 @@ const actions: ActionTree<UtilState, RootState> = {
     commit(types.UTIL_EXTERNAL_MAPPING_TYPES_UPDATED, {})
     commit(types.UTIL_SHOPIFY_SHOP_UPDATED, [])
     commit(types.UTIL_INVENTORY_GROUP_UPDATED, [])
+    commit(types.UTIL_ORGANIZATION_PARTY_ID_UPDATED, "")
   },
 }
 

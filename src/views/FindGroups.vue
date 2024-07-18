@@ -2,12 +2,11 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Groups") }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content id="filter-content">
+    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
@@ -16,10 +15,7 @@
               {{ translate('System groups') }}
             </ion-list-header>
             <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
-              <ion-label>
-                {{ groupType.description ? groupType.description : groupType.facilityGroupTypeId }}
-              </ion-label>
-              <ion-select v-if="groups.length" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', { count: getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length }) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).map[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
+              <ion-select v-if="groups.length" :label="groupType.description ? groupType.description : groupType.facilityGroupTypeId" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', { count: getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length }) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).map[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
                 <ion-select-option :value="group.facilityGroupId" :disabled="group.facilityGroupTypeId && group.facilityGroupTypeId !== groupType.facilityGroupTypeId" :key="group.facilityGroupId" v-for="group in groups">
                   {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
                 </ion-select-option>
@@ -41,7 +37,15 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
+            <ion-item :lines="group.description ? 'inset' : 'none'">
+              <ion-icon :icon="bagHandleOutline" slot="start"/>
+              <ion-label>{{ translate('Product stores') }}</ion-label>
+              <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">
+                {{ group.productStoreCount || 0 }}
+              </ion-chip>
+            </ion-item>
             <ion-item>
+              <ion-icon :icon="businessOutline" slot="start"/>
               <ion-label>{{ translate('Facilities') }}</ion-label>
               <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
                 {{ group.facilityCount }}
@@ -51,12 +55,6 @@
               <ion-label>{{ group.description }}</ion-label>
             </ion-item>
           </ion-card> 
-          <ion-card class="button-card">
-            <ion-button color="medium" fill="clear" @click="openCreateFacilityGroupModal()">
-              <ion-icon :icon="addOutline" slot="start"/>
-              {{ translate('Create group') }}
-            </ion-button>
-          </ion-card>
         </main>
         <main v-else>
           <p class="empty-state">{{ translate("No groups found") }}</p>
@@ -66,13 +64,19 @@
       <ion-infinite-scroll
         @ionInfinite="loadMoreGroups($event)"
         threshold="100px"
-        :disabled="!isScrollable"
+        v-show="isScrollable"
+        ref="infiniteScrollRef"
       >
         <ion-infinite-scroll-content
           loading-spinner="crescent"
           :loading-text="translate('Loading')"
         />
       </ion-infinite-scroll>
+      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+        <ion-fab-button @click="openCreateFacilityGroupModal()">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -80,11 +84,12 @@
 <script lang="ts">
 import {
   IonButton,
-  IonBackButton,
   IonBadge,
   IonCard,
   IonChip,
   IonContent,
+  IonFab,
+  IonFabButton,
   IonHeader,
   IonIcon,
   IonInfiniteScroll,
@@ -103,7 +108,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { ellipsisVerticalOutline, addOutline } from 'ionicons/icons';
+import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
@@ -115,16 +120,18 @@ import { hasError } from '@/adapter';
 import logger from '@/logger';
 import emitter from '@/event-bus';
 import GroupActionsPopover from '@/components/GroupActionsPopover.vue';
+import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 
 export default defineComponent({
   name: 'FindGroups',
   components: {
     IonButton,
-    IonBackButton,
     IonBadge,
     IonCard,
     IonChip,
     IonContent,
+    IonFab,
+    IonFabButton,
     IonHeader,
     IonIcon,
     IonInfiniteScroll,
@@ -140,6 +147,11 @@ export default defineComponent({
     IonTitle,
     IonToolbar
   },
+  data() {
+    return {
+      isScrollingEnabled: false
+    }
+  },
   computed: {
     ...mapGetters({
       groups: "facility/getFacilityGroups",
@@ -151,6 +163,9 @@ export default defineComponent({
   async mounted() {
     await this.fetchGroups();
     await this.store.dispatch('util/fetchFacilityGroupTypes')
+  },
+  async ionViewWillEnter() {
+    this.isScrollingEnabled = false;
   },
   methods: {
     async updateQuery() {
@@ -166,14 +181,29 @@ export default defineComponent({
       };
       await this.store.dispatch('facility/fetchFacilityGroups', payload)
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreGroups(event: any) {
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isScrollable)) {
+        await event.target.complete();
+      }
       this.fetchGroups(
         undefined,
         Math.ceil(
           this.groups?.length / (process.env.VUE_APP_VIEW_SIZE as any)
         ).toString()
-      ).then(() => {
-        event.target.complete();
+      ).then(async () => {
+        await event.target.complete();
       });
     },
     async openCreateFacilityGroupModal() {
@@ -269,6 +299,14 @@ export default defineComponent({
 
       await this.fetchGroups()
       emitter.emit('dismissLoader')
+    },
+    async openAddProductStoreToGroupModal(group: any) {
+      const addProductStoreToGroupModal = await modalController.create({
+        component: AddProductStoreToGroupModal,
+        componentProps: { group }
+      })
+
+      addProductStoreToGroupModal.present()
     }
   },
   setup() {
@@ -277,6 +315,8 @@ export default defineComponent({
 
     return {
       addOutline,
+      bagHandleOutline,
+      businessOutline,
       customSort,
       ellipsisVerticalOutline,
       router,

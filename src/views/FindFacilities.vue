@@ -4,7 +4,6 @@
 
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-back-button slot="start" default-href="/" />
         <ion-title>{{ translate("Find Facilities") }}</ion-title>
         <ion-buttons slot="end" class="mobile-only">
           <ion-menu-button menu="end">
@@ -14,7 +13,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content id="filter-content">
+    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search facilities')" v-model="query.queryString" @keyup.enter="updateQuery()" />
@@ -24,16 +23,14 @@
           <ion-list>
             <ion-item lines="none">
               <ion-icon :icon="globeOutline" slot="start" />
-              <ion-label>{{ translate("Product Store") }}</ion-label>
-              <ion-select interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
+              <ion-select :label="translate('Product Store')" interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName }}</ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item lines="none">
               <ion-icon :icon="businessOutline" slot="start" />
-              <ion-label>{{ translate("Type") }}</ion-label>
-              <ion-select interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
+              <ion-select :label="translate('Type')" interface="popover" v-model="query.facilityTypeId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypes">
                   {{ type.description }}
@@ -42,8 +39,7 @@
             </ion-item>
             <ion-item lines="none">
               <ion-icon :icon="albumsOutline" slot="start" />
-              <ion-label>{{ translate("Group") }}</ion-label>
-              <ion-select interface="popover" v-model="query.facilityGroupId" @ionChange="updateQuery()">
+              <ion-select :label="translate('Group')" interface="popover" v-model="query.facilityGroupId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
                 <ion-select-option :value="group.facilityGroupId" :key="group.facilityGroupId" v-for="group in facilityGroups">
                   {{ group.facilityGroupName }}
@@ -109,11 +105,20 @@
           </ion-fab-button>
         </ion-fab-list>
       </ion-fab>
-
+        <!--
+        When searching for a keyword, and if the user moves to the last item, then the didFire value inside infinite scroll becomes true and thus the infinite scroll does not trigger again on the same page(https://github.com/hotwax/users/issues/84).
+        Also if we are at the section that has been loaded by infinite-scroll and then move to the details page then the list infinite scroll does not work after coming back to the page
+        In ionic v7.6.0, an issue related to infinite scroll has been fixed that when more items can be added to the DOM, but infinite scroll does not fire as the window is not completely filled with the content(https://github.com/ionic-team/ionic-framework/issues/18071).
+        The above fix in ionic 7.6.0 is resulting in the issue of infinite scroll not being called again.
+        To fix this we have maintained another variable `isScrollingEnabled` to check whether the scrolling can be performed or not.
+        If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
+        We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
+        -->
       <ion-infinite-scroll
         @ionInfinite="loadMoreFacilities($event)"
         threshold="100px"
-        :disabled="!isScrollable"
+        v-show="isScrollable"
+        ref="infiniteScrollRef"
       >
         <ion-infinite-scroll-content
           loading-spinner="crescent"
@@ -126,7 +131,6 @@
 
 <script lang="ts">
 import {
-  IonBackButton,
   IonButtons,
   IonChip,
   IonContent,
@@ -177,7 +181,6 @@ export default defineComponent({
   name: 'FindFacilities',
   components: {
     FacilityFilters,
-    IonBackButton,
     IonButtons,
     IonChip,
     IonContent,
@@ -202,7 +205,8 @@ export default defineComponent({
   },
   data() {
     return {
-      facilityGroups: [] as any
+      facilityGroups: [] as any,
+      isScrollingEnabled: false
     }
   },
   computed: {
@@ -217,12 +221,17 @@ export default defineComponent({
   async mounted() {
     // We only need to fetch those types whose parent is not virtual facility
     await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY', parentTypeId_op: 'notEqual', facilityTypeId: 'VIRTUAL_FACILITY', facilityTypeId_op: 'notEqual' }), this.store.dispatch('util/fetchProductStores')])
-    await this.fetchFacilityGroups();
   },
   async ionViewWillEnter() {
     // fetching facilities information in the ionViewWillEnter hook as when updating facilityGroup or fulfillment limit
     // from the details page and again coming to the list page, the UI does not gets updated when fetching information in
     // the mounted hook
+    await this.fetchFacilityGroups();
+    this.isScrollingEnabled = false;
+    if(this.router.currentRoute.value?.query?.productStoreId) {
+      this.query.productStoreId = this.router.currentRoute.value.query.productStoreId
+      await this.store.dispatch('facility/updateFacilityQuery', this.query)
+    }
     await this.fetchFacilities();
   },
   methods: {
@@ -242,14 +251,29 @@ export default defineComponent({
     async viewFacilityDetails(facilityId: string) {
       this.router.push({ path: `/facility-details/${facilityId}` })
     },
+    enableScrolling() {
+      const parentElement = (this as any).$refs.contentRef.$el
+      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
+      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
+      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
+      if(distanceFromInfinite < 0) {
+        this.isScrollingEnabled = false;
+      } else {
+        this.isScrollingEnabled = true;
+      }
+    },
     async loadMoreFacilities(event: any) {
+      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
+      if(!(this.isScrollingEnabled && this.isScrollable)) {
+        await event.target.complete();
+      }
       this.fetchFacilities(
         undefined,
         Math.ceil(
           this.facilities?.length / (process.env.VUE_APP_VIEW_SIZE as any)
         ).toString()
-      ).then(() => {
-        event.target.complete();
+      ).then(async () => {
+        await event.target.complete();
       });
     },
     async changeOrderLimitPopover(ev: Event, facility: any) {

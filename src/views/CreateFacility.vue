@@ -2,7 +2,7 @@
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-back-button default-href="/find-facilities" slot="start" />
+        <ion-back-button default-href="/tabs/find-facilities" slot="start" />
         <ion-title>{{ translate("Add Store") }}</ion-title>
       </ion-toolbar>
     </ion-header>
@@ -14,33 +14,22 @@
           </ion-card-header>
           <ion-list>
             <ion-item>
-              <ion-label>{{ translate("Type") }}</ion-label>
-              <ion-select interface="popover" v-model="selectedFacilityTypeId">
+              <ion-select :label="translate('Type')" interface="popover" v-model="selectedFacilityTypeId">
                 <ion-select-option :value="facilityTypeId" :key="facilityTypeId" v-for="(type, facilityTypeId) in facilityTypesByParentTypeId">
                   {{ type.description ? type.description : facilityTypeId }}
                 </ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('Name') }} <ion-text color="danger">*</ion-text>
-              </ion-label>
-              <ion-input @ionBlur="setFacilityId($event)" v-model="formData.facilityName" />
+              <ion-input label-placement="floating" @ionBlur="setFacilityId($event)" v-model="formData.facilityName">
+                <div slot="label">{{ translate('Name') }} <ion-text color="danger">*</ion-text></div>
+              </ion-input>
             </ion-item>
-            <ion-item ref="facilityId">
-              <ion-label position="floating">
-                {{ translate('Internal ID') }}
-              </ion-label>
-              <ion-input v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" />
-              <ion-note slot="error">
-                {{ translate('Internal ID cannot be more than 20 characters.') }}
-              </ion-note>
+            <ion-item lines="none">
+              <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" error-text="translate('Internal ID cannot be more than 20 characters.')" />
             </ion-item>
             <ion-item>
-              <ion-label position="floating">
-                {{ translate('External ID') }}
-              </ion-label>
-              <ion-input v-model="formData.externalId" />
+              <ion-input :label="translate('External ID')" label-placement="floating" v-model="formData.externalId" />
             </ion-item>
           </ion-list>
         </ion-card>
@@ -68,9 +57,7 @@ import {
   IonIcon,
   IonInput,
   IonItem,
-  IonLabel,
   IonList,
-  IonNote,
   IonPage,
   IonSelect,
   IonSelectOption,
@@ -101,9 +88,7 @@ export default defineComponent({
     IonIcon,
     IonInput,
     IonItem,
-    IonLabel,
     IonList,
-    IonNote,
     IonPage,
     IonSelect,
     IonSelectOption,
@@ -113,7 +98,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      facilityTypes: "util/getFacilityTypes"
+      facilityTypes: "util/getFacilityTypes",
+      organizationPartyId: "util/getOrganizationPartyId"
     })
   },
   data() {
@@ -177,13 +163,14 @@ export default defineComponent({
         const payload = {
           ...this.formData,
           facilityTypeId: this.selectedFacilityTypeId,
-          ownerPartyId: "COMPANY"
+          ownerPartyId: this.organizationPartyId
         }
 
         const resp = await FacilityService.createFacility(payload);
         if (!hasError(resp)) {
           const { facilityId } = resp.data
           showToast(translate("Facility created successfully."))
+          this.store.dispatch('facility/updateCurrentFacility', payload),
           this.router.replace(`/add-facility-address/${facilityId}`)
         } else {
           throw resp.data;

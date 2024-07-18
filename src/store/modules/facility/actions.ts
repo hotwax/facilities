@@ -85,12 +85,8 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     if (state.facilityQuery.facilityGroupId) {
       filters['facilityGroupId'] = state.facilityQuery.facilityGroupId
-      filters['facilityGroupId_op'] = 'equals'
-      filters['facilityGroupId_grp'] = '2'
-      filters['primaryFacilityGroupId'] = state.facilityQuery.facilityGroupId
-      filters['primaryFacilityGroupId_op'] = 'equals'
-      filters['primaryFacilityGroupId_grp'] = '2'
-      filters['grp_op_2'] = 'OR'
+      filters['facilityGroupId_op'] = 'equals',
+      filters['filterByDate'] = 'Y'
     }
 
     const params = {
@@ -103,21 +99,23 @@ const actions: ActionTree<FacilityState, RootState> = {
       "distinct": "Y",
       "fromDateName": "facilityGroupFromDate",
       "thruDateName": "facilityGroupThruDate",
-      "filterByDate": "Y",
       "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId'],
       ...payload
     }
 
-    let facilities = [], total = 0, facilityList = [];
+    const facilities = JSON.parse(JSON.stringify(state.facilities.list));
+    let total = 0, facilityList = [];
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
 
       if(!hasError(resp) && resp.data.count) {
-        facilities = resp.data.docs
+        if(payload.viewIndex && payload.viewIndex > 0) {
+          facilityList = facilities.concat(resp.data.docs)
+        } else {
+          facilityList = resp.data.docs
+        }
         total = resp.data.count
-
-        if(payload.viewIndex && payload.viewIndex > 0) facilityList = JSON.parse(JSON.stringify(state.facilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -126,7 +124,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList.length ? facilityList : facilities, total });
+    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList, total });
 
     if(facilities.length) {
       await dispatch('fetchFacilitiesAdditionalInformation', payload)
@@ -180,7 +178,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
-    if(current?.facilityId && !payload.skipState) {
+    if(current?.facilityId && !payload.skipState && current["groupInformation"]) {
       // As inventory channels are fetched while fetching additional facility info
       // But here we already have additional facility info, so just getting and adding inventory groups to current.
       const inventoryGroups = rootGetters['util/getInventoryGroups'];
@@ -237,7 +235,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName'],
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
       viewSize: 1
     }
 
@@ -546,13 +544,14 @@ const actions: ActionTree<FacilityState, RootState> = {
   },
 
   async fetchVirtualFacilities({ commit, dispatch, state }, payload) {
-    let facilities = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
 
     let archivedFacilityIds = []
     if (state.archivedFacilities.length) {
       archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities)).map((facility: any) => facility.facilityId)
     }
+    
+    let facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)), total = 0;
 
     try {
       const params = {
@@ -568,17 +567,20 @@ const actions: ActionTree<FacilityState, RootState> = {
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
+        distinct: 'Y',
         fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
         ...payload
       }
 
       const resp = await FacilityService.fetchFacilities(params)
 
-      if (!hasError(resp) && resp.data.count) {
-        facilities = resp.data.docs
+      if (!hasError(resp) && resp.data.count) {    
+        if (payload.viewIndex && payload.viewIndex > 0){
+          facilities = facilities.concat(resp.data.docs)
+        } else {
+          facilities = resp.data.docs
+        }
         total = resp.data.count
-
-        if (payload.viewIndex && payload.viewIndex > 0) facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)).concat(facilities)
       } else {
         throw resp.data
       }
@@ -675,10 +677,9 @@ const actions: ActionTree<FacilityState, RootState> = {
 
   updateArchivedFacilities({ commit }, facilities) {
     commit(types.FACILITY_ARCHIVED_UPDATED, facilities)
-  },
+  },  
 
   async fetchFacilityGroups({ commit, state, dispatch }, payload) {
-    let groups = [], total = 0;
     if (payload.viewIndex === 0) emitter.emit("presentLoader");
 
     const filters = {} as any
@@ -694,6 +695,9 @@ const actions: ActionTree<FacilityState, RootState> = {
       filters['facilityGroupName_ic'] = 'Y'
       filters['facilityGroupName_grp'] = '2'
     }
+
+    let groups = JSON.parse(JSON.stringify(state.facilityGroups.list)) , total = 0;
+
     try {
       const params = {
         inputFields: {
@@ -709,12 +713,13 @@ const actions: ActionTree<FacilityState, RootState> = {
       const resp = await FacilityService.fetchFacilityGroups(params)
 
       if (!hasError(resp) && resp.data.count) {
-        groups = resp.data.docs
-        total = resp.data.count
 
         if (payload.viewIndex && payload.viewIndex > 0) {
-          groups = JSON.parse(JSON.stringify(state.facilityGroups.list)).concat(groups)
+          groups = groups.concat(resp.data.docs)
+        } else { 
+          groups = resp.data.docs
         }
+        total = resp.data.count
       } else {
         throw resp.data
       }
@@ -744,9 +749,16 @@ const actions: ActionTree<FacilityState, RootState> = {
     stateGroups = stateGroups.filter((group: any) => !facilityGroupIds.includes(group.facilityGroupId))
 
     try {
-      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(facilityGroupIds)
+      // facilityGroupIds is list of ids which gets empty at the end of below api call
+      // We again want's to use this facilityGroupIds in another api hence deep cloning it.
+      const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(JSON.parse(JSON.stringify(facilityGroupIds)))
       groups.map((group: any) => {
         group.facilityCount = facilityCountByGroup[group.facilityGroupId] || 0
+      })
+
+      const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup(facilityGroupIds)
+      groups.map((group: any) => {
+        group.productStoreCount = productStoreCountByGroup[group.facilityGroupId] || 0
       })
     } catch (error) {
       logger.error(error)

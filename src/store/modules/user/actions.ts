@@ -10,6 +10,7 @@ import logger from '@/logger'
 import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from '@/authorization'
 import { translate, useAuthStore, useUserStore } from '@hotwax/dxp-components'
 import emitter from '@/event-bus'
+import router from '@/router'
 
 const actions: ActionTree<UserState, RootState> = {
 
@@ -61,12 +62,18 @@ const actions: ActionTree<UserState, RootState> = {
       commit(types.USER_PERMISSIONS_UPDATED, appPermissions);
       commit(types.USER_TOKEN_CHANGED, { newToken: token })
       updateToken(token)
+      this.dispatch('util/fetchOrganizationPartyId')
+
+      const productStoreId = router.currentRoute.value?.query?.productStoreId
+      if (productStoreId) {
+        return `/tabs/find-facilities?productStoreId=${productStoreId}`;
+      }
     } catch (err: any) {
       // If any of the API call in try block has status code other than 2xx it will be handled in common catch block.
       // TODO Check if handling of specific status codes is required.
       showToast(translate('Something went wrong while login. Please contact administrator.'));
       logger.error("error: ", err.toString());
-      return Promise.reject(new Error(err))
+      return Promise.reject(err instanceof Object ? err : new Error(err));
     }
   },
 
@@ -125,22 +132,11 @@ const actions: ActionTree<UserState, RootState> = {
   /**
    * Update user timeZone
    */
-  async setUserTimeZone({ state, commit }, payload) {
+  async setUserTimeZone ( { state, commit }, timeZoneId) {
     const current: any = state.current;
-    if(current.userTimeZone !== payload.tzId) {
-      try {
-        const resp = await UserService.setUserTimeZone(payload)
-        if (resp.status === 200 && !hasError(resp)) {
-          const current: any = state.current;
-          current.userTimeZone = payload.tzId;
-          commit(types.USER_INFO_UPDATED, current);
-          Settings.defaultZone = current.userTimeZone;
-          showToast(translate("Time zone updated successfully"));
-        }
-      } catch(err) {
-        logger.error('Failed to update timeZone')
-      }
-    }
+    current.userTimeZone = timeZoneId;
+    commit(types.USER_INFO_UPDATED, current);
+    Settings.defaultZone = current.userTimeZone;
   },
 
   // Set User Instance Url

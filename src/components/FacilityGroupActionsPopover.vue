@@ -10,6 +10,9 @@
       <ion-item button @click="updateGroupDescriptionModal()">
         {{ group?.description ? translate("Edit description") : translate("Add description") }}
       </ion-item>
+      <ion-item button @click="updateGroupTypeModal()">
+        {{ translate("Select type") }}
+      </ion-item>
       <ion-item button @click="deleteFacilityGroup()" lines="none">
         {{ translate("Delete") }}
       </ion-item>
@@ -33,8 +36,10 @@ import { showToast } from '@/utils';
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { mapGetters, useStore } from "vuex";
+import { DateTime } from 'luxon';
 import logger from "@/logger";
-import FacilityGroupDescriptionModal from "./FacilityGroupDescriptionModal.vue";
+import FacilityGroupDescriptionModal from "@/components/FacilityGroupDescriptionModal.vue";
+import GroupTypeModal from "@/components/GroupTypeModal.vue";
 
 export default defineComponent({
   name: "FacilityGroupActionsPopover",
@@ -66,7 +71,11 @@ export default defineComponent({
           text: translate('Apply'),
           handler: (data) => {
             const { facilityGroupName } = data
-            popoverController.dismiss(facilityGroupName)
+            if (facilityGroupName.trim().length <= 0) {
+              showToast(translate('Facility group name cannot be empty'));
+              return false;    
+            }
+            popoverController.dismiss(facilityGroupName.trim())
           }
         }]
       })
@@ -95,9 +104,9 @@ export default defineComponent({
       try {
         //First delete all the Inactive FacilityGroupMember records
         await this.deleteInactiveFacilityGroupAssociations(this.group.facilityGroupId);
-
-        const resp = await FacilityService.deleteFacilityGroup({
-          facilityGroupId: this.group.facilityGroupId
+        const resp = await FacilityService.updateFacilityGroup({
+          facilityGroupId: this.group.facilityGroupId,
+          thruDate: DateTime.now().toMillis()
         }) as any
 
         if (!hasError(resp)) {
@@ -131,6 +140,15 @@ export default defineComponent({
           }
         });
       })
+    },
+    async updateGroupTypeModal() {
+      const updateGroupTypeModal = await modalController.create({
+        component: GroupTypeModal,
+        componentProps: { facilityGroup: this.group }
+      })
+
+      await popoverController.dismiss()
+      updateGroupTypeModal.present()
     }
   },
   setup() {
