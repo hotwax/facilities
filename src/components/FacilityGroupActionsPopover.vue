@@ -36,6 +36,7 @@ import { showToast } from '@/utils';
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { mapGetters, useStore } from "vuex";
+import { DateTime } from 'luxon';
 import logger from "@/logger";
 import FacilityGroupDescriptionModal from "@/components/FacilityGroupDescriptionModal.vue";
 import GroupTypeModal from "@/components/GroupTypeModal.vue";
@@ -70,7 +71,11 @@ export default defineComponent({
           text: translate('Apply'),
           handler: (data) => {
             const { facilityGroupName } = data
-            popoverController.dismiss(facilityGroupName)
+            if (facilityGroupName.trim().length <= 0) {
+              showToast(translate('Facility group name cannot be empty'));
+              return false;    
+            }
+            popoverController.dismiss(facilityGroupName.trim())
           }
         }]
       })
@@ -99,9 +104,9 @@ export default defineComponent({
       try {
         //First delete all the Inactive FacilityGroupMember records
         await this.deleteInactiveFacilityGroupAssociations(this.group.facilityGroupId);
-
-        const resp = await FacilityService.deleteFacilityGroup({
-          facilityGroupId: this.group.facilityGroupId
+        const resp = await FacilityService.updateFacilityGroup({
+          facilityGroupId: this.group.facilityGroupId,
+          thruDate: DateTime.now().toMillis()
         }) as any
 
         if (!hasError(resp)) {

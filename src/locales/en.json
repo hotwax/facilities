@@ -101,6 +101,7 @@
   "Facility external ID updated.": "Facility external ID updated.",
   "Facility group deleted.": "Facility group deleted.",
   "Facility group type updated successfully.": "Facility group type updated successfully.",
+  "Facility group name cannot be empty": "Facility group name cannot be empty",
   "Facility ID": "Facility ID",
   "Facility latitude and longitude removed successfully.": "Facility latitude and longitude removed successfully.",
   "Facility latitude and longitude updated successfully.": "Facility latitude and longitude updated successfully.",
