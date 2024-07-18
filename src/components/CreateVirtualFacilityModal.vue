@@ -137,9 +137,13 @@ export default defineComponent({
         } else {
           throw resp.data;
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error(error)
-        showToast(translate('Failed to create parking.'))
+        if(error?.response?.data?.error?.message) {
+          showToast(error.response.data.error.message)
+        } else {
+          showToast(translate('Failed to create parking.'))
+        }
       }
       modalController.dismiss()
     },
