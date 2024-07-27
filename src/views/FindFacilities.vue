@@ -405,7 +405,11 @@ export default defineComponent({
 .list-item {
   --columns-desktop: 4;
 }
-
+@media screen and (min-width: 1000px) {
+main {
+  padding-bottom: 3.5rem;
+}
+}
 config-note {
   display: block;
   text-align: center;
