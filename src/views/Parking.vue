@@ -234,10 +234,8 @@ main {
   margin: auto;
 }
 
-@media screen and (min-width: 1000px) {
-  main {
-    padding-bottom: 5rem;
-  }
+main {
+  padding-bottom: 80px;
 }
 
 </style>

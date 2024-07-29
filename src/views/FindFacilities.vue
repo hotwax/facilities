@@ -405,10 +405,9 @@ export default defineComponent({
 .list-item {
   --columns-desktop: 4;
 }
-@media screen and (min-width: 1000px) {
+
 main {
-  padding-bottom: 3.5rem;
-}
+  padding-bottom: 80px;
 }
 config-note {
   display: block;

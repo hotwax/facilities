@@ -338,9 +338,8 @@ main:has(ion-card) {
   align-items: start;
 }
 
-@media screen and (min-width: 1000px) {
-  main {
-    padding-bottom: 4rem;
-  }
+main {
+  padding-bottom: 80px;
 }
+
 </style>
