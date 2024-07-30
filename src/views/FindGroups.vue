@@ -44,14 +44,14 @@
                 {{ group.productStoreCount || 0 }}
               </ion-chip>
             </ion-item>
-            <ion-item>
+            <ion-item :lines="group.description ? 'inset' : 'none'">
               <ion-icon :icon="businessOutline" slot="start"/>
               <ion-label>{{ translate('Facilities') }}</ion-label>
               <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
                 {{ group.facilityCount }}
               </ion-chip>
             </ion-item>
-            <ion-item lines="full" v-if="group.description ? 'inset' : 'none'">
+            <ion-item  v-if="group.description" lines="none">
               <ion-label>{{ group.description }}</ion-label>
             </ion-item>
           </ion-card> 
