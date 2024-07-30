@@ -37,7 +37,7 @@
                 <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
               </ion-button>
             </ion-item>
-            <ion-item :lines="group.description ? 'inset' : 'none'">
+            <ion-item lines="inset">
               <ion-icon :icon="bagHandleOutline" slot="start"/>
               <ion-label>{{ translate('Product stores') }}</ion-label>
               <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">
@@ -51,7 +51,7 @@
                 {{ group.facilityCount }}
               </ion-chip>
             </ion-item>
-            <ion-item lines="full" v-if="group.description">
+            <ion-item lines="full" v-if="group.description ? 'inset' : 'none'">
               <ion-label>{{ group.description }}</ion-label>
             </ion-item>
           </ion-card> 
