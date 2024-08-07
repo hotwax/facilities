@@ -52,10 +52,6 @@
               <ion-button @click="manageFacilities(group)" fill="clear" color="medium" slot="end">
                 <ion-icon :icon="pencilOutline" slot="icon-only"/>
               </ion-button>
-
-              <!--<ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
-                {{ group.facilityCount }}
-              </ion-chip>-->
             </ion-item>
             <ion-item v-if="group.description" lines="none">
               <ion-label>{{ group.description }}</ion-label>
