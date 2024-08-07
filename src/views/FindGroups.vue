@@ -47,9 +47,15 @@
             <ion-item :lines="group.description ? 'inset' : 'none'">
               <ion-icon :icon="businessOutline" slot="start"/>
               <ion-label>{{ translate('Facilities') }}</ion-label>
-              <ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
+              
+              <ion-label slot="end">{{ group.facilityCount }}</ion-label>
+              <ion-button @click="manageFacilities(group)" fill="clear" color="medium" slot="end">
+                <ion-icon :icon="pencilOutline" slot="icon-only"/>
+              </ion-button>
+
+              <!--<ion-chip outline slot="end" @click="openGroupActionsPopover($event, group)">
                 {{ group.facilityCount }}
-              </ion-chip>
+              </ion-chip>-->
             </ion-item>
             <ion-item v-if="group.description" lines="none">
               <ion-label>{{ group.description }}</ion-label>
@@ -108,7 +114,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline } from 'ionicons/icons';
+import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline, pencilOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
@@ -161,10 +167,10 @@ export default defineComponent({
     })
   },
   async mounted() {
-    await this.fetchGroups();
     await this.store.dispatch('util/fetchFacilityGroupTypes')
   },
   async ionViewWillEnter() {
+    await this.fetchGroups();
     this.isScrollingEnabled = false;
   },
   methods: {
@@ -251,6 +257,9 @@ export default defineComponent({
         }
       }
     },
+    manageFacilities(facilityGroup: any) {
+      this.$router.push({ path: `/manage-facilities/${facilityGroup.facilityGroupId}`})
+    },
     async openGroupActionsPopover(event: Event, group: any) {
       const groupActionsPopover = await popoverController.create({
         component: GroupActionsPopover,
@@ -319,6 +328,7 @@ export default defineComponent({
       businessOutline,
       customSort,
       ellipsisVerticalOutline,
+      pencilOutline,
       router,
       store,
       translate
