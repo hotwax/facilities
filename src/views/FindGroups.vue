@@ -125,7 +125,6 @@ import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
 import emitter from '@/event-bus';
-import GroupActionsPopover from '@/components/GroupActionsPopover.vue';
 import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 
 export default defineComponent({
@@ -259,16 +258,6 @@ export default defineComponent({
     },
     manageFacilities(facilityGroup: any) {
       this.$router.push({ path: `/manage-facilities/${facilityGroup.facilityGroupId}`})
-    },
-    async openGroupActionsPopover(event: Event, group: any) {
-      const groupActionsPopover = await popoverController.create({
-        component: GroupActionsPopover,
-        event,
-        showBackdrop: false,
-        componentProps: { group }
-      });
-
-      groupActionsPopover.present();
     },
     getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
       const associatedfacilityGroupIds = [] as any
