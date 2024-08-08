@@ -696,7 +696,8 @@ const actions: ActionTree<FacilityState, RootState> = {
       filters['facilityGroupName_grp'] = '2'
     }
 
-    let groups = JSON.parse(JSON.stringify(state.facilityGroups.list)) , total = 0;
+    let groups = JSON.parse(JSON.stringify(state.facilityGroups.list)); 
+    let total = 0;
 
     try {
       const params = {
@@ -712,8 +713,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       const resp = await FacilityService.fetchFacilityGroups(params)
 
-      if (!hasError(resp) && resp.data.count) {
-
+      if (!hasError(resp) && resp.data.count > 0) {
         if (payload.viewIndex && payload.viewIndex > 0) {
           groups = groups.concat(resp.data.docs)
         } else { 
@@ -724,7 +724,10 @@ const actions: ActionTree<FacilityState, RootState> = {
         throw resp.data
       }
     } catch (error) {
-      logger.error(error)
+      if (payload.viewIndex === 0) { 
+        groups = []; 
+        total = 0; 
+      }
     }
 
     emitter.emit("dismissLoader");
