@@ -332,4 +332,9 @@ main:has(ion-card) {
   grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
   align-items: start;
 }
+
+main {
+  padding-bottom: 80px;
+}
+
 </style>

@@ -234,12 +234,8 @@ main {
   margin: auto;
 }
 
-@media screen and (min-width: 700px) {
-
-  main {
-    padding: var(--spacer-lg);
-  }
-
+main {
+  padding-bottom: 80px;
 }
 
 </style>
