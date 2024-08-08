@@ -9,7 +9,7 @@
   
       <ion-content>
         <div class="find">
-          <section class="search">
+          <section class="ion-padding-end search">
             <ion-searchbar :placeholder="translate('Search facilities')" v-model="queryString" @ionInput="getFilteredFacilities()"/>
             <ion-list>
               <ion-list-header>
@@ -399,5 +399,8 @@
   <style scoped>
   ion-content {
     --padding-bottom: 80px;
+  }
+  .search {
+    border-right: 1px solid lightgray;
   }
   </style>
