@@ -87,7 +87,7 @@
                     <p>{{ group.facilityGroupId }}</p>
                   </ion-label>
                 </ion-checkbox>
-                <ion-note slot="end">10</ion-note>
+                <ion-note slot="end">{{ group.facilityCount }}</ion-note>
               </ion-item>
             </ion-list> 
             <div v-else>
