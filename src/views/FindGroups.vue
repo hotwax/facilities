@@ -205,7 +205,6 @@ export default defineComponent({
     })
   },
   async mounted() {
-    this.playAnimation();
     await this.store.dispatch('util/fetchFacilityGroupTypes')
   },
   async ionViewWillEnter() {
@@ -217,9 +216,6 @@ export default defineComponent({
       if (this.segment === 'facility-groups') {
         this.currentFacilityGroupTypeId = ''
         this.isParentGroupDetailAnimationCompleted = false;
-        
-      } else {
-        this.playAnimation();
       }
     },
     setCurrentFacilityGroupType(facilityGroupTypeId: string) {
