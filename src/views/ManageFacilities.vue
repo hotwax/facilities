@@ -136,35 +136,32 @@
       await this.fetchMemberFacilities();
       await this.getFilteredFacilities();
     },
+    async beforeRouteLeave() {
+      let canLeave = false;
+      const alert = await alertController.create({
+        header: translate("Leave page"),
+        message: translate("Any edits made on this page will be lost."),
+        buttons: [
+          {
+            text: translate("STAY"),
+            handler: () => {
+              canLeave = false;
+            },
+          },
+          {
+            text: translate("LEAVE"),
+            handler: () => {
+              canLeave = true;
+            },
+          },
+        ],
+      });
+
+      alert.present()
+      await alert.onDidDismiss()
+      return canLeave
+    },
     methods: {
-      async beforeRouteLeave() {
-        if(!this.toast) return
-
-        let canLeave = false;
-        const alert = await alertController.create({
-          header: translate("Leave page"),
-          message: translate("Any edits made on this page will be lost."),
-          buttons: [
-            {
-              text: translate("STAY"),
-              handler: () => {
-                canLeave = false;
-              },
-            },
-            {
-              text: translate("LEAVE"),
-              handler: () => {
-                canLeave = true;
-                this.toast.dismiss()
-              },
-            },
-          ],
-        });
-
-        alert.present()
-        await alert.onDidDismiss()
-        return canLeave
-      },
       getFilteredFacilities() {
         let nonMemberFacilities = this.facilities ? this.facilities : [] as any;
         const selectedFacilityIds = this.selectedFacilities ? new Set(this.selectedFacilities.map((facility:any) => facility.facilityId)) as any : [];
@@ -279,7 +276,6 @@
         this.selectedFacilities = [...this.selectedFacilities, {...facility, sequenceNum}]
         this.getFilteredFacilities();
         this.isFacilityMembersModified = true;
-        showToast(translate("Facility selected. Click the save button to add it to the group."))
       },
       selectAll() {
         let sequenceNum = 1;
@@ -296,13 +292,11 @@
         this.selectedFacilities = [...this.selectedFacilities, ...facilitiesWithSequences]
         this.getFilteredFacilities();
         this.isFacilityMembersModified = true;
-        showToast(translate("Facility selected. Click the save button to add it to the group."))
       },
       async removeFacility(facility: any) {
         this.selectedFacilities = this.selectedFacilities.filter((selectedFacility: any) => selectedFacility.facilityId !== facility.facilityId);
         this.getFilteredFacilities();
         this.isFacilityMembersModified = true;
-        showToast(translate("Facility deselected. Click the save button to remove it from the group."))
       },
       async save () {
         const facilitiesToAdd = this.selectedFacilities.filter((facility: any) => !facility.fromDate)
@@ -346,7 +340,7 @@
         }
         this.fetchMemberFacilities();
         this.isFacilityMembersModified = false;
-        this.$router.push({ path: `/tabs/find-groups` })
+        this.router.push({ path: `/tabs/find-groups` })
       },
       async doReorder(event: CustomEvent) {
         const previousSeq = JSON.parse(JSON.stringify(this.selectedFacilities))
