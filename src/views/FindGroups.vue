@@ -3,8 +3,8 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-title>{{ translate("Groups") }}</ion-title>
-        <ion-segment scrollable v-model="segment" slot="end">
-          <ion-segment-button value="facility-groups">
+        <ion-segment scrollable v-model="segment" slot="end" @ion-change="resetParentGroupPage()">
+          <ion-segment-button value="facility-groups" >
             <ion-label>{{ translate("Facility groups") }}</ion-label>
           </ion-segment-button>
           <ion-segment-button value="facility-group-types">
@@ -76,7 +76,7 @@
           </section>
           <div class="facility-group-type-details" v-show="currentFacilityGroupTypeId">
             <h3>{{ getFacilityGroupTypeDescription(currentFacilityGroupTypeId) }}</h3>
-            <ion-list v-if="!groups.length">
+            <ion-list v-if="groups.length">
               <ion-list-header>
                 <ion-label>{{ translate('Selected groups') }} : 10</ion-label>
               </ion-list-header>
@@ -114,82 +114,6 @@
         </ion-fab-button>
       </ion-fab>
     </ion-content>
-
-    <!--
-    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
-      <div class="find">
-        <section class="search">
-          <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
-          <ion-list>
-            <ion-list-header>
-              {{ translate('System groups') }}
-            </ion-list-header>
-            <ion-item v-for="groupType in facilityGroupTypes" :key="groupType.facilityGroupId">
-              <ion-select v-if="groups.length" :label="groupType.description ? groupType.description : groupType.facilityGroupTypeId" :placeholder="translate('Select')" :selectedText="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length > 1 ? translate('groups', { count: getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).length }) : getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId).map[0]" :value="getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId)" @ionChange="updateFacilityGroupAssociation($event, getAssociatedFacilityGroupIds(groupType.facilityGroupTypeId), groupType.facilityGroupTypeId)" :multiple="true">
-                <ion-select-option :value="group.facilityGroupId" :disabled="group.facilityGroupTypeId && group.facilityGroupTypeId !== groupType.facilityGroupTypeId" :key="group.facilityGroupId" v-for="group in groups">
-                  {{ group.facilityGroupName ? group.facilityGroupName : group.facilityGroupId }}
-                </ion-select-option>
-              </ion-select>
-            </ion-item>
-          </ion-list>
-        </section>
-
-        <main v-if="groups.length">
-          <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
-            <ion-item lines="full">
-              <ion-label>
-                <h1>{{ group.facilityGroupName }}</h1>
-                <p>{{ group.facilityGroupId }}</p>
-              </ion-label>
-              <ion-badge slot="end">{{ group.facilityGroupTypeId }}</ion-badge>
-              <ion-button @click="openFacilityGroupActionsPopover($event, group)" fill="clear" color="medium" slot="end">
-                <ion-icon :icon="ellipsisVerticalOutline" slot="icon-only"/>
-              </ion-button>
-            </ion-item>
-            <ion-item>
-              <ion-icon :icon="bagHandleOutline" slot="start"/>
-              <ion-label>{{ translate('Product stores') }}</ion-label>
-              <ion-chip outline slot="end" @click="openAddProductStoreToGroupModal(group)">
-                {{ group.productStoreCount || 0 }}
-              </ion-chip>
-            </ion-item>
-            <ion-item :lines="group.description ? 'inset' : 'none'">
-              <ion-icon :icon="businessOutline" slot="start"/>
-              <ion-label>{{ translate('Facilities') }}</ion-label>
-              
-              <ion-label slot="end">{{ group.facilityCount }}</ion-label>
-              <ion-button @click="manageFacilities(group)" fill="clear" color="medium" slot="end">
-                <ion-icon :icon="pencilOutline" slot="icon-only"/>
-              </ion-button>
-            </ion-item>
-            <ion-item v-if="group.description" lines="none">
-              <ion-label>{{ group.description }}</ion-label>
-            </ion-item>
-          </ion-card> 
-        </main>
-        <main v-else>
-          <p class="empty-state">{{ translate("No groups found") }}</p>
-        </main>
-      </div>
-
-      <ion-infinite-scroll
-        @ionInfinite="loadMoreGroups($event)"
-        threshold="100px"
-        v-show="isScrollable"
-        ref="infiniteScrollRef"
-      >
-        <ion-infinite-scroll-content
-          loading-spinner="crescent"
-          :loading-text="translate('Loading')"
-        />
-      </ion-infinite-scroll>
-
-      <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-        <ion-fab-button @click="openCreateFacilityGroupModal()">
-          <ion-icon :icon="addOutline" />
-        </ion-fab-button>
-      </ion-fab>
-    </ion-content>-->
   </ion-page>
 </template>
 
@@ -220,7 +144,6 @@ import {
   IonTitle,
   IonToolbar,
   modalController,
-  popoverController,
   createAnimation
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
@@ -229,12 +152,9 @@ import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
 import { customSort, showToast } from '@/utils';
-import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
-import FacilityGroupActionsPopover from '@/components/FacilityGroupActionsPopover.vue';
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
 import logger from '@/logger';
-import emitter from '@/event-bus';
 import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 import GroupTypeModal from "@/components/GroupTypeModal.vue";
 import FacilityGroupDescriptionModal from "@/components/FacilityGroupDescriptionModal.vue";
@@ -285,21 +205,27 @@ export default defineComponent({
     })
   },
   async mounted() {
-    emitter.on('playAnimation', this.playAnimation);
+    this.playAnimation();
     await this.store.dispatch('util/fetchFacilityGroupTypes')
-  },
-  unmounted() {
-    emitter.off('playAnimation', this.playAnimation);
   },
   async ionViewWillEnter() {
     await this.fetchGroups();
     this.isScrollingEnabled = false;
   },
   methods: {
+    resetParentGroupPage() {
+      if (this.segment === 'facility-groups') {
+        this.currentFacilityGroupTypeId = ''
+        this.isParentGroupDetailAnimationCompleted = false;
+        
+      } else {
+        this.playAnimation();
+      }
+    },
     setCurrentFacilityGroupType(facilityGroupTypeId: string) {
       this.currentFacilityGroupTypeId = facilityGroupTypeId
       if (this.currentFacilityGroupTypeId && !this.isParentGroupDetailAnimationCompleted) {
-        emitter.emit('playAnimation');
+        this.playAnimation();
         this.isParentGroupDetailAnimationCompleted = true;
       }
     },
@@ -373,6 +299,16 @@ export default defineComponent({
         await event.target.complete();
       });
     },
+    getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
+      const associatedfacilityGroupIds = [] as any
+
+      this.groups.map((group: any) => {
+        if(group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
+          associatedfacilityGroupIds.push(group.facilityGroupId)
+        }
+      })
+      return associatedfacilityGroupIds
+    },
     createFacilityGroup(){
       this.router.push('/create-facility-group');
     },
@@ -391,92 +327,8 @@ export default defineComponent({
       })
       facilityLoginModal.present()
     },
-    async openCreateFacilityGroupModal() {
-      const createVirtualFacility = await modalController.create({
-        component: CreateFacilityGroupModal
-      })
-
-      createVirtualFacility.present()
-    },
-    async openFacilityGroupActionsPopover(event: Event, group: any) {
-      const facilityGroupActionsPopover = await popoverController.create({
-        component: FacilityGroupActionsPopover,
-        event,
-        showBackdrop: false,
-        componentProps: { group }
-      });
-
-      facilityGroupActionsPopover.present();
-
-      const result = await facilityGroupActionsPopover.onDidDismiss();
-      if (result.data && result.data !== group.facilityGroupName) {
-        try {
-          const resp = await FacilityService.updateFacilityGroup({
-            facilityGroupId: group.facilityGroupId,
-            facilityGroupName: result.data
-          })
-
-          if (!hasError(resp)) {
-            showToast(translate('Facility group renamed.'))
-            const updatedGroups = JSON.parse(JSON.stringify(this.groups))
-              .map((groupData: any) => {
-                if (group.facilityGroupId === groupData.facilityGroupId) {
-                  groupData.facilityGroupName = result.data
-                }
-
-                return groupData
-              })
-            this.store.dispatch('facility/updateFacilityGroups', updatedGroups)
-          } else {
-            throw resp.data
-          }
-        } catch (error) {
-          showToast(translate('Failed to rename facility group.'))
-          logger.error('Failed to rename facility group.', error)
-        }
-      }
-    },
     manageFacilities(facilityGroup: any) {
       this.router.push({ path: `/manage-facilities/${facilityGroup.facilityGroupId}`})
-    },
-    getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
-      const associatedfacilityGroupIds = [] as any
-
-      this.groups.map((group: any) => {
-        if(group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
-          associatedfacilityGroupIds.push(group.facilityGroupId)
-        }
-      })
-      return associatedfacilityGroupIds
-    },
-    async updateFacilityGroupAssociation(event: CustomEvent, prevAssociatedGroups: any, facilityGroupTypeId: string) {
-      const selectedGroups = event.detail.value
-      const groupsToAdd = selectedGroups.filter((selectedGroupId: string) => !prevAssociatedGroups.includes(selectedGroupId))
-      const groupsToRemove = prevAssociatedGroups.filter((prevGroupId: string) => !selectedGroups.includes(prevGroupId))
-      const updateGroupPayloads = [] as any
-
-      if(!(groupsToAdd.length || groupsToRemove.length)) {
-        return;
-      }
-
-      emitter.emit('presentLoader')
-
-      groupsToAdd.map((facilityGroupId: any) => updateGroupPayloads.push({facilityGroupId, facilityGroupTypeId}))
-      groupsToRemove.map((facilityGroupId: any) => updateGroupPayloads.push({facilityGroupId, facilityGroupTypeId: ''}))
-
-      const responses = await Promise.allSettled(updateGroupPayloads
-        .map(async (payload: any) => await FacilityService.updateFacilityGroup(payload))
-      )
-
-      const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
-      if (hasFailedResponse) {
-        showToast(translate("Failed to associate group with system group types."))
-      } else {
-        showToast(translate("Group associated to system group types."))
-      }
-
-      await this.fetchGroups()
-      emitter.emit('dismissLoader')
     },
     async openAddProductStoreToGroupModal(group: any) {
       const addProductStoreToGroupModal = await modalController.create({
