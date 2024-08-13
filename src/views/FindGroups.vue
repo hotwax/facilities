@@ -45,10 +45,9 @@
             </ion-item>
             <ion-item>
               <ion-label>{{ translate('Facilities') }}</ion-label>
-              <ion-label slot="end">{{ group.facilityCount }}</ion-label>
-              <ion-button @click="manageFacilities(group)" fill="clear" slot="end">
-                <ion-icon :icon="settingsOutline" slot="icon-only"/>
-              </ion-button>
+              <ion-chip outline slot="end" @click="manageFacilities(group)">
+                {{ group.facilityCount}}
+              </ion-chip>
             </ion-item>
             <ion-button fill="clear" @click="updateGroupDescriptionModal(group)">
               {{translate('Edit details')}}
@@ -147,7 +146,7 @@ import {
   createAnimation
 } from '@ionic/vue';
 import { defineComponent } from 'vue';
-import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline, settingsOutline } from 'ionicons/icons';
+import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
@@ -368,7 +367,6 @@ export default defineComponent({
       businessOutline,
       customSort,
       ellipsisVerticalOutline,
-      settingsOutline,
       router,
       store,
       translate
