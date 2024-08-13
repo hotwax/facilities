@@ -205,9 +205,9 @@ export default defineComponent({
   },
   async mounted() {
     await this.store.dispatch('util/fetchFacilityGroupTypes')
+    await this.fetchGroups();
   },
   async ionViewWillEnter() {
-    await this.fetchGroups();
     this.isScrollingEnabled = false;
   },
   methods: {

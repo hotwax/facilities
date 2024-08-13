@@ -34,9 +34,9 @@
             </ion-list>
           </section>
   
-          <main>
+          <main v-if="selectedFacilities.length">
             <h3 class="ion-margin-start">{{ translate('Total facilities selected for group', {total: selectedFacilities.length, facilityGroupName: currentFacilityGroup.facilityGroupName ? currentFacilityGroup.facilityGroupName : facilityGroupId}) }}</h3>
-            <ion-list v-if="selectedFacilities.length">
+            <ion-list>
               <ion-list-header>
                 <ion-label>{{ translate('Manage sequence') }}</ion-label>
               </ion-list-header>
@@ -96,6 +96,7 @@
   import { hasError } from '@/adapter';
   import logger from '@/logger';
   import { DateTime } from "luxon";
+  import emitter from "@/event-bus";
   
   export default defineComponent({
     name: 'FindGroups',
@@ -127,16 +128,21 @@
         selectedFacilities: [] as any,
         toast: null as any,
         currentFacilityGroup: {} as any,
-        isFacilityMembersModified: false
+        isFacilityMembersModified: false,
+        isSavingDetail: false
       }
     },
     props: ['facilityGroupId'],
     async mounted() {
+      emitter.emit('presentLoader')
       await Promise.all([this.fetchFacilities(), this.fetchFacilityGroup()])
       await this.fetchMemberFacilities();
       await this.getFilteredFacilities();
+      emitter.emit('dismissLoader')
     },
     async beforeRouteLeave() {
+      if (this.isSavingDetail) return;
+
       let canLeave = false;
       const alert = await alertController.create({
         header: translate("Leave page"),
@@ -194,6 +200,15 @@
         } catch(err) {
           logger.error('Failed to fetch facility group', err)
         }
+      },
+      async fetchGroups(vSize?: any, vIndex?: any) {
+        const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
+        const viewIndex = vIndex ? vIndex : 0;
+        const payload = {
+          viewSize,
+          viewIndex
+        };
+        await this.store.dispatch('facility/fetchFacilityGroups', payload)
       },
       async fetchFacilities() {
         this.facilities = []
@@ -299,6 +314,7 @@
         this.isFacilityMembersModified = true;
       },
       async save () {
+        this.isSavingDetail = true
         const facilitiesToAdd = this.selectedFacilities.filter((facility: any) => !facility.fromDate)
         const selectedFacilityIds = this.selectedFacilities ? new Set(this.selectedFacilities.map((facility:any) => facility.facilityId)) as any : [];
         const facilitiesToRemove = this.memberFacilities.filter((facility: any) => !selectedFacilityIds.has(facility.facilityId))
@@ -338,8 +354,8 @@
         } else {
           showToast(translate("Member facilities updated successfully."))
         }
-        this.fetchMemberFacilities();
         this.isFacilityMembersModified = false;
+        await this.fetchGroups();
         this.router.push({ path: `/tabs/find-groups` })
       },
       async doReorder(event: CustomEvent) {
