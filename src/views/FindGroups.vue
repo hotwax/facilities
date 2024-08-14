@@ -21,7 +21,7 @@
             <ion-searchbar :placeholder="translate('Search groups')" v-model="query.queryString" @keyup.enter="updateQuery()" />
           </section>
         </div>
-        <main v-if="groups">
+        <main v-if="groups && groups.length > 0">
           <ion-card v-for="(group, index) in customSort(groups, ['OMS_FULFILLMENT', 'PICKUP'], 'facilityGroupId')" :key="index">
             <ion-item lines="full">
               <ion-label class="ion-text-wrap">
