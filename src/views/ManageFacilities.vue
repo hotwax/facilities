@@ -34,9 +34,9 @@
             </ion-list>
           </section>
   
-          <main>
+          <main v-if="selectedFacilities.length">
             <h3 class="ion-margin-start">{{ translate('Total facilities selected for group', {total: selectedFacilities.length, facilityGroupName: currentFacilityGroup.facilityGroupName ? currentFacilityGroup.facilityGroupName : facilityGroupId}) }}</h3>
-            <ion-list v-if="selectedFacilities.length">
+            <ion-list>
               <ion-list-header>
                 <ion-label>{{ translate('Manage sequence') }}</ion-label>
               </ion-list-header>
@@ -96,6 +96,7 @@
   import { hasError } from '@/adapter';
   import logger from '@/logger';
   import { DateTime } from "luxon";
+  import emitter from "@/event-bus";
   
   export default defineComponent({
     name: 'FindGroups',
@@ -127,44 +128,46 @@
         selectedFacilities: [] as any,
         toast: null as any,
         currentFacilityGroup: {} as any,
-        isFacilityMembersModified: false
+        isFacilityMembersModified: false,
+        isSavingDetail: false
       }
     },
     props: ['facilityGroupId'],
     async mounted() {
+      emitter.emit('presentLoader')
       await Promise.all([this.fetchFacilities(), this.fetchFacilityGroup()])
       await this.fetchMemberFacilities();
       await this.getFilteredFacilities();
+      emitter.emit('dismissLoader')
+    },
+    async beforeRouteLeave() {
+      if (this.isSavingDetail) return;
+
+      let canLeave = false;
+      const alert = await alertController.create({
+        header: translate("Leave page"),
+        message: translate("Any edits made on this page will be lost."),
+        buttons: [
+          {
+            text: translate("STAY"),
+            handler: () => {
+              canLeave = false;
+            },
+          },
+          {
+            text: translate("LEAVE"),
+            handler: () => {
+              canLeave = true;
+            },
+          },
+        ],
+      });
+
+      alert.present()
+      await alert.onDidDismiss()
+      return canLeave
     },
     methods: {
-      async beforeRouteLeave() {
-        if(!this.toast) return
-
-        let canLeave = false;
-        const alert = await alertController.create({
-          header: translate("Leave page"),
-          message: translate("Any edits made on this page will be lost."),
-          buttons: [
-            {
-              text: translate("STAY"),
-              handler: () => {
-                canLeave = false;
-              },
-            },
-            {
-              text: translate("LEAVE"),
-              handler: () => {
-                canLeave = true;
-                this.toast.dismiss()
-              },
-            },
-          ],
-        });
-
-        alert.present()
-        await alert.onDidDismiss()
-        return canLeave
-      },
       getFilteredFacilities() {
         let nonMemberFacilities = this.facilities ? this.facilities : [] as any;
         const selectedFacilityIds = this.selectedFacilities ? new Set(this.selectedFacilities.map((facility:any) => facility.facilityId)) as any : [];
@@ -279,7 +282,6 @@
         this.selectedFacilities = [...this.selectedFacilities, {...facility, sequenceNum}]
         this.getFilteredFacilities();
         this.isFacilityMembersModified = true;
-        showToast(translate("Facility selected. Click the save button to add it to the group."))
       },
       selectAll() {
         let sequenceNum = 1;
@@ -296,15 +298,14 @@
         this.selectedFacilities = [...this.selectedFacilities, ...facilitiesWithSequences]
         this.getFilteredFacilities();
         this.isFacilityMembersModified = true;
-        showToast(translate("Facility selected. Click the save button to add it to the group."))
       },
       async removeFacility(facility: any) {
         this.selectedFacilities = this.selectedFacilities.filter((selectedFacility: any) => selectedFacility.facilityId !== facility.facilityId);
         this.getFilteredFacilities();
         this.isFacilityMembersModified = true;
-        showToast(translate("Facility deselected. Click the save button to remove it from the group."))
       },
       async save () {
+        this.isSavingDetail = true
         const facilitiesToAdd = this.selectedFacilities.filter((facility: any) => !facility.fromDate)
         const selectedFacilityIds = this.selectedFacilities ? new Set(this.selectedFacilities.map((facility:any) => facility.facilityId)) as any : [];
         const facilitiesToRemove = this.memberFacilities.filter((facility: any) => !selectedFacilityIds.has(facility.facilityId))
@@ -344,9 +345,8 @@
         } else {
           showToast(translate("Member facilities updated successfully."))
         }
-        this.fetchMemberFacilities();
         this.isFacilityMembersModified = false;
-        this.$router.push({ path: `/tabs/find-groups` })
+        this.router.push({ path: `/tabs/find-groups` })
       },
       async doReorder(event: CustomEvent) {
         const previousSeq = JSON.parse(JSON.stringify(this.selectedFacilities))

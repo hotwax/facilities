@@ -12,6 +12,7 @@ import AddFacilityAddress from '@/views/AddFacilityAddress.vue';
 import AddFacilityConfig from '@/views/AddFacilityConfig.vue';
 import Tabs from '@/components/Tabs.vue'
 import ManageFacilities from '@/views/ManageFacilities.vue';
+import CreateFacilityGroup from '@/views/CreateFacilityGroup.vue';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -106,6 +107,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Manage Facilities',
     component: ManageFacilities,
     props: true,
+    beforeEnter: authGuard,
+  },
+  {
+    path: '/create-facility-group',
+    name: 'Create Facility Group',
+    component: CreateFacilityGroup,
     beforeEnter: authGuard,
   }
 ]

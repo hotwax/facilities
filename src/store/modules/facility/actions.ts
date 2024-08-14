@@ -724,6 +724,9 @@ const actions: ActionTree<FacilityState, RootState> = {
         }
         total = resp.data.count
       } else {
+        if (payload.viewIndex === 0 ) {
+          groups = []
+        }
         throw resp.data
       }
     } catch (error) {
