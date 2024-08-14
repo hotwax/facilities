@@ -24,16 +24,16 @@
                 <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
               </ion-item>
               <ion-item>
-                <ion-select :label="translate('Group type')" :disabled="isFacilityGroupTypeDisabled" interface="popover" v-model="formData.facilityGroupTypeId">
+                <ion-select :label="translate('Group type')" :disabled="isFacilityGroupTypeDisabled" :placeholder="translate('Select')" interface="popover" v-model="formData.facilityGroupTypeId">
                   <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
                     {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
                   </ion-select-option>
                 </ion-select>
               </ion-item>
               <ion-item>
-                <ion-select :label="translate('Product store')" interface="popover" v-model="formData.productStoreId">
+                <ion-select v-if="productStores.length" :label="translate('Product store')" :placeholder="translate('Select')" :selectedText="selectedProductStoreIds.length > 1 ? translate('product stores', { count: selectedProductStoreIds.length }) : selectedProductStoreIds.map[0]" :value="selectedProductStoreIds" @ionChange="updateFacilityGroupProductStores($event)" :multiple="true">
                   <ion-select-option :value="productStore.productStoreId" :key="productStore.productStoreId" v-for="productStore in productStores">
-                    {{  productStore.storeName ?  productStore.storeName : productStore.productStoreId }}
+                    {{ productStore.storeName ? productStore.storeName : productStore.productStoreId }}
                   </ion-select-option>
                 </ion-select>
               </ion-item>
@@ -45,7 +45,7 @@
         </ion-card>
         <div class="ion-text-center ion-margin">
           <ion-button @click="createFacilityGroup()" @keyup.enter.stop>
-            {{ translate("Create Group") }}
+            {{ translate("Create group") }}
             <ion-icon slot="end" :icon="arrowForwardOutline"/>
           </ion-button>
         </div>
@@ -59,6 +59,9 @@
 import {
   IonBackButton,
   IonButton,
+  IonCard,
+  IonCardHeader,
+  IonCardTitle,
   IonContent,
   IonHeader,
   IonIcon,
@@ -89,6 +92,9 @@ export default defineComponent({
   components: {
     IonBackButton,
     IonButton,
+    IonCard,
+    IonCardHeader,
+    IonCardTitle,
     IonContent,
     IonHeader,
     IonIcon,
@@ -115,9 +121,9 @@ export default defineComponent({
         facilityGroupName: '',
         facilityGroupTypeId: '',
         description: '',
-        productStoreId: ''
       },
       isFacilityGroupTypeDisabled: false,
+      selectedProductStoreIds: []
     }
   },
   props: ['selectedFacilityGroupTypeId'],
@@ -129,6 +135,10 @@ export default defineComponent({
     }
   },
   methods: {
+    updateFacilityGroupProductStores(event: any) {
+      const selectedProductStoreIds = event.detail.value;
+      this.selectedProductStoreIds = selectedProductStoreIds
+    },
     setFacilityGroupId(event: any) {
       this.formData.facilityGroupId = generateInternalId(event.target.value)
     },
@@ -157,8 +167,8 @@ export default defineComponent({
         const resp = await FacilityService.createFacilityGroup(payload);
         if (!hasError(resp)) {
           const facilityGroupId = resp.data.facilityGroupId
-          if (this.formData.productStoreId) {
-            await this.associateFacilityGroupToStore(this.formData.productStoreId, facilityGroupId);
+          if (this.selectedProductStoreIds.length > 0) {
+            await this.associateFacilityGroupToStore(facilityGroupId, this.selectedProductStoreIds);
           }
           await this.manageFacilityAlert(facilityGroupId)
         } else {
@@ -169,15 +179,18 @@ export default defineComponent({
         showToast(translate('Failed to create facility group.'))
       }
     },
-    async associateFacilityGroupToStore(productStoreId: string, facilityGroupId: string) {
+    async associateFacilityGroupToStore(facilityGroupId: string, productStoreIds: string[]) {
       try {
-        const resp = await FacilityService.createProductStoreFacilityGroup({
-          "productStoreId": productStoreId,
-          "facilityGroupId": facilityGroupId,
-          "fromDate": DateTime.now().toMillis()
-        })
-        if (hasError(resp)) {
-          throw resp;
+        const responses = await Promise.allSettled(productStoreIds
+          .map(async (productStoreId: any) => await FacilityService.createProductStoreFacilityGroup({
+            "productStoreId": productStoreId,
+            "facilityGroupId": facilityGroupId,
+            "fromDate": DateTime.now().toMillis()
+          }))
+        )
+        const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
+        if (hasFailedResponse) {
+          console.log("Error in associating group to some of the product stores")
         }
       } catch (error) {
         logger.error(error)
