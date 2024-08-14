@@ -201,15 +201,6 @@
           logger.error('Failed to fetch facility group', err)
         }
       },
-      async fetchGroups(vSize?: any, vIndex?: any) {
-        const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-        const viewIndex = vIndex ? vIndex : 0;
-        const payload = {
-          viewSize,
-          viewIndex
-        };
-        await this.store.dispatch('facility/fetchFacilityGroups', payload)
-      },
       async fetchFacilities() {
         this.facilities = []
         let viewIndex = 0, resp
@@ -355,7 +346,6 @@
           showToast(translate("Member facilities updated successfully."))
         }
         this.isFacilityMembersModified = false;
-        await this.fetchGroups();
         this.router.push({ path: `/tabs/find-groups` })
       },
       async doReorder(event: CustomEvent) {

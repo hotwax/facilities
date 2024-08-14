@@ -82,6 +82,7 @@ import { useRouter } from 'vue-router'
 import { hasError } from "@/adapter";
 import { generateInternalId, showToast } from "@/utils";
 import logger from "@/logger";
+import { DateTime } from "luxon";
 
 export default defineComponent({
   name: "CreateFacilityGroup",
@@ -103,7 +104,6 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      groups: 'facility/getFacilityGroups',
       facilityGroupTypes: 'util/getFacilityGroupTypes',
       productStores: 'util/getProductStores',
     })
@@ -157,6 +157,9 @@ export default defineComponent({
         const resp = await FacilityService.createFacilityGroup(payload);
         if (!hasError(resp)) {
           const facilityGroupId = resp.data.facilityGroupId
+          if (this.formData.productStoreId) {
+            await this.associateFacilityGroupToStore(this.formData.productStoreId, facilityGroupId);
+          }
           await this.manageFacilityAlert(facilityGroupId)
         } else {
           throw resp.data;
@@ -166,11 +169,26 @@ export default defineComponent({
         showToast(translate('Failed to create facility group.'))
       }
     },
+    async associateFacilityGroupToStore(productStoreId: string, facilityGroupId: string) {
+      try {
+        const resp = await FacilityService.createProductStoreFacilityGroup({
+          "productStoreId": productStoreId,
+          "facilityGroupId": facilityGroupId,
+          "fromDate": DateTime.now().toMillis()
+        })
+        if (hasError(resp)) {
+          throw resp;
+        }
+      } catch (error) {
+        logger.error(error)
+      }
+    },
     async manageFacilityAlert(facilityGroupId: string) {
       const message = 'Creating group without facilities is essentially empty. Would you prefer to associate facilities during group creation or allow for later addition?'
       const alert = await alertController.create({
         header: translate('Add facilities'),
         message: translate(message),
+        backdropDismiss: false,
         buttons: [
           {
             text: translate("Skip"),
