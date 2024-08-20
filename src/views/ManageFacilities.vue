@@ -133,7 +133,7 @@
       }
     },
     props: ['facilityGroupId'],
-    async mounted() {
+    async ionViewWillEnter() {
       emitter.emit('presentLoader')
       await Promise.all([this.fetchFacilities(), this.fetchFacilityGroup()])
       await this.fetchMemberFacilities();
