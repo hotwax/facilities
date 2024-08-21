@@ -234,8 +234,10 @@ main {
   margin: auto;
 }
 
-ion-content {
-  --padding-bottom: 80px;
+@media screen and (min-width: 991px) {
+  ion-content {
+    --padding-bottom: 80px;
+  }
 }
 
 </style>

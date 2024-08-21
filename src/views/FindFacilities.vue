@@ -406,12 +406,14 @@ export default defineComponent({
   --columns-desktop: 4;
 }
 
-ion-content {
-  --padding-bottom: 80px;
-}
-
 config-note {
   display: block;
   text-align: center;
+}
+
+@media screen and (min-width: 991px) {
+  ion-content {
+    --padding-bottom: 80px;
+  }
 }
 </style>
