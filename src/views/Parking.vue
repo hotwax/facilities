@@ -234,12 +234,10 @@ main {
   margin: auto;
 }
 
-@media screen and (min-width: 700px) {
-
-  main {
-    padding: var(--spacer-lg);
+@media screen and (min-width: 991px) {
+  ion-content {
+    --padding-bottom: 80px;
   }
-
 }
 
 </style>

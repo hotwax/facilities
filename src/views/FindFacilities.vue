@@ -410,4 +410,10 @@ config-note {
   display: block;
   text-align: center;
 }
+
+@media screen and (min-width: 991px) {
+  ion-content {
+    --padding-bottom: 80px;
+  }
+}
 </style>
