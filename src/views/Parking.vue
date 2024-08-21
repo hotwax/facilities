@@ -234,8 +234,8 @@ main {
   margin: auto;
 }
 
-main {
-  padding-bottom: 80px;
+ion-content {
+  --padding-bottom: 80px;
 }
 
 </style>

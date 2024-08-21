@@ -406,9 +406,10 @@ export default defineComponent({
   --columns-desktop: 4;
 }
 
-main {
-  padding-bottom: 80px;
+ion-content {
+  --padding-bottom: 80px;
 }
+
 config-note {
   display: block;
   text-align: center;
