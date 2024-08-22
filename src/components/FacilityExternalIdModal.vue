@@ -27,7 +27,7 @@
       <ion-list>
         <ion-list-header>{{ translate('Facility External ID') }}</ion-list-header>
         <ion-item>
-          <ion-input :label="translate('Identification')" v-model="currentFacility.externalId" />
+          <ion-input id="inputElement" :label="translate('Identification')" v-model="currentFacility.externalId" />
         </ion-item>
       </ion-list>
 
