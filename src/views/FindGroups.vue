@@ -3,7 +3,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-title>{{ translate("Groups") }}</ion-title>
-        <ion-segment scrollable v-model="segment" slot="end" @ion-change="resetParentGroupPage()">
+        <ion-segment v-model="segment" slot="end" @ion-change="resetParentGroupPage()">
           <ion-segment-button value="facility-groups" >
             <ion-label>{{ translate("Facility groups") }}</ion-label>
           </ion-segment-button>
@@ -14,7 +14,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
+    <ion-content>
       <template v-if="segment === 'facility-groups'">
         <div class="find">
           <section class="search">
@@ -95,17 +95,6 @@
           </div>
         </div>
       </template>
-      <ion-infinite-scroll
-        @ionInfinite="loadMoreGroups($event)"
-        threshold="100px"
-        v-show="isScrollable"
-        ref="infiniteScrollRef"
-      >
-        <ion-infinite-scroll-content
-          loading-spinner="crescent"
-          :loading-text="translate('Loading')"
-        />
-      </ion-infinite-scroll>
 
       <ion-fab v-if="segment === 'facility-groups'" vertical="bottom" horizontal="end" slot="fixed">
         <ion-fab-button @click="createFacilityGroup()">
@@ -129,8 +118,6 @@ import {
   IonFabButton,
   IonHeader,
   IonIcon,
-  IonInfiniteScroll,
-  IonInfiniteScrollContent,
   IonItem,
   IonLabel,
   IonList,
@@ -172,8 +159,6 @@ export default defineComponent({
     IonFabButton,
     IonHeader,
     IonIcon,
-    IonInfiniteScroll,
-    IonInfiniteScrollContent,
     IonItem,
     IonLabel,
     IonList,
@@ -189,7 +174,6 @@ export default defineComponent({
   data() {
     return {
       segment: "facility-groups",
-      isScrollingEnabled: false,
       currentFacilityGroupTypeId: "",
       isParentGroupDetailAnimationCompleted: false,
       facilityGroupProductStore: {} as any
@@ -209,7 +193,6 @@ export default defineComponent({
   async ionViewWillEnter() {
     this.segment = "facility-groups"
     await this.fetchGroups();
-    this.isScrollingEnabled = false;
   },
   methods: {
     resetParentGroupPage() {
@@ -261,39 +244,18 @@ export default defineComponent({
       await this.store.dispatch('facility/updateGroupQuery', this.query)
       this.fetchGroups();
     },
-    async fetchGroups(vSize?: any, vIndex?: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
-      const payload = {
-        viewSize,
-        viewIndex
-      };
-      await this.store.dispatch('facility/fetchFacilityGroups', payload)
-    },
-    enableScrolling() {
-      const parentElement = (this as any).$refs.contentRef.$el
-      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
-      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
-      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
-      if(distanceFromInfinite < 0) {
-        this.isScrollingEnabled = false;
-      } else {
-        this.isScrollingEnabled = true;
+    async fetchGroups() {
+      const viewSize = process.env.VUE_APP_VIEW_SIZE;
+      let viewIndex = 0;
+      do {
+        const payload = {
+          viewSize,
+          viewIndex
+        };
+        await this.store.dispatch('facility/fetchFacilityGroups', payload)
+        viewIndex++;
       }
-    },
-    async loadMoreGroups(event: any) {
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isScrollable)) {
-        await event.target.complete();
-      }
-      this.fetchGroups(
-        undefined,
-        Math.ceil(
-          this.groups?.length / (process.env.VUE_APP_VIEW_SIZE as any)
-        ).toString()
-      ).then(async () => {
-        await event.target.complete();
-      });
+      while (this.isScrollable);
     },
     getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
       const associatedfacilityGroupIds = [] as any
