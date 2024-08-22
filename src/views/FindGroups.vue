@@ -77,7 +77,7 @@
             <h3>{{ getFacilityGroupTypeDescription(currentFacilityGroupTypeId) }}</h3>
             <ion-list v-if="groups.length">
               <ion-list-header>
-                <ion-label>{{ translate('Selected groups') }} : 10</ion-label>
+                <ion-label>{{ translate('Selected groups') }} : {{ getAssociatedFacilityGroupIds(currentFacilityGroupTypeId).length }}</ion-label>
               </ion-list-header>
               <ion-item v-for="group in groups" :key="group.facilityGroupId">
                 <ion-checkbox label-placement="end" justify="start" :disabled="!!group.facilityGroupTypeId && group.facilityGroupTypeId !== currentFacilityGroupTypeId" :checked="isFacilityGroupLinked(group.facilityGroupTypeId)" @click="updateFacilityGroup($event, group)">
@@ -207,6 +207,7 @@ export default defineComponent({
     await this.store.dispatch('util/fetchFacilityGroupTypes')
   },
   async ionViewWillEnter() {
+    this.segment = "facility-groups"
     await this.fetchGroups();
     this.isScrollingEnabled = false;
   },

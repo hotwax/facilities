@@ -54,6 +54,9 @@
               </ion-reorder-group>
             </ion-list> 
           </main>
+          <main v-else>
+            <p class="empty-state"> {{ translate('No facilities selected.') }}</p>
+          </main>
         </div>
         
         <ion-fab vertical="bottom" horizontal="end" slot="fixed">
@@ -133,8 +136,9 @@
       }
     },
     props: ['facilityGroupId'],
-    async mounted() {
+    async ionViewWillEnter() {
       emitter.emit('presentLoader')
+      this.isSavingDetail = false
       await Promise.all([this.fetchFacilities(), this.fetchFacilityGroup()])
       await this.fetchMemberFacilities();
       await this.getFilteredFacilities();
