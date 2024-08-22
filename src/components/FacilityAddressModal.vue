@@ -16,7 +16,7 @@
         <ion-label>{{ translate("Address") }}</ion-label>
       </ion-item-divider>
       <ion-item>
-        <ion-input :label="translate('Shipping name')" label-placement="floating" v-model="address.toName" />
+        <ion-input id="inputElement" :label="translate('Shipping name')" label-placement="floating" v-model="address.toName" />
       </ion-item>
       <ion-item>
         <ion-input label-placement="floating" v-model="address.address1">

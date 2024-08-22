@@ -743,7 +743,9 @@ export default defineComponent({
         }
       })
 
-      addressModal.present()
+      addressModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async addCustomSchedule() {
       const customScheduleModal = await modalController.create({
@@ -1160,14 +1162,18 @@ export default defineComponent({
         componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
       })
 
-      customMappingModal.present()
+      customMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async editFacilityExternalId() {
       const facilityExternalIdModal = await modalController.create({
         component: FacilityExternalIdModal
       })
 
-      facilityExternalIdModal.present()
+      facilityExternalIdModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
       const customMappingModal = await modalController.create({
@@ -1175,7 +1181,9 @@ export default defineComponent({
         componentProps: { shopifyFacilityMapping, type: 'update' }
       })
 
-      customMappingModal.present()
+      customMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     getOpenEndTime(startTime: any, capacity: any) {
       const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
