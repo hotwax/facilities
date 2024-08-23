@@ -16,10 +16,12 @@
         <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
       </ion-input>
     </ion-item>
-    <ion-item>
+    <ion-item lines="none">
       <ion-textarea :label="translate('Description')" label-placement="floating"
         :placeholder="translate('group description')"
         :auto-grow="true"
+        :counter="true" 
+        :maxlength="255"
         v-model="facilityGroupDescription"
       >
       </ion-textarea>

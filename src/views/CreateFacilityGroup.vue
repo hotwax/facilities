@@ -38,7 +38,14 @@
                 </ion-select>
               </ion-item>
               <ion-item lines="none">
-                <ion-input :label="translate('Description')" label-placement="floating" v-model="formData.description"/>
+                <ion-textarea :label="translate('Description')" label-placement="floating"
+                  :placeholder="translate('group description')"
+                  :auto-grow="true"
+                  :counter="true" 
+                  :maxlength="255"
+                  v-model="formData.description"
+                >
+                </ion-textarea>
               </ion-item>
             </ion-list>
           </form>
@@ -72,6 +79,7 @@ import {
   IonSelect,
   IonSelectOption,
   IonText,
+  IonTextarea,
   IonTitle,
   IonToolbar,
   alertController
@@ -105,6 +113,7 @@ export default defineComponent({
     IonSelect,
     IonSelectOption,
     IonText,
+    IonTextarea,
     IonTitle,
     IonToolbar
   },

@@ -126,7 +126,7 @@ export default defineComponent({
       isScrollable: "facility/isVirtualFacilitiesScrollable",
     })
   },
-  async mounted() {
+  async ionViewWillEnter() {
     await this.fetchArchivedFacilities();
     await this.fetchFacilities();
   },
