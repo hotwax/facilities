@@ -24,23 +24,23 @@
             </ion-button>
           </ion-item>
           <template v-if="facility.facilityId === '_NA_'">
-            <ion-item lines="full">
+            <ion-item>
               <ion-label>{{ translate('Pending allocation') }}</ion-label>
               <ion-note slot="end">{{ facility.orderCount }}</ion-note>
             </ion-item>
-            <ion-item lines="full">
+            <ion-item lines="none">
               <ion-label>{{ translate('Next brokering') }}</ion-label>
               <ion-note slot="end">{{ facility?.brokeringJob?.runTime ? getDateTime(facility?.brokeringJob?.runTime) : translate("Not scheduled") }}</ion-note>
             </ion-item>
           </template>
-          <ion-item v-else>
+          <ion-item v-else :lines="(isFacilityDescriptionAvailable(facility) || ['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId)) ? '' : 'none'">
             <ion-label>{{ translate('Orders') }}</ion-label>
             <ion-note slot="end">{{ facility.orderCount }}</ion-note>
           </ion-item>
-          <ion-item lines="full" v-if="['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId)">
+          <ion-item :lines="isFacilityDescriptionAvailable(facility) ? 'inset' : 'none'" v-if="['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId)">
             <ion-toggle :checked="facility.autoReleaseJob" :disabled="true">{{ translate('Auto release') }}</ion-toggle>
           </ion-item>
-          <ion-item lines="full" v-if="facility.description && !['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId) && facility.facilityId !== '_NA_'">
+          <ion-item lines="none" v-if="isFacilityDescriptionAvailable(facility)">
             <ion-label>{{ facility.description }}</ion-label>
           </ion-item>
         </ion-card>
@@ -207,6 +207,9 @@ export default defineComponent({
     },
     async fetchArchivedFacilities() {
       await this.store.dispatch('facility/fetchArchivedFacilities')
+    },
+    isFacilityDescriptionAvailable(facility: any) {
+      return facility.description && !['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId) && facility.facilityId !== '_NA_';
     }
   },
   setup() {
