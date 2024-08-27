@@ -195,10 +195,13 @@ export default defineComponent({
     await this.fetchGroups();
   },
   methods: {
-    resetParentGroupPage() {
+    async resetParentGroupPage() {
       if (this.segment === 'facility-groups') {
         this.currentFacilityGroupTypeId = ''
         this.isParentGroupDetailAnimationCompleted = false;
+      } else {
+        this.query.queryString = ""
+        await this.updateQuery()
       }
     },
     setCurrentFacilityGroupType(facilityGroupTypeId: string) {
