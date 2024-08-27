@@ -28,7 +28,7 @@
               <ion-label>{{ translate('Pending allocation') }}</ion-label>
               <ion-note slot="end">{{ facility.orderCount }}</ion-note>
             </ion-item>
-            <ion-item :lines="(isFacilityDescriptionAvailable(facility) || ['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId)) ? '' : 'none'">
+            <ion-item lines="none">
               <ion-label>{{ translate('Next brokering') }}</ion-label>
               <ion-note slot="end">{{ facility?.brokeringJob?.runTime ? getDateTime(facility?.brokeringJob?.runTime) : translate("Not scheduled") }}</ion-note>
             </ion-item>
