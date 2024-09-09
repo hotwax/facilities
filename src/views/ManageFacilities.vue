@@ -139,6 +139,7 @@
     async ionViewWillEnter() {
       emitter.emit('presentLoader')
       this.isSavingDetail = false
+      this.queryString = ''
       await Promise.all([this.fetchFacilities(), this.fetchFacilityGroup()])
       await this.fetchMemberFacilities();
       await this.getFilteredFacilities();
