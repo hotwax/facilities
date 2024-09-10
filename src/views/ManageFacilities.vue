@@ -139,6 +139,7 @@
     async ionViewWillEnter() {
       emitter.emit('presentLoader')
       this.isSavingDetail = false
+      this.queryString = ''
       await Promise.all([this.fetchFacilities(), this.fetchFacilityGroup()])
       await this.fetchMemberFacilities();
       await this.getFilteredFacilities();
@@ -310,12 +311,13 @@
       },
       async save () {
         this.isSavingDetail = true
-        const facilitiesToAdd = this.selectedFacilities.filter((facility: any) => !facility.fromDate)
+        const memberFacilityIds = this.memberFacilities?.map((facility: any) => facility.facilityId)
+        const facilitiesToAdd = this.selectedFacilities.filter((facility: any) => !memberFacilityIds.includes(facility.facilityId))
         const selectedFacilityIds = this.selectedFacilities ? new Set(this.selectedFacilities.map((facility:any) => facility.facilityId)) as any : [];
         const facilitiesToRemove = this.memberFacilities.filter((facility: any) => !selectedFacilityIds.has(facility.facilityId))
         
         const removeResponses = await Promise.allSettled(facilitiesToRemove
-          .map(async (facility: any) => await FacilityService.updateFacilityToGroup({
+          .map((facility: any) => FacilityService.updateFacilityToGroup({
             "facilityId": facility.facilityId,
             "facilityGroupId": facility.facilityGroupId,
             "fromDate": facility.fromDate,
@@ -324,7 +326,7 @@
         )
 
         const addResponses = await Promise.allSettled(facilitiesToAdd
-          .map(async (facility: any) => await FacilityService.addFacilityToGroup({
+          .map((facility: any) => FacilityService.addFacilityToGroup({
             "facilityId": facility.facilityId,
             "facilityGroupId": this.facilityGroupId,
             "sequenceNum": facility.sequenceNum
@@ -334,11 +336,17 @@
         const facilityIdsToAdd = facilitiesToAdd ? new Set(facilitiesToAdd.map((facility:any) => facility.facilityId)) as any : [];
         const existingFacilityMembers = this.selectedFacilities.filter((facility:any) => !facilityIdsToAdd.has(facility.facilityId))
         const diffMemberFacilitySequencing = existingFacilityMembers.filter((facility: any) => this.memberFacilities.some((memberFacility: any) => memberFacility.facilityId === facility.facilityId && memberFacility.sequenceNum !== facility.sequenceNum))
-        const sequenceUpdateResponses = await Promise.allSettled(diffMemberFacilitySequencing.map(async (memberFacility: any) => {
-          await FacilityService.updateFacilityToGroup({
+        
+        const memberFacilityDetail = this.memberFacilities.reduce((memberInfo:any, facility:any) => {
+          memberInfo[facility.facilityId] = facility;
+          return memberInfo;
+        }, {});
+
+        const sequenceUpdateResponses = await Promise.allSettled(diffMemberFacilitySequencing.map((memberFacility: any) => {
+          FacilityService.updateFacilityToGroup({
             "facilityId": memberFacility.facilityId,
-            "facilityGroupId": memberFacility.facilityGroupId,
-            "fromDate": memberFacility.fromDate,
+            "facilityGroupId": this.facilityGroupId,
+            "fromDate": memberFacilityDetail[memberFacility.facilityId].fromDate,
             "sequenceNum": memberFacility.sequenceNum
           });
         }))

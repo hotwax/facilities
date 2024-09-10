@@ -193,6 +193,7 @@ export default defineComponent({
   async ionViewWillEnter() {
     this.segment = "facility-groups"
     await this.fetchGroups();
+    await this.resetParentGroupPage()
   },
   methods: {
     async resetParentGroupPage() {

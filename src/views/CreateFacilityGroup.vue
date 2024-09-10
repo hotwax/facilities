@@ -13,45 +13,43 @@
           <ion-card-header>
             <ion-card-title>{{ translate('Create a new group') }}</ion-card-title>
           </ion-card-header>
-          <form @keyup.enter="createFacilityGroup">
-            <ion-list>
-              <ion-item>
-                <ion-input label-placement="floating" @ionBlur="setFacilityGroupId($event)" v-model="formData.facilityGroupName">
-                  <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
-                </ion-input>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
-              </ion-item>
-              <ion-item>
-                <ion-select :label="translate('Group type')" :disabled="isFacilityGroupTypeDisabled" :placeholder="translate('Select')" interface="popover" v-model="formData.facilityGroupTypeId">
-                  <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
-                    {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
-              <ion-item>
-                <ion-select v-if="productStores.length" :label="translate('Product store')" :placeholder="translate('Select')" :selectedText="selectedProductStoreIds.length > 1 ? translate('product stores', { count: selectedProductStoreIds.length }) : selectedProductStoreIds.map[0]" :value="selectedProductStoreIds" @ionChange="updateFacilityGroupProductStores($event)" :multiple="true">
-                  <ion-select-option :value="productStore.productStoreId" :key="productStore.productStoreId" v-for="productStore in productStores">
-                    {{ productStore.storeName ? productStore.storeName : productStore.productStoreId }}
-                  </ion-select-option>
-                </ion-select>
-              </ion-item>
-              <ion-item lines="none">
-                <ion-textarea :label="translate('Description')" label-placement="floating"
-                  :placeholder="translate('group description')"
-                  :auto-grow="true"
-                  :counter="true" 
-                  :maxlength="255"
-                  v-model="formData.description"
-                >
-                </ion-textarea>
-              </ion-item>
-            </ion-list>
-          </form>
+          <ion-list>
+            <ion-item>
+              <ion-input label-placement="floating" @ionBlur="setFacilityGroupId($event)" v-model="formData.facilityGroupName">
+                <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
+              </ion-input>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
+            </ion-item>
+            <ion-item>
+              <ion-select :label="translate('Group type')" :disabled="isFacilityGroupTypeDisabled" :placeholder="translate('Select')" interface="popover" v-model="formData.facilityGroupTypeId">
+                <ion-select-option :value="facilityGroupType.facilityGroupTypeId" :key="facilityGroupType.facilityGroupTypeId" v-for="facilityGroupType in facilityGroupTypes">
+                  {{  facilityGroupType.description ?  facilityGroupType.description : facilityGroupType.facilityGroupTypeId }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item>
+              <ion-select v-if="productStores.length" :label="translate('Product store')" :placeholder="translate('Select')" :selectedText="selectedProductStoreIds.length > 1 ? translate('product stores', { count: selectedProductStoreIds.length }) : selectedProductStoreIds.map[0]" :value="selectedProductStoreIds" @ionChange="updateFacilityGroupProductStores($event)" :multiple="true">
+                <ion-select-option :value="productStore.productStoreId" :key="productStore.productStoreId" v-for="productStore in productStores">
+                  {{ productStore.storeName ? productStore.storeName : productStore.productStoreId }}
+                </ion-select-option>
+              </ion-select>
+            </ion-item>
+            <ion-item lines="none">
+              <ion-textarea :label="translate('Description')" label-placement="floating"
+                :placeholder="translate('group description')"
+                :auto-grow="true"
+                :counter="true" 
+                :maxlength="255"
+                v-model="formData.description"
+              >
+              </ion-textarea>
+            </ion-item>
+          </ion-list>
         </ion-card>
         <div class="ion-text-center ion-margin">
-          <ion-button @click="createFacilityGroup()" @keyup.enter.stop>
+          <ion-button @click="createFacilityGroup()">
             {{ translate("Create group") }}
             <ion-icon slot="end" :icon="arrowForwardOutline"/>
           </ion-button>
