@@ -791,13 +791,14 @@ export default defineComponent({
             }))
           )
 
-          const createResponses = await Promise.allSettled(productStoresToCreate
-            .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+          let createResponses = []
+          for (const payload of productStoresToCreate) {
+            createResponses.push(await FacilityService.createProductStoreFacility({
               productStoreId: payload.productStoreId,
               facilityId: this.facilityId,
               fromDate: DateTime.now().toMillis(),
             }))
-          )
+          }
 
           const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
           if(hasFailedResponse) {
