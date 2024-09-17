@@ -235,6 +235,7 @@ main {
   grid-template-columns: repeat(auto-fill, minmax(300px, 343px));
   max-width: 1000px;
   margin: auto;
+  align-items: start;
 }
 
 @media screen and (min-width: 991px) {
