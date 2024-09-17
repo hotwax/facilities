@@ -118,6 +118,8 @@ export default defineComponent({
 
       // if we does not get shopify shop id for the store then not making product store as primary
       if(!shopifyShopId) {
+        showToast(translate('Failed to make product store primary due to missing Shopify shop'))
+        emitter.emit('dismissLoader')
         return;
       }
 

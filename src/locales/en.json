@@ -144,6 +144,7 @@
   "Failed to find the facility locations": "Failed to find the facility locations",
   "Failed to make product store as primary.": "Failed to make product store as primary.",
   "Failed to make product store primary.": "Failed to make product store primary.",
+  "Failed to make product store primary due to missing Shopify shop": "Failed to make product store primary due to missing Shopify shop",
   "Failed to regenerate latitude and longitude for the facility.": "Failed to regenerate latitude and longitude for the facility.",
   "Failed to rename facility.": "Failed to rename facility.",
   "Failed to remove facility latitude and longitude.": "Failed to remove facility latitude and longitude.",
