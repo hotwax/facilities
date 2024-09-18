@@ -298,13 +298,14 @@ export default defineComponent({
       }
     },
     async addProductStoresToFacility() {
-      const responses = await Promise.allSettled(this.selectedProductStores
-        .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+      let responses = []
+      for (const payload of this.selectedProductStores) {
+        responses.push(await FacilityService.createProductStoreFacility({
           productStoreId: payload.productStoreId,
           facilityId: this.facilityId,
           fromDate: DateTime.now().toMillis(),
         }))
-      )
+      }
 
       const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
       if (hasFailedResponse) {
