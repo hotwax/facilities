@@ -76,7 +76,7 @@ export default defineComponent({
               primaryFacilityGroupId: ''
             })
           }
-
+          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: '' })
           // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
         } else {
@@ -119,6 +119,7 @@ export default defineComponent({
       // if we does not get shopify shop id for the store then not making product store as primary
       if(!shopifyShopId) {
         showToast(translate('Failed to make product store primary due to missing Shopify shop'))
+        popoverController.dismiss()
         emitter.emit('dismissLoader')
         return;
       }
