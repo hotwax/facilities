@@ -562,7 +562,7 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
     do {
       const params = {
         inputFields: {
-          facilityGroupId: facilityGroupIds, // Send all facilityGroupIds at once
+          facilityGroupId: facilityGroupIds,
           facilityGroupId_op: "in"
         },
         viewSize: 250, // maximum view size
