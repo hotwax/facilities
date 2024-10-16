@@ -554,46 +554,44 @@ const fetchArchivedFacilities = async (): Promise<any> => {
 
 const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> => {
   if (!facilityGroupIds.length) return []
-  let allResponseData = [] as any
+  let facilityMemberResponses = [] as any;
   let viewIndex = 0;
-  
-  const params = {
-    inputFields: {
-      facilityGroupId: facilityGroupIds, // Send all facilityGroupIds at once
-      facilityGroupId_op: "in"
-    },
-    viewSize: 250, // maximum view size
-    viewIndex: viewIndex,
-    entityName: 'FacilityGroupAndMember',
-    noConditionFind: "Y",
-    filterByDate: 'Y',
-    fieldList: ['facilityGroupId', 'facilityId']
-  }
-  
+  let resp = {} as any;
+
   try {
-    let responseData;
     do {
-      params.viewIndex = viewIndex;
-      const facilityCountResponse = await api({
+      const params = {
+        inputFields: {
+          facilityGroupId: facilityGroupIds, // Send all facilityGroupIds at once
+          facilityGroupId_op: "in"
+        },
+        viewSize: 250, // maximum view size
+        viewIndex,
+        entityName: 'FacilityGroupAndMember',
+        noConditionFind: "Y",
+        filterByDate: 'Y',
+        fieldList: ['facilityGroupId', 'facilityId']
+      };
+
+      resp = await api({
         url: 'performFind',
         method: 'POST',
         data: params
-      })
-      
-      if (hasError(facilityCountResponse) && !facilityCountResponse?.data?.count) {
-        logger.error('Failed to fetch facility count for some groups')
-      }
-      
-      responseData = facilityCountResponse?.data?.docs
-      allResponseData = allResponseData.concat(responseData)
-      viewIndex++
-    } while (responseData.length >= 250)
-    
-    return allResponseData.reduce((facilityCountByGroup: any, responseData: any) => {
-      if (facilityCountByGroup[responseData.facilityGroupId]) {
-        facilityCountByGroup[responseData.facilityGroupId] += 1
+      });
+
+      if (!hasError(resp) && resp.data.count) {
+        facilityMemberResponses = [...facilityMemberResponses, ...resp.data.docs];
+        viewIndex++;
       } else {
-        facilityCountByGroup[responseData.facilityGroupId] = 1
+        throw resp.data;
+      }
+    } while (resp.data.docs.length >= 250);
+
+    return facilityMemberResponses.reduce((facilityCountByGroup: any, facilityData: any) => {
+      if (facilityCountByGroup[facilityData.facilityGroupId]) {
+        facilityCountByGroup[facilityData.facilityGroupId] += 1;
+      } else {
+        facilityCountByGroup[facilityData.facilityGroupId] = 1
       }
       return facilityCountByGroup
     }, {})
