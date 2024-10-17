@@ -110,7 +110,8 @@ export default defineComponent({
         externalId: '',
       },
       selectedFacilityTypeId: '' as any,
-      facilityTypesByParentTypeId: {} as any
+      facilityTypesByParentTypeId: {} as any,
+      isFacilityIdManuallySet: false,
     }
   },
   async ionViewWillEnter() {
@@ -138,9 +139,12 @@ export default defineComponent({
         facilityId: '',
         externalId: '',
       }
+      this.isFacilityIdManuallySet = false;
     },
     setFacilityId(event: any) {
-      this.formData.facilityId = generateInternalId(event.target.value)
+      if(!this.isFacilityIdManuallySet) {
+        this.formData.facilityId = generateInternalId(event.target.value)
+      }
     },
     async createFacility() {
       if (!this.formData.facilityName?.trim()) {
@@ -214,6 +218,7 @@ export default defineComponent({
       this.formData.facilityId.length <= 20
         ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
         : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
+      this.isFacilityIdManuallySet = true;
     },
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');
