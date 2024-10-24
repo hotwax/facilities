@@ -16,7 +16,7 @@
     <form @keyup.enter="updateGroups">
       <ion-list>
         <ion-item-group v-for="(groups, typeId) in filteredFacilityGroupsByType" :key="typeId">
-          <ion-item-divider color="medium">{{ getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
+          <ion-item-divider color="medium">{{ typeId === "null" ? translate('Others') : getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
           <ion-item v-for="group in groups" :key="group.facilityGroupId">
             <ion-checkbox :checked="isFacilityGroupLinked(group.facilityGroupId)" @ion-change="updateGroupsForFacility(group.facilityGroupId)">{{ group.facilityGroupName }}</ion-checkbox>
           </ion-item>
