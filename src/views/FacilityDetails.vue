@@ -1209,7 +1209,9 @@ export default defineComponent({
         const resp = await UtilService.generateLatLong(payload)
 
         if(!hasError(resp)) {
-          this.isRegenerationRequired = !(this.postalAddress.postalCode === resp.data.response.docs[0].postcode)
+          const postalCode = this.postalAddress.postalCode
+          const fetchedPostcode = resp.data.response.docs[0].postcode
+          this.isRegenerationRequired = !(postalCode.startsWith('0') ? postalCode.substring(1) === fetchedPostcode : postalCode === fetchedPostcode);
         } else {
           throw resp.data
         }

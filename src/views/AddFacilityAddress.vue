@@ -200,10 +200,13 @@ export default defineComponent({
       if(this.contactNumber) this.saveTelecomNumber()
     },
     async generateLatLong() {
+      const postalCode = this.formData.postalCode;
+      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : `${postalCode}`;
+
       const payload = {
         json: {
           params: {
-            q: `postcode: ${this.formData.postalCode}`
+            q: `postcode: ${query}`
           }
         }
       }
@@ -211,6 +214,10 @@ export default defineComponent({
         const resp = await UtilService.generateLatLong(payload)
         if (!hasError(resp)) {
           const result = resp.data.response.docs[0]
+
+          if (postalCode.startsWith('0') && result.postcode !== postalCode.substring(1)) {
+            throw new Error();
+          }
           this.formData.latitude = result.latitude
           this.formData.longitude = result.longitude
         } else {
