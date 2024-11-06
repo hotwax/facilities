@@ -201,12 +201,12 @@ export default defineComponent({
     },
     async generateLatLong() {
       const postalCode = this.formData.postalCode;
-      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : `${postalCode}`;
+      const query = postalCode.startsWith('0') ?  postalCode + ' OR ' + postalCode.substring(1) : postalCode;
 
       const payload = {
         json: {
           params: {
-            q: `postcode: ${query}`
+            q: 'postcode: ' + query
           }
         }
       }

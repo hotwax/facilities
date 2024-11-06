@@ -101,11 +101,11 @@ export default defineComponent({
     async generateLatLong() {
       this.isGeneratingLatLong = true
       const postalCode = this.geoPoint.postalCode;
-      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : `${postalCode}`;
+      const query = postalCode.startsWith('0') ?  postalCode + ' OR ' + postalCode.substring(1) : postalCode;
       const payload = {
         json: {
           params: {
-            q: `postcode: ${query}`
+            q: 'postcode: ' + query
           }
         }
       }
