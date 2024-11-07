@@ -16,7 +16,7 @@
     <form @keyup.enter="updateGroups">
       <ion-list>
         <ion-item-group v-for="(groups, typeId) in filteredFacilityGroupsByType" :key="typeId">
-          <ion-item-divider color="medium">{{ typeId === "null" ? translate('Others') : getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
+          <ion-item-divider color="medium">{{ getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
           <ion-item v-for="group in groups" :key="group.facilityGroupId">
             <ion-checkbox :checked="isFacilityGroupLinked(group.facilityGroupId)" @ion-change="updateGroupsForFacility(group.facilityGroupId)">{{ group.facilityGroupName }}</ion-checkbox>
           </ion-item>
@@ -210,12 +210,13 @@ export default defineComponent({
 
         if(!hasError(resp) && resp.data?.docs?.length > 0) {
           this.filteredFacilityGroupsByType = this.facilityGroupsByType = resp.data.docs.reduce((groupsByType: any, group: any) => {
-            if(groupsByType[group.facilityGroupTypeId]) {
-              groupsByType[group.facilityGroupTypeId].push(group)
-            } else {
-              groupsByType[group.facilityGroupTypeId] = [group]
-            }
+            const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
 
+            if(groupsByType[groupTypeId]) {
+              groupsByType[groupTypeId].push(group)
+            } else {
+              groupsByType[groupTypeId] = [group]
+            }
             return groupsByType
           }, {})
         } else {
