@@ -115,8 +115,8 @@ export default defineComponent({
 
         if(!hasError(resp) && resp.data.response.docs.length > 0) {
           const result = resp.data.response.docs[0]
-          this.geoPoint.latitude = result.latitude;
-          this.geoPoint.longitude = result.longitude;
+          this.geoPoint.latitude = result.latitude
+          this.geoPoint.longitude = result.longitude
         } else {
           throw resp.data
         }
