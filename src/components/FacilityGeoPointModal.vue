@@ -101,11 +101,11 @@ export default defineComponent({
     async generateLatLong() {
       this.isGeneratingLatLong = true
       const postalCode = this.geoPoint.postalCode;
-      const query = postalCode.startsWith('0') ?  postalCode + ' OR ' + postalCode.substring(1) : postalCode;
+      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
       const payload = {
         json: {
           params: {
-            q: 'postcode: ' + query
+            q: `postcode: ${query}`
           }
         }
       }
@@ -115,10 +115,6 @@ export default defineComponent({
 
         if(!hasError(resp) && resp.data.response.docs.length > 0) {
           const result = resp.data.response.docs[0]
-
-          if (postalCode.startsWith('0') && result.postcode !== postalCode.substring(1)) {
-            throw new Error();
-          }
           this.geoPoint.latitude = result.latitude;
           this.geoPoint.longitude = result.longitude;
         } else {

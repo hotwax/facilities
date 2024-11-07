@@ -49,23 +49,20 @@ export default defineComponent({
 
       try {
         const postalCode = this.postalAddress.postalCode;
-        const query = postalCode.startsWith('0') ?  postalCode + ' OR ' + postalCode.substring(1) : postalCode;
+        const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
 
         resp = await UtilService.generateLatLong({
           json: {
             params: {
-              q: 'postcode: ' + query
+              q: `postcode: ${query}`
             }
           }
         })
 
         if(!hasError(resp) && resp.data.response.docs.length > 0) {
           generatedLatLong = resp.data.response.docs[0]
-          if(generatedLatLong.latitude && generatedLatLong.longitude) {
-            if (postalCode.startsWith('0') && generatedLatLong.postcode !== postalCode.substring(1)) {
-              throw new Error();
-            }
 
+          if(generatedLatLong.latitude && generatedLatLong.longitude) {
             resp = await FacilityService.updateFacilityPostalAddress({
               ...this.postalAddress,
               facilityId: this.facilityId,

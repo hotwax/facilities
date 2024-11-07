@@ -1211,7 +1211,7 @@ export default defineComponent({
         if(!hasError(resp)) {
           const postalCode = this.postalAddress.postalCode
           const fetchedPostcode = resp.data.response.docs[0].postcode
-          this.isRegenerationRequired = !(postalCode.startsWith('0') ? postalCode.substring(1) === fetchedPostcode : postalCode === fetchedPostcode);
+          this.isRegenerationRequired = !(postalCode.startsWith('0') ? postalCode.substring(1) === fetchedPostcode || postalCode === fetchedPostcode : postalCode === fetchedPostcode);
         } else {
           throw resp.data
         }
