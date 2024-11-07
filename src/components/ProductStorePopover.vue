@@ -75,8 +75,8 @@ export default defineComponent({
               facilityId: this.facilityId,
               primaryFacilityGroupId: ''
             })
+            await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: '' })
           }
-          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: '' })
           // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
         } else {
