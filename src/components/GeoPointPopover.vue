@@ -48,10 +48,13 @@ export default defineComponent({
       emitter.emit('presentLoader')
 
       try {
+        const postalCode = this.postalAddress.postalCode;
+        const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+
         resp = await UtilService.generateLatLong({
           json: {
             params: {
-              q: `postcode: ${this.postalAddress.postalCode}`
+              q: `postcode: ${query}`
             }
           }
         })

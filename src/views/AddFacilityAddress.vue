@@ -200,10 +200,13 @@ export default defineComponent({
       if(this.contactNumber) this.saveTelecomNumber()
     },
     async generateLatLong() {
+      const postalCode = this.formData.postalCode;
+      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+
       const payload = {
         json: {
           params: {
-            q: `postcode: ${this.formData.postalCode}`
+            q: `postcode: ${query}`
           }
         }
       }
