@@ -210,12 +210,13 @@ export default defineComponent({
 
         if(!hasError(resp) && resp.data?.docs?.length > 0) {
           this.filteredFacilityGroupsByType = this.facilityGroupsByType = resp.data.docs.reduce((groupsByType: any, group: any) => {
-            if(groupsByType[group.facilityGroupTypeId]) {
-              groupsByType[group.facilityGroupTypeId].push(group)
-            } else {
-              groupsByType[group.facilityGroupTypeId] = [group]
-            }
+            const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
 
+            if(groupsByType[groupTypeId]) {
+              groupsByType[groupTypeId].push(group)
+            } else {
+              groupsByType[groupTypeId] = [group]
+            }
             return groupsByType
           }, {})
         } else {
