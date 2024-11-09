@@ -161,27 +161,31 @@
           </ion-card>
 
           <ion-card>
-            <ion-card-header>
-              <ion-card-title>
-                {{ translate("Product Stores") }}
-              </ion-card-title>
-              <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
-                <ion-icon :icon="addCircleOutline" slot="end" />
-                {{ translate("Add") }}
-              </ion-button>
-            </ion-card-header>
-            <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
-              <ion-label>{{ getProductStore(store.productStoreId)?.storeName }}</ion-label>
-              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) !== '' && shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
-              <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
-                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
-              </ion-button>
-            </ion-item>
-            <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
-              {{ translate("Add") }}
-              <ion-icon slot="end" :icon="addCircleOutline" />
-            </ion-button>
-          </ion-card>
+  <ion-card-header>
+    <ion-card-title>
+      {{ translate("Product Stores") }}
+    </ion-card-title>
+    <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
+      <ion-icon :icon="addCircleOutline" slot="end" />
+      {{ translate("Add") }}
+    </ion-button>
+  </ion-card-header>
+  <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
+    <ion-label>
+      {{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}
+    </ion-label>
+    <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) !== '' && shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">
+      {{ translate("primary store") }}
+    </ion-badge>
+    <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
+      <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+    </ion-button>
+  </ion-item>
+  <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
+    {{ translate("Add") }}
+    <ion-icon slot="end" :icon="addCircleOutline" />
+  </ion-button>
+</ion-card>
         </section>
 
         <section>
