@@ -1,8 +1,6 @@
 <template>
   <ion-app>
-    <ion-split-pane content-id="main-content" when="lg">
-      <ion-router-outlet id="main-content" />
-    </ion-split-pane>
+    <ion-router-outlet id="main-content" />
   </ion-app>
 </template>
 
@@ -115,7 +113,4 @@ export default defineComponent({
 </script>
 
 <style scoped>
-ion-split-pane {
-  --side-width: 304px;
-}
 </style>
