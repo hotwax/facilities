@@ -5,7 +5,7 @@
     <ion-header :translucent="true">
       <ion-toolbar>
         <ion-back-button slot="start" default-href="/" />
-        <ion-title>{{ translate("Find Facilities") }}</ion-title>
+        <ion-title>{{ translate("Facilities") }}</ion-title>
         <ion-buttons slot="end" class="mobile-only">
           <ion-menu-button menu="end">
             <ion-icon :icon="filterOutline" />
@@ -61,7 +61,7 @@
               </ion-chip>
             </div>
 
-            <div class="tablet">
+            <div class="tablet order-capacity">
               <div class="ion-text-center" v-if="facility.orderLimitType === 'custom'">
                 <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
                   <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
@@ -334,5 +334,16 @@ export default defineComponent({
 <style scoped>
 .list-item {
   --columns-desktop: 4;
+}
+
+.find {
+  margin-inline-end: 0;
+}
+
+.order-capacity {
+  margin-inline-end: var(--spacer-sm);
+  & ion-note {
+    display: block;
+  }
 }
 </style>
