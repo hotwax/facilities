@@ -91,12 +91,12 @@ export default defineComponent({
         facilityId: '',
         description: '',
       },
-      isVirtualFacIdManuallySet: false
+      isAutoGenerateId: true
     }
   },
   methods: {
     setFacilityId(event: any) {
-      if(!this.isVirtualFacIdManuallySet) {
+      if(this.isAutoGenerateId) {
         this.formData.facilityId = generateInternalId(event.target.value)
       }
     },
@@ -160,7 +160,7 @@ export default defineComponent({
       this.formData.facilityId.length <= 20
         ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
         : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
-      this.isVirtualFacIdManuallySet = true;
+      this.isAutoGenerateId = false;
     },
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');

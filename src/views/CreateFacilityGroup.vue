@@ -131,7 +131,7 @@ export default defineComponent({
       },
       isFacilityGroupTypeDisabled: false,
       selectedProductStoreIds: [],
-      isFacilityGroupIdManuallySet: false
+      isAutoGenerateId: true
     }
   },
   props: ['selectedFacilityGroupTypeId'],
@@ -148,7 +148,7 @@ export default defineComponent({
       this.selectedProductStoreIds = selectedProductStoreIds
     },
     setFacilityGroupId(event: any) {
-      if(!this.isFacilityGroupIdManuallySet) {
+      if(this.isAutoGenerateId) {
         this.formData.facilityGroupId = generateInternalId(event.target.value)
       }
     },
@@ -239,7 +239,7 @@ export default defineComponent({
       this.formData.facilityGroupId.length <= 20
         ? (this as any).$refs.facilityGroupId.$el.classList.add('ion-valid')
         : (this as any).$refs.facilityGroupId.$el.classList.add('ion-invalid');
-      this.isFacilityGroupIdManuallySet = true
+      this.isAutoGenerateId = false
     },
     markFacilityGroupIdTouched() {
       (this as any).$refs.facilityGroupId.$el.classList.add('ion-touched');
