@@ -71,12 +71,16 @@ export default defineComponent({
           // TODO: need to check if we need to remove primary value from the facility if product store is removed.
           // Removing primaryFacilityGroupId from the facility, if present
           if(this.shopifyShopIdForProductStore(this.currentProductStore.productStoreId) === this.current.primaryFacilityGroupId) {
-            await FacilityService.updateFacility({
+            const updateResp = await FacilityService.updateFacility({
               facilityId: this.facilityId,
               primaryFacilityGroupId: ''
-            })
+            });
+            if (!hasError(updateResp)) {
+              await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: '' });
+            } else {
+              throw updateResp.data;
+            }
           }
-
           // refetching product stores with updated roles
           await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
         } else {
@@ -119,6 +123,7 @@ export default defineComponent({
       // if we does not get shopify shop id for the store then not making product store as primary
       if(!shopifyShopId) {
         showToast(translate('Failed to make product store primary due to missing Shopify shop'))
+        popoverController.dismiss()
         emitter.emit('dismissLoader')
         return;
       }
