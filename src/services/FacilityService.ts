@@ -554,53 +554,51 @@ const fetchArchivedFacilities = async (): Promise<any> => {
 
 const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> => {
   if (!facilityGroupIds.length) return []
-  const requests = []
+  let facilityMemberResponses = [] as any;
+  let viewIndex = 0;
+  let resp = {} as any;
 
-  const facilityGroupIdList = facilityGroupIds
-  while (facilityGroupIdList.length) {
-    const batch = facilityGroupIdList.splice(0, 10)
-    const params = {
-      inputFields: {
-        facilityGroupId: batch,
-        facilityGroupId_op: "in"
-      },
-      viewSize: 250, // maximum view size
-      entityName: 'FacilityGroupAndMember',
-      noConditionFind: "Y",
-      filterByDate: 'Y',
-      fieldList: ['facilityGroupId', 'facilityId']
-    }
-    requests.push(params)
-  }
+  try {
+    do {
+      const params = {
+        inputFields: {
+          facilityGroupId: facilityGroupIds,
+          facilityGroupId_op: "in"
+        },
+        viewSize: 250, // maximum view size
+        viewIndex,
+        entityName: 'FacilityGroupAndMember',
+        noConditionFind: "Y",
+        filterByDate: 'Y',
+        fieldList: ['facilityGroupId', 'facilityId']
+      };
 
-  const facilityCountResponse = await Promise.allSettled(requests.map((params) => api({
-    url: 'performFind',
-    method: 'POST',
-    data: params
-  })))
+      resp = await api({
+        url: 'performFind',
+        method: 'POST',
+        data: params
+      });
 
-  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response?.data?.count)
-  if (hasFailedResponse) {
-    logger.error('Failed to fetch facility count for some groups')
-  }
-
-  // taking out the response from Promise.allSettled's 'value' field first 
-  const allResponseData = facilityCountResponse.map((response: any) => response.value)
-    .reduce((responseData: any, response: any) => {
-      if (!hasError(response)) {
-        responseData.push(...response.data.docs)
+      if (!hasError(resp) && resp.data.count) {
+        facilityMemberResponses = [...facilityMemberResponses, ...resp.data.docs];
+        viewIndex++;
+      } else {
+        throw resp.data;
       }
-      return responseData
-    }, [])
+    } while (resp.data.docs.length >= 250);
 
-  return allResponseData.reduce((facilityCountByGroup: any, responseData: any) => {
-    if (facilityCountByGroup[responseData.facilityGroupId]) {
-      facilityCountByGroup[responseData.facilityGroupId] += 1
-    } else {
-      facilityCountByGroup[responseData.facilityGroupId] = 1
-    }
-    return facilityCountByGroup
-  }, {})
+    return facilityMemberResponses.reduce((facilityCountByGroup: any, facilityData: any) => {
+      if (facilityCountByGroup[facilityData.facilityGroupId]) {
+        facilityCountByGroup[facilityData.facilityGroupId] += 1;
+      } else {
+        facilityCountByGroup[facilityData.facilityGroupId] = 1
+      }
+      return facilityCountByGroup
+    }, {})
+  } catch (error) {
+    logger.error(error)
+    return {}
+  }
 }
 
 const fetchProductStoreCountByGroup = async (facilityGroupIds: Array<string>): Promise<any> => {
