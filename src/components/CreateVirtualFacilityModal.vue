@@ -91,11 +91,14 @@ export default defineComponent({
         facilityId: '',
         description: '',
       },
+      isAutoGenerateId: true
     }
   },
   methods: {
     setFacilityId(event: any) {
-      this.formData.facilityId = generateInternalId(event.target.value)
+      if(this.isAutoGenerateId) {
+        this.formData.facilityId = generateInternalId(event.target.value)
+      }
     },
     closeModal() {
       modalController.dismiss();
@@ -157,6 +160,7 @@ export default defineComponent({
       this.formData.facilityId.length <= 20
         ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
         : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
+      this.isAutoGenerateId = false;
     },
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');
