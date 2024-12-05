@@ -779,6 +779,22 @@ const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityEmailAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityEmailAddress",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityEmailAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityEmailAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 const createProductStoreFacilityGroup = async (payload: any): Promise<any> => {
   return api({
     url: "service/createProductStoreFacilityGroup",
@@ -804,6 +820,7 @@ export const FacilityService = {
   createFacilityLocation,
   createVirtualFacility,
   createEnumeration,
+  createFacilityEmailAddress,
   createFacilityCalendar,
   createFacilityIdentification,
   createFacilityPostalAddress,
@@ -841,6 +858,7 @@ export const FacilityService = {
   removeFacilityFromGroup,
   removePartyFromFacility,
   updateFacility,
+  updateFacilityEmailAddress,
   updateFacilityGroup,
   updateFacilityIdentification,
   updateFacilityLocation,
