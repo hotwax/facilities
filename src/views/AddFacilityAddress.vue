@@ -77,7 +77,7 @@
             <ion-item>
               <ion-input :label="translate('Latitude')" label-placement="floating" :disabled="!formData.address1 || !formData.city" v-model="formData.latitude" />
             </ion-item>
-            <ion-item>
+            <ion-item lines="none">
               <ion-input :label="translate('Longitude')" label-placement="floating" :disabled="!formData.address1 || !formData.city" v-model="formData.longitude" />
             </ion-item>
           </ion-list>
