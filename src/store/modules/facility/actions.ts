@@ -260,26 +260,32 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
   },
-  async fetchFacilityTelecomNumber({ commit }, payload) {
-    let telecomNumber;
+  async fetchFacilityTelecomAndEmailAddress({ commit }, payload) {
     const params = {
       inputFields: {
-        contactMechPurposeTypeId: 'PRIMARY_PHONE',
-        contactMechTypeId: 'TELECOM_NUMBER',
+        contactMechPurposeTypeId: ['PRIMARY_PHONE', 'PRIMARY_EMAIL'],
+        contactMechPurposeTypeId_op: 'in',
+        contactMechTypeId: ['TELECOM_NUMBER', 'EMAIL_ADDRESS'],
+        contactMechTypeId_op: 'in',
         facilityId: payload.facilityId
       },
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['contactMechId', 'contactNumber', 'countryCode'],
-      viewSize: 1
+      fieldList: ['contactMechId', 'contactNumber', 'countryCode', 'infoString'],
+      viewSize: 2
     }
 
     try {
       const resp = await FacilityService.fetchFacilityContactDetails(params)
       if(!hasError(resp)) {
-        telecomNumber = resp.data.docs[0]
-        commit(types.FACILITY_TELECOM_NUMBER_UPDATED , telecomNumber);
+        const response = resp.data.docs
+        const contactDetails = {
+          telecomNumber: response.find((item: any) => item.infoString === null),
+          emailAddress: response.find((item: any) => item.infoString !== null)
+        };
+ 
+        commit(types.FACILITY_TELECOM_AND_EMAIL_ADDRESS_UPDATED , contactDetails);
       } else {
         throw resp.data
       }

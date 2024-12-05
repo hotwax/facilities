@@ -53,6 +53,11 @@
                 <ion-text slot="start" v-if=countryCode>{{ countryCode }}</ion-text>
               </ion-input>
             </ion-item>
+            <ion-item lines="none">
+              <ion-input label-placement="floating" v-model="emailAddress">
+                <div slot="label">{{ translate('Email address') }}</div>              
+              </ion-input>
+            </ion-item>
           </ion-list>
         </ion-card>
 
@@ -116,7 +121,7 @@ import { mapGetters, useStore } from "vuex";
 import { useRouter } from 'vue-router'
 import { colorWandOutline, locationOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
-import { showToast } from "@/utils";
+import { showToast, isValidEmail } from "@/utils";
 import logger from "@/logger";
 import { getTelecomCountryCode, hasError } from "@/adapter";
 import { FacilityService } from "@/services/FacilityService";
@@ -164,7 +169,8 @@ export default defineComponent({
         longitude: '',
       },
       contactNumber: '',
-      countryCode: ''
+      countryCode: '',
+      emailAddress: ''
     }
   },
   props: ['facilityId'],
@@ -179,6 +185,12 @@ export default defineComponent({
         showToast("Please fill all the required fields.")
         return
       }
+
+      if(this.emailAddress && !isValidEmail(this.emailAddress)) {
+        showToast(translate("Invalid email address"))
+        return
+      }
+
       const payload = {
         facilityId: this.facilityId,
         contactMechPurposeTypeId: 'PRIMARY_LOCATION',
@@ -198,6 +210,7 @@ export default defineComponent({
         logger.error("Failed to create facility address.", error)
       }
       if(this.contactNumber) this.saveTelecomNumber()
+      if(this.emailAddress) this.saveEmailAddress()
     },
     async generateLatLong() {
       const postalCode = this.formData.postalCode;
@@ -235,7 +248,7 @@ export default defineComponent({
           facilityId: this.facilityId,
           contactMechPurposeTypeId: 'PRIMARY_PHONE',
           contactNumber: this.contactNumber.trim(),
-          countryCode: this.countryCode
+          countryCode: this.countryCode.replace('+', '')
         })
 
         if(hasError(resp)) {
@@ -245,6 +258,22 @@ export default defineComponent({
         logger.error(err)
       }
     },
+    async saveEmailAddress() {
+      try {
+        const resp = await FacilityService.createFacilityEmailAddress({
+          facilityId: this.facilityId,
+          contactMechTypeId: 'EMAIL_ADDRESS',
+          contactMechPurposeTypeId: 'PRIMARY_EMAIL',
+          emailAddress: this.emailAddress,
+        })
+
+        if(hasError(resp)) {
+          throw resp.data;
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+    }
   },
   setup() {
     const store = useStore();

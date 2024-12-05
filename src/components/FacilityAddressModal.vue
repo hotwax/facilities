@@ -56,11 +56,16 @@
           <ion-text slot="start" v-if="telecomNumberValue?.countryCode">{{ telecomNumberValue?.countryCode }}</ion-text>
         </ion-input>
       </ion-item>
+      <ion-item>
+        <ion-input label-placement="floating" v-model="emailAddress.infoString">
+          <div slot="label">{{ translate("Email address") }}</div>
+        </ion-input>
+      </ion-item>
     </form>
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveContact()" :disabled="!isAddressUpdated() && !isTelecomNumberUpdated()">
+    <ion-fab-button @click="saveContact()" :disabled="!isAddressUpdated() && !isTelecomNumberUpdated() && !isEmailAddressUpdated()">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -93,7 +98,7 @@ import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from '@/services/FacilityService';
 import { getTelecomCountryCode, hasError } from "@/adapter";
 import logger from "@/logger";
-import { showToast } from "@/utils";
+import { showToast, isValidEmail } from "@/utils";
 import emitter from "@/event-bus";
 
 export default defineComponent({
@@ -121,19 +126,21 @@ export default defineComponent({
       postalAddress: 'facility/getPostalAddress',
       countries: 'util/getCountries',
       states: 'util/getStates',
-      telecomNumber: 'facility/getTelecomNumber'
+      contactDetails: 'facility/getTelecomAndEmailAddress'
     })
   },
   data() {
     return {
       address: {} as any,
-      telecomNumberValue: {} as any
+      telecomNumberValue: {} as any,
+      emailAddress: {} as any
     }
   },
   props: ['facilityId', 'facilityName'],
   beforeMount() {
     this.address = JSON.parse(JSON.stringify(this.postalAddress))
-    this.telecomNumberValue = this.telecomNumber ? JSON.parse(JSON.stringify(this.telecomNumber)) : {}
+    this.telecomNumberValue = this.contactDetails?.telecomNumber ? JSON.parse(JSON.stringify(this.contactDetails.telecomNumber)) : {}
+    this.emailAddress = this.contactDetails?.emailAddress ? JSON.parse(JSON.stringify(this.contactDetails.emailAddress)) : {};
   },
   async mounted() {
     await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
@@ -157,8 +164,14 @@ export default defineComponent({
         return
       }
 
+      if(this.emailAddress.infoString && !isValidEmail(this.emailAddress.infoString)) {
+        showToast(translate("Invalid email address"))
+        return
+      }
+
       emitter.emit('presentLoader')
       const isTelecomNumberUpdated = this.isTelecomNumberUpdated()
+      const isEmailAddressUpdated = this.isEmailAddressUpdated()
 
       if(this.isAddressUpdated()) {
         try {
@@ -186,6 +199,7 @@ export default defineComponent({
       }
 
       if(isTelecomNumberUpdated) await this.saveTelecomNumber()
+      if(isEmailAddressUpdated) await this.saveEmailAddress()
 
       modalController.dismiss({ postalAddress })
       emitter.emit('dismissLoader')
@@ -197,21 +211,52 @@ export default defineComponent({
         facilityId: this.facilityId,
         contactMechPurposeTypeId: 'PRIMARY_PHONE',
         contactNumber: this.telecomNumberValue.contactNumber.trim(),
-        countryCode: this.telecomNumberValue.countryCode
+        countryCode: this.telecomNumberValue.countryCode.replace('+', '')
       }
 
       try {
-        if(this.telecomNumber?.contactMechId) {
+        if(this.contactDetails.telecomNumber?.contactMechId) {
           resp = await FacilityService.updateFacilityTelecomNumber({
             ...payload,
-            contactMechId: this.telecomNumber.contactMechId,
+            contactMechId: this.contactDetails.telecomNumber.contactMechId,
           })
         } else {
           resp = await FacilityService.createFacilityTelecomNumber(payload)
         }
 
         if(!hasError(resp)) {
-          await this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityTelecomAndEmailAddress', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        logger.error(err)
+      }
+    },
+    async saveEmailAddress() {
+      let resp = {} as any;
+
+      const payload = {
+        facilityId: this.facilityId,
+        emailAddress: this.emailAddress.infoString
+      }
+
+      try {
+        if(this.contactDetails.emailAddress?.contactMechId) {
+          resp = await FacilityService.updateFacilityEmailAddress({
+            ...payload,
+            contactMechId: this.emailAddress.contactMechId,
+          })
+        } else {
+          resp = await FacilityService.createFacilityEmailAddress({
+            ...payload,
+            contactMechTypeId: 'EMAIL_ADDRESS',
+            contactMechPurposeTypeId: 'PRIMARY_EMAIL',
+          })
+        }
+
+        if(!hasError(resp)) {
+          await this.store.dispatch('facility/fetchFacilityTelecomAndEmailAddress', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
@@ -232,8 +277,11 @@ export default defineComponent({
         : true
     },
     isTelecomNumberUpdated() {
-      return this.telecomNumberValue.contactNumber && JSON.stringify(this.telecomNumberValue) !== JSON.stringify(this.telecomNumber)
-    }
+      return this.telecomNumberValue?.contactNumber && JSON.stringify(this.telecomNumberValue.contactNumber) !== JSON.stringify(this.contactDetails?.telecomNumber?.contactNumber)
+    },
+    isEmailAddressUpdated() {
+      return this.emailAddress?.infoString && JSON.stringify(this.emailAddress.infoString) !== JSON.stringify(this.contactDetails?.emailAddress?.infoString);
+    },
   },
   setup() {
     const store = useStore()
