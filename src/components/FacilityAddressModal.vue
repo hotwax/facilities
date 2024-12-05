@@ -44,7 +44,7 @@
         </ion-select>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" v-model="address.postalCode">
+        <ion-input label-placement="floating" v-model="address.postalCode" @keydown="validateZipCode($event)">
           <div slot="label">{{ translate("Zipcode") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
@@ -148,6 +148,12 @@ export default defineComponent({
   methods: {
     closeModal() {
       modalController.dismiss()
+    },
+    validateZipCode(e: any) {
+      if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
+        e.preventDefault();
+        return false;
+      } 
     },
     async saveContact() {
       let resp, postalAddress = '';
