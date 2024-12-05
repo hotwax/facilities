@@ -48,7 +48,7 @@
                 </ion-select-option>
               </ion-select>
             </ion-item>
-            <ion-item lines="none">
+            <ion-item>
               <ion-input :label="translate('Contact number')" :label-placement="countryCode ? 'stacked' : 'floating'" v-model="contactNumber">
                 <ion-text slot="start" v-if=countryCode>{{ countryCode }}</ion-text>
               </ion-input>
