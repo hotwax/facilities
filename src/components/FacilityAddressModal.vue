@@ -187,7 +187,7 @@ export default defineComponent({
 
           if(!hasError(resp)) {
             postalAddress = this.address
-            await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+            await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
             showToast(translate("Facility contact updated successfully."))
           } else {
             throw resp.data
@@ -225,7 +225,7 @@ export default defineComponent({
         }
 
         if(!hasError(resp)) {
-          await this.store.dispatch('facility/fetchFacilityTelecomAndEmailAddress', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
@@ -256,7 +256,7 @@ export default defineComponent({
         }
 
         if(!hasError(resp)) {
-          await this.store.dispatch('facility/fetchFacilityTelecomAndEmailAddress', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }

@@ -227,70 +227,58 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_CURRENT_UPDATED, facility);
   },
 
-  async fetchFacilityContactDetails({ commit }, payload) {
-    let postalAddress = {} as any
-    const params = {
+  async fetchFacilityContactDetailsAndTelecom({ commit }, facility) {
+    let postalAddress = {} as any;
+    const contactDetails = {} as any;
+  
+    const payload = {
       inputFields: {
-        contactMechPurposeTypeId: 'PRIMARY_LOCATION',
-        contactMechTypeId: 'POSTAL_ADDRESS',
-        facilityId: payload.facilityId
-      },
-      entityName: "FacilityContactDetailByPurpose",
-      orderBy: 'fromDate DESC',
-      filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
-      viewSize: 1
-    }
-
-    try {
-      const resp = await FacilityService.fetchFacilityContactDetails(params)
-      if(!hasError(resp)) {
-        postalAddress = resp.data.docs[0]
-        postalAddress = {
-          ...postalAddress,
-          stateProvinceGeoId: postalAddress.stateGeoId
-        }
-        delete postalAddress.stateGeoId
-      } else {
-        throw resp.data
-      }
-    } catch(err) {
-      logger.error('Failed to fetch the postal address for the facility', err)
-    }
-
-    commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
-  },
-  async fetchFacilityTelecomAndEmailAddress({ commit }, payload) {
-    const params = {
-      inputFields: {
-        contactMechPurposeTypeId: ['PRIMARY_PHONE', 'PRIMARY_EMAIL'],
+        contactMechPurposeTypeId: ['PRIMARY_PHONE', 'PRIMARY_EMAIL', 'PRIMARY_LOCATION'],
         contactMechPurposeTypeId_op: 'in',
-        contactMechTypeId: ['TELECOM_NUMBER', 'EMAIL_ADDRESS'],
+        contactMechTypeId: ['TELECOM_NUMBER', 'EMAIL_ADDRESS', 'POSTAL_ADDRESS'],
         contactMechTypeId_op: 'in',
-        facilityId: payload.facilityId
+        facilityId: facility.facilityId
       },
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['contactMechId', 'contactNumber', 'countryCode', 'infoString'],
-      viewSize: 2
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
+      viewSize: 3
     }
 
     try {
-      const resp = await FacilityService.fetchFacilityContactDetails(params)
+      const resp = await FacilityService.fetchFacilityContactDetails(payload);
       if(!hasError(resp)) {
-        const response = resp.data.docs
-        const contactDetails = {
-          telecomNumber: response.find((item: any) => item.infoString === null),
-          emailAddress: response.find((item: any) => item.infoString !== null)
-        };
- 
-        commit(types.FACILITY_TELECOM_AND_EMAIL_ADDRESS_UPDATED , contactDetails);
+        const docs = resp.data.docs
+
+        docs.map((item: any) => {
+          if(item.contactMechTypeId === "POSTAL_ADDRESS") {
+            postalAddress = {
+              ...item,
+              stateProvinceGeoId: item.stateGeoId
+            }
+            delete postalAddress.stateGeoId
+          } else if (item.contactMechTypeId === 'TELECOM_NUMBER') {
+            contactDetails.telecomNumber = {
+              contactMechId: item.contactMechId,
+              contactNumber: item.contactNumber,
+              countryCode: item.countryCode,
+            }
+          } else if (item.contactMechTypeId === 'EMAIL_ADDRESS') {
+            contactDetails.emailAddress = {
+              contactMechId: item.contactMechId,
+              infoString: item.infoString
+            }
+          }
+        })
+       
+        commit(types.FACILITY_POSTAL_ADDRESS_UPDATED, postalAddress)
+        commit(types.FACILITY_TELECOM_AND_EMAIL_ADDRESS_UPDATED, contactDetails)
       } else {
         throw resp.data
       }
     } catch(err) {
-      logger.error('Failed to fetch the contact number for the facility', err)
+      logger.error('Failed to fetch facility contact details and telecom information', err)
     }
   },
 

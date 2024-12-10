@@ -72,7 +72,7 @@ export default defineComponent({
 
             if(!hasError(resp)) {
               showToast(translate("Successfully regenerated latitude and longitude for the facility."))
-              await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+              await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
             } else {
               throw resp.data
             }
@@ -103,7 +103,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate("Facility latitude and longitude removed successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
