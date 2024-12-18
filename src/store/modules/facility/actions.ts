@@ -242,7 +242,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
       viewSize: 3
     }
 
@@ -257,7 +257,6 @@ const actions: ActionTree<FacilityState, RootState> = {
               ...item,
               stateProvinceGeoId: item.stateGeoId
             }
-            delete postalAddress.stateGeoId
           } else if (item.contactMechTypeId === 'TELECOM_NUMBER') {
             contactDetails.telecomNumber = {
               contactMechId: item.contactMechId,
