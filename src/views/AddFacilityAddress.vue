@@ -54,9 +54,7 @@
               </ion-input>
             </ion-item>
             <ion-item lines="none">
-              <ion-input label-placement="floating" v-model="emailAddress">
-                <div slot="label">{{ translate('Email address') }}</div>              
-              </ion-input>
+              <ion-input label-placement="floating" :label="translate('Email address')" v-model="emailAddress" />
             </ion-item>
           </ion-list>
         </ion-card>

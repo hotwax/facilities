@@ -57,9 +57,7 @@
         </ion-input>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" v-model="emailAddress.infoString">
-          <div slot="label">{{ translate("Email address") }}</div>
-        </ion-input>
+        <ion-input label-placement="floating" :label="translate('Email address')" v-model="emailAddress.infoString" />
       </ion-item>
     </form>
   </ion-content>
