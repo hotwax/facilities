@@ -145,7 +145,7 @@ export default defineComponent({
         if(!hasError(resp)) {
           geoPoints = this.geoPoint
           showToast(translate("Facility latitude and longitude updated successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }

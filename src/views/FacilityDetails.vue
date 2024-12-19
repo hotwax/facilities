@@ -53,7 +53,8 @@
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
-                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}-${telecomNumber.contactNumber}` }}</p>
+                    <p class="ion-text-wrap" v-if="contactDetails?.telecomNumber">{{ `${contactDetails.telecomNumber?.countryCode}-${contactDetails.telecomNumber?.contactNumber}` }}</p>
+                    <p class="ion-text-wrap" v-if="contactDetails?.emailAddress">{{ contactDetails.emailAddress?.infoString }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
@@ -639,7 +640,7 @@ export default defineComponent({
       baseUrl: "user/getBaseUrl",
       facilityGroupTypes: 'util/getFacilityGroupTypes',
       inventoryGroups: 'util/getInventoryGroups',
-      telecomNumber: 'facility/getTelecomNumber'
+      contactDetails: 'facility/getTelecomAndEmailAddress'
     })
   },
   props: ["facilityId"],
@@ -651,7 +652,7 @@ export default defineComponent({
       facilityTypeId: 'VIRTUAL_FACILITY',
       facilityTypeId_op: 'notEqual'
     })])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.parentFacilityTypeId = this.current.parentFacilityTypeId
