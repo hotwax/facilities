@@ -13,7 +13,7 @@
   <ion-content>
     <form @keyup.enter="saveGeoPoint">
       <ion-item class="ion-margin-bottom">
-        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
+        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" @keydown="validateZipCode($event)"/>
         <ion-button slot="end" fill="outline" @click="generateLatLong">
           {{ translate("Generate") }}
           <ion-icon v-if="!isGeneratingLatLong" slot="end" :icon="colorWandOutline" />
@@ -21,10 +21,14 @@
         </ion-button>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Latitude')" v-model="geoPoint.latitude" />
+        <ion-input label-placement="floating" type="number" v-model="geoPoint.latitude">
+          <div slot="label">{{ translate("Latitude")}}<ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Longitude')" v-model="geoPoint.longitude" />
+        <ion-input label-placement="floating" type="number" v-model="geoPoint.longitude">
+          <div slot="label">{{ translate("Longitude")}}<ion-text color="danger">*</ion-text></div>
+        </ion-input>  
       </ion-item>
     </form>
   </ion-content>
@@ -98,7 +102,17 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss()
     },
+    validateZipCode(e: any) {
+      if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
+        e.preventDefault();
+        return false;
+      } 
+    },
     async generateLatLong() {
+      if(!this.geoPoint.postalCode) {
+        showToast("Please fill the required Zipcode")
+        return;
+      }
       this.isGeneratingLatLong = true
       const postalCode = this.geoPoint.postalCode;
       const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
