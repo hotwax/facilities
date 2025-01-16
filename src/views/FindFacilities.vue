@@ -25,7 +25,7 @@
               <ion-icon :icon="globeOutline" slot="start" />
               <ion-select :label="translate('Product Store')" interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName }}</ion-select-option>
+                <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName? productStore.storeName: productStore.productStoreId }}</ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item lines="none">
