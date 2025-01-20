@@ -22,7 +22,7 @@
             <ion-list>
               <ion-item v-for="store in selectedProductStores" :key="store.productStoreId">
                 <ion-label>
-                  <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
+                  <h2>{{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}</h2>
                 </ion-label>
                 <ion-badge v-if="store.productStoreId === primaryFacilityGroupId">
                   {{ translate("primary store") }}

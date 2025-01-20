@@ -1,7 +1,8 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>{{ getProductStore(currentProductStore.productStoreId).storeName }}</ion-list-header>
+      <ion-list-header>
+        {{ getProductStore(currentProductStore.productStoreId).storeName || currentProductStore.productStoreId }}</ion-list-header>
       <ion-item button @click="togglePrimary()">
         {{ translate("Primary") }}
         <ion-icon slot="end" :color="current.primaryFacilityGroupId === shopifyShopIdForProductStore(currentProductStore.productStoreId) ? 'warning' : ''" :icon="current.primaryFacilityGroupId === shopifyShopIdForProductStore(currentProductStore.productStoreId) ? star : starOutline" />
