@@ -35,7 +35,7 @@
                 <ion-popover trigger="product-store-actions-trigger" showBackdrop="false" dismissOnSelect="true">
                   <ion-content>
                     <ion-list>
-                      <ion-list-header>{{ getProductStore(store.productStoreId).storeName }}</ion-list-header>
+                      <ion-list-header>{{ getProductStore(store.productStoreId).storeName || store.productStoreId }}</ion-list-header>
                       <ion-item button @click="updatePrimaryFacilityGroupId(store.productStoreId)">
                         {{ translate("Primary") }}
                         <ion-icon slot="end" :color="store.productStoreId === primaryFacilityGroupId ? 'warning' : ''" :icon="store.productStoreId === primaryFacilityGroupId ? star : starOutline" />
