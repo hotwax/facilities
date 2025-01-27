@@ -80,7 +80,7 @@
                 <ion-label>{{ translate('Selected groups') }} : {{ getAssociatedFacilityGroupIds(currentFacilityGroupTypeId).length }}</ion-label>
               </ion-list-header>
               <ion-item v-for="group in groups" :key="group.facilityGroupId" @click.stop="updateFacilityGroup(group)">
-                <ion-checkbox label-placement="end" justify="start" :disabled="!!group.facilityGroupTypeId && group.facilityGroupTypeId !== currentFacilityGroupTypeId" :checked="isFacilityGroupLinked(group.facilityGroupTypeId)">
+                <ion-checkbox label-placement="end" justify="start" :disabled="!!group.facilityGroupTypeId && group.facilityGroupTypeId !== currentFacilityGroupTypeId" :modelValue="isFacilityGroupLinked(group.facilityGroupTypeId)">
                   <ion-label>
                     {{ group.facilityGroupName }}
                     <p>{{ group.facilityGroupId }}</p>
