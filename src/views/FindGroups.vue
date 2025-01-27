@@ -79,8 +79,8 @@
               <ion-list-header>
                 <ion-label>{{ translate('Selected groups') }} : {{ getAssociatedFacilityGroupIds(currentFacilityGroupTypeId).length }}</ion-label>
               </ion-list-header>
-              <ion-item v-for="group in groups" :key="group.facilityGroupId">
-                <ion-checkbox label-placement="end" justify="start" :disabled="!!group.facilityGroupTypeId && group.facilityGroupTypeId !== currentFacilityGroupTypeId" :checked="isFacilityGroupLinked(group.facilityGroupTypeId)" @click="updateFacilityGroup($event, group)">
+              <ion-item v-for="group in groups" :key="group.facilityGroupId" @click.stop="updateFacilityGroup(group)">
+                <ion-checkbox label-placement="end" justify="start" :disabled="!!group.facilityGroupTypeId && group.facilityGroupTypeId !== currentFacilityGroupTypeId" :modelValue="isFacilityGroupLinked(group.facilityGroupTypeId)">
                   <ion-label>
                     {{ group.facilityGroupName }}
                     <p>{{ group.facilityGroupId }}</p>
@@ -215,10 +215,8 @@ export default defineComponent({
     isFacilityGroupLinked(facilityGroupTypeId: any) {
       return this.currentFacilityGroupTypeId === facilityGroupTypeId
     },
-    async updateFacilityGroup(event: any, facilityGroup: any) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      const isChecked = !event.target.checked;
+    async updateFacilityGroup(facilityGroup: any) {
+      const isChecked = !this.isFacilityGroupLinked(facilityGroup.facilityGroupTypeId);
       try {
         const resp = await FacilityService.updateFacilityGroup({
           "facilityGroupId": facilityGroup.facilityGroupId,
