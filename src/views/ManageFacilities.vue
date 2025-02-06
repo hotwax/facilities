@@ -315,61 +315,81 @@
         const facilitiesToAdd = this.selectedFacilities.filter((facility: any) => !memberFacilityIds.includes(facility.facilityId))
         const selectedFacilityIds = this.selectedFacilities ? new Set(this.selectedFacilities.map((facility:any) => facility.facilityId)) as any : [];
         const facilitiesToRemove = this.memberFacilities.filter((facility: any) => !selectedFacilityIds.has(facility.facilityId))
+      
+        if(facilitiesToRemove.length > 0){
+          try{
+            const removeResponse = await FacilityService.updateFacilitiesToGroup({
+              "payload": {
+                "facilityList": facilitiesToRemove.map((facility: any) => ({
+                  "facilityGroupId": this.facilityGroupId,
+                  "facilityId": facility.facilityId,
+                  "fromDate": facility.fromDate,
+                  "thruDate": DateTime.now().toMillis()
+                }))
+              }
+            })
 
-        try{
-          const removeResponses = await FacilityService.updateFacilitiesToGroup({
-          "payload": {
-            "facilityList": facilitiesToRemove.map((facility: any) => ({
-              "facilityGroupId": this.facilityGroupId,
-              "facilityId": facility.facilityId,
-              "fromDate": facility.fromDate,
-              "thruDate": DateTime.now().toMillis()
-              }))
+            if(hasError(removeResponse)){
+              throw removeResponse
             }
-          })
-        
-          const addResponses = await FacilityService.addFacilitiesToGroup({
-            "payload": {
-              "facilityList": facilitiesToAdd.map((facility: any) => ({
-              "facilityGroupId": this.facilityGroupId,
-              "facilityId": facility.facilityId,
-              "sequenceNum": facility.sequenceNum
-             }))
-            }
-          })
-
-          const facilityIdsToAdd = facilitiesToAdd ? new Set(facilitiesToAdd.map((facility:any) => facility.facilityId)) as any : [];
-          const existingFacilityMembers = this.selectedFacilities.filter((facility:any) => !facilityIdsToAdd.has(facility.facilityId))
-          const diffMemberFacilitySequencing = existingFacilityMembers.filter((facility: any) => this.memberFacilities.some((memberFacility: any) => memberFacility.facilityId === facility.facilityId && memberFacility.sequenceNum !== facility.sequenceNum))
-        
-          const memberFacilityDetail = this.memberFacilities.reduce((memberInfo:any, facility:any) => {
-            memberInfo[facility.facilityId] = facility;
-            return memberInfo;
-          }, {});
-
-          const sequenceUpdateResponses = await FacilityService.updateFacilitiesToGroup({
-            "payload": {
-              "facilityList": diffMemberFacilitySequencing.map((memberFacility: any) => ({
-                "facilityGroupId": this.facilityGroupId,
-                "facilityId": memberFacility.facilityId,
-                "fromDate": memberFacilityDetail[memberFacility.facilityId].fromDate,
-                "sequenceNum": memberFacility.sequenceNum
-              }))
-            }
-          })
-
-          if(hasError(removeResponses)){
-            throw removeResponses
-          }else if(hasError(addResponses)){
-            throw addResponses
-          }else if(hasError(sequenceUpdateResponses)){
-            throw sequenceUpdateResponses
+            showToast(translate("Member facilities updated successfully."))
+          }catch(error){
+            showToast(translate("Failed to update some member facilities."))
           }
-        }catch(error){
-          showToast(translate("Failed to update some member facilities."))
-          logger.error(error)
         }
         
+        if(facilitiesToAdd.length > 0){
+          try{
+            const addResponse = await FacilityService.addFacilitiesToGroup({
+              "payload": {
+                "facilityList": facilitiesToAdd.map((facility: any) => ({
+                  "facilityGroupId": this.facilityGroupId,
+                  "facilityId": facility.facilityId,
+                  "sequenceNum": facility.sequenceNum
+                }))
+              }
+            })
+
+            if(hasError(addResponse)){
+              throw addResponse
+            }
+            showToast(translate("Member facilities updated successfully."))
+          }catch(error){
+            showToast(translate("Failed to update some member facilities."))
+          }
+        }
+
+        const facilityIdsToAdd = facilitiesToAdd ? new Set(facilitiesToAdd.map((facility:any) => facility.facilityId)) as any : [];
+        const existingFacilityMembers = this.selectedFacilities.filter((facility:any) => !facilityIdsToAdd.has(facility.facilityId))
+        const diffMemberFacilitySequencing = existingFacilityMembers.filter((facility: any) => this.memberFacilities.some((memberFacility: any) => memberFacility.facilityId === facility.facilityId && memberFacility.sequenceNum !== facility.sequenceNum))
+      
+        const memberFacilityDetail = this.memberFacilities.reduce((memberInfo:any, facility:any) => {
+          memberInfo[facility.facilityId] = facility;
+          return memberInfo;
+        }, {})
+
+        if(diffMemberFacilitySequencing.length > 0){
+          try{
+            const sequenceUpdateResponse = await FacilityService.updateFacilitiesToGroup({
+              "payload": {
+                "facilityList": diffMemberFacilitySequencing.map((memberFacility: any) => ({
+                  "facilityGroupId": this.facilityGroupId,
+                  "facilityId": memberFacility.facilityId,
+                  "fromDate": memberFacilityDetail[memberFacility.facilityId].fromDate,
+                  "sequenceNum": memberFacility.sequenceNum
+                }))
+              }
+            })
+
+            if(hasError(sequenceUpdateResponse)){
+              throw sequenceUpdateResponse
+            }
+            showToast(translate("Member facilities updated successfully."))
+          }catch(error){
+            showToast(translate("Failed to update some member facilities."))
+          }
+        }
+                
         this.isFacilityMembersModified = false;
         this.router.push({ path: `/tabs/find-groups` })
       },
