@@ -64,14 +64,13 @@
                 <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
             </ion-card>
-
             <ion-card>
               <ion-card-header>
                 <ion-card-title>
                   {{ translate("Latitude & Longitude") }}
                 </ion-card-title>
               </ion-card-header>
-              <template v-if="postalAddress?.latitude">
+              <template v-if="postalAddress?.latitude || postalAddress.latitude == 0">
                 <ion-card-content>
                   {{ translate("These values are used to help customers lookup how close they are to your stores when they are finding nearby stores.") }}
                 </ion-card-content>
