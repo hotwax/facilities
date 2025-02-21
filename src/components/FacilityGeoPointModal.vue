@@ -13,8 +13,8 @@
   <ion-content>
     <form @keyup.enter="saveGeoPoint">
       <ion-item class="ion-margin-bottom">
-        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" @keydown="validateZipCode($event)"/>
-        <ion-button slot="end" fill="outline" @click="generateLatLong">
+        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" @keydown="validateZipCode($event)" @ionInput="postalCodeUpdate"/>
+        <ion-button slot="end" fill="outline" :disabled="!isPostalCodeChanged" @click="generateLatLong">
           {{ translate("Generate") }}
           <ion-icon v-if="!isGeneratingLatLong" slot="end" :icon="colorWandOutline" />
           <ion-spinner v-else data-spinner-size="small"/>
@@ -52,6 +52,7 @@ import {
   IonInput,
   IonItem,
   IonSpinner,
+  IonText,
   IonTitle,
   IonToolbar,
   modalController
@@ -80,6 +81,7 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonSpinner,
+    IonText,
     IonTitle,
     IonToolbar,
   },
@@ -92,7 +94,8 @@ export default defineComponent({
   data() {
     return {
       geoPoint: {} as any,
-      isGeneratingLatLong: false
+      isGeneratingLatLong: false,
+      isPostalCodeChanged: false
     }
   },
   beforeMount() {
@@ -101,6 +104,9 @@ export default defineComponent({
   methods: {
     closeModal() {
       modalController.dismiss()
+    },
+    postalCodeUpdate() {
+      this.isPostalCodeChanged = this.geoPoint.postalCode !== this.postalAddress.postalCode;
     },
     validateZipCode(e: any) {
       if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
@@ -143,6 +149,9 @@ export default defineComponent({
         showToast("Please fill all the required fields")
         return;
       }
+      // Convert latitude and longitude to numeric form
+      this.geoPoint.latitude = parseFloat(this.geoPoint.latitude);
+      this.geoPoint.longitude = parseFloat(this.geoPoint.longitude);
 
       emitter.emit('presentLoader')
 
