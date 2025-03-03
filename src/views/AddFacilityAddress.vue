@@ -49,7 +49,7 @@
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-input :label="translate('Contact number')" :label-placement="countryCode ? 'stacked' : 'floating'" v-model="contactNumber">
+              <ion-input :label="translate('Contact number')" :label-placement="countryCode ? 'stacked' : 'floating'" v-model="contactNumber" @keydown="inputCountValidation">
                 <ion-text slot="start" v-if=countryCode>{{ countryCode }}</ion-text>
               </ion-input>
             </ion-item>
@@ -177,6 +177,9 @@ export default defineComponent({
     await this.store.dispatch('util/fetchCountries', { countryGeoId: "USA" })
   },
   methods: {
+    inputCountValidation(event: any){
+      if (/[^0-9-]/.test(event.key) && event.key !== 'Backspace') event.preventDefault();
+    },
     async addAddress() {
       let resp;
       if (!this.formData.address1 || !this.formData.city || !this.formData.postalCode) {
