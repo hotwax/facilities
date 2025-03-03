@@ -357,7 +357,9 @@
         }
 
         const responses = await Promise.allSettled(requestPayload)
-        if(responses.some((response: any) => response.status === 'rejected')){
+        const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
+
+        if (hasFailedResponse) {
           showToast(translate("Failed to update some member facilities."))
         } else {
           showToast(translate("Member facilities updated successfully."))
