@@ -976,7 +976,7 @@ export default defineComponent({
           });
         } else {
           const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
-          resp = await await FacilityService.updateFacilityToGroup({
+          resp = await FacilityService.updateFacilityToGroup({
             "facilityId": this.current.facilityId,
             "facilityGroupId": facilityGroupId,
             "fromDate": groupInformation.fromDate,
@@ -1014,7 +1014,7 @@ export default defineComponent({
           successMessage = translate('is now selling on', { "facilityName": this.current.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
         } else {
           const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
-          resp = await await FacilityService.updateFacilityToGroup({
+          resp = await FacilityService.updateFacilityToGroup({
             "facilityId": this.current.facilityId,
             "facilityGroupId": facilityGroup.facilityGroupId,
             "fromDate": groupInformation.fromDate,
