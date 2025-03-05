@@ -22,45 +22,50 @@ const fetchFacilities = async(query: any): Promise <any> => {
 }
 
 const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise<any> => {
-  let facilitiesGroupInformation = []
+  let facilitiesGroupInformation = [] as any, resp, viewIndex = 0;
   
-  const params = {
-    inputFields: {
-      facilityId: facilityIds,
-      facilityId_op: "in"
-    },
-    fieldList: ['facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate", "description", "facilityGroupName"],
-    entityName: "FacilityGroupAndMember",
-    distinct: 'Y',
-    filterByDate: 'Y',
-    viewSize: facilityIds.length * 10 // multiplying the id by 10, as one facility at max will be in 10 groups
-  }
-
   try {
-    const resp = await api({
-      url: "performFind", 
-      method: "post",
-      data: params
-    }) as any;
+    do {
+      const params = {
+        inputFields: {
+          facilityId: facilityIds,
+          facilityId_op: "in"
+        },
+        fieldList: ['facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate", "description", "facilityGroupName"],
+        entityName: "FacilityGroupAndMember",
+        distinct: 'Y',
+        filterByDate: 'Y',
+        viewSize: 250,
+        viewIndex
+      }
 
-    if(!hasError(resp) && resp.data.count > 0) {
-      facilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
+      resp = await api({
+        url: "performFind", 
+        method: "post",
+        data: params
+      }) as any;
 
-        if(facilityGroups[facilityGroup.facilityId]) {
-          facilityGroups[facilityGroup.facilityId].push({
-            ...facilityGroup
-          })
-        } else {
-          facilityGroups[facilityGroup.facilityId] = [{
-            ...facilityGroup
-          }]
-        }
+      if(!hasError(resp) && resp.data.count > 0) {
+        const newFacilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
 
-        return facilityGroups
-      }, {})
-    } else {
-      throw resp.data;
-    }
+          if(facilityGroups[facilityGroup.facilityId]) {
+            facilityGroups[facilityGroup.facilityId].push({
+              ...facilityGroup
+            })
+          } else {
+            facilityGroups[facilityGroup.facilityId] = [{
+              ...facilityGroup
+            }]
+          }
+
+          return facilityGroups
+        }, {})
+        facilitiesGroupInformation = { ...facilitiesGroupInformation, ...newFacilitiesGroupInformation };
+      } else {
+        throw resp.data;
+      }
+      viewIndex++
+    } while (resp.data.docs.length >= 250);
   } catch(err) {
     logger.error(err)
   }
