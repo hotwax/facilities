@@ -200,31 +200,37 @@ export default defineComponent({
       }
     },
     async fetchFacilityGroups() {
-      const params = {
-        entityName: "FacilityGroup",
-        noConditionFind: 'Y',
-        orderBy: "facilityGroupTypeId ASC",
-        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-        viewSize: 50
-      }
+      let viewIndex = 0, resp;
 
       try {
-        const resp = await FacilityService.fetchFacilityGroups(params);
-
-        if(!hasError(resp) && resp.data?.docs?.length > 0) {
-          this.filteredFacilityGroupsByType = this.facilityGroupsByType = resp.data.docs.reduce((groupsByType: any, group: any) => {
-            const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
-
-            if(groupsByType[groupTypeId]) {
-              groupsByType[groupTypeId].push(group)
-            } else {
-              groupsByType[groupTypeId] = [group]
-            }
-            return groupsByType
-          }, {})
-        } else {
-          throw resp.data
-        }
+        do {
+          const params = {
+            entityName: "FacilityGroup",
+            noConditionFind: 'Y',
+            orderBy: "facilityGroupTypeId ASC",
+            fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+            viewSize: 250,
+            viewIndex
+          }
+          resp = await FacilityService.fetchFacilityGroups(params);
+  
+          if(!hasError(resp) && resp.data?.docs?.length > 0) {
+            const newFacilityGroups = resp.data.docs.reduce((groupsByType: any, group: any) => {
+              const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
+ 
+              if(groupsByType[groupTypeId]) {
+                groupsByType[groupTypeId].push(group)
+              } else {
+                groupsByType[groupTypeId] = [group]
+              }
+              return groupsByType
+            }, {})
+            this.filteredFacilityGroupsByType = this.facilityGroupsByType = { ...this.filteredFacilityGroupsByType, ...newFacilityGroups };
+          } else {
+            throw resp.data
+          }
+          viewIndex++;
+        } while (resp.data.docs.length >= 250)
       } catch(err) {
         logger.error('Failed to find facility groups', err)
       }
