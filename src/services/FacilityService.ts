@@ -541,7 +541,7 @@ const fetchArchivedFacilities = async (): Promise<any> => {
         distinct: 'Y',
         noConditionFind: 'Y',
         filterByDate: 'Y',
-        viewSize: 50
+        viewSize: 250
       }
     }) as any
 
