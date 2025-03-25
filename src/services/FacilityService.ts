@@ -535,6 +535,7 @@ const fetchArchivedFacilities = async (): Promise<any> => {
       data: {
         inputFields: {
           facilityGroupId: 'ARCHIVE',
+          facilityTypeId_value: 'VIRTUAL_FACILITY'
         },
         fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
         entityName: "FacilityAndGroupMember",
