@@ -127,7 +127,6 @@ export default defineComponent({
     })
   },
   async ionViewWillEnter() {
-    await this.fetchArchivedFacilities();
     await this.fetchFacilities();
   },
   methods: {
@@ -204,9 +203,6 @@ export default defineComponent({
       ).then(() => {
         event.target.complete();
       });
-    },
-    async fetchArchivedFacilities() {
-      await this.store.dispatch('facility/fetchArchivedFacilities')
     },
     isFacilityDescriptionAvailable(facility: any) {
       return facility.description && !['BACKORDER', 'PRE_ORDER'].includes(facility.facilityTypeId) && facility.facilityId !== '_NA_';
