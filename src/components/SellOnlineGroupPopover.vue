@@ -39,7 +39,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      current: 'facility/getCurrent'
+      current: 'facility/getCurrent',
+      facilities: "facility/getFacilities"
     })
   },
   methods: {
@@ -82,13 +83,16 @@ export default defineComponent({
       emitter.emit("dismissLoader");
 
       // Update the facility list to reflect the change in sell online status
-      const hasAnyChecked = this.current.inventoryGroups.some((group: any) => group.isChecked);
-      this.store.state.facility.facilities.list.map((facility: any) => {
-        if(facility.facilityId === this.current.facilityId && hasAnyChecked !== facility.sellOnline) {
-          facility.sellOnline = hasAnyChecked;
+      const facilities = JSON.parse(JSON.stringify(this.facilities));
+      const isSellOnlineEnabled = this.current.inventoryGroups.some((group: any) => group.isChecked);
+      const updatedFacilities = facilities.map((facility: any) => {
+        if(facility.facilityId === this.current.facilityId) {
+          if(isSellOnlineEnabled !== facility.sellOnline) facility.sellOnline = isSellOnlineEnabled;
+          facility.groupInformation = this.current.groupInformation;
         }
-        facility.groupInformation = this.current.groupInformation;
+        return facility;
       });
+      this.store.dispatch('facility/updateFacilities', updatedFacilities);
     },
   },
   setup() {
