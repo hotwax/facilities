@@ -9,7 +9,7 @@ import * as types from './mutation-types'
 import logger from '@/logger'
 
 const actions: ActionTree<FacilityState, RootState> = {
-  async fetchFacilitiesAdditionalInformation({ commit, state }, payload = { viewIndex: 0 }) {
+  async fetchFacilitiesAdditionalInformation({ commit, state, rootGetters }, payload = { viewIndex: 0 }) {
 
     // getting all the facilties from state
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list)); // maintaining cachedFacilities as to prepare the facilities payload to fetch additional information
@@ -39,10 +39,11 @@ const actions: ActionTree<FacilityState, RootState> = {
       facility.orderCount = facilitiesOrderCount[facility.facilityId] ? facilitiesOrderCount[facility.facilityId] : 0;
 
       const facilityGroupInformation = facilitiesGroupInformation[facility.facilityId]
+      const inventoryGroups = rootGetters['util/getInventoryGroups'];
 
       if(facilityGroupInformation?.length) {
         facility.groupInformation = facilityGroupInformation
-        facility.sellOnline = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
+        facility.sellOnline = inventoryGroups.some((group: any) => facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === group.facilityGroupId));
         facility.useOMSFulfillment = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
         facility.generateShippingLabel = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
         facility.allowPickup = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
@@ -138,8 +139,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
-  async fetchFacilityAdditionalInformation({ commit, state, rootGetters }) {
-    const facility = JSON.parse(JSON.stringify(state.current))
+  async fetchFacilityAdditionalInformation({ commit, state, rootGetters }, facilityInfo) {  
+    const facility = facilityInfo ? facilityInfo : JSON.parse(JSON.stringify(state.current))
     const inventoryGroups = rootGetters['util/getInventoryGroups'];
     
     const [facilityGroupInformation, facilityOrderCount] = await Promise.all([FacilityService.fetchFacilityGroupInformation([facility.facilityId]), FacilityService.fetchFacilitiesOrderCount([facility.facilityId])])
