@@ -139,7 +139,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
-  async fetchFacilityAdditionalInformation({ commit, state, rootGetters }, facilityInfo) {  
+  async fetchFacilityAdditionalInformation({ commit, state, rootGetters }, facilityInfo) {
     const facility = facilityInfo ? facilityInfo : JSON.parse(JSON.stringify(state.current))
     const inventoryGroups = rootGetters['util/getInventoryGroups'];
     

@@ -175,6 +175,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
+import { DateTime } from 'luxon';
 import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
 
 export default defineComponent({
@@ -215,7 +216,7 @@ export default defineComponent({
       query: "facility/getFacilityQuery",
       isScrollable: "facility/isFacilitiesScrollable",
       facilityTypes: "util/getFacilityTypes",
-      productStores: "util/getProductStores",
+      productStores: "util/getProductStores"
     })
   },
   async mounted() {

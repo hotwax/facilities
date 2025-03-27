@@ -1,7 +1,7 @@
 <template>
   <ion-content>
     <ion-list>
-      <ion-list-header>{{ translate("Sell online") }}</ion-list-header>
+      <ion-list-header>{{ translate("Sell Online") }}</ion-list-header>
       <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
         {{ inventoryGroup?.facilityGroupName }}
         <ion-checkbox slot="end" :checked="inventoryGroup.isChecked" @click.prevent="updateSellInventoryOnlineSetting($event, inventoryGroup)" />
