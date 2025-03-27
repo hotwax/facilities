@@ -83,11 +83,11 @@ export default defineComponent({
 
       // Update the facility list to reflect the change in sell online status
       const hasAnyChecked = this.current.inventoryGroups.some((group: any) => group.isChecked);
-      this.store.state.facilities = this.store.state.facility.facilities.list.map((facility: any) => {
-        if (facility.facilityId === this.current.facilityId && hasAnyChecked !== facility.sellOnline) {
+      this.store.state.facility.facilities.list.map((facility: any) => {
+        if(facility.facilityId === this.current.facilityId && hasAnyChecked !== facility.sellOnline) {
           facility.sellOnline = hasAnyChecked;
         }
-        return facility;
+        facility.groupInformation = this.current.groupInformation;
       });
     },
   },
