@@ -525,7 +525,7 @@ const fetchFacilityGroups = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchArchivedFacilities = async (): Promise<any> => {
+const fetchArchivedFacilities = async (payload :any): Promise<any> => {
   let facilities = []
 
   try {
@@ -535,13 +535,14 @@ const fetchArchivedFacilities = async (): Promise<any> => {
       data: {
         inputFields: {
           facilityGroupId: 'ARCHIVE',
+          facilityTypeId: 'VIRTUAL_FACILITY'
         },
         fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
         entityName: "FacilityAndGroupMember",
         distinct: 'Y',
         noConditionFind: 'Y',
         filterByDate: 'Y',
-        viewSize: 50
+        ...payload
       }
     }) as any
 
