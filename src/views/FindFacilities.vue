@@ -61,7 +61,7 @@
             </ion-item>
 
             <div class="tablet">
-              <ion-chip outline @click.stop="openSellOnlineChannelListPopover($event, facility)">
+              <ion-chip outline @click.stop="openSellOnlineGroupPopover($event, facility)">
                 <ion-label>{{ translate('Sell Online') }}</ion-label>
                 <ion-icon :icon="shareOutline" :color="facility.sellOnline ? 'primary' : ''"/>
               </ion-chip>
@@ -342,7 +342,7 @@ export default defineComponent({
         logger.error('Failed to find facility groups', err)
       }
     },
-    async openSellOnlineChannelListPopover(ev: Event, facility: any) {
+    async openSellOnlineGroupPopover(ev: Event, facility: any) {
       await this.store.dispatch('facility/fetchFacilityAdditionalInformation', facility)
       const popover = await popoverController.create({
         component: SellOnlineGroupPopover,
