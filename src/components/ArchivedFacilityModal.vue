@@ -21,7 +21,8 @@
         </ion-button>
       </ion-item>
     </ion-list>
-    <ion-infinite-scroll @ionInfinite="ionInfinite">
+    <!-- <ion-infinite-scroll @ionInfinite="loadMoreArchivedFacilities($event)" threshold="100px" :disabled="!isScrollable"> -->
+    <ion-infinite-scroll @ionInfinite="loadMoreArchivedFacilities($event)" threshold="100px">
       <ion-infinite-scroll-content
           loading-spinner="crescent"
           :loading-text="translate('Loading')"
@@ -74,6 +75,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       archivedFacilities: 'facility/getArchivedFacilities',
+      isScrollable: 'facility/isArchivedFacilitiesScrollable'
     })
   },
   mounted() {

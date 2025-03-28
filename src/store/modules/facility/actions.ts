@@ -543,8 +543,8 @@ const actions: ActionTree<FacilityState, RootState> = {
     if (payload.viewIndex === 0) emitter.emit("presentLoader"); 
 
     let archivedFacilityIds = []
-    if (state.archivedFacilities.length) {
-      archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities)).map((facility: any) => facility.facilityId)
+    if (state.archivedFacilities.list.length) {
+      archivedFacilityIds = JSON.parse(JSON.stringify(state.archivedFacilities.list)).map((facility: any) => facility.facilityId)
     }
     
     let facilities = JSON.parse(JSON.stringify(state.virtualFacilities.list)), total = 0;
@@ -661,14 +661,25 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total: facilities.length })
   },
 
-  async fetchArchivedFacilities({dispatch }) {
+  async fetchArchivedFacilities({ commit, state, dispatch }, payload) {
     let facilities = []
+    let total = 0;
+    
     try {
-      facilities = await FacilityService.fetchArchivedFacilities()
+      facilities = await FacilityService.fetchArchivedFacilities(payload);
+      total = facilities.length;
+      
+      if (payload.viewIndex === 0) {
+        // Replace the list if it's the first page
+        commit(types.FACILITY_ARCHIVED_UPDATED, { list: facilities, total });
+      } else {
+        // Append to the existing list for subsequent pages
+        const updatedFacilities = [...state.archivedFacilities.list, ...facilities];
+        commit(types.FACILITY_ARCHIVED_UPDATED, { list: updatedFacilities, total: updatedFacilities.length });
+      }
     } catch (error) {
       logger.error(error)
     }
-    dispatch('updateArchivedFacilities', facilities)
   },
 
   updateArchivedFacilities({ commit }, facilities) {

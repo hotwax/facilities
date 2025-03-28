@@ -525,7 +525,7 @@ const fetchFacilityGroups = async (payload: any): Promise<any> => {
   })
 }
 
-const fetchArchivedFacilities = async (): Promise<any> => {
+const fetchArchivedFacilities = async (payload :any): Promise<any> => {
   let facilities = []
 
   try {
@@ -542,7 +542,7 @@ const fetchArchivedFacilities = async (): Promise<any> => {
         distinct: 'Y',
         noConditionFind: 'Y',
         filterByDate: 'Y',
-        viewSize: 250
+        ...payload
       }
     }) as any
 

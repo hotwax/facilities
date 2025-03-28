@@ -13,7 +13,7 @@ const getters: GetterTree <FacilityState, RootState> = {
     return JSON.parse(JSON.stringify(state.facilityGroups.list))
   },
   getArchivedFacilities(state) {
-    return JSON.parse(JSON.stringify(state.archivedFacilities))
+    return JSON.parse(JSON.stringify(state.archivedFacilities.list))
   },
   getFacilityProductStores(state) {
     return state.current.productStores
@@ -53,6 +53,11 @@ const getters: GetterTree <FacilityState, RootState> = {
   },
   getTelecomAndEmailAddress(state) {
     return state.current?.contactDetails
+  },
+  isArchivedFacilitiesScrollable(state) {
+    return (
+      state.archivedFacilities.list?.length > 0 && state.archivedFacilities.list?.length < state.archivedFacilities.total
+    );
   }
 }
 export default getters;
