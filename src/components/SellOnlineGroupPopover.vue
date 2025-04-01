@@ -66,7 +66,6 @@ async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) 
 
   // Update the facility list to reflect the change in sell online status
   const facilitiesList = JSON.parse(JSON.stringify(facilities.value));
-  console.log('current.value :', current.value);
   const isSellOnlineEnabled = current.value.inventoryGroups.some((group: any) => group.isChecked);
   const updatedFacilities = facilitiesList.map((facility: any) => {
     if(facility.facilityId === current.value.facilityId) {

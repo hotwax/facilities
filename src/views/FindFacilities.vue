@@ -175,7 +175,6 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
-import { DateTime } from 'luxon';
 import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
 
 export default defineComponent({
