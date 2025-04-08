@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { IonCheckbox, IonContent, IonItem, IonList, IonListHeader } from '@ionic/vue';
-import { computed, defineProps } from "vue"
+import { computed, defineProps, ref } from "vue"
 import { translate } from "@hotwax/dxp-components";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
@@ -24,14 +24,14 @@ import store from "@/store";
 import { FacilityService } from "@/services/FacilityService";
 
 const props = defineProps(["facility"]);
+let currentFacility = ref(props.facility);
 
-const current = computed(() => store.getters["facility/getCurrent"]);
 const facilities = computed(() => store.getters["facility/getFacilities"]);
 const inventoryGroups = computed(() => store.getters['util/getInventoryGroups'])
 
 function getAssociatedInventoryGroups() {
   inventoryGroups.value.forEach((group: any) => {
-    group.isChecked = (props.facility.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId));
+    group.isChecked = (currentFacility.value.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId));
   });
   return inventoryGroups.value;
 }
@@ -48,23 +48,24 @@ async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) 
     let successMessage;
     if(isChecked) {
       resp = await FacilityService.addFacilityToGroup({
-        "facilityId": current.value.facilityId,
+        "facilityId": currentFacility.value.facilityId,
         "facilityGroupId": facilityGroup.facilityGroupId
       });
-      successMessage = translate('is now selling on', { "facilityName": current.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
+      successMessage = translate('is now selling on', { "facilityName": currentFacility.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
     } else {
-      const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
+      const groupInformation = currentFacility.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
       resp = await FacilityService.updateFacilityToGroup({
-        "facilityId": current.value.facilityId,
+        "facilityId": currentFacility.value.facilityId,
         "facilityGroupId": facilityGroup.facilityGroupId,
         "fromDate": groupInformation.fromDate,
         "thruDate": DateTime.now().toMillis()
       })
-      successMessage = translate('no longer sells on', { "facilityName": current.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName })
+      successMessage = translate('no longer sells on', { "facilityName": currentFacility.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName })
     }
     if(!hasError(resp)) {
       showToast(successMessage)
-      await store.dispatch('facility/fetchFacilityAdditionalInformation')
+      const updatedGroupInformation = await FacilityService.fetchFacilityGroupInformation([currentFacility.value.facilityId])
+      currentFacility.value.groupInformation = Object.values(updatedGroupInformation)[0]
     } else {
       throw resp.data
     }
@@ -76,11 +77,10 @@ async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) 
 
   // Update the facility list to reflect the change in sell online status
   const facilitiesList = JSON.parse(JSON.stringify(facilities.value));
-  const isSellOnlineEnabled = current.value.inventoryGroups.some((group: any) => group.isChecked);
   const updatedFacilities = facilitiesList.map((facility: any) => {
-    if(facility.facilityId === current.value.facilityId) {
-      if(isSellOnlineEnabled !== facility.sellOnline) facility.sellOnline = isSellOnlineEnabled;
-      facility.groupInformation = current.value.groupInformation;
+    if(facility.facilityId === currentFacility.value.facilityId) {
+      facility.sellOnline = currentFacility.value.groupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupTypeId === 'CHANNEL_FAC_GROUP');
+      facility.groupInformation = currentFacility.value.groupInformation;
     }
     return facility;
   });
