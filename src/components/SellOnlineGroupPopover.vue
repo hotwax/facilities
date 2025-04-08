@@ -2,9 +2,9 @@
   <ion-content>
     <ion-list>
       <ion-list-header>{{ translate("Sell Online") }}</ion-list-header>
-      <ion-item v-for="inventoryGroup in current.inventoryGroups" :key="inventoryGroup.facilityGroupId">
+      <ion-item v-for="inventoryGroup in getAssociatedInventoryGroups()" :key="inventoryGroup.facilityGroupId">
         <ion-checkbox label-placement="start" :checked="inventoryGroup.isChecked" @click.prevent="updateSellInventoryOnlineSetting($event, inventoryGroup)">
-          {{ inventoryGroup?.facilityGroupName }}
+          {{ inventoryGroup?.facilityGroupName ? inventoryGroup.facilityGroupName : inventoryGroup.facilityGroupId }}
         </ion-checkbox>
       </ion-item>
     </ion-list>
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { IonCheckbox, IonContent, IonItem, IonList, IonListHeader } from '@ionic/vue';
-import { computed } from "vue"
+import { computed, defineProps } from "vue"
 import { translate } from "@hotwax/dxp-components";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
@@ -23,8 +23,18 @@ import emitter from '@/event-bus'
 import store from "@/store";
 import { FacilityService } from "@/services/FacilityService";
 
+const props = defineProps(["facility"]);
+
 const current = computed(() => store.getters["facility/getCurrent"]);
 const facilities = computed(() => store.getters["facility/getFacilities"]);
+const inventoryGroups = computed(() => store.getters['util/getInventoryGroups'])
+
+function getAssociatedInventoryGroups() {
+  inventoryGroups.value.forEach((group: any) => {
+    group.isChecked = (props.facility.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId));
+  });
+  return inventoryGroups.value;
+}
 
 async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) {
   event.stopImmediatePropagation();

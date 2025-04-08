@@ -342,11 +342,11 @@ export default defineComponent({
       }
     },
     async openSellOnlineGroupPopover(ev: Event, facility: any) {
-      await this.store.dispatch('facility/fetchFacilityAdditionalInformation', facility)
       const popover = await popoverController.create({
         component: SellOnlineGroupPopover,
         event: ev,
         showBackdrop: false,
+        componentProps: { facility: facility }
       });
       popover.present();
     }
