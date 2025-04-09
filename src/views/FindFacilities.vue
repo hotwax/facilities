@@ -61,7 +61,7 @@
             </ion-item>
 
             <div class="tablet">
-              <ion-chip outline @click.stop="updateSellOnlineStatus(facility)">
+              <ion-chip outline @click.stop="openSellOnlineGroupPopover($event, facility)">
                 <ion-label>{{ translate('Sell Online') }}</ion-label>
                 <ion-icon :icon="shareOutline" :color="facility.sellOnline ? 'primary' : ''"/>
               </ion-chip>
@@ -175,7 +175,7 @@ import { FacilityService } from '@/services/FacilityService'
 import { showToast } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
-import { DateTime } from 'luxon';
+import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
 
 export default defineComponent({
   name: 'FindFacilities',
@@ -227,6 +227,7 @@ export default defineComponent({
     // from the details page and again coming to the list page, the UI does not gets updated when fetching information in
     // the mounted hook
     await this.fetchFacilityGroups();
+    await this.store.dispatch('util/fetchInventoryGroups')
     this.isScrollingEnabled = false;
     if(this.router.currentRoute.value?.query?.productStoreId) {
       this.query.productStoreId = this.router.currentRoute.value.query.productStoreId
@@ -319,44 +320,6 @@ export default defineComponent({
         logger.error('Failed to update facility', err)
       }
     },
-    async updateSellOnlineStatus(facility: any) {
-      try {
-        let resp
-        if (!facility.sellOnline) {
-          resp = await FacilityService.addFacilityToGroup({
-            "facilityId": facility.facilityId,
-            "facilityGroupId": 'FAC_GRP'
-          })
-        } else {
-          const groupInformation = facility.groupInformation.find((group: any) => group.facilityGroupId === 'FAC_GRP')
-          resp = await FacilityService.updateFacilityToGroup({
-            "facilityId": facility.facilityId,
-            "facilityGroupId": 'FAC_GRP',
-            "fromDate": groupInformation.fromDate,
-            "thruDate": DateTime.now().toMillis()
-          })
-        }
-
-        if (!hasError(resp)) {
-          // updating the facilities state instead of refetching
-          const facilityGroupInformation = await FacilityService.fetchFacilityGroupInformation([facility.facilityId]);
-          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
-            if (facility.facilityId === facilityData.facilityId) {
-              facilityData.sellOnline = !facility.sellOnline
-              facilityData.groupInformation = facilityGroupInformation[facility.facilityId]
-            }
-            return facilityData
-          })
-          this.store.dispatch('facility/updateFacilities', updatedFacilities)
-          showToast(translate(`Online inventory turned ${facility.sellOnline ? 'off' : 'on'} for`, { facilityName: facility.facilityName }))
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        showToast(translate('Failed to update fulfillment setting'))
-        logger.error('Failed to update fulfillment setting', error)
-      }
-    },
     async fetchFacilityGroups() {
       const params = {
         entityName: "FacilityGroup",
@@ -377,6 +340,15 @@ export default defineComponent({
       } catch (err) {
         logger.error('Failed to find facility groups', err)
       }
+    },
+    async openSellOnlineGroupPopover(ev: Event, facility: any) {
+      const popover = await popoverController.create({
+        component: SellOnlineGroupPopover,
+        event: ev,
+        showBackdrop: false,
+        componentProps: { facility: facility }
+      });
+      popover.present();
     }
   },
   setup() {
