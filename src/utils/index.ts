@@ -1,6 +1,11 @@
 import { translate } from '@hotwax/dxp-components';
 import { Plugins } from '@capacitor/core';
 import { toastController } from '@ionic/vue';
+import { FacilityService } from "@/services/FacilityService";
+import { DateTime } from 'luxon';
+import { hasError } from "@/adapter";
+import store from '@/store'
+import logger from "@/logger";
 
 // TODO Use separate files for specific utilities
 
@@ -65,4 +70,46 @@ const generateInternalId = (name: string) => {
   return name.trim().toUpperCase().split(' ').join('_');
 }
 
-export { copyToClipboard, customSort, generateInternalId, isValidEmail, isValidPassword, showToast }
+const updateFacilityGroup = async (currentFacility: any, facilityGroup: any, isChecked: boolean) => {
+  try {
+    let resp, successMessage;
+    if(isChecked) {
+      resp = await FacilityService.addFacilityToGroup({
+        "facilityId": currentFacility.facilityId,
+        "facilityGroupId": facilityGroup.facilityGroupId
+      });
+      successMessage = translate('is now selling on', { "facilityName": currentFacility.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
+    } else {
+      const groupInformation = currentFacility.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
+      resp = await FacilityService.updateFacilityToGroup({
+        "facilityId": currentFacility.facilityId,
+        "facilityGroupId": facilityGroup.facilityGroupId,
+        "fromDate": groupInformation.fromDate,
+        "thruDate": DateTime.now().toMillis()
+      })
+      successMessage = translate('no longer sells on', { "facilityName": currentFacility.facilityName, "facilityGroupId": facilityGroup.facilityGroupName })
+    }
+    if(!hasError(resp)) {
+      showToast(successMessage);
+      const updatedGroupInformation = await FacilityService.fetchFacilityGroupInformation([currentFacility.facilityId])
+      currentFacility.groupInformation = Object.values(updatedGroupInformation)[0];
+      // Update the facility list to reflect the change in sell online status
+      const facilitiesList = JSON.parse(JSON.stringify(store.getters["facility/getFacilities"]));
+      const updatedFacilities = facilitiesList.map((facility: any) => {
+        if(facility.facilityId === currentFacility.facilityId) {
+          facility.sellOnline = currentFacility.groupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupTypeId === 'CHANNEL_FAC_GROUP');
+          facility.groupInformation = currentFacility.groupInformation;
+        }
+        return facility;
+      });
+      store.dispatch('facility/updateFacilities', updatedFacilities);
+    } else {
+      throw resp.data
+    }
+  } catch (err) {
+    showToast('Failed to update sell inventory online setting');
+    logger.error('Failed to update sell inventory online setting', err);
+  }
+}
+
+export { copyToClipboard, customSort, generateInternalId, isValidEmail, isValidPassword, showToast, updateFacilityGroup }

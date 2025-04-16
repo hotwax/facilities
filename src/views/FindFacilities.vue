@@ -172,7 +172,7 @@ import { translate } from '@hotwax/dxp-components'
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
 import { hasError } from '@/adapter';
 import { FacilityService } from '@/services/FacilityService'
-import { showToast } from '@/utils';
+import { showToast, updateFacilityGroup } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
 import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
@@ -215,7 +215,8 @@ export default defineComponent({
       query: "facility/getFacilityQuery",
       isScrollable: "facility/isFacilitiesScrollable",
       facilityTypes: "util/getFacilityTypes",
-      productStores: "util/getProductStores"
+      productStores: "util/getProductStores",
+      inventoryGroups: "util/getInventoryGroups"
     })
   },
   async mounted() {
@@ -342,13 +343,18 @@ export default defineComponent({
       }
     },
     async openSellOnlineGroupPopover(ev: Event, facility: any) {
-      const popover = await popoverController.create({
-        component: SellOnlineGroupPopover,
-        event: ev,
-        showBackdrop: false,
-        componentProps: { facility: facility }
-      });
-      popover.present();
+      if(this.inventoryGroups.length === 1) {
+        const isGroupAdded = !facility.groupInformation.some((info: any) => info.facilityGroupId === this.inventoryGroups[0].facilityGroupId);
+        await updateFacilityGroup(facility, this.inventoryGroups[0], isGroupAdded);
+      } else {
+        const popover = await popoverController.create({
+          component: SellOnlineGroupPopover,
+          event: ev,
+          showBackdrop: false,
+          componentProps: { facility: facility }
+        });
+        popover.present();
+      }
     }
   },
   setup() {
