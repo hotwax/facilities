@@ -34,9 +34,6 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_MAPPINGS_UPDATED](state, payload) {
     state.current.facilityMappings = payload
   },
-  [types.FACILITY_POSTAL_ADDRESS_UPDATED](state, payload) {
-    state.current.postalAddress = payload
-  },
   [types.FACILITY_SHOPIFY_MAPPINGS_UPDATED](state, payload) {
     state.current.shopifyFacilityMappings = payload
   },
