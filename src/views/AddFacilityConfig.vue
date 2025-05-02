@@ -22,7 +22,7 @@
             <ion-list>
               <ion-item v-for="store in selectedProductStores" :key="store.productStoreId">
                 <ion-label>
-                  <h2>{{ getProductStore(store.productStoreId)?.storeName }}</h2>
+                  <h2>{{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}</h2>
                 </ion-label>
                 <ion-badge v-if="store.productStoreId === primaryFacilityGroupId">
                   {{ translate("primary store") }}
@@ -35,7 +35,7 @@
                 <ion-popover trigger="product-store-actions-trigger" showBackdrop="false" dismissOnSelect="true">
                   <ion-content>
                     <ion-list>
-                      <ion-list-header>{{ getProductStore(store.productStoreId).storeName }}</ion-list-header>
+                      <ion-list-header>{{ getProductStore(store.productStoreId).storeName || store.productStoreId }}</ion-list-header>
                       <ion-item button @click="updatePrimaryFacilityGroupId(store.productStoreId)">
                         {{ translate("Primary") }}
                         <ion-icon slot="end" :color="store.productStoreId === primaryFacilityGroupId ? 'warning' : ''" :icon="store.productStoreId === primaryFacilityGroupId ? star : starOutline" />
@@ -298,13 +298,14 @@ export default defineComponent({
       }
     },
     async addProductStoresToFacility() {
-      const responses = await Promise.allSettled(this.selectedProductStores
-        .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+      let responses = []
+      for (const payload of this.selectedProductStores) {
+        responses.push(await FacilityService.createProductStoreFacility({
           productStoreId: payload.productStoreId,
           facilityId: this.facilityId,
           fromDate: DateTime.now().toMillis(),
         }))
-      )
+      }
 
       const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
       if (hasFailedResponse) {

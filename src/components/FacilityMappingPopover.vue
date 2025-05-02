@@ -55,7 +55,9 @@ export default defineComponent({
       })
 
       await popoverController.dismiss()
-      customMappingModal.present()
+      customMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async addMappingModal(type: any) {
       const addMappingModal = await modalController.create({
@@ -64,7 +66,9 @@ export default defineComponent({
       })
   
       await popoverController.dismiss()
-      addMappingModal.present()
+      addMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async createShopifyFacilityMappingModal() {
       const facilityShopifyMappingModal = await modalController.create({
@@ -72,7 +76,9 @@ export default defineComponent({
       })
   
       await popoverController.dismiss()
-      facilityShopifyMappingModal.present()
+      facilityShopifyMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async createFacilityExternalId() {
       const facilityExternalIdModal = await modalController.create({
@@ -80,7 +86,9 @@ export default defineComponent({
       })
 
       await popoverController.dismiss()
-      facilityExternalIdModal.present()
+      facilityExternalIdModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
   },
   setup() {

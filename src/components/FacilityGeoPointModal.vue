@@ -120,10 +120,13 @@ export default defineComponent({
         return;
       }
       this.isGeneratingLatLong = true
+      const postalCode = this.geoPoint.postalCode;
+      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+      
       const payload = {
         json: {
           params: {
-            q: `postcode: ${this.geoPoint.postalCode}`
+            q: `postcode: ${query}`
           }
         }
       }
@@ -165,7 +168,7 @@ export default defineComponent({
         if(!hasError(resp)) {
           geoPoints = this.geoPoint
           showToast(translate("Facility latitude and longitude updated successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }

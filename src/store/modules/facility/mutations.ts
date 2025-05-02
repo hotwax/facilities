@@ -19,8 +19,8 @@ const mutations: MutationTree <FacilityState> = {
   [types.FACILITY_CURRENT_UPDATED](state, payload) {
     state.current = payload
   },
-  [types.FACILITY_TELECOM_NUMBER_UPDATED](state, payload) {
-    state.current.telecomNumber = payload
+  [types.FACILITY_TELECOM_AND_EMAIL_ADDRESS_UPDATED](state, payload) {
+    state.current.contactDetails = payload
   },
   [types.FACILITY_POSTAL_ADDRESS_UPDATED](state, payload) {
     state.current.postalAddress = payload
@@ -33,9 +33,6 @@ const mutations: MutationTree <FacilityState> = {
   },
   [types.FACILITY_MAPPINGS_UPDATED](state, payload) {
     state.current.facilityMappings = payload
-  },
-  [types.FACILITY_POSTAL_ADDRESS_UPDATED](state, payload) {
-    state.current.postalAddress = payload
   },
   [types.FACILITY_SHOPIFY_MAPPINGS_UPDATED](state, payload) {
     state.current.shopifyFacilityMappings = payload

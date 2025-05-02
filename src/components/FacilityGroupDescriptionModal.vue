@@ -6,15 +6,22 @@
           <ion-icon slot="icon-only" :icon="closeOutline" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ facilityGroup?.description ? translate('Edit group description')  : translate('Add group description') }}</ion-title>
+      <ion-title>{{ translate('Edit group detail') }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   <ion-content>
     <ion-item>
-      <ion-textarea
+      <ion-input label-placement="floating" v-model="facilityGroupName">
+        <div slot="label">{{ translate("Name") }} <ion-text color="danger">*</ion-text></div>
+      </ion-input>
+    </ion-item>
+    <ion-item lines="none">
+      <ion-textarea :label="translate('Description')" label-placement="floating"
         :placeholder="translate('group description')"
         :auto-grow="true"
+        :counter="true" 
+        :maxlength="255"
         v-model="facilityGroupDescription"
       >
       </ion-textarea>
@@ -36,7 +43,9 @@ import {
   IonFabButton,
   IonHeader,
   IonIcon,
+  IonInput,
   IonItem,
+  IonText,
   IonTextarea,
   IonTitle,
   IonToolbar,
@@ -56,7 +65,6 @@ import { FacilityService } from "@/services/FacilityService";
 import { hasError } from '@/adapter';
 import emitter from "@/event-bus";
 import { showToast } from '@/utils';
-import { popoverController } from "@ionic/core";
 
 export default defineComponent({
   name: "CustomFieldModal",
@@ -68,13 +76,16 @@ export default defineComponent({
     IonFabButton,
     IonHeader,
     IonIcon,
+    IonInput,
     IonItem,
+    IonText,
     IonTextarea,
     IonTitle,
     IonToolbar,
   },
   data() {
     return {
+      facilityGroupName: this.facilityGroup.facilityGroupName,
       facilityGroupDescription: this.facilityGroup.description,
     }
   },
@@ -89,17 +100,23 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true });
     },
     async updateFacilityGroupDescription() {
+      if (this.facilityGroupName.trim().length <= 0) {
+        showToast(translate('Facility group name cannot be empty'));
+        return false;    
+      }
       emitter.emit('presentLoader')
       try {
         const resp = await FacilityService.updateFacilityGroup({
           facilityGroupId: this.facilityGroup.facilityGroupId,
+          facilityGroupName: this.facilityGroupName,
           description: this?.facilityGroupDescription
         })
         if (!hasError(resp)) {
-          showToast(translate('Group description updated.'))
+          showToast(translate('Group detail updated.'))
           const updatedGroups = JSON.parse(JSON.stringify(this.groups))
             .map((groupData: any) => {
               if (this.facilityGroup.facilityGroupId === groupData.facilityGroupId) {
+                groupData.facilityGroupName = this.facilityGroupName
                 groupData.description = this.facilityGroupDescription
               }
 
@@ -109,9 +126,8 @@ export default defineComponent({
         }
 
       } catch (error) {
-        showToast(translate('Failed to update group description.'))
+        showToast(translate('Failed to update group detail.'))
       }
-      popoverController.dismiss();
       this.closeModal();
       emitter.emit('dismissLoader')
     },

@@ -55,6 +55,8 @@ import logger from "@/logger";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import { DateTime } from "luxon";
+import emitter from "@/event-bus";
+
 
 export default defineComponent({
   name: "AddProductStoreToGroupModal",
@@ -96,6 +98,7 @@ export default defineComponent({
       modalController.dismiss({ dismissed: true});
     },
     async fetchGroupProductStores() {
+      emitter.emit('presentLoader')
        try {
         const resp = await FacilityService.fetchAssociatedProductStoresToGroup({
           "inputFields": {
@@ -116,6 +119,7 @@ export default defineComponent({
       } catch(err) {
         logger.error(err)
       }
+      emitter.emit('dismissLoader');
     },
     isSelected(productStoreId: any) {
       return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
@@ -182,4 +186,9 @@ export default defineComponent({
   },
 });
 </script>
+<style scoped>
+ion-content {
+  --padding-bottom: 80px;
+}
+</style>
     

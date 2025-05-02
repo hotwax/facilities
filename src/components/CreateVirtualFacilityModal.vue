@@ -81,6 +81,7 @@ export default defineComponent({
   computed: {
     ...mapGetters({
       virtualFacilities: 'facility/getVirtualFacilities',
+      organizationPartyId: 'util/getOrganizationPartyId'
     })
   },
   data() {
@@ -90,11 +91,14 @@ export default defineComponent({
         facilityId: '',
         description: '',
       },
+      isAutoGenerateId: true
     }
   },
   methods: {
     setFacilityId(event: any) {
-      this.formData.facilityId = generateInternalId(event.target.value)
+      if(this.isAutoGenerateId) {
+        this.formData.facilityId = generateInternalId(event.target.value)
+      }
     },
     closeModal() {
       modalController.dismiss();
@@ -120,7 +124,7 @@ export default defineComponent({
         const payload = {
           ...this.formData,
           facilityTypeId: 'VIRTUAL_FACILITY',
-          ownerPartyId: "COMPANY"
+          ownerPartyId: this.organizationPartyId
         }
 
         const resp = await FacilityService.createVirtualFacility(payload);
@@ -136,9 +140,13 @@ export default defineComponent({
         } else {
           throw resp.data;
         }
-      } catch (error) {
+      } catch (error: any) {
         logger.error(error)
-        showToast(translate('Failed to create parking.'))
+        if(error?.response?.data?.error?.message) {
+          showToast(error.response.data.error.message)
+        } else {
+          showToast(translate('Failed to create parking.'))
+        }
       }
       modalController.dismiss()
     },
@@ -152,6 +160,7 @@ export default defineComponent({
       this.formData.facilityId.length <= 20
         ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
         : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
+      this.isAutoGenerateId = false;
     },
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');

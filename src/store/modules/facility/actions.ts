@@ -42,7 +42,7 @@ const actions: ActionTree<FacilityState, RootState> = {
 
       if(facilityGroupInformation?.length) {
         facility.groupInformation = facilityGroupInformation
-        facility.sellOnline = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'FAC_GRP'))
+        facility.sellOnline = facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupTypeId === 'CHANNEL_FAC_GROUP');
         facility.useOMSFulfillment = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'OMS_FULFILLMENT'))
         facility.generateShippingLabel = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'AUTO_SHIPPING_LABEL'))
         facility.allowPickup = (facilityGroupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupId === 'PICKUP'))
@@ -85,12 +85,8 @@ const actions: ActionTree<FacilityState, RootState> = {
 
     if (state.facilityQuery.facilityGroupId) {
       filters['facilityGroupId'] = state.facilityQuery.facilityGroupId
-      filters['facilityGroupId_op'] = 'equals'
-      filters['facilityGroupId_grp'] = '2'
-      filters['primaryFacilityGroupId'] = state.facilityQuery.facilityGroupId
-      filters['primaryFacilityGroupId_op'] = 'equals'
-      filters['primaryFacilityGroupId_grp'] = '2'
-      filters['grp_op_2'] = 'OR'
+      filters['facilityGroupId_op'] = 'equals',
+      filters['filterByDate'] = 'Y'
     }
 
     const params = {
@@ -103,33 +99,35 @@ const actions: ActionTree<FacilityState, RootState> = {
       "distinct": "Y",
       "fromDateName": "facilityGroupFromDate",
       "thruDateName": "facilityGroupThruDate",
-      "filterByDate": "Y",
       "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId'],
       ...payload
     }
 
-    const facilities = JSON.parse(JSON.stringify(state.facilities.list));
-    let total = 0, facilityList = [];
+    let facilities = JSON.parse(JSON.stringify(state.facilities.list));
+    let total = 0;
 
     try {
       const resp = await FacilityService.fetchFacilities(params)
-
-      if(!hasError(resp) && resp.data.count) {
+      
+      if(!hasError(resp) && resp.data.count > 0) {
         if(payload.viewIndex && payload.viewIndex > 0) {
-          facilityList = facilities.concat(resp.data.docs)
+          facilities = facilities.concat(resp.data.docs)
         } else {
-          facilityList = resp.data.docs
+          facilities = resp.data.docs
         }
         total = resp.data.count
       } else {
         throw resp.data
       }
     } catch(error) {
-      logger.error(error)
+      if (payload.viewIndex === 0) { 
+        facilities = []; 
+        total = 0; 
+      }
     }
 
+    commit(types.FACILITY_LIST_UPDATED , { facilities, total });
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_LIST_UPDATED , { facilities: facilityList, total });
 
     if(facilities.length) {
       await dispatch('fetchFacilitiesAdditionalInformation', payload)
@@ -183,7 +181,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     // checking that if the list contains basic information for facility then not fetching the same information again
     const cachedFacilities = JSON.parse(JSON.stringify(state.facilities.list))
     const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId)
-    if(current?.facilityId && !payload.skipState) {
+    if(current?.facilityId && !payload.skipState && current["groupInformation"]) {
       // As inventory channels are fetched while fetching additional facility info
       // But here we already have additional facility info, so just getting and adding inventory groups to current.
       const inventoryGroups = rootGetters['util/getInventoryGroups'];
@@ -229,64 +227,57 @@ const actions: ActionTree<FacilityState, RootState> = {
     commit(types.FACILITY_CURRENT_UPDATED, facility);
   },
 
-  async fetchFacilityContactDetails({ commit }, payload) {
-    let postalAddress = {} as any
-    const params = {
+  async fetchFacilityContactDetailsAndTelecom({ commit }, facility) {
+    let postalAddress = {} as any;
+    const contactDetails = {} as any;
+  
+    const payload = {
       inputFields: {
-        contactMechPurposeTypeId: 'PRIMARY_LOCATION',
-        contactMechTypeId: 'POSTAL_ADDRESS',
-        facilityId: payload.facilityId
+        contactMechPurposeTypeId: ['PRIMARY_PHONE', 'PRIMARY_EMAIL', 'PRIMARY_LOCATION'],
+        contactMechPurposeTypeId_op: 'in',
+        contactMechTypeId: ['TELECOM_NUMBER', 'EMAIL_ADDRESS', 'POSTAL_ADDRESS'],
+        contactMechTypeId_op: 'in',
+        facilityId: facility.facilityId
       },
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'countryGeoId', 'countryGeoName', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
-      viewSize: 1
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
+      viewSize: 3
     }
 
     try {
-      const resp = await FacilityService.fetchFacilityContactDetails(params)
+      const resp = await FacilityService.fetchFacilityContactDetails(payload);
       if(!hasError(resp)) {
-        postalAddress = resp.data.docs[0]
-        postalAddress = {
-          ...postalAddress,
-          stateProvinceGeoId: postalAddress.stateGeoId
-        }
-        delete postalAddress.stateGeoId
+        const docs = resp.data.docs
+
+        docs.map((item: any) => {
+          if(item.contactMechTypeId === "POSTAL_ADDRESS") {
+            postalAddress = {
+              ...item,
+              stateProvinceGeoId: item.stateGeoId
+            }
+          } else if (item.contactMechTypeId === 'TELECOM_NUMBER') {
+            contactDetails.telecomNumber = {
+              contactMechId: item.contactMechId,
+              contactNumber: item.contactNumber,
+              countryCode: item.countryCode,
+            }
+          } else if (item.contactMechTypeId === 'EMAIL_ADDRESS') {
+            contactDetails.emailAddress = {
+              contactMechId: item.contactMechId,
+              infoString: item.infoString
+            }
+          }
+        })
+       
+        commit(types.FACILITY_POSTAL_ADDRESS_UPDATED, postalAddress)
+        commit(types.FACILITY_TELECOM_AND_EMAIL_ADDRESS_UPDATED, contactDetails)
       } else {
         throw resp.data
       }
     } catch(err) {
-      logger.error('Failed to fetch the postal address for the facility', err)
-    }
-
-    commit(types.FACILITY_POSTAL_ADDRESS_UPDATED , postalAddress);
-  },
-  async fetchFacilityTelecomNumber({ commit }, payload) {
-    let telecomNumber;
-    const params = {
-      inputFields: {
-        contactMechPurposeTypeId: 'PRIMARY_PHONE',
-        contactMechTypeId: 'TELECOM_NUMBER',
-        facilityId: payload.facilityId
-      },
-      entityName: "FacilityContactDetailByPurpose",
-      orderBy: 'fromDate DESC',
-      filterByDate: 'Y',
-      fieldList: ['contactMechId', 'contactNumber', 'countryCode'],
-      viewSize: 1
-    }
-
-    try {
-      const resp = await FacilityService.fetchFacilityContactDetails(params)
-      if(!hasError(resp)) {
-        telecomNumber = resp.data.docs[0]
-        commit(types.FACILITY_TELECOM_NUMBER_UPDATED , telecomNumber);
-      } else {
-        throw resp.data
-      }
-    } catch(err) {
-      logger.error('Failed to fetch the contact number for the facility', err)
+      logger.error('Failed to fetch facility contact details and telecom information', err)
     }
   },
 
@@ -726,6 +717,9 @@ const actions: ActionTree<FacilityState, RootState> = {
         }
         total = resp.data.count
       } else {
+        if (payload.viewIndex === 0 ) {
+          groups = []
+        }
         throw resp.data
       }
     } catch (error) {

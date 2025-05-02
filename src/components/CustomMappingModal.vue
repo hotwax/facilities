@@ -26,7 +26,7 @@
       <ion-list>
         <ion-list-header>{{ translate("Custom mapping") }}</ion-list-header>
         <ion-item>
-          <ion-input :label="translate('Mapping ID')" v-model="mappingId" placeholder="Mapping ID" />
+          <ion-input id="inputElement" :label="translate('Mapping ID')" v-model="mappingId" placeholder="Mapping ID" />
         </ion-item>
         <ion-item>
           <ion-input :label="translate('Mapping Name')" v-model="mappingName" placeholder="Mapping name" />

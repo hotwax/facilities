@@ -48,10 +48,13 @@ export default defineComponent({
       emitter.emit('presentLoader')
 
       try {
+        const postalCode = this.postalAddress.postalCode;
+        const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+
         resp = await UtilService.generateLatLong({
           json: {
             params: {
-              q: `postcode: ${this.postalAddress.postalCode}`
+              q: `postcode: ${query}`
             }
           }
         })
@@ -69,7 +72,7 @@ export default defineComponent({
 
             if(!hasError(resp)) {
               showToast(translate("Successfully regenerated latitude and longitude for the facility."))
-              await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+              await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
             } else {
               throw resp.data
             }
@@ -100,7 +103,7 @@ export default defineComponent({
 
         if(!hasError(resp)) {
           showToast(translate("Facility latitude and longitude removed successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId })
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }

@@ -53,7 +53,8 @@
                     <h3>{{ postalAddress.address2 }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
-                    <p class="ion-text-wrap" v-if="telecomNumber">{{ `${telecomNumber.countryCode}-${telecomNumber.contactNumber}` }}</p>
+                    <p class="ion-text-wrap" v-if="contactDetails?.telecomNumber">{{ `${contactDetails.telecomNumber?.countryCode}-${contactDetails.telecomNumber?.contactNumber}` }}</p>
+                    <p class="ion-text-wrap" v-if="contactDetails?.emailAddress">{{ contactDetails.emailAddress?.infoString }}</p>
                   </ion-label>
                 </ion-item>
                 <ion-button fill="clear" @click="openAddressModal">{{ translate("Edit") }}</ion-button>
@@ -170,8 +171,8 @@
               </ion-button>
             </ion-card-header>
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
-              <ion-label>{{ getProductStore(store.productStoreId)?.storeName }}</ion-label>
-              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
+              <ion-label>{{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}</ion-label>
+              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) !== '' && shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
               <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
@@ -638,7 +639,7 @@ export default defineComponent({
       baseUrl: "user/getBaseUrl",
       facilityGroupTypes: 'util/getFacilityGroupTypes',
       inventoryGroups: 'util/getInventoryGroups',
-      telecomNumber: 'facility/getTelecomNumber'
+      contactDetails: 'facility/getTelecomAndEmailAddress'
     })
   },
   props: ["facilityId"],
@@ -650,7 +651,7 @@ export default defineComponent({
       facilityTypeId: 'VIRTUAL_FACILITY',
       facilityTypeId_op: 'notEqual'
     })])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetails', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityTelecomNumber', { facilityId: this.facilityId })])
+    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId })])
     this.defaultDaysToShip = this.current.defaultDaysToShip
     this.isLoading = false
     this.parentFacilityTypeId = this.current.parentFacilityTypeId
@@ -742,7 +743,9 @@ export default defineComponent({
         }
       })
 
-      addressModal.present()
+      addressModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async addCustomSchedule() {
       const customScheduleModal = await modalController.create({
@@ -788,13 +791,14 @@ export default defineComponent({
             }))
           )
 
-          const createResponses = await Promise.allSettled(productStoresToCreate
-            .map(async (payload: any) => await FacilityService.createProductStoreFacility({
+          let createResponses = []
+          for (const payload of productStoresToCreate) {
+            createResponses.push(await FacilityService.createProductStoreFacility({
               productStoreId: payload.productStoreId,
               facilityId: this.facilityId,
               fromDate: DateTime.now().toMillis(),
             }))
-          )
+          }
 
           const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
           if(hasFailedResponse) {
@@ -971,7 +975,7 @@ export default defineComponent({
           });
         } else {
           const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
-          resp = await await FacilityService.updateFacilityToGroup({
+          resp = await FacilityService.updateFacilityToGroup({
             "facilityId": this.current.facilityId,
             "facilityGroupId": facilityGroupId,
             "fromDate": groupInformation.fromDate,
@@ -1009,7 +1013,7 @@ export default defineComponent({
           successMessage = translate('is now selling on', { "facilityName": this.current.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
         } else {
           const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
-          resp = await await FacilityService.updateFacilityToGroup({
+          resp = await FacilityService.updateFacilityToGroup({
             "facilityId": this.current.facilityId,
             "facilityGroupId": facilityGroup.facilityGroupId,
             "fromDate": groupInformation.fromDate,
@@ -1159,14 +1163,18 @@ export default defineComponent({
         componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
       })
 
-      customMappingModal.present()
+      customMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async editFacilityExternalId() {
       const facilityExternalIdModal = await modalController.create({
         component: FacilityExternalIdModal
       })
 
-      facilityExternalIdModal.present()
+      facilityExternalIdModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
       const customMappingModal = await modalController.create({
@@ -1174,7 +1182,9 @@ export default defineComponent({
         componentProps: { shopifyFacilityMapping, type: 'update' }
       })
 
-      customMappingModal.present()
+      customMappingModal.present().then(() => {
+        (document.querySelector("#inputElement") as any).setFocus()
+      })
     },
     getOpenEndTime(startTime: any, capacity: any) {
       const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
@@ -1199,7 +1209,9 @@ export default defineComponent({
         const resp = await UtilService.generateLatLong(payload)
 
         if(!hasError(resp)) {
-          this.isRegenerationRequired = !(this.postalAddress.postalCode === resp.data.response.docs[0].postcode)
+          const postalCode = this.postalAddress.postalCode
+          const fetchedPostcode = resp.data.response.docs[0].postcode
+          this.isRegenerationRequired = !(postalCode.startsWith('0') ? postalCode.substring(1) === fetchedPostcode || postalCode === fetchedPostcode : postalCode === fetchedPostcode);
         } else {
           throw resp.data
         }

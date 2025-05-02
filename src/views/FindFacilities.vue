@@ -25,7 +25,7 @@
               <ion-icon :icon="globeOutline" slot="start" />
               <ion-select :label="translate('Product Store')" interface="popover" v-model="query.productStoreId" @ionChange="updateQuery()">
                 <ion-select-option value="">{{ translate("All") }}</ion-select-option>
-                <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName }}</ion-select-option>
+                <ion-select-option :value="productStore.productStoreId" :key="index" v-for="(productStore, index) in productStores">{{ productStore.storeName ? productStore.storeName : productStore.productStoreId }}</ion-select-option>
               </ion-select>
             </ion-item>
             <ion-item lines="none">
@@ -61,7 +61,7 @@
             </ion-item>
 
             <div class="tablet">
-              <ion-chip outline @click.stop="updateSellOnlineStatus(facility)">
+              <ion-chip outline @click.stop="openSellOnlineGroupPopover($event, facility)">
                 <ion-label>{{ translate('Sell Online') }}</ion-label>
                 <ion-icon :icon="shareOutline" :color="facility.sellOnline ? 'primary' : ''"/>
               </ion-chip>
@@ -172,10 +172,10 @@ import { translate } from '@hotwax/dxp-components'
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
 import { hasError } from '@/adapter';
 import { FacilityService } from '@/services/FacilityService'
-import { showToast } from '@/utils';
+import { showToast, updateFacilityGroup } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
-import { DateTime } from 'luxon';
+import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
 
 export default defineComponent({
   name: 'FindFacilities',
@@ -215,19 +215,25 @@ export default defineComponent({
       query: "facility/getFacilityQuery",
       isScrollable: "facility/isFacilitiesScrollable",
       facilityTypes: "util/getFacilityTypes",
-      productStores: "util/getProductStores"
+      productStores: "util/getProductStores",
+      inventoryGroups: "util/getInventoryGroups"
     })
   },
   async mounted() {
     // We only need to fetch those types whose parent is not virtual facility
     await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY', parentTypeId_op: 'notEqual', facilityTypeId: 'VIRTUAL_FACILITY', facilityTypeId_op: 'notEqual' }), this.store.dispatch('util/fetchProductStores')])
-    await this.fetchFacilityGroups();
   },
   async ionViewWillEnter() {
     // fetching facilities information in the ionViewWillEnter hook as when updating facilityGroup or fulfillment limit
     // from the details page and again coming to the list page, the UI does not gets updated when fetching information in
     // the mounted hook
+    await this.fetchFacilityGroups();
+    await this.store.dispatch('util/fetchInventoryGroups')
     this.isScrollingEnabled = false;
+    if(this.router.currentRoute.value?.query?.productStoreId) {
+      this.query.productStoreId = this.router.currentRoute.value.query.productStoreId
+      await this.store.dispatch('facility/updateFacilityQuery', this.query)
+    }
     await this.fetchFacilities();
   },
   methods: {
@@ -315,44 +321,6 @@ export default defineComponent({
         logger.error('Failed to update facility', err)
       }
     },
-    async updateSellOnlineStatus(facility: any) {
-      try {
-        let resp
-        if (!facility.sellOnline) {
-          resp = await FacilityService.addFacilityToGroup({
-            "facilityId": facility.facilityId,
-            "facilityGroupId": 'FAC_GRP'
-          })
-        } else {
-          const groupInformation = facility.groupInformation.find((group: any) => group.facilityGroupId === 'FAC_GRP')
-          resp = await FacilityService.updateFacilityToGroup({
-            "facilityId": facility.facilityId,
-            "facilityGroupId": 'FAC_GRP',
-            "fromDate": groupInformation.fromDate,
-            "thruDate": DateTime.now().toMillis()
-          })
-        }
-
-        if (!hasError(resp)) {
-          // updating the facilities state instead of refetching
-          const facilityGroupInformation = await FacilityService.fetchFacilityGroupInformation([facility.facilityId]);
-          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
-            if (facility.facilityId === facilityData.facilityId) {
-              facilityData.sellOnline = !facility.sellOnline
-              facilityData.groupInformation = facilityGroupInformation[facility.facilityId]
-            }
-            return facilityData
-          })
-          this.store.dispatch('facility/updateFacilities', updatedFacilities)
-          showToast(translate(`Online inventory turned ${facility.sellOnline ? 'off' : 'on'} for`, { facilityName: facility.facilityName }))
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        showToast(translate('Failed to update fulfillment setting'))
-        logger.error('Failed to update fulfillment setting', error)
-      }
-    },
     async fetchFacilityGroups() {
       const params = {
         entityName: "FacilityGroup",
@@ -372,6 +340,20 @@ export default defineComponent({
         }
       } catch (err) {
         logger.error('Failed to find facility groups', err)
+      }
+    },
+    async openSellOnlineGroupPopover(ev: Event, facility: any) {
+      if(this.inventoryGroups.length === 1) {
+        const isGroupAdded = !facility.groupInformation.some((info: any) => info.facilityGroupId === this.inventoryGroups[0].facilityGroupId);
+        await updateFacilityGroup(facility, this.inventoryGroups[0], isGroupAdded);
+      } else {
+        const popover = await popoverController.create({
+          component: SellOnlineGroupPopover,
+          event: ev,
+          showBackdrop: false,
+          componentProps: { facility: facility }
+        });
+        popover.present();
       }
     }
   },
@@ -405,5 +387,11 @@ export default defineComponent({
 config-note {
   display: block;
   text-align: center;
+}
+
+@media screen and (min-width: 991px) {
+  ion-content {
+    --padding-bottom: 80px;
+  }
 }
 </style>

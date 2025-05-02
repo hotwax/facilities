@@ -98,7 +98,8 @@ export default defineComponent({
   },
   computed: {
     ...mapGetters({
-      facilityTypes: "util/getFacilityTypes"
+      facilityTypes: "util/getFacilityTypes",
+      organizationPartyId: "util/getOrganizationPartyId"
     })
   },
   data() {
@@ -109,7 +110,8 @@ export default defineComponent({
         externalId: '',
       },
       selectedFacilityTypeId: '' as any,
-      facilityTypesByParentTypeId: {} as any
+      facilityTypesByParentTypeId: {} as any,
+      isAutoGenerateId: true,
     }
   },
   async ionViewWillEnter() {
@@ -137,9 +139,12 @@ export default defineComponent({
         facilityId: '',
         externalId: '',
       }
+      this.isAutoGenerateId = true;
     },
     setFacilityId(event: any) {
-      this.formData.facilityId = generateInternalId(event.target.value)
+      if(this.isAutoGenerateId) {
+        this.formData.facilityId = generateInternalId(event.target.value)
+      }
     },
     async createFacility() {
       if (!this.formData.facilityName?.trim()) {
@@ -162,7 +167,7 @@ export default defineComponent({
         const payload = {
           ...this.formData,
           facilityTypeId: this.selectedFacilityTypeId,
-          ownerPartyId: "COMPANY"
+          ownerPartyId: this.organizationPartyId
         }
 
         const resp = await FacilityService.createFacility(payload);
@@ -213,6 +218,7 @@ export default defineComponent({
       this.formData.facilityId.length <= 20
         ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
         : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
+      this.isAutoGenerateId = false;
     },
     markFacilityIdTouched() {
       (this as any).$refs.facilityId.$el.classList.add('ion-touched');

@@ -31,7 +31,7 @@
   </ion-content>
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button @click="saveParties">
+    <ion-fab-button :disabled="!isRoleUpdated()" @click="saveParties">
       <ion-icon :icon="saveOutline" />
     </ion-fab-button>
   </ion-fab>
@@ -223,7 +223,14 @@ export default defineComponent({
     },
     getPartyRoleTypeId(partyId: string) {
       return this.getParty(partyId) ? this.getParty(partyId).roleTypeId : ''
-    }
+    },
+    isRoleUpdated() {
+      const arePartiesUpdated = this.selectedPartyValues.length !== this.selectedParties.length;
+      return arePartiesUpdated || this.selectedPartyValues.some((selectedParty: any) => {
+        const originalParty = this.selectedParties.find((party: any) => party.partyId === selectedParty.partyId);
+        return originalParty && selectedParty.roleTypeId !== originalParty.roleTypeId;
+      });
+    },
   },
   async mounted() {
     await this.findParties()

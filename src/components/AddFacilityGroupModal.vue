@@ -12,11 +12,13 @@
 
   <ion-content>
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findGroups()"/>
-
-    <form @keyup.enter="updateGroups">
+    <div class="empty-state" v-if="!filteredFacilityGroupsByType.null && isSearching">
+      <p>{{ translate("No facility groups found") }}</p>
+    </div>
+    <form v-else @keyup.enter="updateGroups">
       <ion-list>
         <ion-item-group v-for="(groups, typeId) in filteredFacilityGroupsByType" :key="typeId">
-          <ion-item-divider color="medium">{{ getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
+          <ion-item-divider color="light">{{ getFacilityGroupTypeDesc(typeId) }}</ion-item-divider>
           <ion-item v-for="group in groups" :key="group.facilityGroupId">
             <ion-checkbox :checked="isFacilityGroupLinked(group.facilityGroupId)" @ion-change="updateGroupsForFacility(group.facilityGroupId)">{{ group.facilityGroupName }}</ion-checkbox>
           </ion-item>
@@ -86,7 +88,8 @@ export default defineComponent({
       filteredFacilityGroupsByType: {} as any,
       groupsToAdd: [] as Array<string>,
       groupsToRemove: [] as Array<string>,
-      queryString: ''
+      queryString: '',
+      isSearching: false
     }
   },
   computed: {
@@ -197,30 +200,37 @@ export default defineComponent({
       }
     },
     async fetchFacilityGroups() {
-      const params = {
-        entityName: "FacilityGroup",
-        noConditionFind: 'Y',
-        orderBy: "facilityGroupTypeId ASC",
-        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-        viewSize: 50
-      }
+      let viewIndex = 0, resp;
 
       try {
-        const resp = await FacilityService.fetchFacilityGroups(params);
-
-        if(!hasError(resp) && resp.data?.docs?.length > 0) {
-          this.filteredFacilityGroupsByType = this.facilityGroupsByType = resp.data.docs.reduce((groupsByType: any, group: any) => {
-            if(groupsByType[group.facilityGroupTypeId]) {
-              groupsByType[group.facilityGroupTypeId].push(group)
-            } else {
-              groupsByType[group.facilityGroupTypeId] = [group]
-            }
-
-            return groupsByType
-          }, {})
-        } else {
-          throw resp.data
-        }
+        do {
+          const params = {
+            entityName: "FacilityGroup",
+            noConditionFind: 'Y',
+            orderBy: "facilityGroupTypeId ASC",
+            fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+            viewSize: 250,
+            viewIndex
+          }
+          resp = await FacilityService.fetchFacilityGroups(params);
+  
+          if(!hasError(resp) && resp.data?.docs?.length > 0) {
+            const newFacilityGroups = resp.data.docs.reduce((groupsByType: any, group: any) => {
+              const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
+ 
+              if(groupsByType[groupTypeId]) {
+                groupsByType[groupTypeId].push(group)
+              } else {
+                groupsByType[groupTypeId] = [group]
+              }
+              return groupsByType
+            }, {})
+            this.filteredFacilityGroupsByType = this.facilityGroupsByType = { ...this.filteredFacilityGroupsByType, ...newFacilityGroups };
+          } else {
+            throw resp.data
+          }
+          viewIndex++;
+        } while (resp.data.docs.length >= 250)
       } catch(err) {
         logger.error('Failed to find facility groups', err)
       }
@@ -229,9 +239,11 @@ export default defineComponent({
       return this.current.groupInformation?.some((group: any) => group.facilityGroupId === facilityGroupId)
     },
     findGroups() {
+      this.isSearching = true
       // when searched empty return the same list again
       if(!this.queryString.trim()) {
         this.filteredFacilityGroupsByType = this.facilityGroupsByType
+        this.isSearching = false
         return;
       }
 

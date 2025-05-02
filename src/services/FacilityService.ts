@@ -3,6 +3,7 @@ import logger from '@/logger';
 import { DateTime } from 'luxon';
 import { prepareOrderQuery } from '@/utils/solrHelper';
 import { UserService } from './UserService';
+import store from '@/store';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({
@@ -21,45 +22,50 @@ const fetchFacilities = async(query: any): Promise <any> => {
 }
 
 const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise<any> => {
-  let facilitiesGroupInformation = []
+  let facilitiesGroupInformation = [] as any, resp, viewIndex = 0;
   
-  const params = {
-    inputFields: {
-      facilityId: facilityIds,
-      facilityId_op: "in"
-    },
-    fieldList: ['facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate", "description", "facilityGroupName"],
-    entityName: "FacilityGroupAndMember",
-    distinct: 'Y',
-    filterByDate: 'Y',
-    viewSize: facilityIds.length * 10 // multiplying the id by 10, as one facility at max will be in 10 groups
-  }
-
   try {
-    const resp = await api({
-      url: "performFind", 
-      method: "post",
-      data: params
-    }) as any;
+    do {
+      const params = {
+        inputFields: {
+          facilityId: facilityIds,
+          facilityId_op: "in"
+        },
+        fieldList: ['facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate", "description", "facilityGroupName"],
+        entityName: "FacilityGroupAndMember",
+        distinct: 'Y',
+        filterByDate: 'Y',
+        viewSize: 250,
+        viewIndex
+      }
 
-    if(!hasError(resp) && resp.data.count > 0) {
-      facilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
+      resp = await api({
+        url: "performFind", 
+        method: "post",
+        data: params
+      }) as any;
 
-        if(facilityGroups[facilityGroup.facilityId]) {
-          facilityGroups[facilityGroup.facilityId].push({
-            ...facilityGroup
-          })
-        } else {
-          facilityGroups[facilityGroup.facilityId] = [{
-            ...facilityGroup
-          }]
-        }
+      if(!hasError(resp) && resp.data.count > 0) {
+        const newFacilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
 
-        return facilityGroups
-      }, {})
-    } else {
-      throw resp.data;
-    }
+          if(facilityGroups[facilityGroup.facilityId]) {
+            facilityGroups[facilityGroup.facilityId].push({
+              ...facilityGroup
+            })
+          } else {
+            facilityGroups[facilityGroup.facilityId] = [{
+              ...facilityGroup
+            }]
+          }
+
+          return facilityGroups
+        }, {})
+        facilitiesGroupInformation = { ...facilitiesGroupInformation, ...newFacilitiesGroupInformation };
+      } else {
+        throw resp.data;
+      }
+      viewIndex++
+    } while (resp.data.docs.length >= 250);
   } catch(err) {
     logger.error(err)
   }
@@ -553,53 +559,51 @@ const fetchArchivedFacilities = async (): Promise<any> => {
 
 const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> => {
   if (!facilityGroupIds.length) return []
-  const requests = []
+  let facilityMemberResponses = [] as any;
+  let viewIndex = 0;
+  let resp = {} as any;
 
-  const facilityGroupIdList = facilityGroupIds
-  while (facilityGroupIdList.length) {
-    const batch = facilityGroupIdList.splice(0, 10)
-    const params = {
-      inputFields: {
-        facilityGroupId: batch,
-        facilityGroupId_op: "in"
-      },
-      viewSize: 250, // maximum view size
-      entityName: 'FacilityGroupAndMember',
-      noConditionFind: "Y",
-      filterByDate: 'Y',
-      fieldList: ['facilityGroupId', 'facilityId']
-    }
-    requests.push(params)
-  }
+  try {
+    do {
+      const params = {
+        inputFields: {
+          facilityGroupId: facilityGroupIds,
+          facilityGroupId_op: "in"
+        },
+        viewSize: 250, // maximum view size
+        viewIndex,
+        entityName: 'FacilityGroupAndMember',
+        noConditionFind: "Y",
+        filterByDate: 'Y',
+        fieldList: ['facilityGroupId', 'facilityId']
+      };
 
-  const facilityCountResponse = await Promise.allSettled(requests.map((params) => api({
-    url: 'performFind',
-    method: 'POST',
-    data: params
-  })))
+      resp = await api({
+        url: 'performFind',
+        method: 'POST',
+        data: params
+      });
 
-  const hasFailedResponse = facilityCountResponse.some((response: any) => hasError(response.value) && !response?.data?.count)
-  if (hasFailedResponse) {
-    logger.error('Failed to fetch facility count for some groups')
-  }
-
-  // taking out the response from Promise.allSettled's 'value' field first 
-  const allResponseData = facilityCountResponse.map((response: any) => response.value)
-    .reduce((responseData: any, response: any) => {
-      if (!hasError(response)) {
-        responseData.push(...response.data.docs)
+      if (!hasError(resp) && resp.data.count) {
+        facilityMemberResponses = [...facilityMemberResponses, ...resp.data.docs];
+        viewIndex++;
+      } else {
+        throw resp.data;
       }
-      return responseData
-    }, [])
+    } while (resp.data.docs.length >= 250);
 
-  return allResponseData.reduce((facilityCountByGroup: any, responseData: any) => {
-    if (facilityCountByGroup[responseData.facilityGroupId]) {
-      facilityCountByGroup[responseData.facilityGroupId] += 1
-    } else {
-      facilityCountByGroup[responseData.facilityGroupId] = 1
-    }
-    return facilityCountByGroup
-  }, {})
+    return facilityMemberResponses.reduce((facilityCountByGroup: any, facilityData: any) => {
+      if (facilityCountByGroup[facilityData.facilityGroupId]) {
+        facilityCountByGroup[facilityData.facilityGroupId] += 1;
+      } else {
+        facilityCountByGroup[facilityData.facilityGroupId] = 1
+      }
+      return facilityCountByGroup
+    }, {})
+  } catch (error) {
+    logger.error(error)
+    return {}
+  }
 }
 
 const fetchProductStoreCountByGroup = async (facilityGroupIds: Array<string>): Promise<any> => {
@@ -671,6 +675,8 @@ const deleteFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const createFacilityLogin = async (payload: any): Promise <any> => {
+  const organizationPartyId = store.getters['util/getOrganizationPartyId'];
+
   try {
     //Create role type if not exists. This is required for associating facility login user to facility.
     if (!await UserService.isRoleTypeExists("FAC_LOGIN")) {
@@ -686,7 +692,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
     const params = {
       "groupName": payload.facilityName,
       "partyTypeId": "PARTY_GROUP",
-      "partyIdFrom": "COMPANY",
+      "partyIdFrom": organizationPartyId,
       "roleTypeIdFrom": "INTERNAL_ORGANIZATIO", // not a typo
       "roleTypeIdTo": "APPLICATION_USER",
       "partyRelationshipTypeId": "EMPLOYMENT"
@@ -706,7 +712,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
       "requirePasswordChange": "N",
       "enabled": "Y",
       "userPrefTypeId": "ORGANIZATION_PARTY",
-      "userPrefValue": "COMPANY"
+      "userPrefValue": organizationPartyId
     });
     if (hasError(resp)) {
       throw resp.data;
@@ -778,6 +784,22 @@ const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityEmailAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityEmailAddress",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityEmailAddress = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityEmailAddress",
+    method: "post",
+    data: payload
+  })
+}
+
 const createProductStoreFacilityGroup = async (payload: any): Promise<any> => {
   return api({
     url: "service/createProductStoreFacilityGroup",
@@ -794,7 +816,24 @@ const updateProductStoreFacilityGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const addFacilitiesToGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/addFacilitiesToGroup",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilitiesToGroup = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilitiesToGroup",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
+  addFacilitiesToGroup,
   addFacilityToGroup,
   addPartyToFacility,
   associateCalendarToFacility,
@@ -803,6 +842,7 @@ export const FacilityService = {
   createFacilityLocation,
   createVirtualFacility,
   createEnumeration,
+  createFacilityEmailAddress,
   createFacilityCalendar,
   createFacilityIdentification,
   createFacilityPostalAddress,
@@ -840,11 +880,13 @@ export const FacilityService = {
   removeFacilityFromGroup,
   removePartyFromFacility,
   updateFacility,
+  updateFacilityEmailAddress,
   updateFacilityGroup,
   updateFacilityIdentification,
   updateFacilityLocation,
   updateFacilityPostalAddress,
   updateFacilityTelecomNumber,
+  updateFacilitiesToGroup,
   updateFacilityToGroup,
   updateProductStoreFacility,
   updateProductStoreFacilityGroup,

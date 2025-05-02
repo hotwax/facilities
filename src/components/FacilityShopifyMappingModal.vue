@@ -36,7 +36,7 @@
           </ion-select>
         </ion-item>
         <ion-item>
-          <ion-input :label="translate('Location ID')" :placeholder="translate('Add your location ID from Shopify')" v-model="shopifyLocationId" />
+          <ion-input id="inputElement" :label="translate('Location ID')" :placeholder="translate('Add your location ID from Shopify')" v-model="shopifyLocationId" />
         </ion-item>
       </ion-list>
 
