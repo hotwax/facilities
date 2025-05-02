@@ -13,18 +13,22 @@
   <ion-content>
     <form @keyup.enter="saveGeoPoint">
       <ion-item class="ion-margin-bottom">
-        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" />
-        <ion-button slot="end" fill="outline" @click="generateLatLong">
+        <ion-input aria-label="zipcode" :placeholder="translate('Zipcode')" v-model="geoPoint.postalCode" @keydown="validateZipCode($event)" @ionInput="postalCodeUpdate"/>
+        <ion-button slot="end" fill="outline" :disabled="!isPostalCodeChanged" @click="generateLatLong">
           {{ translate("Generate") }}
           <ion-icon v-if="!isGeneratingLatLong" slot="end" :icon="colorWandOutline" />
           <ion-spinner v-else data-spinner-size="small"/>
         </ion-button>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Latitude')" v-model="geoPoint.latitude" />
+        <ion-input label-placement="floating" type="number" v-model="geoPoint.latitude">
+          <div slot="label">{{ translate("Latitude")}}<ion-text color="danger">*</ion-text></div>
+        </ion-input>
       </ion-item>
       <ion-item>
-        <ion-input label-placement="floating" :label="translate('Longitude')" v-model="geoPoint.longitude" />
+        <ion-input label-placement="floating" type="number" v-model="geoPoint.longitude">
+          <div slot="label">{{ translate("Longitude")}}<ion-text color="danger">*</ion-text></div>
+        </ion-input>  
       </ion-item>
     </form>
   </ion-content>
@@ -48,6 +52,7 @@ import {
   IonInput,
   IonItem,
   IonSpinner,
+  IonText,
   IonTitle,
   IonToolbar,
   modalController
@@ -76,6 +81,7 @@ export default defineComponent({
     IonInput,
     IonItem,
     IonSpinner,
+    IonText,
     IonTitle,
     IonToolbar,
   },
@@ -88,7 +94,8 @@ export default defineComponent({
   data() {
     return {
       geoPoint: {} as any,
-      isGeneratingLatLong: false
+      isGeneratingLatLong: false,
+      isPostalCodeChanged: false
     }
   },
   beforeMount() {
@@ -98,7 +105,20 @@ export default defineComponent({
     closeModal() {
       modalController.dismiss()
     },
+    postalCodeUpdate() {
+      this.isPostalCodeChanged = this.geoPoint.postalCode !== this.postalAddress.postalCode;
+    },
+    validateZipCode(e: any) {
+      if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
+        e.preventDefault();
+        return false;
+      } 
+    },
     async generateLatLong() {
+      if(!this.geoPoint.postalCode.trim()) {
+        showToast(translate("Please fill in the required Zipcode"))
+        return;
+      }
       this.isGeneratingLatLong = true
       const postalCode = this.geoPoint.postalCode;
       const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
@@ -132,6 +152,9 @@ export default defineComponent({
         showToast("Please fill all the required fields")
         return;
       }
+      // Convert latitude and longitude to numeric form
+      this.geoPoint.latitude = parseFloat(this.geoPoint.latitude);
+      this.geoPoint.longitude = parseFloat(this.geoPoint.longitude);
 
       emitter.emit('presentLoader')
 
