@@ -115,7 +115,7 @@ export default defineComponent({
       } 
     },
     async generateLatLong() {
-      if(!this.geoPoint.postalCode) {
+      if(!this.geoPoint.postalCode.trim()) {
         showToast("Please fill the required Zipcode")
         return;
       }
