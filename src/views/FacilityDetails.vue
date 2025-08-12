@@ -35,7 +35,7 @@
               </ion-item>
               <ion-item lines="none" class="ion-margin-bottom">
                 <ion-icon :icon="lockClosedOutline" slot="start"/>
-                <ion-toggle :checked="current.closedDate" @click.prevent="closeFacility($event)">{{ translate('Permanently Closed') }}</ion-toggle>
+                <ion-toggle :checked="!!current.closedDate" @click.prevent="closeFacility($event)">{{ translate('Permanently Closed') }}</ion-toggle>
               </ion-item>
             </div>
           </ion-card>
@@ -960,24 +960,24 @@ export default defineComponent({
       emitter.emit("presentLoader");
       const isChecked = !event.target.checked;
 
-      let resp, closedDate;
-      if(isChecked) closedDate = DateTime.now().toMillis()
+      let resp;
+      let closedDate = isChecked ? DateTime.now().toMillis() : ""
 
       try {
         resp = await FacilityService.updateFacility({
           "facilityId": this.current.facilityId,
-          "closedDate": isChecked ? closedDate : ""
+          "closedDate": closedDate
         })
 
         if(!hasError(resp)) {
-          showToast(translate('Facility closed status updated successfully'))
+          showToast(translate('Facility has been marked as ', { status: isChecked ? 'closed' : 'open' }))
           await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, closedDate })
         } else {
           throw resp.data
         }
       } catch(err) {
-        showToast(translate('Failed to update facility'))
-        logger.error('Failed to update facility', err)
+        showToast(translate('Failed to update facility.'))
+        logger.error('Failed to update facility.', err)
       }
       emitter.emit("dismissLoader");
     },
