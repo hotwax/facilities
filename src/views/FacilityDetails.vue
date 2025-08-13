@@ -27,11 +27,15 @@
                 </ion-select>
               </ion-item>
 
-              <ion-item lines="none" class="ion-margin-bottom">
+              <ion-item>
                 <ion-icon :icon="bookmarksOutline" slot="start"/>
                 <ion-select :label="translate('Facility SubType')" interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
                   <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIdOptions" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
                 </ion-select>
+              </ion-item>
+              <ion-item lines="none" class="ion-margin-bottom">
+                <ion-icon :icon="lockClosedOutline" slot="start"/>
+                <ion-toggle :checked="!!current.closedDate" @click.prevent="closeFacility($event)">{{ translate('Permanently Closed') }}</ion-toggle>
               </ion-item>
             </div>
           </ion-card>
@@ -533,6 +537,7 @@ import {
   ellipsisVerticalOutline,
   globeOutline,
   locationOutline,
+  lockClosedOutline,
   openOutline,
   pencilOutline,
   personOutline,
@@ -950,6 +955,32 @@ export default defineComponent({
         logger.error('Failed to update facility', err)
       }
     },
+    async closeFacility(event: any) {
+      event.stopImmediatePropagation();
+      emitter.emit("presentLoader");
+      const isChecked = !event.target.checked;
+
+      let resp;
+      let closedDate = isChecked ? DateTime.now().toMillis() : ""
+
+      try {
+        resp = await FacilityService.updateFacility({
+          "facilityId": this.current.facilityId,
+          "closedDate": closedDate
+        })
+
+        if(!hasError(resp)) {
+          showToast(translate('Facility has been marked as ', { status: isChecked ? 'closed' : 'open' }))
+          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, closedDate })
+        } else {
+          throw resp.data
+        }
+      } catch(err) {
+        showToast(translate('Failed to update facility.'))
+        logger.error('Failed to update facility.', err)
+      }
+      emitter.emit("dismissLoader");
+    },
     async openFacilityOrderCountModal() {
       const facilityOrderCountModal = await modalController.create({
         component: ViewFacilityOrderCountModal,
@@ -1357,6 +1388,7 @@ export default defineComponent({
       ellipsisVerticalOutline,
       globeOutline,
       locationOutline,
+      lockClosedOutline,
       openOutline,
       pencilOutline,
       personOutline,
