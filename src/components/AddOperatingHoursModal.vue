@@ -10,7 +10,7 @@
     </ion-toolbar>
   </ion-header>
   <ion-content>
-    <ion-accordion-group v-model="selectedCalendarId" >
+    <ion-accordion-group :value="selectedCalendarId">
       <ion-radio-group v-model="selectedCalendarId">
         <ion-accordion v-for="calendar in calendars" :key="calendar.calendarId" :value="calendar.calendarId">
           <ion-item slot="header">
