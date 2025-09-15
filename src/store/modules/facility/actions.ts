@@ -557,9 +557,7 @@ const actions: ActionTree<FacilityState, RootState> = {
           parentFacilityTypeId_grp: '1',
           facilityTypeId_value: 'VIRTUAL_FACILITY',
           facilityTypeId_op: 'equals',
-          facilityTypeId_grp: '2',
-          // conditionally filtering if archived facilities are present
-          ...(archivedFacilityIds.length && { facilityId: archivedFacilityIds, facilityId_op: 'not-in' }),
+          facilityTypeId_grp: '2'
         },
         orderBy: "facilityName ASC",
         entityName: "FacilityAndProductStore",
@@ -585,10 +583,18 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
 
     emitter.emit("dismissLoader");
-    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities, total });
-    if (facilities.length) {
+    const filteredFacilities = await dispatch('filterParkingFacilities', { facilities, archivedFacilityIds })
+    commit(types.FACILITY_VIRTUAL_FACILITY_LIST_UPDATED, { facilities: filteredFacilities, total });
+    if (filteredFacilities.length) {
       await dispatch('fetchVirtualFacilitiesAdditionalDetail', payload)
     }
+  },
+
+  async filterParkingFacilities({ commit, dispatch }, { facilities, archivedFacilityIds }) {
+    const matchedFacilities = facilities.filter((facility: any) => archivedFacilityIds.includes(facility.facilityId));
+    const updatedFacilities = facilities.filter((facility: any) => !archivedFacilityIds.includes(facility.facilityId));
+    if(matchedFacilities.length) dispatch('updateArchivedFacilities', matchedFacilities)
+    if(updatedFacilities.length) return updatedFacilities;
   },
   
   async fetchVirtualFacilitiesAdditionalDetail({ commit, state }, payload) {
