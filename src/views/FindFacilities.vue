@@ -69,10 +69,14 @@
 
             <div class="tablet">
               <template v-if="facility.orderLimitType === 'custom'">
-                <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
-                  <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
-                </ion-chip>
-                <ion-note class="config-label">{{ translate('threshold consumed') }}</ion-note>
+                <div class="ion-text-center">
+                  <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
+                    <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
+                  </ion-chip>
+                  <ion-label>
+                    <p>{{ translate('threshold consumed') }}</p>
+                  </ion-label>
+                </div>
               </template>
 
               <ion-chip outline v-else-if="facility.orderLimitType === 'unlimited'" @click.stop="changeOrderLimitPopover($event, facility)">
@@ -145,7 +149,6 @@ import {
   IonLabel,
   IonList,
   IonMenuButton,
-  IonNote,
   IonPage,
   IonSearchbar,
   IonSelect,
@@ -195,7 +198,6 @@ export default defineComponent({
     IonLabel,
     IonList,
     IonMenuButton,
-    IonNote,
     IonPage,
     IonSearchbar,
     IonSelect,
