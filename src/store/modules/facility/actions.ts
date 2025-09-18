@@ -233,9 +233,9 @@ const actions: ActionTree<FacilityState, RootState> = {
   
     const payload = {
       inputFields: {
-        contactMechPurposeTypeId: ['PRIMARY_PHONE', 'PRIMARY_EMAIL', 'PRIMARY_LOCATION'],
+        contactMechPurposeTypeId: ['PRIMARY_PHONE', 'PRIMARY_EMAIL', 'PRIMARY_LOCATION', 'GOOGLE_MAP_URL'],
         contactMechPurposeTypeId_op: 'in',
-        contactMechTypeId: ['TELECOM_NUMBER', 'EMAIL_ADDRESS', 'POSTAL_ADDRESS'],
+        contactMechTypeId: ['TELECOM_NUMBER', 'EMAIL_ADDRESS', 'POSTAL_ADDRESS', 'MAP_URL'],
         contactMechTypeId_op: 'in',
         facilityId: facility.facilityId
       },
@@ -243,7 +243,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
       fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
-      viewSize: 3
+      viewSize: 4
     }
 
     try {

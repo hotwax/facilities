@@ -163,29 +163,52 @@
               </ion-item>
             </ion-list>
           </ion-card>
-
-          <ion-card>
-            <ion-card-header>
-              <ion-card-title>
-                {{ translate("Product Stores") }}
-              </ion-card-title>
-              <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
-                <ion-icon :icon="addCircleOutline" slot="end" />
+          <div>
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>
+                  {{ translate("Product Stores") }}
+                </ion-card-title>
+                <ion-button v-if="facilityProductStores?.length" @click="selectProductStores()" fill="clear">
+                  <ion-icon :icon="addCircleOutline" slot="end" />
+                  {{ translate("Add") }}
+                </ion-button>
+              </ion-card-header>
+              <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
+                <ion-label>{{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}</ion-label>
+                <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) !== '' && shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
+                <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
+                  <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+                </ion-button>
+              </ion-item>
+              <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
                 {{ translate("Add") }}
+                <ion-icon slot="end" :icon="addCircleOutline" />
               </ion-button>
-            </ion-card-header>
-            <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
-              <ion-label>{{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}</ion-label>
-              <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) !== '' && shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
-              <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
-                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
+            </ion-card>
+
+            <ion-card>
+              <ion-card-header>
+                <ion-card-title>
+                  {{ translate('Map Link') }}
+                </ion-card-title>
+              </ion-card-header>
+
+              <ion-card-content>
+                {{ translate('Give customers on your website a direct link to this facility on a mapping service like Google Maps.') }}
+              </ion-card-content>
+              <ion-item lines="full">
+                <ion-label>{{ currentMapUrl }}</ion-label>
+              </ion-item>
+              <ion-button fill="clear" @click="editMapUrl" >
+                {{ translate('Edit') }}
               </ion-button>
-            </ion-item>
-            <ion-button v-if="!facilityProductStores?.length" expand="block" fill="outline" @click="selectProductStores()">
-              {{ translate("Add") }}
-              <ion-icon slot="end" :icon="addCircleOutline" />
-            </ion-button>
-          </ion-card>
+              <ion-button  fill="clear" @click="previewMapUrl" >
+                {{ translate('Preview') }}
+                <ion-icon slot="end" :icon="openOutline" />
+              </ion-button>
+            </ion-card>
+          </div>
         </section>
 
         <section>
@@ -622,7 +645,8 @@ export default defineComponent({
       externalId: '',
       facilityTypeId: '',
       parentFacilityTypeId: '',
-      facilityTypeIdOptions: {} as any
+      facilityTypeIdOptions: {} as any,
+      currentMapUrl: "maps.google.com"
     }
   },
   computed: {
@@ -671,6 +695,71 @@ export default defineComponent({
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
+    async editMapUrl() {
+      const alert = await alertController.create({
+        header: translate("Map Link"),
+        inputs: [
+          {
+            name: 'mapUrl',
+            type: 'text',
+            placeholder: translate("Enter new Map Url"),
+            value: this.currentMapUrl
+          }
+        ],
+        buttons: [
+          {
+            text: translate('Cancel'),
+            role: 'cancel'
+          },
+          {
+            text: translate('Save'),
+            handler: async(data) => {
+              if (!data.mapUrl) return;
+
+              try {
+                const payload = {
+                  facilityId: this.facilityId,
+                  infoString: data.mapUrl
+                };
+
+                let resp;
+                if (this.contactDetails.mapUrl?.contactMechId) {
+                  resp = await FacilityService.updateFacilityContactMech({
+                    ...payload,
+                    contactMechId: this.contactDetails.mapUrl.contactMechId
+                  });
+                } else {
+                  resp = await FacilityService.createFacilityContactMech({
+                    ...payload,
+                    contactMechTypeId: 'MAP_URL',
+                    contactMechPurposeTypeId: 'GOOGLE_MAP_URL'
+                  });
+                }
+
+                if (!hasError(resp)) {
+                  this.currentMapUrl = data.mapUrl;
+                  showToast(translate('Map URL updated successfully'));
+                  await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom',{ facilityId: this.facilityId });
+                } else {
+                  throw resp.data;
+                }
+              } catch (err) {
+                logger.error('Failed to update Map URL', err);
+                showToast(translate('Failed to update Map URL'));
+              }
+            }
+          }
+        ]
+      });
+
+      await alert.present();
+    },
+    previewMapUrl () {
+      if (!this.currentMapUrl) return;
+
+      let url = this.currentMapUrl.startsWith('http') ? this.currentMapUrl : `https://${this.currentMapUrl}`
+      window.open(url, '_blank', 'noopener,noreferrer');
+    },
     getImageUrl(imageUrl: string) {
       return (this.baseUrl.startsWith('http') ? this.baseUrl.replace(/api\/?/, "") : `https://${this.baseUrl}.hotwax.io/`) + imageUrl
     },
