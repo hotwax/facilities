@@ -197,16 +197,24 @@
               <ion-card-content>
                 {{ translate('Give customers on your website a direct link to this facility on a mapping service like Google Maps.') }}
               </ion-card-content>
-              <ion-item lines="full">
-                <ion-label>{{ currentMapUrl }}</ion-label>
-              </ion-item>
-              <ion-button fill="clear" @click="editMapUrl" >
-                {{ translate('Edit') }}
-              </ion-button>
-              <ion-button  fill="clear" @click="previewMapUrl" >
-                {{ translate('Preview') }}
-                <ion-icon slot="end" :icon="openOutline" />
-              </ion-button>
+              <template v-if="contactDetails?.googleMapUrl?.infoString">
+                <ion-item lines="full" >
+                  <ion-label>{{ contactDetails.googleMapUrl.infoString }}</ion-label>
+                </ion-item>
+  
+                <ion-button fill="clear" @click="editMapUrl">
+                  {{ translate('Edit') }}
+                </ion-button>
+                <ion-button fill="clear" @click="previewMapUrl">
+                  {{ translate('Preview') }}
+                  <ion-icon slot="end" :icon="openOutline" />
+                </ion-button>
+              </template>
+              <template v-else>
+                <ion-button  fill="clear" @click="editMapUrl">
+                    {{ translate('Add') }}
+                </ion-button>
+              </template>
             </ion-card>
           </div>
         </section>
@@ -645,8 +653,7 @@ export default defineComponent({
       externalId: '',
       facilityTypeId: '',
       parentFacilityTypeId: '',
-      facilityTypeIdOptions: {} as any,
-      currentMapUrl: "maps.google.com"
+      facilityTypeIdOptions: {} as any
     }
   },
   computed: {
@@ -703,7 +710,7 @@ export default defineComponent({
             name: 'mapUrl',
             type: 'text',
             placeholder: translate("Enter new Map Url"),
-            value: this.currentMapUrl
+            value: this.contactDetails?.googleMapUrl?.infoString || ""
           }
         ],
         buttons: [
@@ -713,7 +720,7 @@ export default defineComponent({
           },
           {
             text: translate('Save'),
-            handler: async(data) => {
+            handler: async (data) => {
               if (!data.mapUrl) return;
 
               try {
@@ -723,29 +730,34 @@ export default defineComponent({
                 };
 
                 let resp;
-                if (this.contactDetails.mapUrl?.contactMechId) {
-                  resp = await FacilityService.updateFacilityContactMech({
-                    ...payload,
-                    contactMechId: this.contactDetails.mapUrl.contactMechId
-                  });
+
+                if (this.contactDetails?.googleMapUrl?.contactMechId) {
+                  if (this.isMapUrlUpdated(data.mapUrl)) {
+                    resp = await FacilityService.updateFacilityContactMech({
+                      ...payload,
+                      contactMechId: this.contactDetails.googleMapUrl.contactMechId,
+                      contactMechTypeId: "MAP_URL",
+                    });
+                  } else {
+                    return;
+                  }
                 } else {
                   resp = await FacilityService.createFacilityContactMech({
                     ...payload,
-                    contactMechTypeId: 'MAP_URL',
-                    contactMechPurposeTypeId: 'GOOGLE_MAP_URL'
+                    contactMechTypeId: "MAP_URL",
+                    contactMechPurposeTypeId: "GOOGLE_MAP_URL"
                   });
                 }
 
                 if (!hasError(resp)) {
-                  this.currentMapUrl = data.mapUrl;
-                  showToast(translate('Map URL updated successfully'));
-                  await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom',{ facilityId: this.facilityId });
+                  showToast(translate("Map URL updated successfully"));
+                  await this.store.dispatch("facility/fetchFacilityContactDetailsAndTelecom", { facilityId: this.facilityId });
                 } else {
                   throw resp.data;
                 }
               } catch (err) {
-                logger.error('Failed to update Map URL', err);
-                showToast(translate('Failed to update Map URL'));
+                logger.error("Failed to update Map URL", err);
+                showToast(translate("Failed to update Map URL"));
               }
             }
           }
@@ -754,10 +766,13 @@ export default defineComponent({
 
       await alert.present();
     },
+    isMapUrlUpdated(newMapUrl: string) {
+      return newMapUrl && JSON.stringify(newMapUrl) !== JSON.stringify(this.contactDetails?.googleMapUrl?.infoString)
+    },
     previewMapUrl () {
-      if (!this.currentMapUrl) return;
+      if (!this.contactDetails?.googleMapUrl?.infoString) return;
 
-      let url = this.currentMapUrl.startsWith('http') ? this.currentMapUrl : `https://${this.currentMapUrl}`
+      let url = this.contactDetails?.googleMapUrl?.infoString.startsWith('http') ? this.contactDetails?.googleMapUrl?.infoString : `https://${this.contactDetails?.googleMapUrl?.infoString}`
       window.open(url, '_blank', 'noopener,noreferrer');
     },
     getImageUrl(imageUrl: string) {

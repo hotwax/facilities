@@ -268,6 +268,11 @@ const actions: ActionTree<FacilityState, RootState> = {
               contactMechId: item.contactMechId,
               infoString: item.infoString
             }
+          } else if (item.contactMechTypeId === 'MAP_URL') {
+            contactDetails.googleMapUrl = {
+              contactMechId: item.contactMechId,
+              infoString: item.infoString
+            }
           }
         })
        
