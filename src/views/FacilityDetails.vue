@@ -721,12 +721,12 @@ export default defineComponent({
           {
             text: translate('Save'),
             handler: async (data) => {
-              if (!data.mapUrl) return;
+              if (!data.mapUrl.trim()) return;
 
               try {
                 const payload = {
                   facilityId: this.facilityId,
-                  infoString: data.mapUrl
+                  infoString: data.mapUrl.trim()
                 };
 
                 let resp;
