@@ -547,7 +547,7 @@ const fetchArchivedFacilities = async (): Promise<any> => {
         }
       }) as any
   
-      if (!hasError(resp) && resp.data.count > 0) {
+      if (!hasError(resp) && resp.data.docs?.length) {
         facilities = facilities.concat(resp.data.docs)
         viewIndex++;
       } else {
