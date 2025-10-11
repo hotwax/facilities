@@ -378,17 +378,49 @@ export default defineComponent({
   }
 });
 </script>
-
 <style scoped>
+/* === FIX FOR OVERLAPPING BUTTONS === */
 .list-item {
-  --columns-desktop: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--ion-color-medium, #ccc);
 }
 
+.list-item ion-item {
+  flex: 1 1 250px; /* ensures text can wrap and prevent pushing chips */
+  min-width: 200px;
+}
+
+.list-item .tablet {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* stack vertically on smaller screens */
+@media (max-width: 600px) {
+  .list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .list-item .tablet {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* keep your original config-note style */
 config-note {
   display: block;
   text-align: center;
 }
 
+/* maintain existing desktop padding rule */
 @media screen and (min-width: 991px) {
   ion-content {
     --padding-bottom: 80px;
