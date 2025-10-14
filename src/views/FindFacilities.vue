@@ -388,9 +388,6 @@ export default defineComponent({
 
 .config-note {
   display: flex;
-  /* margin-top: 4px;
-  font-size: 0.85rem;
-  color: var(--ion-color-medium); */
 }
 
 @media screen and (min-width: 991px) {
