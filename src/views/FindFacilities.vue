@@ -73,9 +73,9 @@
                   <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
                     <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
                   </ion-chip>
-                  <ion-label>
-                    <p>{{ translate('threshold consumed') }}</p>
-                  </ion-label>
+                    <ion-note class="config-note">
+                      {{ translate('threshold consumed') }}
+                    </ion-note>
                 </div>
               </template>
 
@@ -386,9 +386,11 @@ export default defineComponent({
   --columns-desktop: 4;
 }
 
-config-note {
-  display: block;
-  text-align: center;
+.config-note {
+  display: flex;
+  /* margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--ion-color-medium); */
 }
 
 @media screen and (min-width: 991px) {
