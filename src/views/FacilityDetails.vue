@@ -311,7 +311,7 @@
                 <p>{{ facilityLogin.partyId }}</p>
                 <p>{{ facilityLogin.userLoginId }}</p>
               </ion-label>
-              <ion-button slot="end" fill="clear" color="medium" @click="openFacilityLoginActionPopover($event, facilityLogin)">
+              <ion-button slot="end" fill="clear" size="default" color="medium" @click="openFacilityLoginActionPopover($event, facilityLogin)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
