@@ -13,7 +13,7 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content ref="contentRef" :scroll-events="true" @ionScroll="enableScrolling()" id="filter-content">
+    <ion-content ref="contentRef" id="filter-content">
       <div class="find">
         <section class="search">
           <ion-searchbar :placeholder="translate('Search facilities')" v-model="query.queryString" @keyup.enter="updateQuery()" />
@@ -121,8 +121,7 @@
       <ion-infinite-scroll
         @ionInfinite="loadMoreFacilities($event)"
         threshold="100px"
-        v-show="isScrollable"
-        ref="infiniteScrollRef"
+        v-if="isScrollable"
       >
         <ion-infinite-scroll-content
           loading-spinner="crescent"
@@ -210,7 +209,6 @@ export default defineComponent({
   data() {
     return {
       facilityGroups: [] as any,
-      isScrollingEnabled: false
     }
   },
   computed: {
@@ -233,7 +231,6 @@ export default defineComponent({
     // the mounted hook
     await this.fetchFacilityGroups();
     await this.store.dispatch('util/fetchInventoryGroups')
-    this.isScrollingEnabled = false;
     if(this.router.currentRoute.value?.query?.productStoreId) {
       this.query.productStoreId = this.router.currentRoute.value.query.productStoreId
       await this.store.dispatch('facility/updateFacilityQuery', this.query)
@@ -257,22 +254,7 @@ export default defineComponent({
     async viewFacilityDetails(facilityId: string) {
       this.router.push({ path: `/facility-details/${facilityId}` })
     },
-    enableScrolling() {
-      const parentElement = (this as any).$refs.contentRef.$el
-      const scrollEl = parentElement.shadowRoot.querySelector("main[part='scroll']")
-      let scrollHeight = scrollEl.scrollHeight, infiniteHeight = (this as any).$refs.infiniteScrollRef.$el.offsetHeight, scrollTop = scrollEl.scrollTop, threshold = 100, height = scrollEl.offsetHeight
-      const distanceFromInfinite = scrollHeight - infiniteHeight - scrollTop - threshold - height
-      if(distanceFromInfinite < 0) {
-        this.isScrollingEnabled = false;
-      } else {
-        this.isScrollingEnabled = true;
-      }
-    },
     async loadMoreFacilities(event: any) {
-      // Added this check here as if added on infinite-scroll component the Loading content does not gets displayed
-      if(!(this.isScrollingEnabled && this.isScrollable)) {
-        await event.target.complete();
-      }
       this.fetchFacilities(
         undefined,
         Math.ceil(

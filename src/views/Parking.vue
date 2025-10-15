@@ -19,7 +19,7 @@
               <h1>{{ facility.facilityName }}</h1>
               <p>{{ facility.facilityId }}</p>
             </ion-label>
-            <ion-button fill="clear" color="medium" @click="openVirtualFacilityActionsPopover($event, facility)">
+            <ion-button fill="clear" size="default" color="medium" @click="openVirtualFacilityActionsPopover($event, facility)">
               <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
             </ion-button>
           </ion-item>

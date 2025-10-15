@@ -177,7 +177,7 @@
             <ion-item v-for="store in facilityProductStores" :key="store.productStoreId">
               <ion-label>{{ getProductStore(store.productStoreId)?.storeName || store.productStoreId }}</ion-label>
               <ion-badge slot="end" v-if="shopifyShopIdForProductStore(store.productStoreId) !== '' && shopifyShopIdForProductStore(store.productStoreId) === current.primaryFacilityGroupId">{{ translate("primary store") }}</ion-badge>
-              <ion-button slot="end" fill="clear" color="medium" @click="productStorePopover($event, store)">
+              <ion-button slot="end" size="default" fill="clear" color="medium" @click="productStorePopover($event, store)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>
@@ -280,7 +280,7 @@
                 <p>{{ facilityLogin.partyId }}</p>
                 <p>{{ facilityLogin.userLoginId }}</p>
               </ion-label>
-              <ion-button slot="end" fill="clear" color="medium" @click="openFacilityLoginActionPopover($event, facilityLogin)">
+              <ion-button slot="end" fill="clear" size="default" color="medium" @click="openFacilityLoginActionPopover($event, facilityLogin)">
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-item>

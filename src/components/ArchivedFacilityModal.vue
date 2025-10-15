@@ -16,7 +16,7 @@
           {{ archivedFacility.facilityName }}
           <p>{{ archivedFacility.facilityId }}</p>
         </ion-label>
-        <ion-button fill="clear" color="medium" @click="unarchiveFacility(archivedFacility)">
+        <ion-button fill="clear" size="default" color="medium" @click="unarchiveFacility(archivedFacility)">
           <ion-icon slot="icon-only" :icon="gitPullRequestOutline" />
         </ion-button>
       </ion-item>
