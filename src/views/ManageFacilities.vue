@@ -24,7 +24,7 @@
                   <p>{{ facility.facilityId }}</p>
                   {{ facility.facilityName }}
                 </ion-label>
-                <ion-button slot="end" fill="clear" color="success" @click="selectFacility(facility)">
+                <ion-button slot="end" fill="clear" size="default" color="success" @click="selectFacility(facility)">
                   <ion-icon :icon="addCircleOutline" slot="icon-only"/>
                 </ion-button>
               </ion-item>
@@ -42,7 +42,7 @@
               </ion-list-header>
               <ion-reorder-group @ionItemReorder="doReorder($event)" :disabled="false">
                 <ion-item v-for="facility in selectedFacilities" :key="facility.facilityId">
-                  <ion-button slot="start" fill="clear" color="danger" @click="removeFacility(facility)">
+                  <ion-button slot="start" fill="clear" size="default" color="danger" @click="removeFacility(facility)">
                     <ion-icon :icon="removeCircleOutline" slot="icon-only"/>
                   </ion-button>
                   <ion-label>

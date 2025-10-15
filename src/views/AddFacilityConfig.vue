@@ -28,7 +28,7 @@
                   {{ translate("primary store") }}
                 </ion-badge>
                 <!-- TODO add logic for make primary -->
-                <ion-button id="product-store-actions-trigger" slot="end" fill="clear" color="medium">
+                <ion-button id="product-store-actions-trigger" size="default" slot="end" fill="clear" color="medium">
                   <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                 </ion-button>
                 <!-- inline popover as ProductStorePopover logic is complex and different from the use case here -->
