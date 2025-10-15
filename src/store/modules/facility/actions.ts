@@ -590,7 +590,7 @@ const actions: ActionTree<FacilityState, RootState> = {
     }
   },
 
-  async filterParkingFacilities({ commit, dispatch }, { facilities, archivedFacilityIds }) {
+  async filterParkingFacilities({ dispatch }, { facilities, archivedFacilityIds }) {
     const matchedFacilities = facilities.filter((facility: any) => archivedFacilityIds.includes(facility.facilityId));
     const updatedFacilities = facilities.filter((facility: any) => !archivedFacilityIds.includes(facility.facilityId));
     if(matchedFacilities.length) dispatch('updateArchivedFacilities', matchedFacilities)
