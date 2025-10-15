@@ -387,9 +387,9 @@ export default defineComponent({
 .list-item {
   --columns-desktop: 4;
 }
-
 .config-note {
-  display: flex;
+  display: block;
+  text-align: center;
 }
 
 @media screen and (min-width: 991px) {
