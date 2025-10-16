@@ -199,13 +199,14 @@
               </ion-card-content>
               <template v-if="contactDetails?.googleMapUrl?.infoString">
                 <ion-item lines="full" >
+                  <ion-label>{{ translate('URL') }}</ion-label>
                   <ion-label>{{ contactDetails.googleMapUrl.infoString }}</ion-label>
                 </ion-item>
   
                 <ion-button fill="clear" @click="editMapUrl">
                   {{ translate('Edit') }}
                 </ion-button>
-                <ion-button fill="clear" @click="previewMapUrl">
+                <ion-button fill="clear" :href="mapUrl" target="_blank">
                   {{ translate('Preview') }}
                   <ion-icon slot="end" :icon="openOutline" />
                 </ion-button>
@@ -676,7 +677,10 @@ export default defineComponent({
       facilityGroupTypes: 'util/getFacilityGroupTypes',
       inventoryGroups: 'util/getInventoryGroups',
       contactDetails: 'facility/getTelecomAndEmailAddress'
-    })
+    }),
+    mapUrl() {
+      return this.contactDetails?.googleMapUrl?.infoString || ''
+    }
   },
   props: ["facilityId"],
   async ionViewWillEnter() {
@@ -708,7 +712,7 @@ export default defineComponent({
         inputs: [
           {
             name: 'mapUrl',
-            type: 'text',
+            type: 'url',
             placeholder: translate("Enter new Map Url"),
             value: this.contactDetails?.googleMapUrl?.infoString || ""
           }
@@ -722,6 +726,18 @@ export default defineComponent({
             text: translate('Save'),
             handler: async (data) => {
               if (!data.mapUrl.trim()) return;
+
+              let isValidUrl = true;
+              try {
+                new URL(data.mapUrl);
+              } catch (_) {
+                isValidUrl = false;
+              }
+
+              if (!isValidUrl) {
+                showToast(translate("Please enter a valid URL"));
+                return false;
+              }
 
               try {
                 const payload = {
@@ -768,12 +784,6 @@ export default defineComponent({
     },
     isMapUrlUpdated(newMapUrl: string) {
       return newMapUrl && JSON.stringify(newMapUrl) !== JSON.stringify(this.contactDetails?.googleMapUrl?.infoString)
-    },
-    previewMapUrl () {
-      if (!this.contactDetails?.googleMapUrl?.infoString) return;
-
-      let url = this.contactDetails?.googleMapUrl?.infoString.startsWith('http') ? this.contactDetails?.googleMapUrl?.infoString : `https://${this.contactDetails?.googleMapUrl?.infoString}`
-      window.open(url, '_blank', 'noopener,noreferrer');
     },
     getImageUrl(imageUrl: string) {
       return (this.baseUrl.startsWith('http') ? this.baseUrl.replace(/api\/?/, "") : `https://${this.baseUrl}.hotwax.io/`) + imageUrl
