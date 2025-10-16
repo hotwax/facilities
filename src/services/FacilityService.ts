@@ -832,6 +832,22 @@ const updateFacilitiesToGroup = async (payload: any): Promise<any> => {
   })
 }
 
+const createFacilityContactMech = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/createFacilityContactMech",
+    method: "post",
+    data: payload
+  })
+}
+
+const updateFacilityContactMech = async (payload: any): Promise<any> => {
+  return api({
+    url: "service/updateFacilityContactMech",
+    method: "post",
+    data: payload
+  })
+}
+
 export const FacilityService = {
   addFacilitiesToGroup,
   addFacilityToGroup,
@@ -890,5 +906,7 @@ export const FacilityService = {
   updateFacilityToGroup,
   updateProductStoreFacility,
   updateProductStoreFacilityGroup,
-  updateShopifyShopLocation
+  updateShopifyShopLocation,
+  createFacilityContactMech,
+  updateFacilityContactMech
 }
