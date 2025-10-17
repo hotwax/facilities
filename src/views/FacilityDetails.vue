@@ -198,8 +198,7 @@
                 {{ translate('Give customers on your website a direct link to this facility on a mapping service like Google Maps.') }}
               </ion-card-content>
               <template v-if="contactDetails?.googleMapUrl?.infoString">
-                <ion-item lines="full" >
-                  <ion-label>{{ translate('URL') }}</ion-label>
+                <ion-item lines="full">
                   <ion-label>{{ contactDetails.googleMapUrl.infoString }}</ion-label>
                 </ion-item>
   
