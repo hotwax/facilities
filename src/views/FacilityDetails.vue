@@ -149,7 +149,7 @@
                 </ion-card-title>
               </div>
               <ion-button color="medium" fill="clear" class="ion-no-padding" @click="openOperatingHoursPopover">
-                <ion-icon :icon="ellipsisVerticalOutline" />
+                <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-card-header>
             <ion-list lines="none">
@@ -495,12 +495,12 @@
 
           <div class="external-mappings">
             <ion-card v-for="(group, index) in current.groupInformation" :key="index">
+              <p v-if="getFacilityGroupTypeDesc(group.facilityGroupTypeId)" class="ion-margin-start overline">{{ getFacilityGroupTypeDesc(group.facilityGroupTypeId) }}</p>
               <ion-card-header>
                 <div>
                   <ion-card-title>{{ group.facilityGroupName }}</ion-card-title>
                   <ion-card-subtitle>{{ group.facilityGroupId }}</ion-card-subtitle>
                 </div>
-                <ion-badge>{{ getFacilityGroupTypeDesc(group.facilityGroupTypeId) }}</ion-badge>
                 <ion-button fill="clear" @click="removeFacilityFromGroup(group.facilityGroupId)">
                   <ion-icon slot="icon-only" :icon="unlinkOutline" />
                 </ion-button>
