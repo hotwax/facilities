@@ -12,7 +12,7 @@
 
   <ion-content>
     <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findGroups()"/>
-    <div class="empty-state" v-if="!filteredFacilityGroupsByType.null && isSearching">
+    <div class="empty-state" v-if="!Object.keys(filteredFacilityGroupsByType).length || isSearching">
       <p>{{ translate("No facility groups found") }}</p>
     </div>
     <form v-else @keyup.enter="updateGroups">
@@ -262,6 +262,8 @@ export default defineComponent({
         })
         return filteredGroups
       }, {})
+
+      this.isSearching = false
     },
     getFacilityGroupTypeDesc(groupTypeId: any) {
       return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
