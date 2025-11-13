@@ -439,7 +439,7 @@ const actions: ActionTree<FacilityState, RootState> = {
         parties = resp.data.docs
 
         parties.map((party: any) => {
-          party.fullName = party.groupName ? party.groupName : `${party.firstName} ${party.lastName}`
+          party.fullName = party.groupName || [party.firstName, party.lastName].filter(Boolean).join(' ') || party.partyId;
         });
       } else {
         throw resp.data
