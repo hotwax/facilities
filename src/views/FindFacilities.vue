@@ -67,12 +67,12 @@
               </ion-chip>
             </div>
 
-            <div class="tablet">
+            <div class="tablet tablet-flex">
               <template v-if="facility.orderLimitType === 'custom'">
                 <ion-chip outline @click.stop="changeOrderLimitPopover($event, facility)">
                   <ion-label>{{ facility.orderCount }} {{ '/' }} {{ facility.maximumOrderLimit }}</ion-label>
                 </ion-chip>
-                <ion-note class="config-label">{{ translate('threshold consumed') }}</ion-note>
+                <ion-note>{{ translate('threshold consumed') }}</ion-note>
               </template>
 
               <ion-chip outline v-else-if="facility.orderLimitType === 'unlimited'" @click.stop="changeOrderLimitPopover($event, facility)">
@@ -365,10 +365,10 @@ export default defineComponent({
 .list-item {
   --columns-desktop: 4;
 }
-
-config-note {
-  display: block;
-  text-align: center;
+.tablet-flex{
+  display: flex;
+  align-items: end;
+  flex-direction: column;
 }
 
 @media screen and (min-width: 991px) {
