@@ -27,6 +27,9 @@
         <ion-input :label="translate('Address line 2')" label-placement="floating" v-model="address.address2" />
       </ion-item>
       <ion-item>
+        <ion-input :label="translate('Directions')" label-placement="floating" v-model="address.directions" />
+      </ion-item>
+      <ion-item>
         <ion-input label-placement="floating" v-model="address.city">
           <div slot="label">{{ translate("City") }} <ion-text color="danger">*</ion-text></div>
         </ion-input>

@@ -242,7 +242,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       entityName: "FacilityContactDetailByPurpose",
       orderBy: 'fromDate DESC',
       filterByDate: 'Y',
-      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
+      fieldList: ['address1', 'address2', 'city', 'contactMechId', 'contactMechTypeId', 'contactNumber', 'countryCode', 'countryGeoId', 'countryGeoName', 'directions', 'infoString', 'latitude', 'longitude', 'postalCode', 'stateGeoId', 'stateGeoName', 'toName'],
       viewSize: 4
     }
 
