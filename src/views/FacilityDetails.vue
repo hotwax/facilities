@@ -55,6 +55,7 @@
                     <h3>{{ postalAddress.toName }}</h3>
                     <h3>{{ postalAddress.address1 }}</h3>
                     <h3>{{ postalAddress.address2 }}</h3>
+                    <h3>{{ postalAddress.directions }}</h3>
                     <p class="ion-text-wrap">{{ postalAddress.postalCode ? `${postalAddress.city}, ${postalAddress.postalCode}` : postalAddress.city }}</p>
                     <p class="ion-text-wrap">{{ postalAddress.countryGeoName ? `${postalAddress.stateGeoName}, ${postalAddress.countryGeoName}` : postalAddress.stateGeoName }}</p>
                     <p class="ion-text-wrap" v-if="contactDetails?.telecomNumber">{{ `${contactDetails.telecomNumber?.countryCode}-${contactDetails.telecomNumber?.contactNumber}` }}</p>

@@ -25,6 +25,9 @@
               <ion-input :label="translate('Address line 2')" label-placement="floating" v-model="formData.address2" />
             </ion-item>
             <ion-item>
+              <ion-input :label="translate('Directions')" label-placement="floating" v-model="formData.directions" />
+            </ion-item>
+            <ion-item>
               <ion-input label-placement="floating" v-model="formData.city">
                 <div slot="label">{{ translate('City') }} <ion-text color="danger">*</ion-text></div>
               </ion-input>
@@ -159,6 +162,7 @@ export default defineComponent({
         toName: '',
         address1: '',
         address2: '',
+        directions: '',
         city: '',
         postalCode: '',
         stateProvinceGeoId: '',
