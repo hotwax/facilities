@@ -146,7 +146,7 @@
               <div>
                 <p class="overline">{{ translate("Operating hours") }}</p>
                 <ion-card-title>
-                  {{ facilityCalendar.description }}
+                  {{ facilityCalendar.description || facilityCalendar.calendarId }}
                 </ion-card-title>
               </div>
               <ion-button color="medium" fill="clear" class="ion-no-padding" @click="openOperatingHoursPopover">
