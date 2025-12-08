@@ -117,9 +117,6 @@
                 {{ translate("Operating hours") }}
               </ion-card-title>
             </ion-card-header>
-            <ion-card-content>
-              {{ translate("Select a saved calendar of store hours or create a new calendar") }}
-            </ion-card-content>
             <ion-item lines="none">
               <ion-label>
                 <p class="overline">{{ translate("Selected TimeZone") }}</p>
@@ -128,7 +125,10 @@
               </ion-label>
               <ion-button slot="end" fill="outline" color="dark" @click="openTimeZoneModal">{{ translate(current?.facilityTimeZone ? "Change" : "Add") }}</ion-button>
             </ion-item>
-
+            <ion-card-content>
+              {{ translate("Select a saved calendar of store hours or create a new calendar") }}
+            </ion-card-content>
+            
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-radio :value="calendar.calendarId">
