@@ -117,9 +117,18 @@
                 {{ translate("Operating hours") }}
               </ion-card-title>
             </ion-card-header>
+            <ion-item lines="none">
+              <ion-label>
+                <p class="overline">{{ translate("Selected TimeZone") }}</p>
+                {{ current?.facilityTimeZone || '-' }}
+                <p v-if="current?.facilityTimeZone">{{ getCurrentTime(current?.facilityTimeZone, dateTimeFormat) }}</p>
+              </ion-label>
+              <ion-button slot="end" fill="outline" color="dark" @click="openTimeZoneModal">{{ translate(current?.facilityTimeZone ? "Change" : "Add") }}</ion-button>
+            </ion-item>
             <ion-card-content>
               {{ translate("Select a saved calendar of store hours or create a new calendar") }}
             </ion-card-content>
+            
             <ion-radio-group v-model="selectedCalendarId">
               <ion-item v-for="(calendar, index) in calendars.slice(0,3)" :key="index" lines="none">
                 <ion-radio :value="calendar.calendarId">
@@ -153,6 +162,16 @@
                 <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
               </ion-button>
             </ion-card-header>
+
+            <ion-item lines="none">
+              <ion-label>
+                <p class="overline">{{ translate("Selected TimeZone") }}</p>
+                {{ current?.facilityTimeZone || '-'}}
+                <p v-if="current?.facilityTimeZone">{{ getCurrentTime(current?.facilityTimeZone, dateTimeFormat) }}</p>
+              </ion-label>
+              <ion-button @click="openTimeZoneModal" slot="end" fill="outline" color="dark">{{ translate(current?.facilityTimeZone ? "Change" : "Add") }}</ion-button>
+            </ion-item>
+
             <ion-list lines="none">
               <ion-item v-for="day in days" :key="day">
                 <ion-label>
@@ -607,6 +626,7 @@ import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
 import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
 import { copyToClipboard } from '@/utils';
+import FacilityTimeZoneModal from '@/components/FacilityTimeZoneSwitcher.vue'
 
 export default defineComponent({
   name: 'FacilityDetails',
@@ -654,7 +674,8 @@ export default defineComponent({
       externalId: '',
       facilityTypeId: '',
       parentFacilityTypeId: '',
-      facilityTypeIdOptions: {} as any
+      facilityTypeIdOptions: {} as any,
+      dateTimeFormat: 't ZZZZ'
     }
   },
   computed: {
@@ -706,6 +727,15 @@ export default defineComponent({
     if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
   },
   methods: {
+    getCurrentTime (zone: string, format = 't ZZZZ') {
+      return DateTime.now().setZone(zone).toFormat(format)
+    },
+    async openTimeZoneModal() {
+      const timeZoneModal = await modalController.create({
+        component: FacilityTimeZoneModal
+      })
+      timeZoneModal.present()
+    },
     async editMapUrl() {
       const alert = await alertController.create({
         header: translate("Map Link"),
