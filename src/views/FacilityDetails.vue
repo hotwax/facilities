@@ -123,10 +123,10 @@
             <ion-item lines="none">
               <ion-label>
                 <p class="overline">{{ translate("Selected TimeZone") }}</p>
-                {{ current?.facilityTimeZone }}
-                <p>{{ getCurrentTime(current?.facilityTimeZone, dateTimeFormat) }}</p>
+                {{ current?.facilityTimeZone || '-' }}
+                <p v-if="current?.facilityTimeZone">{{ getCurrentTime(current?.facilityTimeZone, dateTimeFormat) }}</p>
               </ion-label>
-              <ion-button slot="end" fill="outline" color="dark" @click="openTimeZoneModal">{{ translate("Change") }}</ion-button>
+              <ion-button slot="end" fill="outline" color="dark" @click="openTimeZoneModal">{{ translate(current?.facilityTimeZone ? "Change" : "Add") }}</ion-button>
             </ion-item>
 
             <ion-radio-group v-model="selectedCalendarId">
@@ -166,10 +166,10 @@
             <ion-item lines="none">
               <ion-label>
                 <p class="overline">{{ translate("Selected TimeZone") }}</p>
-                {{ current?.facilityTimeZone }}
-                <p>{{ getCurrentTime(current?.facilityTimeZone, dateTimeFormat) }}</p>
+                {{ current?.facilityTimeZone || '-'}}
+                <p v-if="current?.facilityTimeZone">{{ getCurrentTime(current?.facilityTimeZone, dateTimeFormat) }}</p>
               </ion-label>
-              <ion-button @click="openTimeZoneModal" slot="end" fill="outline" color="dark">{{ translate("Change") }}</ion-button>
+              <ion-button @click="openTimeZoneModal" slot="end" fill="outline" color="dark">{{ translate(current?.facilityTimeZone ? "Change" : "Add") }}</ion-button>
             </ion-item>
 
             <ion-list lines="none">
@@ -674,7 +674,8 @@ export default defineComponent({
       externalId: '',
       facilityTypeId: '',
       parentFacilityTypeId: '',
-      facilityTypeIdOptions: {} as any
+      facilityTypeIdOptions: {} as any,
+      dateTimeFormat: 't ZZZZ'
     }
   },
   computed: {

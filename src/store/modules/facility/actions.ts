@@ -99,7 +99,7 @@ const actions: ActionTree<FacilityState, RootState> = {
       "distinct": "Y",
       "fromDateName": "facilityGroupFromDate",
       "thruDateName": "facilityGroupThruDate",
-      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId', 'closedDate'],
+      "fieldList": ['facilityId', 'facilityName', 'facilityTypeId', 'maximumOrderLimit', 'defaultDaysToShip', 'externalId', 'primaryFacilityGroupId', 'parentFacilityTypeId', 'closedDate', 'facilityTimeZone'],
       ...payload
     }
 
