@@ -155,7 +155,7 @@ async function setFacilityTimeZone() {
     throw resp.data;
   }
 } catch (err) {
-  logger.error('Failed to remove group from facility', err)
+  logger.error('Failed to update facility timezone.', err)
   showToast(translate('Failed to update facility timezone.'))
 }
   closeModal();
