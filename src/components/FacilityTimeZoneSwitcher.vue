@@ -15,7 +15,7 @@
 
   <ion-content>
     <div>
-      <ion-radio-group value="rd" v-model="timeZoneId">
+      <ion-radio-group v-model="timeZoneId">
         <ion-list v-if="showBrowserTimeZone">
           <ion-list-header>{{ translate("Browser time zone") }}</ion-list-header>
           <ion-item>
