@@ -149,7 +149,7 @@ async function setFacilityTimeZone() {
   })
 
   if (!hasError(resp)) {
-    await store.dispatch('facility/fetchCurrentFacility', { facilityId: currentFacility.value.facilityId })
+    await store.dispatch('facility/fetchCurrentFacility', { facilityId: currentFacility.value.facilityId, skipState:true })
     showToast(translate('Facility timezone updated successfully.'))
   } else {
     throw resp.data;
