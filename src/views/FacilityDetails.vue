@@ -819,18 +819,18 @@ export default defineComponent({
       try {
         const payload = {
           facilityId: this.facilityId,
-          contactMechId: this.contactDetails.googleMapUrl.contactMechId
+          contactMechId: this.contactDetails?.googleMapUrl?.contactMechId
         }
         const resp = await FacilityService.deleteFacilityContactMech(payload)
         if (!hasError(resp)) {
-          showToast(translate('Map URL removed successfully'))
+          showToast(translate('Map URL removed successfully.'))
           await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
         } else {
           throw resp.data
         }
       } catch (err) {
-        logger.error('Failed to remove map url', err)
-        showToast(translate('Failed to remove map url'))
+        logger.error('Failed to remove map url.', err)
+        showToast(translate('Failed to remove map url.'))
       }
     },
     isMapUrlUpdated(newMapUrl: string) {
