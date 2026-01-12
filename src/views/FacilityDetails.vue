@@ -221,17 +221,18 @@
                 <ion-item lines="full">
                   <ion-label>{{ contactDetails.googleMapUrl.infoString }}</ion-label>
                 </ion-item>
-  
-                <ion-button fill="clear" @click="editMapUrl">
-                  {{ translate('Edit') }}
-                </ion-button>
-                <ion-button fill="clear" :href="mapUrl" target="_blank">
-                  {{ translate('Preview') }}
-                  <ion-icon slot="end" :icon="openOutline" />
-                </ion-button>
-                <ion-button fill="clear" color="danger" @click="deleteMapUrl">
-                  <ion-icon slot="icon-only" :icon="trashOutline" />
-                </ion-button>
+                <div class="actions">
+                  <ion-button fill="clear" @click="editMapUrl">
+                    {{ translate('Edit') }}
+                  </ion-button>
+                  <ion-button fill="clear" :href="mapUrl" target="_blank">
+                    {{ translate('Preview') }}
+                    <ion-icon slot="end" :icon="openOutline" />
+                  </ion-button>
+                  <ion-button fill="clear" color="danger" @click="deleteMapUrl">
+                    {{ translate('Remove') }}
+                  </ion-button>
+                </div>
               </template>
               <template v-else>
                 <ion-button  fill="clear" @click="editMapUrl">
