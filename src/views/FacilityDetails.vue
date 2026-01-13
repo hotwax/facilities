@@ -221,14 +221,18 @@
                 <ion-item lines="full">
                   <ion-label>{{ contactDetails.googleMapUrl.infoString }}</ion-label>
                 </ion-item>
-  
-                <ion-button fill="clear" @click="editMapUrl">
-                  {{ translate('Edit') }}
-                </ion-button>
-                <ion-button fill="clear" :href="mapUrl" target="_blank">
-                  {{ translate('Preview') }}
-                  <ion-icon slot="end" :icon="openOutline" />
-                </ion-button>
+                <div class="actions">
+                  <ion-button fill="clear" @click="editMapUrl">
+                    {{ translate('Edit') }}
+                  </ion-button>
+                  <ion-button fill="clear" :href="mapUrl" target="_blank">
+                    {{ translate('Preview') }}
+                    <ion-icon slot="end" :icon="openOutline" />
+                  </ion-button>
+                  <ion-button fill="clear" color="danger" @click="deleteMapUrl">
+                    {{ translate('Remove') }}
+                  </ion-button>
+                </div>
               </template>
               <template v-else>
                 <ion-button  fill="clear" @click="editMapUrl">
@@ -592,6 +596,7 @@ import {
   openOutline,
   pencilOutline,
   personOutline,
+  trashOutline,
   unlinkOutline
 } from 'ionicons/icons'
 import { translate } from '@hotwax/dxp-components';
@@ -755,7 +760,6 @@ export default defineComponent({
           {
             text: translate('Save'),
             handler: async (data) => {
-              if (!data.mapUrl.trim()) return;
 
               let isValidUrl = true;
               try {
@@ -811,6 +815,24 @@ export default defineComponent({
       });
 
       await alert.present();
+    },
+    async deleteMapUrl() {
+      try {
+        const payload = {
+          facilityId: this.facilityId,
+          contactMechId: this.contactDetails?.googleMapUrl?.contactMechId
+        }
+        const resp = await FacilityService.deleteFacilityContactMech(payload)
+        if (!hasError(resp)) {
+          showToast(translate('Map URL removed successfully.'))
+          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
+        } else {
+          throw resp.data
+        }
+      } catch (err) {
+        logger.error('Failed to remove map url.', err)
+        showToast(translate('Failed to remove map url.'))
+      }
     },
     isMapUrlUpdated(newMapUrl: string) {
       return newMapUrl && JSON.stringify(newMapUrl) !== JSON.stringify(this.contactDetails?.googleMapUrl?.infoString)
@@ -1538,7 +1560,8 @@ export default defineComponent({
       personOutline,
       store,
       translate,
-      unlinkOutline
+      unlinkOutline,
+      trashOutline
     }
   }
 });
