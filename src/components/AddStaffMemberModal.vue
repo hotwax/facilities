@@ -8,10 +8,12 @@
       </ion-buttons>
       <ion-title>{{ translate("Staff") }}</ion-title>
     </ion-toolbar>
+    <ion-toolbar>
+      <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findParties()"/>
+    </ion-toolbar>
   </ion-header>
 
   <ion-content class="ion-padding">
-    <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findParties()"/>
 
     <div class="ion-padding" v-if="!parties.length">
       {{ translate("No party found") }}

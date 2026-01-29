@@ -8,10 +8,12 @@
       </ion-buttons>
       <ion-title>{{ translate("Add Group") }}</ion-title>
     </ion-toolbar>
+    <ion-toolbar>
+      <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findGroups()"/>
+    </ion-toolbar>
   </ion-header>
 
   <ion-content>
-    <ion-searchbar v-model="queryString" @keyup.enter="queryString = $event.target.value; findGroups()"/>
     <div class="empty-state" v-if="!Object.keys(filteredFacilityGroupsByType).length || isSearching">
       <p>{{ translate("No facility groups found") }}</p>
     </div>
