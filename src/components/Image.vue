@@ -12,9 +12,9 @@ export default defineComponent({
   components: {},
   created() {
     if (
-      process.env.VUE_APP_RESOURCE_URL
+      import.meta.env.VITE_APP_RESOURCE_URL
     ) {
-      this.resourceUrl = process.env.VUE_APP_RESOURCE_URL;
+      this.resourceUrl = import.meta.env.VITE_APP_RESOURCE_URL;
     }
   },
   mounted() {

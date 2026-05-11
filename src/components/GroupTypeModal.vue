@@ -11,7 +11,7 @@
   </ion-header>
 
   <ion-content>
-    <form @keyup.enter="saveGroupType()"  class="ion-margin-top">
+    <form @keyup.enter="saveGroupType()" class="ion-margin-top">
       <!-- Empty state -->
       <div class="empty-state" v-if="!facilityGroupTypes.length">
         <p>{{ translate("No group types found")}}</p>
@@ -39,7 +39,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { 
   IonButtons,
   IonButton,
@@ -56,84 +56,62 @@ import {
   IonToolbar,
   modalController,
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@hotwax/dxp-components";
-import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "GroupTypeModal",
-  components: { 
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonRadioGroup,
-    IonRadio,
-    IonTitle,
-    IonToolbar 
-  },
-  data() {
-    return {
-      facilityGroupValue: JSON.parse(JSON.stringify(this.facilityGroup))
-    }
-  },
-  props: ["facilityGroup"],
-  computed: {
-    ...mapGetters({
-      facilityGroupTypes: "util/getFacilityGroupTypes",
-      groups: "facility/getFacilityGroups",
-    })
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    async saveGroupType() {
-      try {
-        const resp = await FacilityService.updateFacilityGroup({
-          facilityGroupId: this.facilityGroupValue.facilityGroupId,
-          facilityGroupTypeId: this.facilityGroupValue.facilityGroupTypeId
-        })
+const props = defineProps(["facilityGroup"]);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-        if(!hasError(resp)) {
-          showToast(translate("Facility group type updated successfully."))
-          const currentGroup = this.groups.find((group: any) => group.facilityGroupId === this.facilityGroupValue.facilityGroupId)
-          currentGroup.facilityGroupTypeId = this.facilityGroupValue.facilityGroupTypeId
+const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
+const groups = computed(() => facilityStore.getFacilityGroups);
 
-          await this.store.dispatch('facility/updateFacilityGroups', this.groups)
-          modalController.dismiss()
-        } else {
-          throw resp.data;
+const facilityGroupValue = ref(JSON.parse(JSON.stringify(props.facilityGroup)));
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+function isGroupTypeUpdated() {
+  return props.facilityGroup.facilityGroupTypeId !== facilityGroupValue.value.facilityGroupTypeId;
+}
+
+async function saveGroupType() {
+  try {
+    const resp = await FacilityService.updateFacilityGroup({
+      facilityGroupId: facilityGroupValue.value.facilityGroupId,
+      facilityGroupTypeId: facilityGroupValue.value.facilityGroupTypeId
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Facility group type updated successfully."));
+      const updatedGroups = groups.value.map((group: any) => {
+        if (group.facilityGroupId === facilityGroupValue.value.facilityGroupId) {
+          return {
+            ...group,
+            facilityGroupTypeId: facilityGroupValue.value.facilityGroupTypeId
+          };
         }
-      } catch(err) {
-        showToast(translate("Failed to update facility group type."))
-        logger.error(err)
-      }
-    },
-    isGroupTypeUpdated() {
-      return this.facilityGroup.facilityGroupTypeId !== this.facilityGroupValue.facilityGroupTypeId
+        return group;
+      });
+
+      facilityStore.updateFacilityGroups(updatedGroups);
+      modalController.dismiss();
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
-    return {
-      closeOutline,
-      saveOutline,
-      translate,
-      store
-    };
+  } catch (err) {
+    showToast(translate("Failed to update facility group type."));
+    logger.error(err);
   }
-});
+}
 </script>
 
 <style scoped>

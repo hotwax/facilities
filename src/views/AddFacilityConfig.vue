@@ -27,12 +27,10 @@
                 <ion-badge v-if="store.productStoreId === primaryFacilityGroupId">
                   {{ translate("primary store") }}
                 </ion-badge>
-                <!-- TODO add logic for make primary -->
                 <ion-button id="product-store-actions-trigger" size="default" slot="end" fill="clear" color="medium">
                   <ion-icon slot="icon-only" :icon="ellipsisVerticalOutline" />
                 </ion-button>
-                <!-- inline popover as ProductStorePopover logic is complex and different from the use case here -->
-                <ion-popover trigger="product-store-actions-trigger" showBackdrop="false" dismissOnSelect="true">
+                <ion-popover trigger="product-store-actions-trigger" :show-backdrop="false" :dismiss-on-select="true">
                   <ion-content>
                     <ion-list>
                       <ion-list-header>{{ getProductStore(store.productStoreId).storeName || store.productStoreId }}</ion-list-header>
@@ -83,7 +81,7 @@
                   </ion-input>
                 </ion-item>
                 <ion-item lines="none">
-                  <ion-input label-placement="floating" v-model="password" ref="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" helper-text="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
+                  <ion-input label-placement="floating" v-model="password" ref="passwordInput" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" :helper-text="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
                     <div slot="label">{{ translate('Password') }} <ion-text color="danger">*</ion-text></div>
                   </ion-input>
                 </ion-item>
@@ -111,7 +109,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonBackButton,
   IonBadge,
@@ -134,9 +132,9 @@ import {
   IonToolbar,
   IonToggle,
   modalController,
+  onIonViewWillEnter
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { mapGetters, useStore } from "vuex";
+import { ref, computed, reactive } from "vue";
 import { useRouter } from 'vue-router'
 import {
   addCircleOutline,
@@ -154,272 +152,236 @@ import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService"
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue';
 import { DateTime } from "luxon";
+import { useFacilityStore } from '@/store/facility';
+import { useUtilStore } from '@/store/util';
 
-export default defineComponent({
-  name: "AddFacilityConfig",
-  components: {
-    IonBackButton,
-    IonBadge,
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonPage,
-    IonPopover,
-    IonText,
-    IonTitle,
-    IonToggle,
-    IonToolbar,
-  },
-  computed: {
-    ...mapGetters({
-      current: 'facility/getCurrent',
-      getProductStore: 'util/getProductStore',
-    })
-  },
-  data() {
-    return {
-      fulfillmentSettings: {
-        PICKUP: false,
-        FAC_GRP: false,
-        OMS_FULFILLMENT: false
-      } as any,
-      createLoginCreds: false as any,
-      password: '',
-      username: '',
-      emailAddress: '',
-      selectedProductStores: [] as any,
-      primaryFacilityGroupId: ''  // storing productStoreId initially in this, as at this point we don't fetch shopifyShopId
-    }
-  },
-  props: ['facilityId'],
-  async ionViewWillEnter() {
-    await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId })
-    await this.store.dispatch('util/fetchProductStores')
-    this.username = this.current.facilityId
-  },
-  methods: {
-    async saveFulfillmentSettings() {
-      const responses = []
-      if (this.fulfillmentSettings.PICKUP) {
-        const resp = await FacilityService.addFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": 'PICKUP'
-        })
-        responses.push(resp)
-      }
+const props = defineProps(['facilityId']);
+const router = useRouter();
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      if (this.fulfillmentSettings.FAC_GRP) {
-        const resp = await FacilityService.addFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": 'FAC_GRP'
-        })
-        responses.push(resp)
-      }
-
-      if (this.fulfillmentSettings.OMS_FULFILLMENT) {
-        const resp = await FacilityService.addFacilityToGroup({
-          "facilityId": this.facilityId,
-          "facilityGroupId": 'OMS_FULFILLMENT'
-        })
-        responses.push(resp)
-      }
-
-      const hasFailedResponse = responses.some((response: any) => hasError(response))
-      if (hasFailedResponse) {
-        throw { message: translate('Failed to update some fulfillment settings.') }
-      }
-    },
-    async createFacilityLogin() {
-      
-
-      try {
-        const payload = {
-          "facilityId" : this.facilityId, 
-          "facilityName": this.current.facilityName,
-          "username": this.username,
-          "password": this.password,
-          "emailAddress": this.emailAddress
-        }
-
-        await FacilityService.createFacilityLogin(payload);
-        return Promise.resolve()
-      } catch (error) {
-        return Promise.reject(error);
-      }
-    },
-    async saveStoreConfig() {
-      if (this.createLoginCreds) {
-
-        if (!this.username ||  !this.password || !this.emailAddress) {
-          showToast(translate('Please fill all the required fields'))
-          return
-        }
-        if (this.username && await UserService.isUserLoginIdExists(this.username)) {
-          showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: this.username }))
-          return;
-        }
-        if (!isValidEmail(this.emailAddress)) {
-          showToast(translate('Please provide a valid email.'))
-          return
-        }
-      }
-
-      try {
-        if (Object.values(this.fulfillmentSettings).includes(true)) {
-          await this.saveFulfillmentSettings()
-        }
-
-        if (this.createLoginCreds) {
-          await this.createFacilityLogin()
-        }
-
-        if (this.selectedProductStores) {
-          await this.addProductStoresToFacility()
-          if (this.primaryFacilityGroupId) {
-            const shopifyShopId = await this.store.dispatch('util/fetchShopifyShopForProductStores', [this.primaryFacilityGroupId])
-            await this.makeProductStorePrimary(shopifyShopId)
-          }
-        }
-
-        showToast(translate("Facility configurations created successfully."))
-        this.$router.replace({ path: `/facility-details/${this.facilityId}` })
-      } catch (error: any) {
-        showToast(error.message)
-        logger.error(error.message)
-      }
-    },
-    async addProductStoresToFacility() {
-      let responses = []
-      for (const payload of this.selectedProductStores) {
-        responses.push(await FacilityService.createProductStoreFacility({
-          productStoreId: payload.productStoreId,
-          facilityId: this.facilityId,
-          fromDate: DateTime.now().toMillis(),
-        }))
-      }
-
-      const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
-      if (hasFailedResponse) {
-        throw { message: translate('Failed to add some product stores to the facility.') }
-      }
-    },
-    async fetchFacilityGroup(shopifyShopId: string) {
-      let facilityGroupId;
-      try {
-        const resp = await FacilityService.fetchFacilityGroup({
-          inputFields: {
-            facilityGroupId: shopifyShopId
-          },
-          entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-          viewSize: 100
-        })
-        if (!hasError(resp)) {
-          facilityGroupId = resp.data.docs[0].facilityGroupId
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        logger.error(err)
-      }
-      return facilityGroupId
-    },
-    async makeProductStorePrimary(shopifyShopId: string) {
-      let resp;
-      try {
-        let facilityGroupId = await this.fetchFacilityGroup(shopifyShopId)
-
-        if (!facilityGroupId) {
-          resp = await FacilityService.createFacilityGroup({
-            facilityGroupTypeId: 'FEATURING',
-            facilityGroupName: this.getProductStore(this.primaryFacilityGroupId).storeName,
-            facilityGroupId: shopifyShopId
-          })
-
-          if(!hasError(resp)) {
-            facilityGroupId = resp.data.facilityGroupId
-          }
-        }
-
-        if (facilityGroupId) {
-          resp = await FacilityService.updateFacility({
-            facilityId: this.facilityId,
-            primaryFacilityGroupId: facilityGroupId
-          })
-          if (hasError(resp)) {
-            throw { message: translate('Failed to make product store as primary.') }
-          }
-          return Promise.resolve(resp.data)
-        } else {
-          throw { message: translate('Failed to make product store as primary.') }
-        }
-      } catch (err) {
-        return Promise.reject(err)
-      }
-    },
-    async selectProductStore() {
-      const selectProductStoreModal = await modalController.create({
-        component: SelectProductStoreModal,
-        componentProps: {
-          selectedProductStores: this.selectedProductStores
-        }
-      })
-
-      selectProductStoreModal.onDidDismiss().then(async(result: any) => {
-        if (result.data && result.data.value) {
-          this.selectedProductStores = result.data.value.selectedProductStores
-        }
-      })
-
-      selectProductStoreModal.present()
-    },
-    removeProductStore(productStoreId: string) {
-      this.selectedProductStores = this.selectedProductStores.filter((store: any) => store.productStoreId !== productStoreId)
-    },
-    updatePrimaryFacilityGroupId(productStoreId: string) {
-      productStoreId === this.primaryFacilityGroupId ? (this.primaryFacilityGroupId = '') : (this.primaryFacilityGroupId = productStoreId)
-    },
-    validatePassword(event: any) {
-      const value = event.target.value;
-      (this as any).$refs.password.$el.classList.remove('ion-valid');
-      (this as any).$refs.password.$el.classList.remove('ion-invalid');
-
-      if (value === '') return;
-
-      isValidPassword(value)
-        ? (this as any).$refs.password.$el.classList.add('ion-valid')
-        : (this as any).$refs.password.$el.classList.add('ion-invalid');
-    },
-    markPasswordTouched() {
-      (this as any).$refs.password.$el.classList.add('ion-touched');
-    },
-  },
-  setup() {
-    const store = useStore();
-    const router = useRouter();
-
-    return {
-      addCircleOutline,
-      ellipsisVerticalOutline,
-      locationOutline,
-      removeCircleOutline,
-      router,
-      star,
-      starOutline,
-      store,
-      translate
-    };
-  }
+const fulfillmentSettings = reactive({
+  PICKUP: false,
+  FAC_GRP: false,
+  OMS_FULFILLMENT: false
 });
+const createLoginCreds = ref(false);
+const password = ref('');
+const username = ref('');
+const emailAddress = ref('');
+const selectedProductStores = ref([] as any);
+const primaryFacilityGroupId = ref('');
+const passwordInput = ref(null as any);
+
+const current = computed(() => facilityStore.getCurrent);
+const getProductStore = computed(() => (id: string) => utilStore.getProductStore(id));
+
+onIonViewWillEnter(async () => {
+  await facilityStore.fetchCurrentFacility({ facilityId: props.facilityId });
+  await utilStore.fetchProductStores();
+  username.value = current.value.facilityId;
+});
+
+async function saveFulfillmentSettings() {
+  const promises = [];
+  if (fulfillmentSettings.PICKUP) {
+    promises.push(FacilityService.addFacilityToGroup({
+      "facilityId": props.facilityId,
+      "facilityGroupId": 'PICKUP'
+    }));
+  }
+
+  if (fulfillmentSettings.FAC_GRP) {
+    promises.push(FacilityService.addFacilityToGroup({
+      "facilityId": props.facilityId,
+      "facilityGroupId": 'FAC_GRP'
+    }));
+  }
+
+  if (fulfillmentSettings.OMS_FULFILLMENT) {
+    promises.push(FacilityService.addFacilityToGroup({
+      "facilityId": props.facilityId,
+      "facilityGroupId": 'OMS_FULFILLMENT'
+    }));
+  }
+
+  const results = await Promise.all(promises);
+  const hasFailed = results.some((response: any) => hasError(response));
+  if (hasFailed) {
+    throw { message: translate('Failed to update some fulfillment settings.') };
+  }
+}
+
+async function createFacilityLogin() {
+  try {
+    const payload = {
+      "facilityId": props.facilityId,
+      "facilityName": current.value.facilityName,
+      "username": username.value,
+      "password": password.value,
+      "emailAddress": emailAddress.value
+    };
+
+    await FacilityService.createFacilityLogin(payload);
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function saveStoreConfig() {
+  if (createLoginCreds.value) {
+    if (!username.value || !password.value || !emailAddress.value) {
+      showToast(translate('Please fill all the required fields'));
+      return;
+    }
+    if (username.value && await UserService.isUserLoginIdExists(username.value)) {
+      showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
+      return;
+    }
+    if (!isValidEmail(emailAddress.value)) {
+      showToast(translate('Please provide a valid email.'));
+      return;
+    }
+  }
+
+  try {
+    if (Object.values(fulfillmentSettings).includes(true)) {
+      await saveFulfillmentSettings();
+    }
+
+    if (createLoginCreds.value) {
+      await createFacilityLogin();
+    }
+
+    if (selectedProductStores.value.length > 0) {
+      await addProductStoresToFacility();
+      if (primaryFacilityGroupId.value) {
+        const shopifyShopId = await utilStore.fetchShopifyShopForProductStores([primaryFacilityGroupId.value]);
+        await makeProductStorePrimary(shopifyShopId);
+      }
+    }
+
+    showToast(translate("Facility configurations created successfully."));
+    router.replace({ path: `/facility-details/${props.facilityId}` });
+  } catch (error: any) {
+    showToast(error.message);
+    logger.error(error.message);
+  }
+}
+
+async function addProductStoresToFacility() {
+  const promises = selectedProductStores.value.map((payload: any) => 
+    FacilityService.createProductStoreFacility({
+      productStoreId: payload.productStoreId,
+      facilityId: props.facilityId,
+      fromDate: DateTime.now().toMillis(),
+    })
+  );
+
+  const results = await Promise.all(promises);
+  const hasFailed = results.some((response: any) => hasError(response));
+  if (hasFailed) {
+    throw { message: translate('Failed to add some product stores to the facility.') };
+  }
+}
+
+async function fetchFacilityGroup(shopifyShopId: string) {
+  let facilityGroupId;
+  try {
+    const resp = await FacilityService.fetchFacilityGroup({
+      inputFields: {
+        facilityGroupId: shopifyShopId
+      },
+      entityName: 'FacilityGroup',
+      fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
+      viewSize: 100
+    });
+    if (!hasError(resp) && resp.data.docs.length > 0) {
+      facilityGroupId = resp.data.docs[0].facilityGroupId;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+  return facilityGroupId;
+}
+
+async function makeProductStorePrimary(shopifyShopId: string) {
+  try {
+    let facilityGroupId = await fetchFacilityGroup(shopifyShopId);
+
+    if (!facilityGroupId) {
+      const resp = await FacilityService.createFacilityGroup({
+        facilityGroupTypeId: 'FEATURING',
+        facilityGroupName: utilStore.getProductStore(primaryFacilityGroupId.value).storeName,
+        facilityGroupId: shopifyShopId
+      });
+
+      if (!hasError(resp)) {
+        facilityGroupId = resp.data.facilityGroupId;
+      }
+    }
+
+    if (facilityGroupId) {
+      const resp = await FacilityService.updateFacility({
+        facilityId: props.facilityId,
+        primaryFacilityGroupId: facilityGroupId
+      });
+      if (hasError(resp)) {
+        throw { message: translate('Failed to make product store as primary.') };
+      }
+    } else {
+      throw { message: translate('Failed to make product store as primary.') };
+    }
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function selectProductStore() {
+  const modal = await modalController.create({
+    component: SelectProductStoreModal,
+    componentProps: {
+      selectedProductStores: selectedProductStores.value
+    }
+  });
+
+  modal.onDidDismiss().then((result: any) => {
+    if (result.data && result.data.value) {
+      selectedProductStores.value = result.data.value.selectedProductStores;
+    }
+  });
+
+  modal.present();
+}
+
+function removeProductStore(productStoreId: string) {
+  selectedProductStores.value = selectedProductStores.value.filter((store: any) => store.productStoreId !== productStoreId);
+}
+
+function updatePrimaryFacilityGroupId(productStoreId: string) {
+  primaryFacilityGroupId.value = productStoreId === primaryFacilityGroupId.value ? '' : productStoreId;
+}
+
+function validatePassword(event: any) {
+  const value = event.target.value;
+  if (!passwordInput.value) return;
+
+  const el = passwordInput.value.$el;
+  el.classList.remove('ion-valid');
+  el.classList.remove('ion-invalid');
+
+  if (value === '') return;
+
+  isValidPassword(value)
+    ? el.classList.add('ion-valid')
+    : el.classList.add('ion-invalid');
+}
+
+function markPasswordTouched() {
+  if (passwordInput.value) {
+    passwordInput.value.$el.classList.add('ion-touched');
+  }
+}
 </script>
 
 <style scoped>

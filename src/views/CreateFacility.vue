@@ -26,7 +26,7 @@
               </ion-input>
             </ion-item>
             <ion-item lines="none">
-              <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" error-text="translate('Internal ID cannot be more than 20 characters.')" />
+              <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityIdInput" v-model="formData.facilityId" @ionChange="validateFacilityId" @ionBlur="markFacilityIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
             </ion-item>
             <ion-item>
               <ion-input :label="translate('External ID')" label-placement="floating" v-model="formData.externalId" />
@@ -45,7 +45,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonBackButton,
   IonButton,
@@ -64,178 +64,152 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
+  onIonViewWillEnter
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { mapGetters, useStore } from "vuex";
-import { useRouter } from 'vue-router'
+import { ref, computed, reactive } from "vue";
+import { useRouter, useRoute } from 'vue-router'
 import { addOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
 import { generateInternalId, showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import { useFacilityStore } from '@/store/facility';
+import { useUtilStore } from '@/store/util';
 
-export default defineComponent({
-  name: "CreateFacility",
-  components: {
-    IonBackButton,
-    IonButton,
-    IonCard,
-    IonCardTitle,
-    IonCardHeader,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonList,
-    IonPage,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTitle,
-    IonToolbar,
-  },
-  computed: {
-    ...mapGetters({
-      facilityTypes: "util/getFacilityTypes",
-      organizationPartyId: "util/getOrganizationPartyId"
-    })
-  },
-  data() {
-    return {
-      formData: {
-        facilityName: '',
-        facilityId: '',
-        externalId: '',
-      },
-      selectedFacilityTypeId: '' as any,
-      facilityTypesByParentTypeId: {} as any,
-      isAutoGenerateId: true,
-    }
-  },
-  async ionViewWillEnter() {
-    this.clearFormData()
-    await Promise.all([
-      this.store.dispatch('facility/updateCurrentFacility', {}),
-      this.store.dispatch('util/fetchFacilityTypes', {
-        parentTypeId: 'VIRTUAL_FACILITY',
-        parentTypeId_op: 'notEqual',
-        facilityTypeId: 'VIRTUAL_FACILITY',
-        facilityTypeId_op: 'notEqual'
-      })
-    ])
-    this.facilityTypesByParentTypeId = this.getFacilityTypesByParentTypeId(this.$route.query.type as string)
+const router = useRouter();
+const route = useRoute();
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-    // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
-    // as default elements within the list. These elements may appear at any index within the list structure.
-    // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
-    this.selectedFacilityTypeId = this.facilityTypesByParentTypeId['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypesByParentTypeId['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypesByParentTypeId)[0]
-  },
-  methods: {
-    clearFormData() {
-      this.formData = {
-        facilityName: '',
-        facilityId: '',
-        externalId: '',
-      }
-      this.isAutoGenerateId = true;
-    },
-    setFacilityId(event: any) {
-      if(this.isAutoGenerateId) {
-        this.formData.facilityId = generateInternalId(event.target.value)
-      }
-    },
-    async createFacility() {
-      if (!this.formData.facilityName?.trim()) {
-        showToast(translate('Facility name is required.'))
-        return
-      }
-
-      if (this.formData.facilityId.length > 20) {
-        showToast(translate('Internal ID cannot be more than 20 characters.'))
-        return
-      }
-
-      // In case the user does not lose focus from the facility name input
-      // and click on create the button, we need to set the internal id manually
-      if (!this.formData.facilityId) {
-        this.formData.facilityId = generateInternalId(this.formData.facilityName)
-      }
-
-      try {
-        const payload = {
-          ...this.formData,
-          facilityTypeId: this.selectedFacilityTypeId,
-          ownerPartyId: this.organizationPartyId
-        }
-
-        const resp = await FacilityService.createFacility(payload);
-        if (!hasError(resp)) {
-          const { facilityId } = resp.data
-          showToast(translate("Facility created successfully."))
-          this.store.dispatch('facility/updateCurrentFacility', payload),
-          this.router.replace(`/add-facility-address/${facilityId}`)
-        } else {
-          throw resp.data;
-        }
-      } catch (error: any) {
-        logger.error(error)
-        if(error?.response?.data?.error?.message) {
-          showToast(error.response.data.error.message)
-        } else {
-          showToast(translate('Failed to create facility.'))
-        }
-        return;
-      }
-
-      // creating default facility location
-      await FacilityService.createFacilityLocation({
-        facilityId: this.formData.facilityId,
-        locationTypeEnumId: "FLT_PICKLOC",
-        areaId: "TL",
-        aisleId: "TL",
-        sectionId: "TL",
-        levelId: "LL",
-        positionId: "01",
-      })
-    },
-    getFacilityTypesByParentTypeId(parentTypeId: string) {
-      return parentTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
-        if (this.facilityTypes[facilityTypeId].parentTypeId === parentTypeId) {
-          facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
-        }
-        return facilityTypesByParentTypeId
-      }, {}) : this.facilityTypes
-    },
-    validateFacilityId(event: any) {
-      const value = event.target.value;
-      (this as any).$refs.facilityId.$el.classList.remove('ion-valid');
-      (this as any).$refs.facilityId.$el.classList.remove('ion-invalid');
-
-      if (value === '') return;
-
-      this.formData.facilityId.length <= 20
-        ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
-        : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
-      this.isAutoGenerateId = false;
-    },
-    markFacilityIdTouched() {
-      (this as any).$refs.facilityId.$el.classList.add('ion-touched');
-    },
-  },
-  setup() {
-    const store = useStore();
-    const router = useRouter();
-
-    return {
-      addOutline,
-      store,
-      router,
-      translate
-    };
-  }
+const facilityIdInput = ref(null as any);
+const formData = reactive({
+  facilityName: '',
+  facilityId: '',
+  externalId: '',
 });
+const selectedFacilityTypeId = ref('' as any);
+const facilityTypesByParentTypeId = ref({} as any);
+const isAutoGenerateId = ref(true);
+
+const facilityTypes = computed(() => utilStore.getFacilityTypes);
+const organizationPartyId = computed(() => utilStore.getOrganizationPartyId);
+
+onIonViewWillEnter(async () => {
+  clearFormData();
+  await Promise.all([
+    facilityStore.updateCurrentFacility({}),
+    utilStore.fetchFacilityTypes({
+      parentTypeId: 'VIRTUAL_FACILITY',
+      parentTypeId_op: 'notEqual',
+      facilityTypeId: 'VIRTUAL_FACILITY',
+      facilityTypeId_op: 'notEqual'
+    })
+  ]);
+  facilityTypesByParentTypeId.value = getFacilityTypesByParentTypeIdFromSelection(route.query.type as string);
+
+  selectedFacilityTypeId.value = facilityTypesByParentTypeId.value['RETAIL_STORE'] 
+    ? 'RETAIL_STORE' 
+    : facilityTypesByParentTypeId.value['WAREHOUSE'] 
+      ? 'WAREHOUSE' 
+      : Object.keys(facilityTypesByParentTypeId.value)[0];
+});
+
+function clearFormData() {
+  formData.facilityName = '';
+  formData.facilityId = '';
+  formData.externalId = '';
+  isAutoGenerateId.value = true;
+}
+
+function setFacilityId(event: any) {
+  if (isAutoGenerateId.value) {
+    formData.facilityId = generateInternalId(event.target.value);
+  }
+}
+
+async function createFacility() {
+  if (!formData.facilityName?.trim()) {
+    showToast(translate('Facility name is required.'));
+    return;
+  }
+
+  if (formData.facilityId.length > 20) {
+    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    return;
+  }
+
+  if (!formData.facilityId) {
+    formData.facilityId = generateInternalId(formData.facilityName);
+  }
+
+  try {
+    const payload = {
+      ...formData,
+      facilityTypeId: selectedFacilityTypeId.value,
+      ownerPartyId: organizationPartyId.value
+    };
+
+    const resp = await FacilityService.createFacility(payload);
+    if (!hasError(resp)) {
+      const { facilityId } = resp.data;
+      showToast(translate("Facility created successfully."));
+      facilityStore.updateCurrentFacility(payload);
+      router.replace(`/add-facility-address/${facilityId}`);
+    } else {
+      throw resp.data;
+    }
+  } catch (error: any) {
+    logger.error(error);
+    if (error?.response?.data?.error?.message) {
+      showToast(error.response.data.error.message);
+    } else {
+      showToast(translate('Failed to create facility.'));
+    }
+    return;
+  }
+
+  await FacilityService.createFacilityLocation({
+    facilityId: formData.facilityId,
+    locationTypeEnumId: "FLT_PICKLOC",
+    areaId: "TL",
+    aisleId: "TL",
+    sectionId: "TL",
+    levelId: "LL",
+    positionId: "01",
+  });
+}
+
+function getFacilityTypesByParentTypeIdFromSelection(parentTypeId: string) {
+  return parentTypeId ? Object.keys(facilityTypes.value).reduce((acc: any, facilityTypeId: string) => {
+    if (facilityTypes.value[facilityTypeId].parentTypeId === parentTypeId) {
+      acc[facilityTypeId] = facilityTypes.value[facilityTypeId];
+    }
+    return acc;
+  }, {}) : facilityTypes.value;
+}
+
+function validateFacilityId(event: any) {
+  const value = event.target.value;
+  if (!facilityIdInput.value) return;
+
+  const el = facilityIdInput.value.$el;
+  el.classList.remove('ion-valid');
+  el.classList.remove('ion-invalid');
+
+  if (value === '') return;
+
+  formData.facilityId.length <= 20
+    ? el.classList.add('ion-valid')
+    : el.classList.add('ion-invalid');
+  isAutoGenerateId.value = false;
+}
+
+function markFacilityIdTouched() {
+  if (facilityIdInput.value) {
+    facilityIdInput.value.$el.classList.add('ion-touched');
+  }
+}
 </script>
 
 <style scoped>

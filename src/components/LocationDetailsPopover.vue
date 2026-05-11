@@ -12,7 +12,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonItem,
@@ -21,72 +21,52 @@ import {
   modalController,
   popoverController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
 import AddLocationModal from "./AddLocationModal.vue";
-import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "LocationDetailsPopover",
-  components: {
-    IonContent,
-    IonItem,
-    IonList,
-    IonListHeader
-  },
-  computed: {
-    ...mapGetters({
-      current: 'facility/getCurrent'
-    })
-  },
-  props: ["location"],
-  methods: {
-    async addLocationModal() {
-      const addLocationModal = await modalController.create({
-        component: AddLocationModal,
-        componentProps: { location: this.location }
-      })
+const props = defineProps(["location"]);
+const facilityStore = useFacilityStore();
+const current = computed(() => facilityStore.getCurrent);
 
-      await popoverController.dismiss();
-      addLocationModal.present()
-    },
-    async removeLocation() {
-      emitter.emit('presentLoader')
+async function addLocationModal() {
+  const addLocationModal = await modalController.create({
+    component: AddLocationModal,
+    componentProps: { location: props.location }
+  });
 
-      const params = {
-        facilityId: this.location.facilityId,
-        locationSeqId: this.location.locationSeqId
-      }
+  await popoverController.dismiss();
+  addLocationModal.present();
+}
 
-      try {
-        const resp = await FacilityService.deleteFacilityLocation(params)
+async function removeLocation() {
+  emitter.emit('presentLoader');
 
-        if(!hasError(resp)) {
-          showToast(translate('Facility location removed successfully'))
-          await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to remove facility location'))
-        logger.error('Failed to remove facility location', err)
-      }
-      popoverController.dismiss();
-      emitter.emit('dismissLoader')
+  const params = {
+    facilityId: props.location.facilityId,
+    locationSeqId: props.location.locationSeqId
+  };
+
+  try {
+    const resp = await FacilityService.deleteFacilityLocation(params);
+
+    if (!hasError(resp)) {
+      showToast(translate('Facility location removed successfully'));
+      await facilityStore.fetchFacilityLocations({ facilityId: current.value.facilityId });
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      store,
-      translate
-    };
+  } catch (err) {
+    showToast(translate('Failed to remove facility location'));
+    logger.error('Failed to remove facility location', err);
   }
-});
+  popoverController.dismiss();
+  emitter.emit('dismissLoader');
+}
 </script>

@@ -19,7 +19,7 @@
           </ion-input>
         </ion-item>
         <ion-item lines="none">
-          <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityId" v-model="formData.facilityId" @ionInput="validateFacilityId" @ionBlur="markFacilityIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')"/>
+          <ion-input :label="translate('Internal ID')" label-placement="floating" ref="facilityIdInput" v-model="formData.facilityId" @ionInput="validateFacilityId" @ionBlur="markFacilityIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')"/>
         </ion-item>
         <ion-item>
           <ion-input label-placement="floating" :label="translate('Description')" v-model="formData.description"/>
@@ -35,7 +35,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -52,129 +52,107 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { generateInternalId, showToast } from "@/utils";
 import logger from "@/logger";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "CreateVirtualFacility",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonList,
-    IonText,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      virtualFacilities: 'facility/getVirtualFacilities',
-      organizationPartyId: 'util/getOrganizationPartyId'
-    })
-  },
-  data() {
-    return {
-      formData: {
-        facilityName: '',
-        facilityId: '',
-        description: '',
-      },
-      isAutoGenerateId: true
-    }
-  },
-  methods: {
-    setFacilityId(event: any) {
-      if(this.isAutoGenerateId) {
-        this.formData.facilityId = generateInternalId(event.target.value)
-      }
-    },
-    closeModal() {
-      modalController.dismiss();
-    },
-    async createVirtualFacility() {
-      if (!this.formData.facilityName?.trim()) {
-        showToast(translate('Please fill all the required fields'))
-        return;
-      }
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      if (this.formData.facilityId.length > 20) {
-        showToast(translate('Internal ID cannot be more than 20 characters.'))
-        return
-      }
+const virtualFacilities = computed(() => facilityStore.getVirtualFacilities);
+const organizationPartyId = computed(() => utilStore.getOrganizationPartyId);
 
-      // In case the user does not lose focus from the facility name input
-      // and click on create the button, we need to set the internal id manually
-      if (!this.formData.facilityId) {
-        this.formData.facilityId = generateInternalId(this.formData.facilityName)
-      }
-
-      try {
-        const payload = {
-          ...this.formData,
-          facilityTypeId: 'VIRTUAL_FACILITY',
-          ownerPartyId: this.organizationPartyId
-        }
-
-        const resp = await FacilityService.createVirtualFacility(payload);
-        if (!hasError(resp)) {
-          showToast(translate("New parking created successfully."))
-          const createdFacility = {
-            ...this.formData,
-            facilityTypeId: 'VIRTUAL_FACILITY',
-            orderCount: 0
-          }
-          const updatedVirtualFacilities = [...this.virtualFacilities, createdFacility]
-          this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
-        } else {
-          throw resp.data;
-        }
-      } catch (error: any) {
-        logger.error(error)
-        if(error?.response?.data?.error?.message) {
-          showToast(error.response.data.error.message)
-        } else {
-          showToast(translate('Failed to create parking.'))
-        }
-      }
-      modalController.dismiss()
-    },
-    validateFacilityId(event: any) {
-      const value = event.target.value;
-      (this as any).$refs.facilityId.$el.classList.remove('ion-valid');
-      (this as any).$refs.facilityId.$el.classList.remove('ion-invalid');
-
-      if (value === '') return;
-
-      this.formData.facilityId.length <= 20
-        ? (this as any).$refs.facilityId.$el.classList.add('ion-valid')
-        : (this as any).$refs.facilityId.$el.classList.add('ion-invalid');
-      this.isAutoGenerateId = false;
-    },
-    markFacilityIdTouched() {
-      (this as any).$refs.facilityId.$el.classList.add('ion-touched');
-    },
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      store,
-      saveOutline,
-      translate
-    };
-  },
+const formData = ref({
+  facilityName: '',
+  facilityId: '',
+  description: '',
 });
+const isAutoGenerateId = ref(true);
+const facilityIdInput = ref(null as any);
+
+function setFacilityId(event: any) {
+  if (isAutoGenerateId.value) {
+    formData.value.facilityId = generateInternalId(event.target.value);
+  }
+}
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function createVirtualFacility() {
+  if (!formData.value.facilityName?.trim()) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  if (formData.value.facilityId.length > 20) {
+    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    return;
+  }
+
+  // In case the user does not lose focus from the facility name input
+  // and click on create the button, we need to set the internal id manually
+  if (!formData.value.facilityId) {
+    formData.value.facilityId = generateInternalId(formData.value.facilityName);
+  }
+
+  try {
+    const payload = {
+      ...formData.value,
+      facilityTypeId: 'VIRTUAL_FACILITY',
+      ownerPartyId: organizationPartyId.value
+    };
+
+    const resp = await FacilityService.createVirtualFacility(payload);
+    if (!hasError(resp)) {
+      showToast(translate("New parking created successfully."));
+      const createdFacility = {
+        ...formData.value,
+        facilityTypeId: 'VIRTUAL_FACILITY',
+        orderCount: 0
+      };
+      const updatedVirtualFacilities = [...virtualFacilities.value, createdFacility];
+      facilityStore.updateVirtualFacilities(updatedVirtualFacilities);
+    } else {
+      throw resp.data;
+    }
+  } catch (error: any) {
+    logger.error(error);
+    if (error?.response?.data?.error?.message) {
+      showToast(error.response.data.error.message);
+    } else {
+      showToast(translate('Failed to create parking.'));
+    }
+  }
+  modalController.dismiss();
+}
+
+function validateFacilityId(event: any) {
+  const value = event.target.value;
+  if (!facilityIdInput.value) return;
+
+  const el = facilityIdInput.value.$el;
+  el.classList.remove('ion-valid');
+  el.classList.remove('ion-invalid');
+
+  if (value === '') return;
+
+  formData.value.facilityId.length <= 20
+    ? el.classList.add('ion-valid')
+    : el.classList.add('ion-invalid');
+  isAutoGenerateId.value = false;
+}
+
+function markFacilityIdTouched() {
+  if (facilityIdInput.value) {
+    facilityIdInput.value.$el.classList.add('ion-touched');
+  }
+}
 </script>

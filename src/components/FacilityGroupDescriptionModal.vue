@@ -34,7 +34,7 @@
   </ion-content>
 </template>
   
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButtons,
   IonButton,
@@ -51,7 +51,6 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import {
   closeOutline,
   eyeOutline,
@@ -59,92 +58,55 @@ import {
   lockClosedOutline,
   mailOutline
 } from "ionicons/icons";
-import { mapGetters, useStore } from "vuex";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from '@/adapter';
 import emitter from "@/event-bus";
 import { showToast } from '@/utils';
+import { useFacilityStore } from "@/store/facility";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "CustomFieldModal",
-  components: {
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonText,
-    IonTextarea,
-    IonTitle,
-    IonToolbar,
-  },
-  data() {
-    return {
-      facilityGroupName: this.facilityGroup.facilityGroupName,
-      facilityGroupDescription: this.facilityGroup.description,
-    }
-  },
-  computed: {
-    ...mapGetters({
-      groups: 'facility/getFacilityGroups',
-    })
-  },
-  props: ['facilityGroup'],
-  methods: {
-    closeModal() {
-      modalController.dismiss({ dismissed: true });
-    },
-    async updateFacilityGroupDescription() {
-      if (this.facilityGroupName.trim().length <= 0) {
-        showToast(translate('Facility group name cannot be empty'));
-        return false;    
-      }
-      emitter.emit('presentLoader')
-      try {
-        const resp = await FacilityService.updateFacilityGroup({
-          facilityGroupId: this.facilityGroup.facilityGroupId,
-          facilityGroupName: this.facilityGroupName,
-          description: this?.facilityGroupDescription
-        })
-        if (!hasError(resp)) {
-          showToast(translate('Group detail updated.'))
-          const updatedGroups = JSON.parse(JSON.stringify(this.groups))
-            .map((groupData: any) => {
-              if (this.facilityGroup.facilityGroupId === groupData.facilityGroupId) {
-                groupData.facilityGroupName = this.facilityGroupName
-                groupData.description = this.facilityGroupDescription
-              }
+const props = defineProps(['facilityGroup']);
+const facilityStore = useFacilityStore();
+const groups = computed(() => facilityStore.getFacilityGroups);
 
-              return groupData
-            })
-          this.store.dispatch('facility/updateFacilityGroups', updatedGroups)
+const facilityGroupName = ref(props.facilityGroup.facilityGroupName || '');
+const facilityGroupDescription = ref(props.facilityGroup.description || '');
+
+function closeModal() {
+  modalController.dismiss({ dismissed: true });
+}
+
+async function updateFacilityGroupDescription() {
+  if (facilityGroupName.value.trim().length <= 0) {
+    showToast(translate('Facility group name cannot be empty'));
+    return false;    
+  }
+  emitter.emit('presentLoader');
+  try {
+    const resp = await FacilityService.updateFacilityGroup({
+      facilityGroupId: props.facilityGroup.facilityGroupId,
+      facilityGroupName: facilityGroupName.value,
+      description: facilityGroupDescription.value
+    });
+    if (!hasError(resp)) {
+      showToast(translate('Group detail updated.'));
+      const updatedGroups = groups.value.map((groupData: any) => {
+        if (props.facilityGroup.facilityGroupId === groupData.facilityGroupId) {
+          return {
+            ...groupData,
+            facilityGroupName: facilityGroupName.value,
+            description: facilityGroupDescription.value
+          };
         }
-
-      } catch (error) {
-        showToast(translate('Failed to update group detail.'))
-      }
-      this.closeModal();
-      emitter.emit('dismissLoader')
-    },
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      eyeOutline,
-      eyeOffOutline,
-      lockClosedOutline,
-      mailOutline,
-      store,
-      translate
-    };
-  },
-});
+        return groupData;
+      });
+      facilityStore.updateFacilityGroups(updatedGroups);
+    }
+  } catch (error) {
+    showToast(translate('Failed to update group detail.'));
+  }
+  closeModal();
+  emitter.emit('dismissLoader');
+}
 </script>
-  

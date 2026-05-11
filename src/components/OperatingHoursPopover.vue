@@ -21,7 +21,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonItem,
@@ -31,9 +31,7 @@ import {
   modalController,
   popoverController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
-import { mapGetters, useStore } from "vuex";
 import AddOperatingHoursModal from "@/components/AddOperatingHoursModal.vue";
 import CustomScheduleModal from "@/components/CustomScheduleModal.vue";
 import { FacilityService } from "@/services/FacilityService";
@@ -41,81 +39,63 @@ import { showToast } from "@/utils";
 import logger from "@/logger";
 import { hasError } from "@/adapter";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "FacilityMappingPopover",
-  components: {
-    IonContent,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader
-  },
-  props: ["facilityId"],
-  computed: {
-    ...mapGetters({
-      facilityCalendar: 'facility/getFacilityCalendar'
-    })
-  },
-  methods: {
-    async addOperatingHours() {
-      const addOperatingHoursModal = await modalController.create({
-        component: AddOperatingHoursModal,
-        componentProps: { facilityId: this.facilityId }
-      })
+const props = defineProps(["facilityId"]);
+const facilityStore = useFacilityStore();
 
-      addOperatingHoursModal.onDidDismiss().then(() => {
-        popoverController.dismiss()
-      })
+const facilityCalendar = computed(() => facilityStore.getFacilityCalendar);
 
-      addOperatingHoursModal.present()
-    },
-    async addCustomSchedule() {
-      const customScheduleModal = await modalController.create({
-        component: CustomScheduleModal,
-        componentProps: { facilityId: this.facilityId }
-      })
+async function addOperatingHours() {
+  const addOperatingHoursModal = await modalController.create({
+    component: AddOperatingHoursModal,
+    componentProps: { facilityId: props.facilityId }
+  });
 
-      customScheduleModal.onDidDismiss().then(() => {
-        popoverController.dismiss()
-      })
+  addOperatingHoursModal.onDidDismiss().then(() => {
+    popoverController.dismiss();
+  });
 
-      customScheduleModal.present()
-    },
-    async removeCalendarFromFacility() {
-      emitter.emit('presentLoader')
+  addOperatingHoursModal.present();
+}
 
-      let resp;
+async function addCustomSchedule() {
+  const customScheduleModal = await modalController.create({
+    component: CustomScheduleModal,
+    componentProps: { facilityId: props.facilityId }
+  });
 
-      try {
-        resp = await FacilityService.removeFacilityCalendar({
-          facilityId: this.facilityId,
-          calendarId: this.facilityCalendar.calendarId,
-          facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-          fromDate: this.facilityCalendar.fromDate
-      })
+  customScheduleModal.onDidDismiss().then(() => {
+    popoverController.dismiss();
+  });
 
-        if(!hasError(resp)) {
-          showToast("Successfully revoked calendar associativity with the facility.")
-          this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-        } else {
-          throw resp.data;
-        }
-      } catch(err) { 
-        showToast(translate("Failed to revoke calendar associativity with the facility."))
-        logger.error(err)
-      }
+  customScheduleModal.present();
+}
 
-      popoverController.dismiss()
-      emitter.emit('dismissLoader')
+async function removeCalendarFromFacility() {
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.removeFacilityCalendar({
+      facilityId: props.facilityId,
+      calendarId: facilityCalendar.value.calendarId,
+      facilityCalendarTypeId: facilityCalendar.value.facilityCalendarTypeId,
+      fromDate: facilityCalendar.value.fromDate
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Successfully revoked calendar associativity with the facility."));
+      await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
-    return {
-      store,
-      translate
-    };
+  } catch (err) { 
+    showToast(translate("Failed to revoke calendar associativity with the facility."));
+    logger.error(err);
   }
-});
+
+  popoverController.dismiss();
+  emitter.emit('dismissLoader');
+}
 </script>

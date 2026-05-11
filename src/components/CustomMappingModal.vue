@@ -43,9 +43,9 @@
       </ion-fab>
     </form>
   </ion-content>
-  </template>
+</template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -63,104 +63,69 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from 'vuex'
 import { showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "CustomMappingModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonTitle,
-    IonToolbar
-  },
-  data() {
-    return {
-      mappingId: '',
-      mappingName: '',
-      mappingValue: ''
-    }
-  },
-  computed: {
-    ...mapGetters({
-      currentFacility: 'facility/getCurrent'
-    })
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    async saveMapping() {
-      if(!this.mappingId.trim() || !this.mappingName.trim() || !this.mappingValue.trim()) {
-        showToast(translate('Please fill all the required fields'))
-        return;
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
+const currentFacility = computed(() => facilityStore.getCurrent);
+
+const mappingId = ref('');
+const mappingName = ref('');
+const mappingValue = ref('');
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function saveMapping() {
+  if (!mappingId.value.trim() || !mappingName.value.trim() || !mappingValue.value.trim()) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+
+  try {
+    let resp = await FacilityService.createEnumeration({
+      "enumId": mappingId.value,
+      "enumTypeId": "FACILITY_IDENTITY",
+      "description": mappingName.value
+    });
+
+    if (!hasError(resp) && resp.data.enumId) {
+      resp = await FacilityService.createFacilityIdentification({
+        "facilityId": currentFacility.value.facilityId,
+        "facilityIdenTypeId": resp.data.enumId,
+        "idValue": mappingValue.value
+      });
+
+      if (!hasError(resp)) {
+        showToast(translate('External mapping created successfully'));
+        // fetching external mapping types again, as we have created a new mapping type that needs to be included in popover
+        // added skipState property to not check for cached type and always make an api call
+        await utilStore.fetchExternalMappingTypes({ skipState: true });
+        facilityStore.fetchFacilityMappings({ facilityId: currentFacility.value.facilityId });
+        closeModal();
+      } else {
+        throw resp.data;
       }
-
-      emitter.emit('presentLoader')
-
-      let resp;
-
-      try {
-        resp = await FacilityService.createEnumeration({
-          "enumId": this.mappingId,
-          "enumTypeId": "FACILITY_IDENTITY",
-          "description": this.mappingName
-        })
-
-        if(!hasError(resp) && resp.data.enumId) {
-          resp = await FacilityService.createFacilityIdentification({
-            "facilityId": this.currentFacility.facilityId,
-            "facilityIdenTypeId": resp.data.enumId,
-            "idValue": this.mappingValue
-          })
-  
-          if(!hasError(resp)) {
-            showToast(translate('External mapping created successfully'))
-            // fetching external mapping types again, as we have created a new mapping type that needs to be included in popover
-            // added skipState property to not check for cached type and always make an api call
-            await this.store.dispatch('util/fetchExternalMappingTypes', { skipState: true })
-            this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.currentFacility.facilityId })
-            this.closeModal();
-          } else {
-            throw resp.data
-          }
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to create external mapping'))
-        logger.error('Failed to create external mapping', err)
-      }
-
-      emitter.emit('dismissLoader')
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore()
+  } catch (err) {
+    showToast(translate('Failed to create external mapping'));
+    logger.error('Failed to create external mapping', err);
+  }
 
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
-});
+  emitter.emit('dismissLoader');
+}
 </script>

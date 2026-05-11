@@ -35,7 +35,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -54,238 +54,205 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@hotwax/oms-api";
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { showToast } from "@/utils";
 import { DateTime } from "luxon";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onMounted } from "vue";
 
-export default defineComponent({
-  name: "AddFacilityGroupModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonCheckbox,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonItemDivider,
-    IonItemGroup,
-    IonList,
-    IonSearchbar,
-    IonTitle,
-    IonToolbar
-  },
-  data() {
-    return {
-      facilityGroupsByType: {},
-      filteredFacilityGroupsByType: {} as any,
-      groupsToAdd: [] as Array<string>,
-      groupsToRemove: [] as Array<string>,
-      queryString: '',
-      isSearching: false
-    }
-  },
-  computed: {
-    ...mapGetters({
-      current: 'facility/getCurrent',
-      facilityGroupTypes: 'util/getFacilityGroupTypes'
-    })
-  },
-  async mounted() {
-    await this.fetchFacilityGroups();
-  },
-  methods: {
-    closeModal(fetchGroups = false) {
-      modalController.dismiss({ fetchGroups });
-    },
-    async updateGroupsForFacility(facilityGroupId: string) {
-      // if clicked on an already added group
-      if(this.isFacilityGroupLinked(facilityGroupId)) {
-        if(this.groupsToRemove.includes(facilityGroupId)) {
-          this.groupsToRemove.splice(this.groupsToRemove.indexOf(facilityGroupId), 1)
-        } else {
-          this.groupsToRemove.push(facilityGroupId)
-        }
-        return;
-      }
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      if(this.groupsToAdd.includes(facilityGroupId)) {
-        this.groupsToAdd.splice(this.groupsToAdd.indexOf(facilityGroupId), 1)
-      } else {
-        this.groupsToAdd.push(facilityGroupId)
-      }
-    },
-    async updateGroups() {
-      if(!this.groupsToAdd.length && !this.groupsToRemove.length) {
-        showToast(translate('Please select/de-select groups to link/unlink from facility'))
-        return;
-      }
+const current = computed(() => facilityStore.getCurrent);
+const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
 
-      emitter.emit("presentLoader");
+const facilityGroupsByType = ref({} as any);
+const filteredFacilityGroupsByType = ref({} as any);
+const groupsToAdd = ref([] as Array<string>);
+const groupsToRemove = ref([] as Array<string>);
+const queryString = ref('');
+const isSearching = ref(false);
 
-      // Defined this to check if any of the api gets failed when linking multiple groups to the facility
-      let isFacilityGroupRespHasError = false;
-
-      // Using for..of loop as when calling the apis in parallel (using Promise.all) some of the groups doesn't gets linked to the facility
-      // even on api success, thus calling the apis one by one inside for..of.
-      for(let groupId of this.groupsToAdd) {
-        try {
-          await this.addFacilityToGroup(groupId);
-        } catch {
-          isFacilityGroupRespHasError = true;
-        }
-      }
-
-      for(let groupId of this.groupsToRemove) {
-        try {
-          await this.removeFacilityFromGroup(groupId);
-        } catch {
-          isFacilityGroupRespHasError = true;
-        }
-      }
-
-      if(isFacilityGroupRespHasError) {
-        showToast(translate('Failed to update some groups for facility'))
-      } else {
-        showToast(translate('Updated groups for facility'))
-      }
-      emitter.emit("dismissLoader");
-      this.closeModal(true);
-    },
-    async addFacilityToGroup(facilityGroupId: string) {
-      let resp;
-      try {
-        resp = await FacilityService.addFacilityToGroup({
-          "facilityId": this.current.facilityId,
-          "facilityGroupId": facilityGroupId
-        })
-
-        if(hasError(resp)) {
-          throw resp.data
-        }
-        return Promise.resolve(resp.data)
-      } catch (err) {
-        logger.error('Failed to add group to facility', err)
-        return Promise.reject(err)
-      }
-    },
-    async removeFacilityFromGroup(facilityGroupId: string) {
-      let resp;
-
-      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
-
-      try {
-
-        resp = await FacilityService.updateFacilityToGroup({
-          "facilityId": this.current.facilityId,
-          "facilityGroupId": facilityGroupId,
-          "fromDate": groupInformation.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-
-        if (hasError(resp)) {
-          throw resp.data;
-        }
-        return Promise.resolve(resp.data)
-      } catch (err) {
-        logger.error('Failed to remove group from facility', err)
-        return Promise.reject(err)
-      }
-    },
-    async fetchFacilityGroups() {
-      let viewIndex = 0, resp;
-
-      try {
-        do {
-          const params = {
-            entityName: "FacilityGroup",
-            noConditionFind: 'Y',
-            orderBy: "facilityGroupTypeId ASC",
-            fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-            viewSize: 250,
-            viewIndex
-          }
-          resp = await FacilityService.fetchFacilityGroups(params);
-  
-          if(!hasError(resp) && resp.data?.docs?.length > 0) {
-            const newFacilityGroups = resp.data.docs.reduce((groupsByType: any, group: any) => {
-              const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
- 
-              if(groupsByType[groupTypeId]) {
-                groupsByType[groupTypeId].push(group)
-              } else {
-                groupsByType[groupTypeId] = [group]
-              }
-              return groupsByType
-            }, {})
-            this.filteredFacilityGroupsByType = this.facilityGroupsByType = { ...this.filteredFacilityGroupsByType, ...newFacilityGroups };
-          } else {
-            throw resp.data
-          }
-          viewIndex++;
-        } while (resp.data.docs.length >= 250)
-      } catch(err) {
-        logger.error('Failed to find facility groups', err)
-      }
-    },
-    isFacilityGroupLinked(facilityGroupId: string) {
-      return this.current.groupInformation?.some((group: any) => group.facilityGroupId === facilityGroupId)
-    },
-    findGroups() {
-      this.isSearching = true
-      // when searched empty return the same list again
-      if(!this.queryString.trim()) {
-        this.filteredFacilityGroupsByType = this.facilityGroupsByType
-        this.isSearching = false
-        return;
-      }
-
-      // converting to lowercase to search without honoring case
-      const keyword = this.queryString.trim().toLowerCase();
-
-      this.filteredFacilityGroupsByType = Object.values(this.facilityGroupsByType).reduce((filteredGroups: any, groups: any) => {
-        groups.map((group: any) => {
-          const groupId = group.facilityGroupId ? group.facilityGroupId.toLowerCase() : '';
-          const groupName = group.facilityGroupName ? group.facilityGroupName.toLowerCase() : '';
-
-          if (groupId.includes(keyword) || groupName.includes(keyword)) {
-            const groupTypeId = group?.facilityGroupTypeId;
-            if (filteredGroups[groupTypeId]) {
-              filteredGroups[groupTypeId].push(group)
-            } else {
-              filteredGroups[groupTypeId] = [group]
-            }
-          }
-        })
-        return filteredGroups
-      }, {})
-
-      this.isSearching = false
-    },
-    getFacilityGroupTypeDesc(groupTypeId: any) {
-      return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
-    }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onMounted(async () => {
+  await fetchFacilityGroups();
 });
+
+function closeModal(fetchGroups = false) {
+  modalController.dismiss({ fetchGroups });
+}
+
+function updateGroupsForFacility(facilityGroupId: string) {
+  // if clicked on an already added group
+  if (isFacilityGroupLinked(facilityGroupId)) {
+    if (groupsToRemove.value.includes(facilityGroupId)) {
+      groupsToRemove.value.splice(groupsToRemove.value.indexOf(facilityGroupId), 1);
+    } else {
+      groupsToRemove.value.push(facilityGroupId);
+    }
+    return;
+  }
+
+  if (groupsToAdd.value.includes(facilityGroupId)) {
+    groupsToAdd.value.splice(groupsToAdd.value.indexOf(facilityGroupId), 1);
+  } else {
+    groupsToAdd.value.push(facilityGroupId);
+  }
+}
+
+async function updateGroups() {
+  if (!groupsToAdd.value.length && !groupsToRemove.value.length) {
+    showToast(translate('Please select/de-select groups to link/unlink from facility'));
+    return;
+  }
+
+  emitter.emit("presentLoader");
+
+  let isFacilityGroupRespHasError = false;
+
+  for (const groupId of groupsToAdd.value) {
+    try {
+      await addFacilityToGroup(groupId);
+    } catch {
+      isFacilityGroupRespHasError = true;
+    }
+  }
+
+  for (const groupId of groupsToRemove.value) {
+    try {
+      await removeFacilityFromGroup(groupId);
+    } catch {
+      isFacilityGroupRespHasError = true;
+    }
+  }
+
+  if (isFacilityGroupRespHasError) {
+    showToast(translate('Failed to update some groups for facility'));
+  } else {
+    showToast(translate('Updated groups for facility'));
+  }
+  emitter.emit("dismissLoader");
+  closeModal(true);
+}
+
+async function addFacilityToGroup(facilityGroupId: string) {
+  try {
+    const resp = await FacilityService.addFacilityToGroup({
+      "facilityId": current.value.facilityId,
+      "facilityGroupId": facilityGroupId
+    });
+
+    if (hasError(resp)) {
+      throw resp.data;
+    }
+    return Promise.resolve(resp.data);
+  } catch (err) {
+    logger.error('Failed to add group to facility', err);
+    return Promise.reject(err);
+  }
+}
+
+async function removeFacilityFromGroup(facilityGroupId: string) {
+  const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId);
+
+  try {
+    const resp = await FacilityService.updateFacilityToGroup({
+      "facilityId": current.value.facilityId,
+      "facilityGroupId": facilityGroupId,
+      "fromDate": groupInformation.fromDate,
+      "thruDate": DateTime.now().toMillis()
+    });
+
+    if (hasError(resp)) {
+      throw resp.data;
+    }
+    return Promise.resolve(resp.data);
+  } catch (err) {
+    logger.error('Failed to remove group from facility', err);
+    return Promise.reject(err);
+  }
+}
+
+async function fetchFacilityGroups() {
+  let viewIndex = 0, resp;
+
+  try {
+    do {
+      const params = {
+        entityName: "FacilityGroup",
+        noConditionFind: 'Y',
+        orderBy: "facilityGroupTypeId ASC",
+        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+        viewSize: 250,
+        viewIndex
+      };
+      resp = await FacilityService.fetchFacilityGroups(params);
+
+      if (!hasError(resp) && resp.data?.docs?.length > 0) {
+        const newFacilityGroups = resp.data.docs.reduce((groupsByType: any, group: any) => {
+          const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
+
+          if (groupsByType[groupTypeId]) {
+            groupsByType[groupTypeId].push(group);
+          } else {
+            groupsByType[groupTypeId] = [group];
+          }
+          return groupsByType;
+        }, {});
+        facilityGroupsByType.value = { ...facilityGroupsByType.value, ...newFacilityGroups };
+        filteredFacilityGroupsByType.value = facilityGroupsByType.value;
+      } else {
+        throw resp.data;
+      }
+      viewIndex++;
+    } while (resp.data.docs.length >= 250);
+  } catch (err) {
+    logger.error('Failed to find facility groups', err);
+  }
+}
+
+function isFacilityGroupLinked(facilityGroupId: string) {
+  return current.value.groupInformation?.some((group: any) => group.facilityGroupId === facilityGroupId);
+}
+
+function findGroups() {
+  isSearching.value = true;
+  if (!queryString.value.trim()) {
+    filteredFacilityGroupsByType.value = facilityGroupsByType.value;
+    isSearching.value = false;
+    return;
+  }
+
+  const keyword = queryString.value.trim().toLowerCase();
+
+  filteredFacilityGroupsByType.value = Object.values(facilityGroupsByType.value).reduce((filteredGroups: any, groups: any) => {
+    groups.map((group: any) => {
+      const groupId = group.facilityGroupId ? group.facilityGroupId.toLowerCase() : '';
+      const groupName = group.facilityGroupName ? group.facilityGroupName.toLowerCase() : '';
+
+      if (groupId.includes(keyword) || groupName.includes(keyword)) {
+        const groupTypeId = group?.facilityGroupTypeId || "Others";
+        if (filteredGroups[groupTypeId]) {
+          filteredGroups[groupTypeId].push(group);
+        } else {
+          filteredGroups[groupTypeId] = [group];
+        }
+      }
+    });
+    return filteredGroups;
+  }, {});
+
+  isSearching.value = false;
+}
+
+function getFacilityGroupTypeDesc(groupTypeId: any) {
+  return facilityGroupTypes.value.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId;
+}
 </script>
 
 <style scoped>

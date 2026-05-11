@@ -72,7 +72,7 @@
   </ion-fab>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -92,8 +92,6 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from '@/services/FacilityService';
@@ -101,207 +99,182 @@ import { getTelecomCountryCode, hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast, isValidEmail } from "@/utils";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onMounted } from "vue";
 
-export default defineComponent({
-  name: "FacilityAddressModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonItemDivider,
-    IonLabel,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      postalAddress: 'facility/getPostalAddress',
-      countries: 'util/getCountries',
-      states: 'util/getStates',
-      contactDetails: 'facility/getTelecomAndEmailAddress'
-    })
-  },
-  data() {
-    return {
-      address: {} as any,
-      telecomNumberValue: {} as any,
-      emailAddress: {} as any
+const props = defineProps(['facilityId', 'facilityName']);
+
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
+
+const postalAddress = computed(() => facilityStore.getPostalAddress);
+const countries = computed(() => utilStore.getCountries);
+const states = computed(() => utilStore.getStates);
+const contactDetails = computed(() => facilityStore.getTelecomAndEmailAddress);
+
+const address = ref({} as any);
+const telecomNumberValue = ref({} as any);
+const emailAddress = ref({} as any);
+
+onMounted(async () => {
+  address.value = JSON.parse(JSON.stringify(postalAddress.value));
+  telecomNumberValue.value = contactDetails.value?.telecomNumber ? JSON.parse(JSON.stringify(contactDetails.value.telecomNumber)) : {};
+  emailAddress.value = contactDetails.value?.emailAddress ? JSON.parse(JSON.stringify(contactDetails.value.emailAddress)) : {};
+
+  await utilStore.fetchCountries({ countryGeoId: address.value?.countryGeoId });
+  if (address.value.countryGeoId) {
+    const country = countries.value.find((country: any) => country.geoId === address.value.countryGeoId);
+    if (country) {
+      telecomNumberValue.value.countryCode = getTelecomCountryCode(country.geoCode);
     }
-  },
-  props: ['facilityId', 'facilityName'],
-  beforeMount() {
-    this.address = JSON.parse(JSON.stringify(this.postalAddress))
-    this.telecomNumberValue = this.contactDetails?.telecomNumber ? JSON.parse(JSON.stringify(this.contactDetails.telecomNumber)) : {}
-    this.emailAddress = this.contactDetails?.emailAddress ? JSON.parse(JSON.stringify(this.contactDetails.emailAddress)) : {};
-  },
-  async mounted() {
-    await this.store.dispatch('util/fetchCountries', { countryGeoId: this.address?.countryGeoId })
-    if(this.address.countryGeoId) {
-      const country = this.countries.find((country: any) => country.geoId === this.address.countryGeoId)
-      this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
-    }
-    if(!this.address.toName) {
-      this.address.toName = this.facilityName
-    }
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    validateZipCode(e: any) {
-      if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
-        e.preventDefault();
-        return false;
-      } 
-    },
-    async saveContact() {
-      let resp, postalAddress = '';
-
-      if(!this.address?.address1 || !this.address?.city || !this.address?.postalCode) {
-        showToast("Please fill all the required fields.")
-        return
-      }
-
-      if(this.emailAddress.infoString && !isValidEmail(this.emailAddress.infoString)) {
-        showToast(translate("Invalid email address"))
-        return
-      }
-
-      emitter.emit('presentLoader')
-      const isTelecomNumberUpdated = this.isTelecomNumberUpdated()
-      const isEmailAddressUpdated = this.isEmailAddressUpdated()
-
-      if(this.isAddressUpdated()) {
-        try {
-          if(this.address.contactMechId) {
-            resp = await FacilityService.updateFacilityPostalAddress({ ...this.address, facilityId: this.facilityId })
-          } else {
-            resp = await FacilityService.createFacilityPostalAddress({
-              ...this.address,
-              facilityId: this.facilityId,
-              contactMechPurposeTypeId: 'PRIMARY_LOCATION'
-            })
-          }
-
-          if(!hasError(resp)) {
-            postalAddress = this.address
-            await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
-            showToast(translate("Facility contact updated successfully."))
-          } else {
-            throw resp.data
-          }
-        } catch(err) {
-          showToast(translate("Failed to update facility contact."))
-          logger.error(err)
-        }
-      }
-
-      if(isTelecomNumberUpdated) await this.saveTelecomNumber()
-      if(isEmailAddressUpdated) await this.saveEmailAddress()
-
-      modalController.dismiss({ postalAddress })
-      emitter.emit('dismissLoader')
-    },
-    async saveTelecomNumber() {
-      let resp = {} as any;
-
-      const payload = {
-        facilityId: this.facilityId,
-        contactMechPurposeTypeId: 'PRIMARY_PHONE',
-        contactNumber: this.telecomNumberValue.contactNumber.trim(),
-        countryCode: this.telecomNumberValue.countryCode.replace('+', '')
-      }
-
-      try {
-        if(this.contactDetails.telecomNumber?.contactMechId) {
-          resp = await FacilityService.updateFacilityTelecomNumber({
-            ...payload,
-            contactMechId: this.contactDetails.telecomNumber.contactMechId,
-          })
-        } else {
-          resp = await FacilityService.createFacilityTelecomNumber(payload)
-        }
-
-        if(!hasError(resp)) {
-          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-    },
-    async saveEmailAddress() {
-      let resp = {} as any;
-
-      const payload = {
-        facilityId: this.facilityId,
-        emailAddress: this.emailAddress.infoString
-      }
-
-      try {
-        if(this.contactDetails.emailAddress?.contactMechId) {
-          resp = await FacilityService.updateFacilityEmailAddress({
-            ...payload,
-            contactMechId: this.emailAddress.contactMechId,
-          })
-        } else {
-          resp = await FacilityService.createFacilityEmailAddress({
-            ...payload,
-            contactMechTypeId: 'EMAIL_ADDRESS',
-            contactMechPurposeTypeId: 'PRIMARY_EMAIL',
-          })
-        }
-
-        if(!hasError(resp)) {
-          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-    },
-    updateState(ev: CustomEvent) {
-      this.store.dispatch('util/fetchStates', { geoId: ev.detail.value })
-      const country = this.countries.find((country: any) => country.geoId === ev.detail.value)
-      this.telecomNumberValue.countryCode = getTelecomCountryCode(country.geoCode)
-    },
-    isAddressUpdated() {
-      // in case postal address is not there - new facility is created
-      // hence explicitly returning true as .some check will fail
-      return Object.keys(this.postalAddress).length
-        ? Object.entries(this.postalAddress).some(([addressKey, addressValue]) => this.address[addressKey] !== addressValue)
-        : true
-    },
-    isTelecomNumberUpdated() {
-      return !Object.is(this.telecomNumberValue?.contactNumber, this.contactDetails?.telecomNumber?.contactNumber)
-    },
-    isEmailAddressUpdated() {
-      return this.emailAddress?.infoString && JSON.stringify(this.emailAddress.infoString) !== JSON.stringify(this.contactDetails?.emailAddress?.infoString);
-    },
-  },
-  setup() {
-    const store = useStore()
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      getTelecomCountryCode,
-      translate
-    };
-  },
+  }
+  if (!address.value.toName) {
+    address.value.toName = props.facilityName;
+  }
 });
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+function validateZipCode(e: any) {
+  if (/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)) {
+    e.preventDefault();
+    return false;
+  }
+}
+
+function isAddressUpdated() {
+  if (!Object.keys(postalAddress.value).length) return true;
+  return Object.entries(postalAddress.value).some(([addressKey, addressValue]) => address.value[addressKey] !== addressValue);
+}
+
+function isTelecomNumberUpdated() {
+  return !Object.is(telecomNumberValue.value?.contactNumber, contactDetails.value?.telecomNumber?.contactNumber);
+}
+
+function isEmailAddressUpdated() {
+  return emailAddress.value?.infoString && JSON.stringify(emailAddress.value.infoString) !== JSON.stringify(contactDetails.value?.emailAddress?.infoString);
+}
+
+async function saveTelecomNumber() {
+  let resp = {} as any;
+  const payload = {
+    facilityId: props.facilityId,
+    contactMechPurposeTypeId: 'PRIMARY_PHONE',
+    contactNumber: telecomNumberValue.value.contactNumber.trim(),
+    countryCode: telecomNumberValue.value.countryCode.replace('+', '')
+  };
+
+  try {
+    if (contactDetails.value.telecomNumber?.contactMechId) {
+      resp = await FacilityService.updateFacilityTelecomNumber({
+        ...payload,
+        contactMechId: contactDetails.value.telecomNumber.contactMechId,
+      });
+    } else {
+      resp = await FacilityService.createFacilityTelecomNumber(payload);
+    }
+
+    if (!hasError(resp)) {
+      await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+}
+
+async function saveEmailAddress() {
+  let resp = {} as any;
+  const payload = {
+    facilityId: props.facilityId,
+    emailAddress: emailAddress.value.infoString
+  };
+
+  try {
+    if (contactDetails.value.emailAddress?.contactMechId) {
+      resp = await FacilityService.updateFacilityEmailAddress({
+        ...payload,
+        contactMechId: emailAddress.value.contactMechId,
+      });
+    } else {
+      resp = await FacilityService.createFacilityEmailAddress({
+        ...payload,
+        contactMechTypeId: 'EMAIL_ADDRESS',
+        contactMechPurposeTypeId: 'PRIMARY_EMAIL',
+      });
+    }
+
+    if (!hasError(resp)) {
+      await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+}
+
+async function saveContact() {
+  let resp;
+  let savedPostalAddress = '';
+
+  if (!address.value?.address1 || !address.value?.city || !address.value?.postalCode) {
+    showToast("Please fill all the required fields.");
+    return;
+  }
+
+  if (emailAddress.value.infoString && !isValidEmail(emailAddress.value.infoString)) {
+    showToast(translate("Invalid email address"));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+  const telecomUpdated = isTelecomNumberUpdated();
+  const emailUpdated = isEmailAddressUpdated();
+
+  if (isAddressUpdated()) {
+    try {
+      if (address.value.contactMechId) {
+        resp = await FacilityService.updateFacilityPostalAddress({ ...address.value, facilityId: props.facilityId });
+      } else {
+        resp = await FacilityService.createFacilityPostalAddress({
+          ...address.value,
+          facilityId: props.facilityId,
+          contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+        });
+      }
+
+      if (!hasError(resp)) {
+        savedPostalAddress = address.value;
+        await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+        showToast(translate("Facility contact updated successfully."));
+      } else {
+        throw resp.data;
+      }
+    } catch (err) {
+      showToast(translate("Failed to update facility contact."));
+      logger.error(err);
+    }
+  }
+
+  if (telecomUpdated) await saveTelecomNumber();
+  if (emailUpdated) await saveEmailAddress();
+
+  modalController.dismiss({ postalAddress: savedPostalAddress });
+  emitter.emit('dismissLoader');
+}
+
+function updateState(ev: CustomEvent) {
+  utilStore.fetchStates({ geoId: ev.detail.value });
+  const country = countries.value.find((country: any) => country.geoId === ev.detail.value);
+  if (country) {
+    telecomNumberValue.value.countryCode = getTelecomCountryCode(country.geoCode);
+  }
+}
 </script>
 
 <style scoped>

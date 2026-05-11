@@ -35,7 +35,6 @@
               <ion-chip outline slot="end" @click="updateGroupTypeModal(group)">
                 {{ group.facilityGroupTypeId ? getFacilityGroupTypeDescription(group.facilityGroupTypeId) ? getFacilityGroupTypeDescription(group.facilityGroupTypeId) : group.facilityGroupTypeId : "-" }}
               </ion-chip>
-              
             </ion-item>
             <ion-item lines="full">
               <ion-label>{{ translate('Product stores') }}</ion-label>
@@ -105,7 +104,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonCard,
@@ -130,12 +129,12 @@ import {
   IonTitle,
   IonToolbar,
   modalController,
-  createAnimation
+  createAnimation,
+  onIonViewWillEnter
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
-import { ellipsisVerticalOutline, addOutline, bagHandleOutline, businessOutline } from 'ionicons/icons';
+import { ref, computed, onMounted } from 'vue';
+import { addOutline, bagHandleOutline, businessOutline, ellipsisVerticalOutline } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
-import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
 import { customSort, showToast } from '@/utils';
 import { FacilityService } from '@/services/FacilityService';
@@ -144,200 +143,173 @@ import logger from '@/logger';
 import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 import GroupTypeModal from "@/components/GroupTypeModal.vue";
 import FacilityGroupDescriptionModal from "@/components/FacilityGroupDescriptionModal.vue";
+import { useFacilityStore } from '@/store/facility';
+import { useUtilStore } from '@/store/util';
 
-export default defineComponent({
-  name: 'FindGroups',
-  components: {
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCheckbox,
-    IonChip,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonNote,
-    IonPage,
-    IonSearchbar,
-    IonSegment,
-    IonSegmentButton,
-    IonTitle,
-    IonToolbar
-  },
-  data() {
-    return {
-      segment: "facility-groups",
-      currentFacilityGroupTypeId: "",
-      isParentGroupDetailAnimationCompleted: false,
-      facilityGroupProductStore: {} as any
-    }
-  },
-  computed: {
-    ...mapGetters({
-      groups: "facility/getFacilityGroups",
-      facilityGroupTypes: "util/getFacilityGroupTypes",
-      isScrollable: "facility/isFacilityGroupsScrollable",
-      query: "facility/getGroupQuery",
-    })
-  },
-  async mounted() {
-    await this.store.dispatch('util/fetchFacilityGroupTypes')
-  },
-  async ionViewWillEnter() {
-    this.segment = "facility-groups"
-    await this.fetchGroups();
-    await this.resetParentGroupPage()
-  },
-  methods: {
-    async resetParentGroupPage() {
-      if (this.segment === 'facility-groups') {
-        this.currentFacilityGroupTypeId = ''
-        this.isParentGroupDetailAnimationCompleted = false;
-      } else {
-        this.query.queryString = ""
-        await this.updateQuery()
-      }
-    },
-    setCurrentFacilityGroupType(facilityGroupTypeId: string) {
-      this.currentFacilityGroupTypeId = facilityGroupTypeId
-      if (this.currentFacilityGroupTypeId && !this.isParentGroupDetailAnimationCompleted) {
-        this.playAnimation();
-        this.isParentGroupDetailAnimationCompleted = true;
-      }
-    },
-    isFacilityGroupLinked(facilityGroupTypeId: any) {
-      return this.currentFacilityGroupTypeId === facilityGroupTypeId
-    },
-    async updateFacilityGroup(facilityGroup: any) {
-      const isChecked = !this.isFacilityGroupLinked(facilityGroup.facilityGroupTypeId);
-      try {
-        const resp = await FacilityService.updateFacilityGroup({
-          "facilityGroupId": facilityGroup.facilityGroupId,
-          "facilityGroupTypeId": isChecked ? this.currentFacilityGroupTypeId : ''
-        })
+const router = useRouter();
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-        if (!hasError(resp)) {
-          const message = isChecked ? "Group associated to parent group." : "Group removed from parent group."
-          showToast(translate(message))
-          const updatedGroup = this.groups.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
-          updatedGroup.facilityGroupTypeId = isChecked ? this.currentFacilityGroupTypeId : ''
-          await this.store.dispatch('facility/updateFacilityGroups', this.groups)
-        } else {
-          throw resp.data;
-        }
-      } catch (err) {
-        const message = isChecked ? "Failed to associate group to parent group." : "Failed to remove group from parent group."
-        logger.error(message, err)
-        showToast(translate(message))
-      }
-    },
-    getFacilityGroupTypeDescription (facilityGroupTypeId: string) {
-      const facilityGroupType = this.facilityGroupTypes.find(((groupType: any) => groupType.facilityGroupTypeId === facilityGroupTypeId))
-      return facilityGroupType?.description ? facilityGroupType?.description : facilityGroupTypeId;
-    },
-    async updateQuery() {
-      await this.store.dispatch('facility/updateGroupQuery', this.query)
-      this.fetchGroups();
-    },
-    async fetchGroups() {
-      const viewSize = process.env.VUE_APP_VIEW_SIZE;
-      let viewIndex = 0;
-      do {
-        const payload = {
-          viewSize,
-          viewIndex
-        };
-        await this.store.dispatch('facility/fetchFacilityGroups', payload)
-        viewIndex++;
-      }
-      while (this.isScrollable);
-    },
-    getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
-      const associatedfacilityGroupIds = [] as any
+const segment = ref("facility-groups");
+const currentFacilityGroupTypeId = ref("");
+const isParentGroupDetailAnimationCompleted = ref(false);
 
-      this.groups.map((group: any) => {
-        if(group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
-          associatedfacilityGroupIds.push(group.facilityGroupId)
-        }
-      })
-      return associatedfacilityGroupIds
-    },
-    createFacilityGroup(){
-      this.router.push('/create-facility-group');
-    },
-    async updateGroupTypeModal(group: any) {
-      const updateGroupTypeModal = await modalController.create({
-        component: GroupTypeModal,
-        componentProps: { facilityGroup: group }
-      })
+const groups = computed(() => facilityStore.getFacilityGroups);
+const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
+const isScrollable = computed(() => facilityStore.isFacilityGroupsScrollable);
+const query = computed(() => facilityStore.getGroupQuery);
 
-      updateGroupTypeModal.present()
-    },
-    async updateGroupDescriptionModal(group: any) {
-      const facilityLoginModal = await modalController.create({
-        component: FacilityGroupDescriptionModal,
-        componentProps: { facilityGroup: group }
-      })
-      facilityLoginModal.present()
-    },
-    manageFacilities(facilityGroup: any) {
-      this.router.push({ path: `/manage-facilities/${facilityGroup.facilityGroupId}`})
-    },
-    async openAddProductStoreToGroupModal(group: any) {
-      const addProductStoreToGroupModal = await modalController.create({
-        component: AddProductStoreToGroupModal,
-        componentProps: { group }
-      })
-
-      addProductStoreToGroupModal.present()
-    },
-    playAnimation() {
-      const typeDetails = document.querySelector('.facility-group-type-details') as Element
-      const groupTypes = document.querySelector('.facility-group-types') as Element
-
-      const revealAnimation = createAnimation()
-        .addElement(typeDetails)
-        .duration(1500)
-        .easing('ease')
-        .keyframes([
-          { offset: 0, flex: '0', opacity: '0' },
-          { offset: 0.5, flex: '1', opacity: '0' },
-          { offset: 1, flex: '1', opacity: '1' }
-        ])
-
-      const gapAnimation = createAnimation()
-        .addElement(groupTypes)
-        .duration(500)
-        .fromTo('gap', '0', 'var(--spacer-2xl)');
-
-      createAnimation()
-        .addAnimation([gapAnimation, revealAnimation])
-        .play();
-    }
-  },
-  setup() {
-    const router = useRouter();
-    const store = useStore();
-
-    return {
-      addOutline,
-      bagHandleOutline,
-      businessOutline,
-      customSort,
-      ellipsisVerticalOutline,
-      router,
-      store,
-      translate
-    };
-  }
+onMounted(async () => {
+  await utilStore.fetchFacilityGroupTypes();
 });
+
+onIonViewWillEnter(async () => {
+  segment.value = "facility-groups";
+  await fetchGroups();
+  await resetParentGroupPage();
+});
+
+async function resetParentGroupPage() {
+  if (segment.value === 'facility-groups') {
+    currentFacilityGroupTypeId.value = '';
+    isParentGroupDetailAnimationCompleted.value = false;
+  } else {
+    query.value.queryString = "";
+    await updateQuery();
+  }
+}
+
+function setCurrentFacilityGroupType(facilityGroupTypeId: string) {
+  currentFacilityGroupTypeId.value = facilityGroupTypeId;
+  if (currentFacilityGroupTypeId.value && !isParentGroupDetailAnimationCompleted.value) {
+    playAnimation();
+    isParentGroupDetailAnimationCompleted.value = true;
+  }
+}
+
+function isFacilityGroupLinked(facilityGroupTypeId: any) {
+  return currentFacilityGroupTypeId.value === facilityGroupTypeId;
+}
+
+async function updateFacilityGroup(facilityGroup: any) {
+  const isChecked = !isFacilityGroupLinked(facilityGroup.facilityGroupTypeId);
+  try {
+    const resp = await FacilityService.updateFacilityGroup({
+      "facilityGroupId": facilityGroup.facilityGroupId,
+      "facilityGroupTypeId": isChecked ? currentFacilityGroupTypeId.value : ''
+    });
+
+    if (!hasError(resp)) {
+      const message = isChecked ? "Group associated to parent group." : "Group removed from parent group.";
+      showToast(translate(message));
+      const updatedGroups = groups.value.map((group: any) => {
+        if (group.facilityGroupId === facilityGroup.facilityGroupId) {
+          return { ...group, facilityGroupTypeId: isChecked ? currentFacilityGroupTypeId.value : '' };
+        }
+        return group;
+      });
+      await facilityStore.updateFacilityGroups(updatedGroups);
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    const message = isChecked ? "Failed to associate group to parent group." : "Failed to remove group from parent group.";
+    logger.error(message, err);
+    showToast(translate(message));
+  }
+}
+
+function getFacilityGroupTypeDescription(facilityGroupTypeId: string) {
+  const facilityGroupType = facilityGroupTypes.value.find(((groupType: any) => groupType.facilityGroupTypeId === facilityGroupTypeId));
+  return facilityGroupType?.description ? facilityGroupType?.description : facilityGroupTypeId;
+}
+
+async function updateQuery() {
+  await facilityStore.updateGroupQuery(query.value);
+  await fetchGroups();
+}
+
+async function fetchGroups() {
+  const viewSize = import.meta.env.VITE_APP_VIEW_SIZE;
+  let viewIndex = 0;
+  do {
+    const payload = {
+      viewSize,
+      viewIndex
+    };
+    await facilityStore.fetchFacilityGroups(payload);
+    viewIndex++;
+  }
+  while (isScrollable.value);
+}
+
+function getAssociatedFacilityGroupIds(facilityGroupTypeId: any) {
+  const associatedfacilityGroupIds = [] as any;
+  groups.value.forEach((group: any) => {
+    if (group.facilityGroupTypeId && group.facilityGroupTypeId === facilityGroupTypeId) {
+      associatedfacilityGroupIds.push(group.facilityGroupId);
+    }
+  });
+  return associatedfacilityGroupIds;
+}
+
+function createFacilityGroup() {
+  router.push('/create-facility-group');
+}
+
+async function updateGroupTypeModal(group: any) {
+  const modal = await modalController.create({
+    component: GroupTypeModal,
+    componentProps: { facilityGroup: group }
+  });
+  modal.present();
+}
+
+async function updateGroupDescriptionModal(group: any) {
+  const modal = await modalController.create({
+    component: FacilityGroupDescriptionModal,
+    componentProps: { facilityGroup: group }
+  });
+  modal.present();
+}
+
+function manageFacilities(facilityGroup: any) {
+  router.push({ path: `/manage-facilities/${facilityGroup.facilityGroupId}` });
+}
+
+async function openAddProductStoreToGroupModal(group: any) {
+  const modal = await modalController.create({
+    component: AddProductStoreToGroupModal,
+    componentProps: { group }
+  });
+  modal.present();
+}
+
+function playAnimation() {
+  const typeDetails = document.querySelector('.facility-group-type-details') as Element;
+  const groupTypes = document.querySelector('.facility-group-types') as Element;
+
+  if (!typeDetails || !groupTypes) return;
+
+  const revealAnimation = createAnimation()
+    .addElement(typeDetails)
+    .duration(1500)
+    .easing('ease')
+    .keyframes([
+      { offset: 0, flex: '0', opacity: '0' },
+      { offset: 0.5, flex: '1', opacity: '0' },
+      { offset: 1, flex: '1', opacity: '1' }
+    ]);
+
+  const gapAnimation = createAnimation()
+    .addElement(groupTypes)
+    .duration(500)
+    .fromTo('gap', '0', 'var(--spacer-2xl)');
+
+  createAnimation()
+    .addAnimation([gapAnimation, revealAnimation])
+    .play();
+}
 </script>
 
 <style scoped>
@@ -352,29 +324,29 @@ main:has(ion-card) {
 }
 
 .facility-group-types {
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    gap: var(--spacer-2xl);
-    max-width: 990px;
-    margin: var(--spacer-base) auto 0;
-  }
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  gap: var(--spacer-2xl);
+  max-width: 990px;
+  margin: var(--spacer-base) auto 0;
+}
 
-  .facility-group-types > section {
-    display: grid;
-    grid-template-columns: minmax(400px, 1fr);
-    max-width: 50ch;
-  }
+.facility-group-types > section {
+  display: grid;
+  grid-template-columns: minmax(400px, 1fr);
+  max-width: 50ch;
+}
+.facility-group-type-details {
+  flex: 1 0 355px;
+  position: sticky;
+  top: var(--spacer-lg);
+  flex: 1;
+}
+@media (min-width: 991px) {
   .facility-group-type-details {
-    flex: 1 0 355px;
-    position: sticky;
-    top: var(--spacer-lg);
-    flex: 1;
+    width: 0px;
+    opacity: 0;
   }
-  @media (min-width: 991px) {
-    .facility-group-type-details {
-      width: 0px;
-      opacity: 0;
-    }
-  }
+}
 </style>

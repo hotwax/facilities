@@ -29,7 +29,7 @@
   </ion-menu>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonHeader,
@@ -44,49 +44,24 @@ import {
   menuController
 } from '@ionic/vue'
 import { businessOutline, globeOutline } from 'ionicons/icons'
-import { defineComponent } from 'vue';
-import { mapGetters, useStore } from 'vuex';
 import { translate } from '@hotwax/dxp-components'
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { computed } from 'vue';
 
-export default defineComponent({
-  name: 'FacilityFilters',
-  components: {
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonList,
-    IonMenu,
-    IonTitle,
-    IonToolbar,
-    IonSelect,
-    IonSelectOption
-  },
-  computed: {
-    ...mapGetters({
-      query: "facility/getFacilityQuery",
-      facilityTypes: "util/getFacilityTypes",
-      productStores: "util/getProductStores"
-    })
-  },
-  methods: {
-    closeMenu() {
-      menuController.close()
-    },
-    async updateQuery() {
-      await this.store.dispatch('facility/updateFacilityQuery', this.query)
-      this.closeMenu();
-    },
-  },
-  setup() {
-    const store = useStore();
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-    return {
-      businessOutline,
-      globeOutline,
-      store,
-      translate
-    };    
-  }
-})
+const query = computed(() => facilityStore.getFacilityQuery);
+const facilityTypes = computed(() => utilStore.getFacilityTypes);
+const productStores = computed(() => utilStore.getProductStores);
+
+function closeMenu() {
+  menuController.close();
+}
+
+async function updateQuery() {
+  await facilityStore.updateFacilityQuery(query.value);
+  closeMenu();
+}
 </script>

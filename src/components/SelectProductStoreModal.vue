@@ -29,7 +29,7 @@
   </ion-content>
 </template>
   
-<script lang="ts">
+<script setup lang="ts">
 import { 
   IonButton,
   IonButtons,
@@ -46,81 +46,46 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from "vuex";
+import { useUtilStore } from "@/store/util";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "SelectProductStoreModal",
-  components: { 
-    IonButton,
-    IonButtons,
-    IonCheckbox,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      productStores: 'util/getProductStores',
-      facilityProductStores: 'facility/getFacilityProductStores',
-    })
-  },
-  props: ["selectedProductStores"],
-  data() {
-    return {
-      selectedProductStoreValues: JSON.parse(JSON.stringify(this.selectedProductStores)),
+const props = defineProps(["selectedProductStores"]);
+const utilStore = useUtilStore();
+
+const productStores = computed(() => utilStore.getProductStores);
+
+const selectedProductStoreValues = ref(JSON.parse(JSON.stringify(props.selectedProductStores)));
+
+function closeModal() {
+  modalController.dismiss({ dismissed: true });
+}
+
+async function saveProductStores() {
+  const productStoresToCreate = selectedProductStoreValues.value.filter((selectedStore: any) => !props.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId));
+  const productStoresToRemove = props.selectedProductStores.filter((store: any) => !selectedProductStoreValues.value.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId));
+
+  modalController.dismiss({
+    dismissed: true,
+    value: {
+      selectedProductStores: selectedProductStoreValues.value,
+      productStoresToCreate,
+      productStoresToRemove
     }
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss({ dismissed: true});
-    },
-    async saveProductStores() {
-      const productStoresToCreate = this.selectedProductStoreValues.filter((selectedStore: any) => !this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId))
-      const productStoresToRemove = this.selectedProductStores.filter((store: any) => !this.selectedProductStoreValues.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId))
+  });
+}
 
-      modalController.dismiss({
-        dismissed: true,
-        value: {
-          selectedProductStores: this.selectedProductStoreValues,
-          productStoresToCreate,
-          productStoresToRemove
-        }
-      });
+function toggleProductStoreSelection(updatedStore: any) {
+  const isCurrentlySelected = selectedProductStoreValues.value.some((store: any) => store.productStoreId === updatedStore.productStoreId);
+  if (isCurrentlySelected) {
+    selectedProductStoreValues.value = selectedProductStoreValues.value.filter((store: any) => store.productStoreId !== updatedStore.productStoreId);
+  } else {
+    selectedProductStoreValues.value.push(updatedStore);
+  }
+}
 
-      modalController.dismiss()
-    },
-    toggleProductStoreSelection(updatedStore: any) {
-      let selectedStore = this.selectedProductStoreValues.some((store: any) => store.productStoreId === updatedStore.productStoreId);
-      if(selectedStore) {
-        this.selectedProductStoreValues = this.selectedProductStoreValues.filter((store: any) => store.productStoreId !== updatedStore.productStoreId);
-      } else {
-        this.selectedProductStoreValues.push(updatedStore);
-      }
-    },
-    isSelected(productStoreId: string) {
-      return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
-    }
-  },
-  setup() {
-    const store = useStore()
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
-});
+function isSelected(productStoreId: string) {
+  return selectedProductStoreValues.value.some((productStore: any) => productStore.productStoreId === productStoreId);
+}
 </script>
-    

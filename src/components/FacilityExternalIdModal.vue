@@ -27,7 +27,7 @@
       <ion-list>
         <ion-list-header>{{ translate('Facility External ID') }}</ion-list-header>
         <ion-item>
-          <ion-input id="inputElement" :label="translate('Identification')" v-model="currentFacility.externalId" />
+          <ion-input id="inputElement" :label="translate('Identification')" v-model="externalId" />
         </ion-item>
       </ion-list>
 
@@ -40,7 +40,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -58,83 +58,54 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from 'vuex'
 import { FacilityService } from '@/services/FacilityService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "FacilityExternalIdModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      currentFacility: 'facility/getCurrent'
-    })
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    async updateExternalId() {
-      if(!this.currentFacility.externalId?.trim()) {
-        showToast(translate('Please enter a valid value'))
-        return;
-      }
+const facilityStore = useFacilityStore();
+const currentFacility = computed(() => facilityStore.getCurrent);
 
-      emitter.emit('presentLoader')
+const externalId = ref(currentFacility.value.externalId || '');
 
-      let resp;
+function closeModal() {
+  modalController.dismiss();
+}
 
-      try {
-        resp = await FacilityService.updateFacility({
-          "facilityId": this.currentFacility.facilityId,
-          "externalId": this.currentFacility.externalId
-        })
+async function updateExternalId() {
+  if (!externalId.value?.trim()) {
+    showToast(translate('Please enter a valid value'));
+    return;
+  }
 
-        if(!hasError(resp)) {
-          showToast(translate('Facility external ID updated.'))
-          await this.store.dispatch('facility/updateCurrentFacility', this.currentFacility)
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to create external mapping'))
-        logger.error('Failed to create external mapping', err)
-      }
+  emitter.emit('presentLoader');
 
-      emitter.emit('dismissLoader')
+  try {
+    const resp = await FacilityService.updateFacility({
+      "facilityId": currentFacility.value.facilityId,
+      "externalId": externalId.value
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Facility external ID updated.'));
+      await facilityStore.updateCurrentFacility({
+        ...currentFacility.value,
+        externalId: externalId.value
+      });
+      closeModal();
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
+  } catch (err) {
+    showToast(translate('Failed to create external mapping'));
+    logger.error('Failed to create external mapping', err);
+  }
 
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
-});
+  emitter.emit('dismissLoader');
+}
 </script>

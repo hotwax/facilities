@@ -27,7 +27,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -41,52 +41,31 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { closeOutline, saveOutline } from "ionicons/icons";
+import { closeOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
+import { onMounted, ref } from "vue";
 
-export default defineComponent({
-  name: "ViewFacilityOrderCountModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonCol,
-    IonContent,
-    IonGrid,
-    IonHeader,
-    IonIcon,
-    IonRow,
-    IonTitle,
-    IonToolbar
-  },
-  props: ["facilityId"],
-  data() {
-    return {
-      facilityOrderCounts: [] as Array<any>,
-      isLoading: true
-    }
-  },
-  async mounted() {
-    this.facilityOrderCounts = await FacilityService.fetchFacilityOrderCounts(this.facilityId)
-    this.isLoading = false;
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    }
-  },
-  setup() {
-    return {
-      closeOutline,
-      saveOutline,
-      translate
-    };
-  },
+const props = defineProps(["facilityId"]);
+const facilityOrderCounts = ref([] as Array<any>);
+const isLoading = ref(true);
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+onMounted(async () => {
+  try {
+    facilityOrderCounts.value = await FacilityService.fetchFacilityOrderCounts(props.facilityId);
+  } catch (error) {
+    console.error("Failed to fetch facility order counts", error);
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 
-<style>
+<style scoped>
   ion-col {
     text-align: center;
   }

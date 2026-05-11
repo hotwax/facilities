@@ -52,7 +52,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -70,128 +70,98 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onBeforeMount } from "vue";
 
-export default defineComponent({
-  name: "AddLocationModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTitle,
-    IonToolbar
-  },
-  props: ["location"],
-  data() {
-    return {
-      locationInfo: {} as any
-    }
-  },
-  beforeMount() {
-    this.locationInfo = this.location ? JSON.parse(JSON.stringify(this.location)) : {}
-  },
-  computed: {
-    ...mapGetters({
-      current: 'facility/getCurrent',
-      locationTypes: 'util/getLocationTypes'
-    })
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss();
-    },
-    async saveFacilityLocation() {
-      if(!this.locationInfo.aisleId?.trim() || !this.locationInfo.areaId?.trim() || !this.locationInfo.sectionId?.trim() || !this.locationInfo.levelId?.trim()) {
-        showToast(translate('Please fill all the required fields'))
-        return;
-      }
+const props = defineProps(["location"]);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      // checking for locationSeqId as when adding new facility we won't be having locationSeqId
-      if(this.location?.locationSeqId) {
-        await this.updateFacilityLocation()
-      } else {
-        await this.addFacilityLocation()
-      }
+const current = computed(() => facilityStore.getCurrent);
+const locationTypes = computed(() => utilStore.getLocationTypes);
 
-      // fetching facility locations after updating/creating a location
-      await this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.current.facilityId })
-    },
-    async addFacilityLocation() {
-      const params = {
-        facilityId: this.current.facilityId,
-        ...this.locationInfo
-      }
+const locationInfo = ref({} as any);
 
-      emitter.emit('presentLoader')
-
-      try {
-        const resp = await FacilityService.createFacilityLocation(params)
-
-        if(!hasError(resp)) {
-          showToast(translate('Facility location created successfully'))
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to create facility location'))
-        logger.error('Failed to create facility location', err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-
-    async updateFacilityLocation() {
-      const params = {
-        facilityId: this.current.facilityId,
-        ...this.locationInfo
-      }
-
-      emitter.emit('presentLoader')
-
-      try {
-        const resp = await FacilityService.updateFacilityLocation(params)
-
-        if(!hasError(resp)) {
-          showToast(translate('Facility location updated successfully'))
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update facility location'))
-        logger.error('Failed to update facility location', err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onBeforeMount(() => {
+  locationInfo.value = props.location ? JSON.parse(JSON.stringify(props.location)) : {};
 });
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function saveFacilityLocation() {
+  if (!locationInfo.value.aisleId?.trim() || !locationInfo.value.areaId?.trim() || !locationInfo.value.sectionId?.trim() || !locationInfo.value.levelId?.trim()) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  // checking for locationSeqId as when adding new facility we won't be having locationSeqId
+  if (props.location?.locationSeqId) {
+    await updateFacilityLocation();
+  } else {
+    await addFacilityLocation();
+  }
+
+  // fetching facility locations after updating/creating a location
+  await facilityStore.fetchFacilityLocations({ facilityId: current.value.facilityId });
+}
+
+async function addFacilityLocation() {
+  const params = {
+    facilityId: current.value.facilityId,
+    ...locationInfo.value
+  };
+
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.createFacilityLocation(params);
+
+    if (!hasError(resp)) {
+      showToast(translate('Facility location created successfully'));
+      closeModal();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to create facility location'));
+    logger.error('Failed to create facility location', err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function updateFacilityLocation() {
+  const params = {
+    facilityId: current.value.facilityId,
+    ...locationInfo.value
+  };
+
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.updateFacilityLocation(params);
+
+    if (!hasError(resp)) {
+      showToast(translate('Facility location updated successfully'));
+      closeModal();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update facility location'));
+    logger.error('Failed to update facility location', err);
+  }
+
+  emitter.emit('dismissLoader');
+}
 </script>

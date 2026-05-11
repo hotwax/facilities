@@ -44,7 +44,7 @@
   </ion-fab>
 </template>
   
-<script lang="ts">
+<script setup lang="ts">
 import { 
   IonAccordion,
   IonAccordionGroup,
@@ -64,8 +64,6 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { mapGetters, useStore } from "vuex";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
@@ -74,134 +72,104 @@ import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { showToast } from "@/utils";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onBeforeMount } from "vue";
 
-export default defineComponent({
-  name: "AddOperatingHoursModal",
-  components: { 
-    IonAccordion,
-    IonAccordionGroup,
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonRadio,
-    IonRadioGroup,
-    IonTitle,
-    IonToolbar,
-  },
-  data() {
-    return {
-      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-      selectedCalendarId: '' as any
-    }
-  },
-  props: ["facilityId"],
-  computed: {
-    ...mapGetters({
-      calendars: 'util/getCalendars',
-      facilityCalendar: 'facility/getFacilityCalendar'
-    })
-  },
-  beforeMount() {
-    this.selectedCalendarId = this.facilityCalendar.calendarId
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss({ dismissed: true});
-    },
-    saveOperatingHours() {
-      if(this.facilityCalendar?.calendarId) {
-        this.updateOperatingHours()
-      } else {
-        this.addOperatingHours()
-      }
-    },
-    async addOperatingHours() {
-      emitter.emit('presentLoader')
+const props = defineProps(["facilityId"]);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      try {
-        const resp = await FacilityService.associateCalendarToFacility({
-          facilityId: this.facilityId,
-          calendarId: this.selectedCalendarId,
-          fromDate: DateTime.now().toMillis(),
-          facilityCalendarTypeId: 'OPERATING_HOURS'
-        })
+const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const selectedCalendarId = ref('' as any);
 
-        if(!hasError(resp)) {
-          showToast(translate("Successfully associated calendar to the facility."))
-          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate("Failed to associate calendar to the facility."))
-        logger.error(err)
-      }
+const calendars = computed(() => utilStore.getCalendars);
+const facilityCalendar = computed(() => facilityStore.getFacilityCalendar);
 
-      modalController.dismiss()
-      emitter.emit('dismissLoader')
-    },
-    async updateOperatingHours() {
-      emitter.emit('presentLoader')
-
-      let resp;
-
-      try {
-        resp = await FacilityService.removeFacilityCalendar({
-          facilityId: this.facilityId,
-          calendarId: this.facilityCalendar.calendarId,
-          facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-          fromDate: this.facilityCalendar.fromDate
-        })
-
-        if(!hasError(resp)) {
-          resp = await FacilityService.associateCalendarToFacility({
-            facilityId: this.facilityId,
-            calendarId: this.selectedCalendarId,
-            fromDate: DateTime.now().toMillis(),
-            facilityCalendarTypeId: 'OPERATING_HOURS'
-          })
-
-          if(!hasError(resp)) {
-            showToast(translate("Successfully associated calendar to the facility."))
-            await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-          } else {
-            throw resp.data
-          }
-        } else {
-          throw resp.data;
-        }
-      } catch(err) {
-        showToast(translate("Failed to associate calendar to the facility."))
-        logger.error(err)
-      }
-
-      modalController.dismiss()
-      emitter.emit('dismissLoader')
-    },
-    getStartAndEndTime(startTime: any, capacity: any) {
-      const formatedStartTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('hh:mm a');
-      const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
-      return `${formatedStartTime} - ${endTime}`
-    }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onBeforeMount(() => {
+  selectedCalendarId.value = facilityCalendar.value.calendarId;
 });
+
+function closeModal() {
+  modalController.dismiss({ dismissed: true });
+}
+
+function saveOperatingHours() {
+  if (facilityCalendar.value?.calendarId) {
+    updateOperatingHours();
+  } else {
+    addOperatingHours();
+  }
+}
+
+async function addOperatingHours() {
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.associateCalendarToFacility({
+      facilityId: props.facilityId,
+      calendarId: selectedCalendarId.value,
+      fromDate: DateTime.now().toMillis(),
+      facilityCalendarTypeId: 'OPERATING_HOURS'
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Successfully associated calendar to the facility."));
+      await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate("Failed to associate calendar to the facility."));
+    logger.error(err);
+  }
+
+  modalController.dismiss();
+  emitter.emit('dismissLoader');
+}
+
+async function updateOperatingHours() {
+  emitter.emit('presentLoader');
+
+  try {
+    let resp = await FacilityService.removeFacilityCalendar({
+      facilityId: props.facilityId,
+      calendarId: facilityCalendar.value.calendarId,
+      facilityCalendarTypeId: facilityCalendar.value.facilityCalendarTypeId,
+      fromDate: facilityCalendar.value.fromDate
+    });
+
+    if (!hasError(resp)) {
+      resp = await FacilityService.associateCalendarToFacility({
+        facilityId: props.facilityId,
+        calendarId: selectedCalendarId.value,
+        fromDate: DateTime.now().toMillis(),
+        facilityCalendarTypeId: 'OPERATING_HOURS'
+      });
+
+      if (!hasError(resp)) {
+        showToast(translate("Successfully associated calendar to the facility."));
+        await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
+      } else {
+        throw resp.data;
+      }
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate("Failed to associate calendar to the facility."));
+    logger.error(err);
+  }
+
+  modalController.dismiss();
+  emitter.emit('dismissLoader');
+}
+
+function getStartAndEndTime(startTime: any, capacity: any) {
+  const formatedStartTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('hh:mm a');
+  const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a');
+  return `${formatedStartTime} - ${endTime}`;
+}
 </script>
 
 <style scoped>

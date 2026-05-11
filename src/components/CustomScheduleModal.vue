@@ -72,7 +72,7 @@
   </ion-fab>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { 
   IonButton,
   IonButtons,
@@ -94,185 +94,151 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { hasError } from "@hotwax/oms-api";
 import { DateTime } from "luxon";
-import { mapGetters, useStore } from "vuex";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
 import { showToast } from "@/utils";
 import emitter from "@/event-bus";
+import { ref, computed } from "vue";
 
-export default defineComponent({
-  name: "CustomScheduleModal",
-  components: { 
-    IonButton,
-    IonButtons,
-    IonChip,
-    IonContent,
-    IonDatetime,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonModal,
-    IonText,
-    IonTitle,
-    IonToggle,
-    IonToolbar,
-  },
-  data() {
-    return {
-      isDailyTimingsChecked: false as boolean,
-      days: ['Daily'],
-      selectedTimesForWeek: {} as any,
-      selectedDayTime: '',
-      isTimeModalOpen: false
-    }
-  },
-  props: ['facilityId'],
-  computed: {
-    ...mapGetters({
-      facilityCalendar: 'facility/getFacilityCalendar'
-    })
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss({ dismissed: true});
-    },
-    clearSelectedTime(selectedDayTime: string) {
-      this.selectedTimesForWeek[selectedDayTime] = ''
-    },
-    async openTimeModal(selectedDayTime: string) {
-      this.selectedDayTime = selectedDayTime
-      this.isTimeModalOpen = true
-    },
-    updateTime(event: CustomEvent) {
-      this.selectedTimesForWeek[this.selectedDayTime] = event.detail.value
-    },
-    updateDailyTimings() {
-      this.isDailyTimingsChecked = !this.isDailyTimingsChecked
-      this.days = this.isDailyTimingsChecked ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] : ['Daily']
-    },
-    async saveCustomSchedule() {
-      let payload = {} as any
+const props = defineProps(['facilityId']);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      if(this.days.length === 1) {
-        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-        const dailyStartTime = DateTime.fromISO(this.selectedTimesForWeek['DailyStartTime'], {setZone: true}).toFormat('HH:mm:ss')
-        const dailyCapacity = this.getCapacity(this.selectedTimesForWeek['DailyStartTime'], this.selectedTimesForWeek['DailyEndTime'])
-        if(dailyStartTime && dailyCapacity) {
-          days.map((day: string) => {
-            payload[day+'StartTime'] = dailyStartTime
-            payload[day+'Capacity'] = dailyCapacity
-          })
-        }
+const facilityCalendar = computed(() => facilityStore.getFacilityCalendar);
+
+const isDailyTimingsChecked = ref(false);
+const days = ref(['Daily']);
+const selectedTimesForWeek = ref({} as any);
+const selectedDayTime = ref('');
+const isTimeModalOpen = ref(false);
+
+function closeModal() {
+  modalController.dismiss({ dismissed: true });
+}
+
+function clearSelectedTime(dayTime: string) {
+  selectedTimesForWeek.value[dayTime] = '';
+}
+
+async function openTimeModal(dayTime: string) {
+  selectedDayTime.value = dayTime;
+  isTimeModalOpen.value = true;
+}
+
+function updateTime(event: CustomEvent) {
+  selectedTimesForWeek.value[selectedDayTime.value] = event.detail.value;
+}
+
+function updateDailyTimings() {
+  isDailyTimingsChecked.value = !isDailyTimingsChecked.value;
+  days.value = isDailyTimingsChecked.value ? ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] : ['Daily'];
+}
+
+async function addCustomSchedule(payload: any) {
+  try {
+    let resp = await FacilityService.createFacilityCalendar({ ...payload, description: selectedTimesForWeek.value.description.trim() });
+    if (!hasError(resp)) {
+      const calendarId = resp.data.calendarId;
+
+      resp = await FacilityService.associateCalendarToFacility({
+        facilityId: props.facilityId,
+        calendarId: calendarId,
+        fromDate: DateTime.now().toMillis(),
+        facilityCalendarTypeId: 'OPERATING_HOURS'
+      });
+
+      if (!hasError(resp)) {
+        showToast(translate("Successfully created and associated calendar to the facility."));
+        await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
+        await utilStore.fetchCalendars();
+        modalController.dismiss();
       } else {
-        this.days.map((day: string) => {
-          const startTime = DateTime.fromISO(this.selectedTimesForWeek[day+'StartTime'], {setZone: true}).toFormat('HH:mm:ss')
-          const capacity = this.getCapacity(this.selectedTimesForWeek[day+'StartTime'], this.selectedTimesForWeek[day+'EndTime'])
-          if(startTime && capacity) {
-            payload[day+'StartTime'] = startTime
-            payload[day+'Capacity'] = capacity
-          }
-        })
+        throw resp.data;
       }
-
-      if(!Object.keys(payload).length) {
-        showToast(translate("Please check start time and end time entries. End time cannot be less than start time."))
-        return;
-      }
-
-      emitter.emit('presentLoader')
-
-      if(this.facilityCalendar?.calendarId) {
-        try {
-          const resp = await FacilityService.removeFacilityCalendar({
-            facilityId: this.facilityId,
-            calendarId: this.facilityCalendar.calendarId,
-            facilityCalendarTypeId: this.facilityCalendar.facilityCalendarTypeId,
-            fromDate: this.facilityCalendar.fromDate
-          })
-
-          if(!hasError(resp)) {
-            await this.addCustomSchedule(payload)
-          } else {
-            throw resp.data;
-          }
-        } catch(err) {
-          logger.error(err)
-        }
-      } else {
-        await this.addCustomSchedule(payload)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async addCustomSchedule(payload: any) {
-      let resp;
-      let calendarId;
-
-      try {
-        resp = await FacilityService.createFacilityCalendar({ ...payload, description: this.selectedTimesForWeek.description.trim()})
-        if(!hasError(resp)) {
-          calendarId = resp.data.calendarId
-
-          resp = await FacilityService.associateCalendarToFacility({
-            facilityId: this.facilityId,
-            calendarId: calendarId,
-            fromDate: DateTime.now().toMillis(),
-            facilityCalendarTypeId: 'OPERATING_HOURS'
-          })
-
-          if(!hasError(resp)) {
-            showToast(translate("Successfully created and associated calendar to the facility."))
-            await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-            await this.store.dispatch('util/fetchCalendars')
-            modalController.dismiss()
-          } else {
-            throw resp.data
-          }
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate("Failed to create calendar to the facility."))
-        logger.error(err)
-      }
-    },
-    getCapacity(startTime: any, endTime: any) {
-      const formatedStartTime = DateTime.fromISO(startTime, {setZone: true}).toMillis()
-      const formatedEndTime = DateTime.fromISO(endTime, {setZone: true}).toMillis()
-
-      if(formatedEndTime <= formatedStartTime) {
-        return null;
-      }
-
-      return formatedEndTime - formatedStartTime
-    },
-    getTime(time: any) {
-      return DateTime.fromISO(time, {setZone: true}).toFormat('hh:mm a')
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
+  } catch (err) {
+    showToast(translate("Failed to create calendar to the facility."));
+    logger.error(err);
+  }
+}
 
-    return {
-      closeCircle,
-      closeOutline,
-      DateTime,
-      saveOutline,
-      store,
-      translate
-    };
-  },
-});
+async function saveCustomSchedule() {
+  const payload = {} as any;
+
+  if (days.value.length === 1) {
+    const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const dailyStartTime = DateTime.fromISO(selectedTimesForWeek.value['DailyStartTime'], { setZone: true }).toFormat('HH:mm:ss');
+    const dailyCapacity = getCapacity(selectedTimesForWeek.value['DailyStartTime'], selectedTimesForWeek.value['DailyEndTime']);
+    if (dailyStartTime && dailyCapacity) {
+      weekDays.forEach((day: string) => {
+        payload[day + 'StartTime'] = dailyStartTime;
+        payload[day + 'Capacity'] = dailyCapacity;
+      });
+    }
+  } else {
+    days.value.forEach((day: string) => {
+      const startTime = DateTime.fromISO(selectedTimesForWeek.value[day + 'StartTime'], { setZone: true }).toFormat('HH:mm:ss');
+      const capacity = getCapacity(selectedTimesForWeek.value[day + 'StartTime'], selectedTimesForWeek.value[day + 'EndTime']);
+      if (startTime && capacity) {
+        payload[day + 'StartTime'] = startTime;
+        payload[day + 'Capacity'] = capacity;
+      }
+    });
+  }
+
+  if (!Object.keys(payload).length) {
+    showToast(translate("Please check start time and end time entries. End time cannot be less than start time."));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+
+  if (facilityCalendar.value?.calendarId) {
+    try {
+      const resp = await FacilityService.removeFacilityCalendar({
+        facilityId: props.facilityId,
+        calendarId: facilityCalendar.value.calendarId,
+        facilityCalendarTypeId: facilityCalendar.value.facilityCalendarTypeId,
+        fromDate: facilityCalendar.value.fromDate
+      });
+
+      if (!hasError(resp)) {
+        await addCustomSchedule(payload);
+      } else {
+        throw resp.data;
+      }
+    } catch (err) {
+      logger.error(err);
+    }
+  } else {
+    await addCustomSchedule(payload);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+function getCapacity(startTime: any, endTime: any) {
+  const formatedStartTime = DateTime.fromISO(startTime, { setZone: true }).toMillis();
+  const formatedEndTime = DateTime.fromISO(endTime, { setZone: true }).toMillis();
+
+  if (formatedEndTime <= formatedStartTime) {
+    return null;
+  }
+
+  return formatedEndTime - formatedStartTime;
+}
+
+function getTime(time: any) {
+  return DateTime.fromISO(time, { setZone: true }).toFormat('hh:mm a');
+}
 </script>
 
 <style scoped>

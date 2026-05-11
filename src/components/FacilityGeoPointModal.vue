@@ -40,7 +40,7 @@
   </ion-fab>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -57,8 +57,6 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { mapGetters, useStore } from "vuex";
 import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { showToast } from "@/utils";
@@ -67,131 +65,102 @@ import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
 import { FacilityService } from '@/services/FacilityService'
 import emitter from "@/event-bus";
-  
-export default defineComponent({
-  name: "FacilityGeoPointModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonSpinner,
-    IonText,
-    IonTitle,
-    IonToolbar,
-  },
-  computed: {
-    ...mapGetters({
-      postalAddress: 'facility/getPostalAddress',
-    })
-  },
-  props: ['facilityId'],
-  data() {
-    return {
-      geoPoint: {} as any,
-      isGeneratingLatLong: false,
-      isPostalCodeChanged: false
-    }
-  },
-  beforeMount() {
-    this.geoPoint = JSON.parse(JSON.stringify(this.postalAddress))
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    postalCodeUpdate() {
-      this.isPostalCodeChanged = this.geoPoint.postalCode !== this.postalAddress.postalCode;
-    },
-    validateZipCode(e: any) {
-      if(/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)){
-        e.preventDefault();
-        return false;
-      } 
-    },
-    async generateLatLong() {
-      if(!this.geoPoint.postalCode.trim()) {
-        showToast(translate("Please fill in the required Zipcode"))
-        return;
-      }
-      this.isGeneratingLatLong = true
-      const postalCode = this.geoPoint.postalCode;
-      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
-      
-      const payload = {
-        json: {
-          params: {
-            q: `postcode: ${query}`
-          }
-        }
-      }
+import { useFacilityStore } from "@/store/facility";
+import { ref, computed, onMounted } from "vue";
 
-      try {
-        const resp = await UtilService.generateLatLong(payload)
+const props = defineProps(['facilityId']);
+const facilityStore = useFacilityStore();
+const postalAddress = computed(() => facilityStore.getPostalAddress);
 
-        if(!hasError(resp) && resp.data.response.docs.length > 0) {
-          const result = resp.data.response.docs[0]
-          this.geoPoint.latitude = result.latitude
-          this.geoPoint.longitude = result.longitude
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate("Unable to find the latitude and longitude for the entered zip code."))
-        logger.error('Unable to find the latitude and longitude for the entered zip code.', err)
-      }
-      this.isGeneratingLatLong = false
-    },
-    async saveGeoPoint() {
-      if(!this.geoPoint.latitude || !this.geoPoint.longitude) {
-        showToast("Please fill all the required fields")
-        return;
-      }
-      // Convert latitude and longitude to numeric form
-      this.geoPoint.latitude = parseFloat(this.geoPoint.latitude);
-      this.geoPoint.longitude = parseFloat(this.geoPoint.longitude);
+const geoPoint = ref({} as any);
+const isGeneratingLatLong = ref(false);
+const isPostalCodeChanged = ref(false);
 
-      emitter.emit('presentLoader')
-
-      let resp, geoPoints = '';
-
-      try {
-        // passing old postalCode from here, as we don't allow user to update postalCode from this modal,
-        // and the user can only update the latLon from here
-        resp = await FacilityService.updateFacilityPostalAddress({...this.geoPoint, postalCode: this.postalAddress.postalCode, facilityId: this.facilityId})
-
-        if(!hasError(resp)) {
-          geoPoints = this.geoPoint
-          showToast(translate("Facility latitude and longitude updated successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate("Failed to update facility latitude and longitude."))
-        logger.error(err)
-      }
-      modalController.dismiss({ geoPoints })
-      emitter.emit('dismissLoader')
-    }
-  },
-  setup() {
-    const store = useStore()
-
-    return {
-      closeOutline,
-      colorWandOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onMounted(() => {
+  geoPoint.value = JSON.parse(JSON.stringify(postalAddress.value));
 });
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+function postalCodeUpdate() {
+  isPostalCodeChanged.value = geoPoint.value.postalCode !== postalAddress.value.postalCode;
+}
+
+function validateZipCode(e: any) {
+  if (/[`!@#$%^&*()_+=\\|,.<>?~{};:'"/]/.test(e.key)) {
+    e.preventDefault();
+    return false;
+  }
+}
+
+async function generateLatLong() {
+  if (!geoPoint.value.postalCode?.trim()) {
+    showToast(translate("Please fill in the required Zipcode"));
+    return;
+  }
+  isGeneratingLatLong.value = true;
+  const postalCode = geoPoint.value.postalCode;
+  const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+
+  const payload = {
+    json: {
+      params: {
+        q: `postcode: ${query}`
+      }
+    }
+  };
+
+  try {
+    const resp = await UtilService.generateLatLong(payload);
+
+    if (!hasError(resp) && resp.data.response.docs.length > 0) {
+      const result = resp.data.response.docs[0];
+      geoPoint.value.latitude = result.latitude;
+      geoPoint.value.longitude = result.longitude;
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
+    logger.error('Unable to find the latitude and longitude for the entered zip code.', err);
+  }
+  isGeneratingLatLong.value = false;
+}
+
+async function saveGeoPoint() {
+  if (!geoPoint.value.latitude || !geoPoint.value.longitude) {
+    showToast("Please fill all the required fields");
+    return;
+  }
+  // Convert latitude and longitude to numeric form
+  geoPoint.value.latitude = parseFloat(geoPoint.value.latitude);
+  geoPoint.value.longitude = parseFloat(geoPoint.value.longitude);
+
+  emitter.emit('presentLoader');
+
+  let geoPointsResult = {} as any;
+
+  try {
+    // passing old postalCode from here, as we don't allow user to update postalCode from this modal,
+    // and the user can only update the latLon from here
+    const resp = await FacilityService.updateFacilityPostalAddress({ ...geoPoint.value, postalCode: postalAddress.value.postalCode, facilityId: props.facilityId });
+
+    if (!hasError(resp)) {
+      geoPointsResult = geoPoint.value;
+      showToast(translate("Facility latitude and longitude updated successfully."));
+      await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate("Failed to update facility latitude and longitude."));
+    logger.error(err);
+  }
+  modalController.dismiss({ geoPoints: geoPointsResult });
+  emitter.emit('dismissLoader');
+}
 </script>
 
 <style scoped>

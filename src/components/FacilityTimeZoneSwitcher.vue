@@ -84,29 +84,30 @@ import {
   modalController
 } from '@ionic/vue';
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { computed, onBeforeMount, ref, defineProps } from "vue";
-import { translate} from '@hotwax/dxp-components'
+import { computed, onMounted, ref } from "vue";
+import { translate } from '@hotwax/dxp-components'
 import { DateTime } from 'luxon' 
-import { useStore } from 'vuex'
 import { getAvailableTimeZones, hasError } from '../adapter';
 import { FacilityService } from '@/services/FacilityService';
 import { showToast } from '@/utils';
 import logger from '@/logger';
-const store = useStore();
+import { useFacilityStore } from "@/store/facility";
 
-const currentFacility = computed(() => store.getters['facility/getCurrent'])
-const currentTimeZoneId = computed(() => currentFacility.value?.facilityTimeZone)
-const timeZones = ref() as any
+const facilityStore = useFacilityStore();
+
+const currentFacility = computed(() => facilityStore.getCurrent);
+const currentTimeZoneId = computed(() => currentFacility.value?.facilityTimeZone);
+const timeZones = ref([] as any[]);
 
 const isLoading = ref(true);
 const queryString = ref('');
-const filteredTimeZones = ref([]) as any
-const timeZoneId = ref(currentTimeZoneId.value)
+const filteredTimeZones = ref([] as any[]);
+const timeZoneId = ref(currentTimeZoneId.value);
 // Fetching timeZone of the browser
 const browserTimeZone = ref({
   label: '',
   id: Intl.DateTimeFormat().resolvedOptions().timeZone
-})
+});
 
 const props = defineProps({
   showBrowserTimeZone: {
@@ -121,79 +122,66 @@ const props = defineProps({
     type: String,
     default: 't ZZZZ'
   }
-})
+});
 
 const closeModal = () => {
   timeZoneId.value = currentTimeZoneId.value;
-  modalController.dismiss()
-}
-
-onBeforeMount(async () => {
-  isLoading.value = true;
-  timeZones.value = await getAvailableTimeZones() as any
-  timeZoneId.value = currentFacility.value?.facilityTimeZone
-  
-  if (props.showBrowserTimeZone) {
-    browserTimeZone.value.label = ((timeZones.value as any[])?.find((timeZone: any) => (timeZone?.id || '').toLowerCase().includes(browserTimeZone.value.id.toLowerCase()))?.label) || ''
-  }
-
-  findTimeZone();
-  isLoading.value = false;
-})
-
-async function setFacilityTimeZone() {
-  try {
-  const resp = await FacilityService.updateFacility({
-    "facilityId": currentFacility.value.facilityId,
-    "facilityTimeZone": timeZoneId.value
-  })
-
-  if (!hasError(resp)) {
-    await store.dispatch('facility/fetchCurrentFacility', { facilityId: currentFacility.value.facilityId, skipState:true })
-    showToast(translate('Facility timezone updated successfully.'))
-  } else {
-    throw resp.data;
-  }
-} catch (err) {
-  logger.error('Failed to update facility timezone.', err)
-  showToast(translate('Failed to update facility timezone.'))
-}
-  closeModal();
+  modalController.dismiss();
 }
 
 function findTimeZone() {
   const searchedString = queryString.value.toLowerCase();
   filteredTimeZones.value = timeZones.value.filter((timeZone: any) => timeZone.id.toLowerCase().match(searchedString) || timeZone.label.toLowerCase().match(searchedString));
 
-  if(props.showBrowserTimeZone) {
+  if (props.showBrowserTimeZone) {
     filteredTimeZones.value = filteredTimeZones.value.filter((timeZone: any) => !timeZone.id.toLowerCase().match(browserTimeZone.value.id.toLowerCase()));
   }
 }
 
+onMounted(async () => {
+  isLoading.value = true;
+  timeZones.value = await getAvailableTimeZones() as any[];
+  timeZoneId.value = currentFacility.value?.facilityTimeZone;
+  
+  if (props.showBrowserTimeZone) {
+    browserTimeZone.value.label = (timeZones.value?.find((timeZone: any) => (timeZone?.id || '').toLowerCase().includes(browserTimeZone.value.id.toLowerCase()))?.label) || '';
+  }
+
+  findTimeZone();
+  isLoading.value = false;
+});
+
+async function setFacilityTimeZone() {
+  try {
+    const resp = await FacilityService.updateFacility({
+      "facilityId": currentFacility.value.facilityId,
+      "facilityTimeZone": timeZoneId.value
+    });
+
+    if (!hasError(resp)) {
+      await facilityStore.fetchCurrentFacility({ facilityId: currentFacility.value.facilityId, skipState: true });
+      showToast(translate('Facility timezone updated successfully.'));
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to update facility timezone.', err);
+    showToast(translate('Failed to update facility timezone.'));
+  }
+  closeModal();
+}
+
 async function selectSearchBarText(event: any) {
-  const element = await event.target.getInputElement()
+  const element = await event.target.getInputElement();
   element.select();
 }
 
 function preventSpecialCharacters($event: any) {
   // Searching special characters fails the API, hence, they must be omitted
-  if(/[`!@#$%^&*()_+\-=\\|,.<>?~]/.test($event.key)) $event.preventDefault();
-}
-
-function search() {
-  isLoading.value = true;
-  findTimeZone();
-  isLoading.value = false;
-}
-
-// clearing the data explicitely as the modal is mounted due to the component being mounted always
-function clearSearch() {
-  queryString.value = ''
-  filteredTimeZones.value = []
-  isLoading.value = true
+  if (/[`!@#$%^&*()_+\-=\\|,.<>?~]/.test($event.key)) $event.preventDefault();
 }
 
 const getCurrentTime = (zone: string, format = 't ZZZZ') => {
-  return DateTime.now().setZone(zone).toFormat(format)
+  return DateTime.now().setZone(zone).toFormat(format);
 }
 </script>

@@ -16,7 +16,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonIcon,
@@ -25,194 +25,174 @@ import {
   IonListHeader,
   popoverController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { removeCircleOutline, star, starOutline } from "ionicons/icons";
 import { translate } from "@hotwax/dxp-components";
-import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "ProductStorePopover",
-  components: {
-    IonContent,
-    IonIcon,
-    IonItem,
-    IonList,
-    IonListHeader
-  },
-  props: ['currentProductStore', 'facilityId'],
-  computed: {
-    ...mapGetters({
-      facilityProductStores: 'facility/getFacilityProductStores',
-      getProductStore: 'util/getProductStore',
-      productStores: 'util/getProductStores',
-      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
-      current: 'facility/getCurrent'
-    })
-  },
-  methods: {
-    async removeStoreFromFacility() {
-      emitter.emit('presentLoader')
+const props = defineProps(['currentProductStore', 'facilityId']);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      try {
-        const resp = await FacilityService.updateProductStoreFacility({
-          facilityId: this.facilityId,
-          productStoreId: this.currentProductStore.productStoreId,
-          fromDate: this.currentProductStore.fromDate,
-          thruDate: DateTime.now().toMillis()
-        })
+const current = computed(() => facilityStore.getCurrent);
+const getProductStore = computed(() => (id: string) => utilStore.getProductStore(id));
+const shopifyShopIdForProductStore = computed(() => (id: string) => utilStore.getShopifyShopIdForProductStore(id));
 
-        if(!hasError(resp)) {
-          showToast(translate('Store unlinked successfully.'))
+async function removeStoreFromFacility() {
+  emitter.emit('presentLoader');
 
-          // TODO: need to check if we need to remove primary value from the facility if product store is removed.
-          // Removing primaryFacilityGroupId from the facility, if present
-          if(this.shopifyShopIdForProductStore(this.currentProductStore.productStoreId) === this.current.primaryFacilityGroupId) {
-            const updateResp = await FacilityService.updateFacility({
-              facilityId: this.facilityId,
-              primaryFacilityGroupId: ''
-            });
-            if (!hasError(updateResp)) {
-              await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: '' });
-            } else {
-              throw updateResp.data;
-            }
-          }
-          // refetching product stores with updated roles
-          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
+  try {
+    const resp = await FacilityService.updateProductStoreFacility({
+      facilityId: props.facilityId,
+      productStoreId: props.currentProductStore.productStoreId,
+      fromDate: props.currentProductStore.fromDate,
+      thruDate: DateTime.now().toMillis()
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Store unlinked successfully.'));
+
+      // TODO: need to check if we need to remove primary value from the facility if product store is removed.
+      // Removing primaryFacilityGroupId from the facility, if present
+      if (shopifyShopIdForProductStore.value(props.currentProductStore.productStoreId) === current.value.primaryFacilityGroupId) {
+        const updateResp = await FacilityService.updateFacility({
+          facilityId: props.facilityId,
+          primaryFacilityGroupId: ''
+        });
+        if (!hasError(updateResp)) {
+          await facilityStore.updateCurrentFacility({ ...current.value, primaryFacilityGroupId: '' });
         } else {
-          throw resp.data
+          throw updateResp.data;
         }
-      } catch(err) {
-        logger.error(err)
-        showToast(translate('Store unlink failed.'))
       }
-      popoverController.dismiss()
-      emitter.emit('dismissLoader')
-    },
-    async updatePrimaryStore(shopifyShopId = '') {
-      try {
-        const resp = await FacilityService.updateFacility({
-          facilityId: this.facilityId,
-          primaryFacilityGroupId: shopifyShopId
-        })
-        if(!hasError(resp)) {
-          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, primaryFacilityGroupId: shopifyShopId })
-        } else {
-          throw resp.data
-        }
-      } catch(error) {
-        showToast(translate('Failed to update primary product store'))
-        logger.error('Failed to update primary product store', error)
-      }
-    },
-    async togglePrimary() {
-      emitter.emit('presentLoader')
-
-      const productStoreId = this.currentProductStore.productStoreId
-      let shopifyShopId = this.shopifyShopIdForProductStore(productStoreId)
-
-      // if the shopifyShop is not present for productStore inside the facility then fetching the shopify information for productStore
-      if(!shopifyShopId) {
-        shopifyShopId = await this.store.dispatch('util/fetchShopifyShopForProductStores', [productStoreId])
-      }
-
-      // if we does not get shopify shop id for the store then not making product store as primary
-      if(!shopifyShopId) {
-        showToast(translate('Failed to make product store primary due to missing Shopify shop'))
-        popoverController.dismiss()
-        emitter.emit('dismissLoader')
-        return;
-      }
-
-      // when product store is already primary
-      if(this.current.primaryFacilityGroupId === shopifyShopId) {
-        await this.updatePrimaryStore();
-        popoverController.dismiss()
-        emitter.emit('dismissLoader')
-        return;
-      }
-
-      // creating for facility group, as group is required when updating primaryFacilityGroupId on facility
-
-      let facilityGroupId;
-
-      // Fetching the facility group corresponding to the shopifyShopId.
-      // There should be one facility group where facilityGroupId equals to shopifyShopId in order
-      // to manage primary product store of a facility.
-      facilityGroupId = await this.fetchFacilityGroup(shopifyShopId)
-
-      // Create one facility group corresponding to the shopifyShopId if not exists.
-      if(!facilityGroupId) {
-        facilityGroupId = await this.createFacilityGroup(shopifyShopId)
-      }
-
-      // if facilityGroup is still not found, then not update primary store for facility
-      if(facilityGroupId) {
-        await this.updatePrimaryStore(shopifyShopId);
-      } else {
-        showToast(translate('Failed to make product store primary due to missing group'))
-      }
-      popoverController.dismiss()
-      emitter.emit('dismissLoader')
-    },
-    async fetchFacilityGroup(shopifyShopId: string) {
-      let facilityGroupId;
-      try {
-        const resp = await FacilityService.fetchFacilityGroup({
-          inputFields: {
-            facilityGroupId: shopifyShopId
-          },
-          entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-          viewSize: 1
-        })
-
-        if(!hasError(resp)) {
-          facilityGroupId = resp.data.docs[0].facilityGroupId
-        } else {
-          throw resp.data
-        }
-      } catch(error) {
-        logger.error('Failed to fetch facility group', error)
-      }
-      return facilityGroupId
-    },
-    async createFacilityGroup(shopifyShopId: string) {
-      let facilityGroupId;
-      try {
-        const resp = await FacilityService.createFacilityGroup({
-          facilityGroupId: shopifyShopId,
-          facilityGroupName: this.getProductStore(this.currentProductStore.productStoreId).storeName,
-          facilityGroupTypeId: 'FEATURING'
-        })
-  
-        if(!hasError(resp)) {
-          facilityGroupId = resp.data.facilityGroupId
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-      return facilityGroupId
+      // refetching product stores with updated roles
+      await facilityStore.getFacilityProductStores({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      removeCircleOutline,
-      star,
-      starOutline,
-      store,
-      translate
-    };
+  } catch (err) {
+    logger.error(err);
+    showToast(translate('Store unlink failed.'));
   }
-});
+  popoverController.dismiss();
+  emitter.emit('dismissLoader');
+}
+
+async function updatePrimaryStore(shopifyShopId = '') {
+  try {
+    const resp = await FacilityService.updateFacility({
+      facilityId: props.facilityId,
+      primaryFacilityGroupId: shopifyShopId
+    });
+    if (!hasError(resp)) {
+      await facilityStore.updateCurrentFacility({ ...current.value, primaryFacilityGroupId: shopifyShopId });
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    showToast(translate('Failed to update primary product store'));
+    logger.error('Failed to update primary product store', error);
+  }
+}
+
+async function togglePrimary() {
+  emitter.emit('presentLoader');
+
+  const productStoreId = props.currentProductStore.productStoreId;
+  let shopifyShopId = shopifyShopIdForProductStore.value(productStoreId);
+
+  // if the shopifyShop is not present for productStore inside the facility then fetching the shopify information for productStore
+  if (!shopifyShopId) {
+    shopifyShopId = await utilStore.fetchShopifyShopForProductStores([productStoreId]);
+  }
+
+  // if we does not get shopify shop id for the store then not making product store as primary
+  if (!shopifyShopId) {
+    showToast(translate('Failed to make product store primary due to missing Shopify shop'));
+    popoverController.dismiss();
+    emitter.emit('dismissLoader');
+    return;
+  }
+
+  // when product store is already primary
+  if (current.value.primaryFacilityGroupId === shopifyShopId) {
+    await updatePrimaryStore();
+    popoverController.dismiss();
+    emitter.emit('dismissLoader');
+    return;
+  }
+
+  // creating for facility group, as group is required when updating primaryFacilityGroupId on facility
+
+  let facilityGroupId;
+
+  // Fetching the facility group corresponding to the shopifyShopId.
+  // There should be one facility group where facilityGroupId equals to shopifyShopId in order
+  // to manage primary product store of a facility.
+  facilityGroupId = await fetchFacilityGroup(shopifyShopId);
+
+  // Create one facility group corresponding to the shopifyShopId if not exists.
+  if (!facilityGroupId) {
+    facilityGroupId = await createFacilityGroup(shopifyShopId);
+  }
+
+  // if facilityGroup is still not found, then not update primary store for facility
+  if (facilityGroupId) {
+    await updatePrimaryStore(shopifyShopId);
+  } else {
+    showToast(translate('Failed to make product store primary due to missing group'));
+  }
+  popoverController.dismiss();
+  emitter.emit('dismissLoader');
+}
+
+async function fetchFacilityGroup(shopifyShopId: string) {
+  let facilityGroupId;
+  try {
+    const resp = await FacilityService.fetchFacilityGroup({
+      inputFields: {
+        facilityGroupId: shopifyShopId
+      },
+      entityName: 'FacilityGroup',
+      fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
+      viewSize: 1
+    });
+
+    if (!hasError(resp)) {
+      facilityGroupId = resp.data.docs[0].facilityGroupId;
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    logger.error('Failed to fetch facility group', error);
+  }
+  return facilityGroupId;
+}
+
+async function createFacilityGroup(shopifyShopId: string) {
+  let facilityGroupId;
+  try {
+    const resp = await FacilityService.createFacilityGroup({
+      facilityGroupId: shopifyShopId,
+      facilityGroupName: getProductStore.value(props.currentProductStore.productStoreId).storeName,
+      facilityGroupTypeId: 'FEATURING'
+    });
+
+    if (!hasError(resp)) {
+      facilityGroupId = resp.data.facilityGroupId;
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+  return facilityGroupId;
+}
 </script>

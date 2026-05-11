@@ -40,7 +40,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -58,128 +58,94 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from 'vuex'
 import { FacilityService } from '@/services/FacilityService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onMounted } from "vue";
 
-export default defineComponent({
-  name: "FacilityMappingModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      currentFacility: 'facility/getCurrent',
-      externalMappingTypes: 'util/getExternalMappingTypes'
-    })
-  },
-  data() {
-    return {
-      mappingValue: ''
-    }
-  },
-  props: ["mappingId", "mapping", "type"],
-  mounted() {
-    if(this.type) {
-      this.mappingValue = this.mapping?.idValue
-    }
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    async saveMapping() {
-      if(!this.mappingValue.trim()) {
-        showToast(translate('Please enter a valid value'))
-        return;
-      }
+const props = defineProps(["mappingId", "mapping", "type"]);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      emitter.emit('presentLoader')
+const currentFacility = computed(() => facilityStore.getCurrent);
+const externalMappingTypes = computed(() => utilStore.getExternalMappingTypes);
 
-      let resp;
+const mappingValue = ref('');
 
-      try {
-        resp = await FacilityService.createFacilityIdentification({
-          "facilityId": this.currentFacility.facilityId,
-          "facilityIdenTypeId": this.mappingId,
-          "idValue": this.mappingValue
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate('External mapping created successfully'))
-          this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.currentFacility.facilityId })
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to create external mapping'))
-        logger.error('Failed to create external mapping', err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async updateMapping() {
-      if(!this.mappingValue.trim()) {
-        showToast(translate('Please enter a valid value'))
-        return;
-      }
-
-      emitter.emit('presentLoader')
-
-      let resp;
-
-      try {
-        resp = await FacilityService.updateFacilityIdentification({
-          "facilityId": this.currentFacility.facilityId,
-          "facilityIdenTypeId": this.mappingId,
-          "fromDate": this.mapping.fromDate,
-          "idValue": this.mappingValue
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate('External mapping updated successfully'))
-          this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.currentFacility.facilityId })
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update external mapping'))
-        logger.error('Failed to update external mapping', err)
-      }
-
-      emitter.emit('dismissLoader')
-    }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onMounted(() => {
+  if (props.type) {
+    mappingValue.value = props.mapping?.idValue || '';
+  }
 });
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function saveMapping() {
+  if (!mappingValue.value?.trim()) {
+    showToast(translate('Please enter a valid value'));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.createFacilityIdentification({
+      "facilityId": currentFacility.value.facilityId,
+      "facilityIdenTypeId": props.mappingId,
+      "idValue": mappingValue.value
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('External mapping created successfully'));
+      await facilityStore.fetchFacilityMappings({ facilityId: currentFacility.value.facilityId });
+      closeModal();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to create external mapping'));
+    logger.error('Failed to create external mapping', err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function updateMapping() {
+  if (!mappingValue.value?.trim()) {
+    showToast(translate('Please enter a valid value'));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.updateFacilityIdentification({
+      "facilityId": currentFacility.value.facilityId,
+      "facilityIdenTypeId": props.mappingId,
+      "fromDate": props.mapping.fromDate,
+      "idValue": mappingValue.value
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('External mapping updated successfully'));
+      await facilityStore.fetchFacilityMappings({ facilityId: currentFacility.value.facilityId });
+      closeModal();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update external mapping'));
+    logger.error('Failed to update external mapping', err);
+  }
+
+  emitter.emit('dismissLoader');
+}
 </script>

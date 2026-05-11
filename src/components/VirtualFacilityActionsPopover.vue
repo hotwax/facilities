@@ -14,7 +14,7 @@
   </ion-content>
 </template>
   
-<script lang="ts">
+<script setup lang="ts">
 import {
   alertController,
   IonContent,
@@ -23,132 +23,114 @@ import {
   IonListHeader,
   popoverController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { translate } from '@hotwax/dxp-components'
 import { showToast } from '@/utils';
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
-import { mapGetters, useStore } from "vuex";
 import logger from "@/logger";
+import { useFacilityStore } from "@/store/facility";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "VirtualFacilityActionsPopover",
-  components: {
-    IonContent,
-    IonItem,
-    IonList,
-    IonListHeader
-  },
-  computed: {
-    ...mapGetters({
-      virtualFacilities: 'facility/getVirtualFacilities',
-    })
-  },
-  props: ['facility'],
-  methods: {
-    async renameVirtualFacility() {
-      const alert = await alertController.create({
-        header: translate('Rename parking'),
-        inputs: [{
-          name: "facilityName",
-          value: this.facility.facilityName
-        }],
-        buttons: [{
-          text: translate('Cancel'),
-          role: "cancel"
-        },
-        {
-          text: translate('Apply'),
-          handler: (data) => {
-            const { facilityName } = data
-            popoverController.dismiss(facilityName)
-          }
-        }]
-      })
-      await alert.present()
+const props = defineProps(['facility']);
+const facilityStore = useFacilityStore();
+const virtualFacilities = computed(() => facilityStore.getVirtualFacilities);
+
+async function renameVirtualFacility() {
+  const alert = await alertController.create({
+    header: translate('Rename parking'),
+    inputs: [{
+      name: "facilityName",
+      value: props.facility.facilityName
+    }],
+    buttons: [{
+      text: translate('Cancel'),
+      role: "cancel"
     },
-    async archiveVirtualFacility() {
-      let facilityGroupId = await this.fetchArchiveGroup()
-
-      if (!facilityGroupId) {
-        facilityGroupId = await this.createArchiveGroup()
+    {
+      text: translate('Apply'),
+      handler: (data) => {
+        const { facilityName } = data;
+        popoverController.dismiss(facilityName);
       }
+    }]
+  });
+  await alert.present();
+}
 
-      if (!facilityGroupId) {
-        showToast(translate('Failed to archive parking.'))
-        return
-      }
+async function archiveVirtualFacility() {
+  let facilityGroupId = await fetchArchiveGroup();
 
-      try {
-        const resp = await FacilityService.addFacilityToGroup({
-          facilityId: this.facility.facilityId,
-          facilityGroupId
-        })
+  if (!facilityGroupId) {
+    facilityGroupId = await createArchiveGroup();
+  }
 
-        if (!hasError(resp)) {
-          const updatedVirtualFacilities = JSON.parse(JSON.stringify(this.virtualFacilities))
-            .filter((facility: any) => facility.facilityId !== this.facility.facilityId)
-          this.store.dispatch('facility/updateVirtualFacilities', updatedVirtualFacilities)
-          await this.store.dispatch('facility/fetchArchivedFacilities')
-          showToast(translate("Parking archived successfully."))
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        showToast(translate('Failed to archive parking.'))
-        logger.error('Failed to archive parking.', error)
-      }
+  if (!facilityGroupId) {
+    showToast(translate('Failed to archive parking.'));
+    return;
+  }
 
-      popoverController.dismiss()
-    },
-    async fetchArchiveGroup() {
-      // checking if the archive group exists and return the facilityGroupId if it does
-      let fetchedFacilityGroupId = ''
-      try {
-        const resp = await FacilityService.fetchFacilityGroup({
-          inputFields: {
-            facilityGroupId: 'ARCHIVE',
-          },
-          entityName: 'FacilityGroup',
-          fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-          viewSize: 1
-        })
+  try {
+    const resp = await FacilityService.addFacilityToGroup({
+      facilityId: props.facility.facilityId,
+      facilityGroupId
+    });
 
-        fetchedFacilityGroupId = resp.data.count ? resp.data.docs[0].facilityGroupId : ''
-      } catch (error) {
-        logger.error(error)
-      }
-      return fetchedFacilityGroupId
-    },
-    async createArchiveGroup() {
-      let createdFacilityGroupId = ''
-      try {
-        const resp = await FacilityService.createFacilityGroup({
-          facilityGroupName: 'Archive',
-          facilityGroupId: 'ARCHIVE',
-          facilityGroupTypeId: '', // TODO need to decide group type ID
-        })
-
-        if (!hasError(resp)) {
-          createdFacilityGroupId = resp.data.facilityGroupId
-        } else {
-          throw resp.data
-        }
-
-      } catch (error) {
-        showToast(translate('Failed to archive parking.'))
-        logger.error('Failed to archive parking.', error)
-      }
-      return createdFacilityGroupId
+    if (!hasError(resp)) {
+      const updatedVirtualFacilities = JSON.parse(JSON.stringify(virtualFacilities.value))
+        .filter((facility: any) => facility.facilityId !== props.facility.facilityId);
+      facilityStore.updateVirtualFacilities(updatedVirtualFacilities);
+      await facilityStore.fetchArchivedFacilities();
+      showToast(translate("Parking archived successfully."));
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
+  } catch (error) {
+    showToast(translate('Failed to archive parking.'));
+    logger.error('Failed to archive parking.', error);
+  }
 
-    return {
-      store,
-      translate
+  popoverController.dismiss();
+}
+
+async function fetchArchiveGroup() {
+  // checking if the archive group exists and return the facilityGroupId if it does
+  let fetchedFacilityGroupId = '';
+  try {
+    const resp = await FacilityService.fetchFacilityGroup({
+      inputFields: {
+        facilityGroupId: 'ARCHIVE',
+      },
+      entityName: 'FacilityGroup',
+      fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
+      viewSize: 1
+    });
+
+    fetchedFacilityGroupId = resp.data.count ? resp.data.docs[0].facilityGroupId : '';
+  } catch (error) {
+    logger.error(error);
+  }
+  return fetchedFacilityGroupId;
+}
+
+async function createArchiveGroup() {
+  let createdFacilityGroupId = '';
+  try {
+    const resp = await FacilityService.createFacilityGroup({
+      facilityGroupName: 'Archive',
+      facilityGroupId: 'ARCHIVE',
+      facilityGroupTypeId: '', // TODO need to decide group type ID
+    });
+
+    if (!hasError(resp)) {
+      createdFacilityGroupId = resp.data.facilityGroupId;
+    } else {
+      throw resp.data;
     }
-  },
-});
+
+  } catch (error) {
+    showToast(translate('Failed to archive parking.'));
+    logger.error('Failed to archive parking.', error);
+  }
+  return createdFacilityGroupId;
+}
 </script>

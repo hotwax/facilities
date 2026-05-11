@@ -11,118 +11,98 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonItem,
   IonList,
   popoverController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
-import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import logger from "@/logger";
 import { UtilService } from '@/services/UtilService';
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "LocationDetailsPopover",
-  components: {
-    IonContent,
-    IonItem,
-    IonList
-  },
-  computed: {
-    ...mapGetters({
-      postalAddress: 'facility/getPostalAddress',
-    })
-  },
-  props: ['facilityId', 'isRegenerationRequired'],
-  methods: {
-    async regenerateLatitudeAndLongitude() {
-      let resp, generatedLatLong;
+const props = defineProps(['facilityId', 'isRegenerationRequired']);
+const facilityStore = useFacilityStore();
+const postalAddress = computed(() => facilityStore.getPostalAddress);
 
-      emitter.emit('presentLoader')
+async function regenerateLatitudeAndLongitude() {
+  let resp;
+  let generatedLatLong;
 
-      try {
-        const postalCode = this.postalAddress.postalCode;
-        const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+  emitter.emit('presentLoader');
 
-        resp = await UtilService.generateLatLong({
-          json: {
-            params: {
-              q: `postcode: ${query}`
-            }
-          }
-        })
+  try {
+    const postalCode = postalAddress.value.postalCode;
+    const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
 
-        if(!hasError(resp) && resp.data.response.docs.length > 0) {
-          generatedLatLong = resp.data.response.docs[0]
-
-          if(generatedLatLong.latitude && generatedLatLong.longitude) {
-            resp = await FacilityService.updateFacilityPostalAddress({
-              ...this.postalAddress,
-              facilityId: this.facilityId,
-              latitude: generatedLatLong.latitude,
-              longitude: generatedLatLong.longitude
-            })
-
-            if(!hasError(resp)) {
-              showToast(translate("Successfully regenerated latitude and longitude for the facility."))
-              await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
-            } else {
-              throw resp.data
-            }
-          }
-        } else {
-          throw resp.data
+    resp = await UtilService.generateLatLong({
+      json: {
+        params: {
+          q: `postcode: ${query}`
         }
-      } catch(err) {
-        showToast(translate("Failed to regenerate latitude and longitude for the facility."))
-        logger.error(err);
       }
+    });
 
-      popoverController.dismiss({ generatedLatLong })
-      emitter.emit('dismissLoader')
-    },
-    async removeLatitudeAndLongitude() {
-      emitter.emit('presentLoader')
+    if (!hasError(resp) && resp.data.response.docs.length > 0) {
+      generatedLatLong = resp.data.response.docs[0];
 
-      let resp;
-
-      try {
+      if (generatedLatLong.latitude && generatedLatLong.longitude) {
         resp = await FacilityService.updateFacilityPostalAddress({
-          ...this.postalAddress,
-          facilityId: this.facilityId,
-          latitude: '',
-          longitude: ''
-        })
+          ...postalAddress.value,
+          facilityId: props.facilityId,
+          latitude: generatedLatLong.latitude,
+          longitude: generatedLatLong.longitude
+        });
 
-        if(!hasError(resp)) {
-          showToast(translate("Facility latitude and longitude removed successfully."))
-          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
+        if (!hasError(resp)) {
+          showToast(translate("Successfully regenerated latitude and longitude for the facility."));
+          await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
         } else {
-          throw resp.data
+          throw resp.data;
         }
-      } catch(err) {
-        showToast(translate("Failed to remove facility latitude and longitude."))
-        logger.error(err)
       }
-
-      popoverController.dismiss()
-      emitter.emit('dismissLoader')
+    } else {
+      throw resp.data;
     }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      store,
-      translate
-    };
+  } catch (err) {
+    showToast(translate("Failed to regenerate latitude and longitude for the facility."));
+    logger.error(err);
   }
-});
+
+  popoverController.dismiss({ generatedLatLong });
+  emitter.emit('dismissLoader');
+}
+
+async function removeLatitudeAndLongitude() {
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.updateFacilityPostalAddress({
+      ...postalAddress.value,
+      facilityId: props.facilityId,
+      latitude: '',
+      longitude: ''
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Facility latitude and longitude removed successfully."));
+      await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate("Failed to remove facility latitude and longitude."));
+    logger.error(err);
+  }
+
+  popoverController.dismiss();
+  emitter.emit('dismissLoader');
+}
 </script>

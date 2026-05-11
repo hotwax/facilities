@@ -14,7 +14,6 @@
   </ion-header>
 
   <ion-content class="ion-padding">
-
     <div class="ion-padding" v-if="!parties.length">
       {{ translate("No party found") }}
     </div>
@@ -39,7 +38,7 @@
   </ion-fab>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -59,196 +58,171 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
-import { mapGetters, useStore } from "vuex";
 import { showToast } from "@/utils";
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onMounted } from "vue";
 
-export default defineComponent({
-  name: "AddStaffMemberModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonSearchbar,
-    IonSelect,
-    IonSelectOption,
-    IonTitle,
-    IonToolbar
-  },
-  props: ['facilityId', 'selectedParties'],
-  data() {
-    return {
-      parties: [] as any,
-      queryString: '',
-      selectedPartyValues: JSON.parse(JSON.stringify(this.selectedParties))
-    }
-  },
-  computed: {
-    ...mapGetters({
-      partyRoles: 'util/getPartyRoles',
-    })
-  },
-  methods: {
-    async closeModal() {
-      modalController.dismiss()
-    },
-    async findParties() {
-      emitter.emit('presentLoader')
+const props = defineProps(['facilityId', 'selectedParties']);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      this.parties = []
-      let inputFields = {}
-      if(this.queryString.length > 0) {
-        inputFields = {
-          groupName_value: this.queryString,
-          groupName_op: 'contains',
-          groupName_ic: 'Y',
-          groupName_grp: '1',
-          firstName_value: this.queryString,
-          firstName_op: 'contains',
-          firstName_ic: 'Y',
-          firstName_grp: '2',
-          lastName_value: this.queryString,
-          lastName_op: 'contains',
-          lastName_ic: 'Y',
-          lastName_grp: '3'
-        }
-      }
+const partyRoles = computed(() => utilStore.getPartyRoles);
 
-      const payload = {
-        inputFields: {
-          ...inputFields,
-          roleTypeId: 'APPLICATION_USER'
-        },
-        viewSize: 10,
-        entityName: 'PartyRoleAndPartyDetail',
-        noConditionFind: 'Y',
-        distinct: 'Y',
-        orderBy: "firstName ASC",
-        fieldList: ['partyId', 'firstName', 'groupName', 'lastName']
-      }
+const parties = ref([] as any);
+const queryString = ref('');
+const selectedPartyValues = ref(JSON.parse(JSON.stringify(props.selectedParties)));
 
-      try {
-        const resp = await FacilityService.getPartyRoleAndPartyDetails(payload)
-        if(!hasError(resp)) {
-          let parties = resp.data.docs
-
-          parties.map((party: any) => {
-            party.fullName = party.groupName ? party.groupName : party.firstName ? `${party.firstName} ${party.lastName}` : ''
-          })
-          this.parties = parties
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async saveParties() {
-      emitter.emit('presentLoader')
-
-      const partiesToAdd = this.selectedPartyValues.filter((selectedParty: any) => !this.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId))
-      const partiesToRemove = this.selectedParties.filter((party: any) => !this.selectedPartyValues.some((selectedParty: any) => party.partyId === selectedParty.partyId))
-      const partiesRoleChanged = this.selectedParties.filter((party: any) => this.selectedPartyValues.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId))
-      partiesRoleChanged.map((party: any) => partiesToRemove.push(party))
-
-      if(!(partiesToAdd.length > 0 || partiesToRemove.length > 0)) {
-        showToast(translate("Please update atleast one party role."))
-        return;
-      }
-
-      const removeResponses = await Promise.allSettled(partiesToRemove
-        .map(async (party: any) => await FacilityService.removePartyFromFacility({
-          facilityId: this.facilityId,
-          fromDate: party.fromDate,
-          thruDate: DateTime.now().toMillis(),
-          partyId: party.partyId,
-          roleTypeId: party.roleTypeId
-        }))
-      )
-
-      const addResponses = await Promise.allSettled(partiesToAdd
-        .map(async (party: any) => await FacilityService.addPartyToFacility({
-          facilityId: this.facilityId,
-          partyId: party.partyId,
-          roleTypeId: party.roleTypeId
-        }))
-      )
-
-      const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
-      if (hasFailedResponse) {
-        showToast(translate("Failed to update some role(s)."))
-      } else {
-        showToast(translate("Role(s) updated successfully."))
-      }
-
-      // refetching parties with updated roles
-      await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
-      modalController.dismiss()
-      emitter.emit('dismissLoader')
-    },
-    updateSelectedParties(event: CustomEvent, selectedPartyId: string) {
-      let party = {} as any
-      const selectedRoleTypeId = event.detail.value
-
-      party = this.getParty(selectedPartyId)
-      if(party?.partyId) {
-        party = this.selectedPartyValues.find((party: any) => party.partyId === selectedPartyId)
-        this.selectedPartyValues = this.selectedPartyValues.filter((party: any) => party.partyId !== selectedPartyId)
-
-        if(selectedRoleTypeId) {
-          this.selectedPartyValues.push({...party, roleTypeId: selectedRoleTypeId})
-        }
-      } else {
-        party = this.parties.find((party: any) => party.partyId === selectedPartyId)
-        this.selectedPartyValues.push({...party, roleTypeId: selectedRoleTypeId})
-      }
-    },
-    getParty(partyId: string) {
-      return this.selectedPartyValues.find((party: any) => party.partyId === partyId)
-    },
-    getPartyRoleTypeId(partyId: string) {
-      return this.getParty(partyId) ? this.getParty(partyId).roleTypeId : ''
-    },
-    isRoleUpdated() {
-      const arePartiesUpdated = this.selectedPartyValues.length !== this.selectedParties.length;
-      return arePartiesUpdated || this.selectedPartyValues.some((selectedParty: any) => {
-        const originalParty = this.selectedParties.find((party: any) => party.partyId === selectedParty.partyId);
-        return originalParty && selectedParty.roleTypeId !== originalParty.roleTypeId;
-      });
-    },
-  },
-  async mounted() {
-    await this.findParties()
-  },
-  setup() {
-    const store = useStore()
-
-    return {
-      closeCircle,
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onMounted(async () => {
+  await findParties();
 });
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function findParties() {
+  emitter.emit('presentLoader');
+
+  parties.value = [];
+  let inputFields = {};
+  if (queryString.value.length > 0) {
+    inputFields = {
+      groupName_value: queryString.value,
+      groupName_op: 'contains',
+      groupName_ic: 'Y',
+      groupName_grp: '1',
+      firstName_value: queryString.value,
+      firstName_op: 'contains',
+      firstName_ic: 'Y',
+      firstName_grp: '2',
+      lastName_value: queryString.value,
+      lastName_op: 'contains',
+      lastName_ic: 'Y',
+      lastName_grp: '3'
+    };
+  }
+
+  const payload = {
+    inputFields: {
+      ...inputFields,
+      roleTypeId: 'APPLICATION_USER'
+    },
+    viewSize: 10,
+    entityName: 'PartyRoleAndPartyDetail',
+    noConditionFind: 'Y',
+    distinct: 'Y',
+    orderBy: "firstName ASC",
+    fieldList: ['partyId', 'firstName', 'groupName', 'lastName']
+  };
+
+  try {
+    const resp = await FacilityService.getPartyRoleAndPartyDetails(payload);
+    if (!hasError(resp)) {
+      const docs = resp.data.docs;
+
+      docs.map((party: any) => {
+        party.fullName = party.groupName ? party.groupName : party.firstName ? `${party.firstName} ${party.lastName}` : '';
+      });
+      parties.value = docs;
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function saveParties() {
+  emitter.emit('presentLoader');
+
+  const partiesToAdd = selectedPartyValues.value.filter((selectedParty: any) => !props.selectedParties.some((party: any) => party.partyId === selectedParty.partyId && party.roleTypeId === selectedParty.roleTypeId));
+  const partiesToRemove = props.selectedParties.filter((party: any) => !selectedPartyValues.value.some((selectedParty: any) => party.partyId === selectedParty.partyId));
+  const partiesRoleChanged = props.selectedParties.filter((party: any) => selectedPartyValues.value.some((selectedParty: any) => selectedParty.partyId === party.partyId && selectedParty.roleTypeId !== party.roleTypeId));
+  partiesRoleChanged.map((party: any) => partiesToRemove.push(party));
+
+  if (!(partiesToAdd.length > 0 || partiesToRemove.length > 0)) {
+    showToast(translate("Please update atleast one party role."));
+    emitter.emit('dismissLoader');
+    return;
+  }
+
+  const removePromises = partiesToRemove.map((party: any) => 
+    FacilityService.removePartyFromFacility({
+      facilityId: props.facilityId,
+      fromDate: party.fromDate,
+      thruDate: DateTime.now().toMillis(),
+      partyId: party.partyId,
+      roleTypeId: party.roleTypeId
+    })
+  );
+
+  const addPromises = partiesToAdd.map((party: any) => 
+    FacilityService.addPartyToFacility({
+      facilityId: props.facilityId,
+      partyId: party.partyId,
+      roleTypeId: party.roleTypeId
+    })
+  );
+
+  const responses = await Promise.allSettled([...removePromises, ...addPromises]);
+  const hasFailed = responses.some((response: any) => response.status === 'rejected');
+  
+  if (hasFailed) {
+    showToast(translate("Failed to update some role(s)."));
+  } else {
+    showToast(translate("Role(s) updated successfully."));
+  }
+
+  // refetching parties with updated roles
+  await facilityStore.getFacilityParties({ facilityId: props.facilityId });
+  modalController.dismiss();
+  emitter.emit('dismissLoader');
+}
+
+function updateSelectedParties(event: CustomEvent, selectedPartyId: string) {
+  let party = {} as any;
+  const selectedRoleTypeId = event.detail.value;
+
+  party = getParty(selectedPartyId);
+  if (party?.partyId) {
+    party = selectedPartyValues.value.find((p: any) => p.partyId === selectedPartyId);
+    selectedPartyValues.value = selectedPartyValues.value.filter((p: any) => p.partyId !== selectedPartyId);
+
+    if (selectedRoleTypeId) {
+      selectedPartyValues.value.push({ ...party, roleTypeId: selectedRoleTypeId });
+    }
+  } else {
+    party = parties.value.find((p: any) => p.partyId === selectedPartyId);
+    selectedPartyValues.value.push({ ...party, roleTypeId: selectedRoleTypeId });
+  }
+}
+
+function getParty(partyId: string) {
+  return selectedPartyValues.value.find((party: any) => party.partyId === partyId);
+}
+
+function getPartyRoleTypeId(partyId: string) {
+  const party = getParty(partyId);
+  return party ? party.roleTypeId : '';
+}
+
+function isRoleUpdated() {
+  const arePartiesUpdated = selectedPartyValues.value.length !== props.selectedParties.length;
+  return arePartiesUpdated || selectedPartyValues.value.some((selectedParty: any) => {
+    const originalParty = props.selectedParties.find((party: any) => party.partyId === selectedParty.partyId);
+    return originalParty && selectedParty.roleTypeId !== originalParty.roleTypeId;
+  });
+}
 </script>
 
 <style scoped>

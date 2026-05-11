@@ -1,46 +1,13 @@
-import { createStore, useStore as useVuexStore } from "vuex"
-import mutations  from './mutations'
-import getters  from './getters'
-import actions from './actions'
-import RootState from './RootState'
-import createPersistedState from 'vuex-persistedstate';
-import userModule from './modules/user';
-import { setPermissions } from '@/authorization'
-import facilityModule from './modules/facility'
-import utilModule from "./modules/util"
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
+// Create pinia instance
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
-// TODO check how to register it from the components only
-// Handle same module registering multiple time on page refresh
-//store.registerModule('user', userModule);
+export default pinia
 
-
-const state: any = {
-
-}
-
-const persistState = createPersistedState({
-    paths: ['user', 'util.organizationPartyId'],
-    fetchBeforeUse: true
-})
-
-// Added modules here so that hydration takes place before routing
-const store = createStore<RootState>({
-    state,
-    actions,
-    mutations,
-    getters,
-    plugins: [ persistState ],
-    modules: { 
-        'user': userModule,
-        'facility': facilityModule,
-        'util': utilModule
-    },
-})
-
-setPermissions(store.getters['user/getUserPermissions']);
-
-export default store
-export function useStore(): typeof store {
-    return useVuexStore()
-}
+// Export stores for easier access if needed
+export * from './user'
+export * from './util'
+export * from './facility'

@@ -29,7 +29,7 @@
   </ion-content>
 </template>
   
-<script lang="ts">
+<script setup lang="ts">
 import { 
   IonButton,
   IonButtons,
@@ -46,149 +46,127 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from "vuex";
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { hasError } from "@/adapter";
 import { showToast } from "@/utils";
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onMounted } from "vue";
 
+const props = defineProps(["group"]);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-export default defineComponent({
-  name: "AddProductStoreToGroupModal",
-  components: { 
-    IonButton,
-    IonButtons,
-    IonCheckbox,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonTitle,
-    IonToolbar
-  },
-  props: ["group"],
-  computed: {
-    ...mapGetters({
-      productStores: 'util/getProductStores',
-      facilityProductStores: 'facility/getFacilityProductStores',
-      groups: "facility/getFacilityGroups"
-    })
-  },
-  data() {
-    return {
-      selectedProductStores: [],
-      selectedProductStoreValues: [] as any
-    }
-  },
-  async mounted() {
-    await this.store.dispatch('util/fetchProductStores')
-    this.fetchGroupProductStores()
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss({ dismissed: true});
-    },
-    async fetchGroupProductStores() {
-      emitter.emit('presentLoader')
-       try {
-        const resp = await FacilityService.fetchAssociatedProductStoresToGroup({
-          "inputFields": {
-            "facilityGroupId": this.group.facilityGroupId
-          },
-          "viewSize": 250, // maximum view size
-          "entityName": 'ProductStoreFacilityGroup',
-          "noConditionFind": "Y",
-          "filterByDate": 'Y'
-        })
+const productStores = computed(() => utilStore.getProductStores);
+const groups = computed(() => facilityStore.getFacilityGroups);
 
-        if(!hasError(resp)) {
-          this.selectedProductStores = resp.data.docs
-          this.selectedProductStoreValues = JSON.parse(JSON.stringify(resp.data.docs))
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-      emitter.emit('dismissLoader');
-    },
-    isSelected(productStoreId: any) {
-      return this.selectedProductStoreValues.some((productStore: any) => productStore.productStoreId === productStoreId);
-    },
-    toggleProductStoreSelection(store: any) {
-      if(this.isSelected(store.productStoreId)) {
-        this.selectedProductStoreValues = this.selectedProductStoreValues.filter((productStore: any) => productStore.productStoreId !== store.productStoreId);
-      } else {
-        this.selectedProductStoreValues.push(store);
-      }
-    },
-    async saveProductStores() {
-      const productStoresToAdd = this.selectedProductStoreValues.filter((selectedStore: any) => !this.selectedProductStores.some((store: any) => store.productStoreId === selectedStore.productStoreId))
-      const productStoresToRemove = this.selectedProductStores.filter((store: any) => !this.selectedProductStoreValues.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId))
+const selectedProductStores = ref([] as any);
+const selectedProductStoreValues = ref([] as any);
 
-      const removeResponses = await Promise.allSettled(productStoresToRemove
-        .map(async (store: any) => await FacilityService.updateProductStoreFacilityGroup({
-          "productStoreId": store.productStoreId,
-          "facilityGroupId": this.group.facilityGroupId,
-          "fromDate": store.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        }))
-      )
-
-      const addResponses = await Promise.allSettled(productStoresToAdd
-        .map(async (store: any) => await FacilityService.createProductStoreFacilityGroup({
-          "productStoreId": store.productStoreId,
-          "facilityGroupId": this.group.facilityGroupId,
-          "fromDate": DateTime.now().toMillis()
-        }))
-      )
-
-      const hasFailedResponse = [...removeResponses, ...addResponses].some((response: any) => response.status === 'rejected')
-      if (hasFailedResponse) {
-        showToast(translate("Failed to associate some product stores to group."))
-      } else {
-        showToast(translate("Product stores associated to group successfully."))
-      }
-      this.fetchGroupsCount()
-      modalController.dismiss()
-    },
-    async fetchGroupsCount() {
-      const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup([this.group.facilityGroupId])
-      const currentGroup = this.groups.find((group: any) => group.facilityGroupId === this.group.facilityGroupId)
-      currentGroup.productStoreCount = productStoreCountByGroup[this.group.facilityGroupId]
-
-      await this.store.dispatch('facility/updateFacilityGroups', this.groups)
-    },
-    areProductStoresUpdated() {
-      if(this.selectedProductStores.length !== this.selectedProductStoreValues.length) return true;
-
-      return this.selectedProductStoreValues.some((selectedProductStore: any) => !this.selectedProductStores.find((productStore: any) => productStore.productStoreId === selectedProductStore.productStoreId))
-    }
-  },
-  setup() {
-    const store = useStore()
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onMounted(async () => {
+  await utilStore.fetchProductStores();
+  fetchGroupProductStores();
 });
+
+function closeModal() {
+  modalController.dismiss({ dismissed: true });
+}
+
+async function fetchGroupProductStores() {
+  emitter.emit('presentLoader');
+  try {
+    const resp = await FacilityService.fetchAssociatedProductStoresToGroup({
+      "inputFields": {
+        "facilityGroupId": props.group.facilityGroupId
+      },
+      "viewSize": 250, // maximum view size
+      "entityName": 'ProductStoreFacilityGroup',
+      "noConditionFind": "Y",
+      "filterByDate": 'Y'
+    });
+
+    if (!hasError(resp)) {
+      selectedProductStores.value = resp.data.docs;
+      selectedProductStoreValues.value = JSON.parse(JSON.stringify(resp.data.docs));
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+  emitter.emit('dismissLoader');
+}
+
+function isSelected(productStoreId: any) {
+  return selectedProductStoreValues.value.some((productStore: any) => productStore.productStoreId === productStoreId);
+}
+
+function toggleProductStoreSelection(store: any) {
+  if (isSelected(store.productStoreId)) {
+    selectedProductStoreValues.value = selectedProductStoreValues.value.filter((productStore: any) => productStore.productStoreId !== store.productStoreId);
+  } else {
+    selectedProductStoreValues.value.push(store);
+  }
+}
+
+async function saveProductStores() {
+  const productStoresToAdd = selectedProductStoreValues.value.filter((selectedStore: any) => !selectedProductStores.value.some((store: any) => store.productStoreId === selectedStore.productStoreId));
+  const productStoresToRemove = selectedProductStores.value.filter((store: any) => !selectedProductStoreValues.value.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId));
+
+  const removePromises = productStoresToRemove.map((store: any) => 
+    FacilityService.updateProductStoreFacilityGroup({
+      "productStoreId": store.productStoreId,
+      "facilityGroupId": props.group.facilityGroupId,
+      "fromDate": store.fromDate,
+      "thruDate": DateTime.now().toMillis()
+    })
+  );
+
+  const addPromises = productStoresToAdd.map((store: any) => 
+    FacilityService.createProductStoreFacilityGroup({
+      "productStoreId": store.productStoreId,
+      "facilityGroupId": props.group.facilityGroupId,
+      "fromDate": DateTime.now().toMillis()
+    })
+  );
+
+  const responses = await Promise.allSettled([...removePromises, ...addPromises]);
+  const hasFailed = responses.some((response: any) => response.status === 'rejected');
+  
+  if (hasFailed) {
+    showToast(translate("Failed to associate some product stores to group."));
+  } else {
+    showToast(translate("Product stores associated to group successfully."));
+  }
+  fetchGroupsCount();
+  modalController.dismiss();
+}
+
+async function fetchGroupsCount() {
+  const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup([props.group.facilityGroupId]);
+  const updatedGroups = JSON.parse(JSON.stringify(groups.value));
+  const currentGroup = updatedGroups.find((g: any) => g.facilityGroupId === props.group.facilityGroupId);
+  if (currentGroup) {
+    currentGroup.productStoreCount = productStoreCountByGroup[props.group.facilityGroupId];
+  }
+
+  await facilityStore.updateFacilityGroups(updatedGroups);
+}
+
+function areProductStoresUpdated() {
+  if (selectedProductStores.value.length !== selectedProductStoreValues.value.length) return true;
+
+  return selectedProductStoreValues.value.some((selectedProductStore: any) => !selectedProductStores.value.find((productStore: any) => productStore.productStoreId === selectedProductStore.productStoreId));
+}
 </script>
+
 <style scoped>
 ion-content {
   --padding-bottom: 80px;
 }
 </style>
-    

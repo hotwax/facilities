@@ -20,7 +20,7 @@
               </ion-input>
             </ion-item>
             <ion-item lines="none">
-              <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
+              <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupIdInput" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
             </ion-item>
             <ion-item>
               <ion-select :label="translate('Group type')" :disabled="isFacilityGroupTypeDisabled" :placeholder="translate('Select')" interface="popover" v-model="formData.facilityGroupTypeId">
@@ -30,7 +30,7 @@
               </ion-select>
             </ion-item>
             <ion-item>
-              <ion-select v-if="productStores.length" :label="translate('Product store')" :placeholder="translate('Select')" :selectedText="selectedProductStoreIds.length > 1 ? translate('product stores', { count: selectedProductStoreIds.length }) : selectedProductStoreIds.map[0]" :value="selectedProductStoreIds" @ionChange="updateFacilityGroupProductStores($event)" :multiple="true">
+              <ion-select v-if="productStores.length" :label="translate('Product store')" :placeholder="translate('Select')" :selected-text="selectedProductStoreIds.length > 1 ? translate('product stores', { count: selectedProductStoreIds.length }) : selectedProductStoreIds[0]" :value="selectedProductStoreIds" @ionChange="updateFacilityGroupProductStores($event)" :multiple="true">
                 <ion-select-option :value="productStore.productStoreId" :key="productStore.productStoreId" v-for="productStore in productStores">
                   {{ productStore.storeName ? productStore.storeName : productStore.productStoreId }}
                 </ion-select-option>
@@ -60,7 +60,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonBackButton,
   IonButton,
@@ -82,182 +82,154 @@ import {
   IonToolbar,
   alertController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
+import { ref, computed, reactive, onMounted } from "vue";
 import { arrowForwardOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { mapGetters, useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import { hasError } from "@/adapter";
 import { generateInternalId, showToast } from "@/utils";
 import logger from "@/logger";
 import { DateTime } from "luxon";
+import { useUtilStore } from '@/store/util';
 
-export default defineComponent({
-  name: "CreateFacilityGroup",
-  components: {
-    IonBackButton,
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonList,
-    IonPage,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTextarea,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      facilityGroupTypes: 'util/getFacilityGroupTypes',
-      productStores: 'util/getProductStores',
-    })
-  },
-  data() {
-    return {
-      formData: {
-        facilityGroupId: '',
-        facilityGroupName: '',
-        facilityGroupTypeId: '',
-        description: '',
-      },
-      isFacilityGroupTypeDisabled: false,
-      selectedProductStoreIds: [],
-      isAutoGenerateId: true
-    }
-  },
-  props: ['selectedFacilityGroupTypeId'],
-  async mounted() {
-    await Promise.all([this.store.dispatch('util/fetchProductStores'), this.store.dispatch('util/fetchFacilityGroupTypes')])
-    if (this.selectedFacilityGroupTypeId) {
-      this.formData.facilityGroupTypeId = this.selectedFacilityGroupTypeId
-      this.isFacilityGroupTypeDisabled = true
-    }
-  },
-  methods: {
-    updateFacilityGroupProductStores(event: any) {
-      const selectedProductStoreIds = event.detail.value;
-      this.selectedProductStoreIds = selectedProductStoreIds
-    },
-    setFacilityGroupId(event: any) {
-      if(this.isAutoGenerateId) {
-        this.formData.facilityGroupId = generateInternalId(event.target.value)
-      }
-    },
-    async createFacilityGroup() {
-      if (!this.formData.facilityGroupName?.trim()) {
-        showToast(translate('Please fill all the required fields'))
-        return;
-      }
+const props = defineProps(['selectedFacilityGroupTypeId']);
+const router = useRouter();
+const utilStore = useUtilStore();
 
-      if (this.formData.facilityGroupId.length > 20) {
-        showToast(translate('Internal ID cannot be more than 20 characters.'))
-        return
-      }
-
-      // In case the user does not lose focus from the facility name input
-      // and click on create the button, we need to set the internal id manually
-      if (!this.formData.facilityGroupId) {
-        this.formData.facilityGroupId = generateInternalId(this.formData.facilityGroupName)
-      }
-
-      try {
-        const payload = {
-          ...this.formData,
-        }
-
-        const resp = await FacilityService.createFacilityGroup(payload);
-        if (!hasError(resp)) {
-          const facilityGroupId = resp.data.facilityGroupId
-          if (this.selectedProductStoreIds.length > 0) {
-            await this.associateFacilityGroupToStore(facilityGroupId, this.selectedProductStoreIds);
-          }
-          await this.manageFacilityAlert(facilityGroupId)
-        } else {
-          throw resp.data;
-        }
-      } catch (error) {
-        logger.error(error)
-        showToast(translate('Failed to create facility group.'))
-      }
-    },
-    async associateFacilityGroupToStore(facilityGroupId: string, productStoreIds: string[]) {
-      try {
-        const responses = await Promise.allSettled(productStoreIds
-          .map(async (productStoreId: any) => await FacilityService.createProductStoreFacilityGroup({
-            "productStoreId": productStoreId,
-            "facilityGroupId": facilityGroupId,
-            "fromDate": DateTime.now().toMillis()
-          }))
-        )
-        const hasFailedResponse = responses.some((response: any) => response.status === 'rejected')
-        if (hasFailedResponse) {
-          console.log("Error in associating group to some of the product stores")
-        }
-      } catch (error) {
-        logger.error(error)
-      }
-    },
-    async manageFacilityAlert(facilityGroupId: string) {
-      const message = 'Creating group without facilities is essentially empty. Would you prefer to associate facilities during group creation or allow for later addition?'
-      const alert = await alertController.create({
-        header: translate('Add facilities'),
-        message: translate(message),
-        backdropDismiss: false,
-        buttons: [
-          {
-            text: translate("Skip"),
-            handler: async (data: any) => {
-              this.router.replace({ path: `/tabs/find-groups`})
-            }
-          },
-          {
-            text: translate("Add"),
-            handler: async (data: any) => {
-              this.router.replace({ path: `/manage-facilities/${facilityGroupId}`})
-            }
-          }
-        ],
-      });
-      return alert.present();
-    },
-    validateFacilityGroupId(event: any) {
-      const value = event.target.value;
-      (this as any).$refs.facilityGroupId.$el.classList.remove('ion-valid');
-      (this as any).$refs.facilityGroupId.$el.classList.remove('ion-invalid');
-
-      if (value === '') return;
-
-      this.formData.facilityGroupId.length <= 20
-        ? (this as any).$refs.facilityGroupId.$el.classList.add('ion-valid')
-        : (this as any).$refs.facilityGroupId.$el.classList.add('ion-invalid');
-      this.isAutoGenerateId = false
-    },
-    markFacilityGroupIdTouched() {
-      (this as any).$refs.facilityGroupId.$el.classList.add('ion-touched');
-    },
-  },
-  setup() {
-    const store = useStore();
-    const router = useRouter();
-
-    return {
-      arrowForwardOutline,
-      router,
-      store,
-      translate
-    };
-  },
+const formData = reactive({
+  facilityGroupId: '',
+  facilityGroupName: '',
+  facilityGroupTypeId: '',
+  description: '',
 });
+const isFacilityGroupTypeDisabled = ref(false);
+const selectedProductStoreIds = ref([] as string[]);
+const isAutoGenerateId = ref(true);
+const facilityGroupIdInput = ref(null as any);
+
+const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
+const productStores = computed(() => utilStore.getProductStores);
+
+onMounted(async () => {
+  await Promise.all([utilStore.fetchProductStores(), utilStore.fetchFacilityGroupTypes()]);
+  if (props.selectedFacilityGroupTypeId) {
+    formData.facilityGroupTypeId = props.selectedFacilityGroupTypeId;
+    isFacilityGroupTypeDisabled.value = true;
+  }
+});
+
+function updateFacilityGroupProductStores(event: any) {
+  selectedProductStoreIds.value = event.detail.value;
+}
+
+function setFacilityGroupId(event: any) {
+  if (isAutoGenerateId.value) {
+    formData.facilityGroupId = generateInternalId(event.target.value);
+  }
+}
+
+async function createFacilityGroup() {
+  if (!formData.facilityGroupName?.trim()) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  if (formData.facilityGroupId.length > 20) {
+    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    return;
+  }
+
+  if (!formData.facilityGroupId) {
+    formData.facilityGroupId = generateInternalId(formData.facilityGroupName);
+  }
+
+  try {
+    const payload = {
+      ...formData,
+    };
+
+    const resp = await FacilityService.createFacilityGroup(payload);
+    if (!hasError(resp)) {
+      const facilityGroupId = resp.data.facilityGroupId;
+      if (selectedProductStoreIds.value.length > 0) {
+        await associateFacilityGroupToStore(facilityGroupId, selectedProductStoreIds.value);
+      }
+      await manageFacilityAlert(facilityGroupId);
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    logger.error(error);
+    showToast(translate('Failed to create facility group.'));
+  }
+}
+
+async function associateFacilityGroupToStore(facilityGroupId: string, productStoreIds: string[]) {
+  try {
+    const responses = await Promise.allSettled(productStoreIds
+      .map(async (productStoreId: any) => await FacilityService.createProductStoreFacilityGroup({
+        "productStoreId": productStoreId,
+        "facilityGroupId": facilityGroupId,
+        "fromDate": DateTime.now().toMillis()
+      }))
+    );
+    const hasFailedResponse = responses.some((response: any) => response.status === 'rejected');
+    if (hasFailedResponse) {
+      console.log("Error in associating group to some of the product stores");
+    }
+  } catch (error) {
+    logger.error(error);
+  }
+}
+
+async function manageFacilityAlert(facilityGroupId: string) {
+  const message = 'Creating group without facilities is essentially empty. Would you prefer to associate facilities during group creation or allow for later addition?';
+  const alert = await alertController.create({
+    header: translate('Add facilities'),
+    message: translate(message),
+    backdropDismiss: false,
+    buttons: [
+      {
+        text: translate("Skip"),
+        handler: async () => {
+          router.replace({ path: `/tabs/find-groups`});
+        }
+      },
+      {
+        text: translate("Add"),
+        handler: async () => {
+          router.replace({ path: `/manage-facilities/${facilityGroupId}`});
+        }
+      }
+    ],
+  });
+  return alert.present();
+}
+
+function validateFacilityGroupId(event: any) {
+  const value = event.target.value;
+  if (!facilityGroupIdInput.value) return;
+
+  const el = facilityGroupIdInput.value.$el;
+  el.classList.remove('ion-valid');
+  el.classList.remove('ion-invalid');
+
+  if (value === '') return;
+
+  formData.facilityGroupId.length <= 20
+    ? el.classList.add('ion-valid')
+    : el.classList.add('ion-invalid');
+  isAutoGenerateId.value = false;
+}
+
+function markFacilityGroupIdTouched() {
+  if (facilityGroupIdInput.value) {
+    facilityGroupIdInput.value.$el.classList.add('ion-touched');
+  }
+}
 </script>
+
 <style scoped>
 @media (min-width: 700px) {
   main {

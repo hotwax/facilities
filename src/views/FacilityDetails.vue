@@ -30,7 +30,7 @@
               <ion-item>
                 <ion-icon :icon="bookmarksOutline" slot="start"/>
                 <ion-select :label="translate('Facility SubType')" interface="popover" v-model="facilityTypeId" @ionChange="updateFacilityType()">
-                  <ion-select-option v-for="(type, facilityTypeId) in facilityTypeIdOptions" :key="facilityTypeId" :value="facilityTypeId">{{ type.description ? type.description : facilityTypeId }}</ion-select-option>
+                  <ion-select-option v-for="(type, fTypeId) in facilityTypeIdOptions" :key="fTypeId" :value="fTypeId">{{ type.description ? type.description : fTypeId }}</ion-select-option>
                 </ion-select>
               </ion-item>
               <ion-item lines="none" class="ion-margin-bottom">
@@ -142,7 +142,7 @@
             </ion-item>
             <ion-item button lines="none" @click="addCustomSchedule">
               <ion-label>{{ translate("Custom schedule") }}</ion-label>
-              <ion-icon slot="end" color="primary" :icon="addCircleOutline" button />
+              <ion-icon slot="end" color="primary" :icon="addCircleOutline" />
             </ion-item>
             <ion-button fill="outline" expand="block" :disabled="!selectedCalendarId" @click="associateCalendarToFacility">
               {{ translate("Add operating hours") }}
@@ -301,7 +301,7 @@
             </ion-card-content>
             <ion-item lines="none" v-if="current.orderLimitType === 'custom'">
               <ion-text>{{ current.orderCount }}</ion-text>
-              <ion-progress-bar class="ion-margin" :value="current.orderCount / current.maximumOrderLimit" />
+              <ion-progress-bar class="ion-margin" :value="current.orderCount / (current.maximumOrderLimit || 1)" />
               <ion-chip outline @click="changeOrderLimitPopover">{{ current.maximumOrderLimit }}</ion-chip>
             </ion-item>      
             <ion-item lines="none" v-else-if="current.orderLimitType === 'unlimited'">
@@ -426,8 +426,6 @@
                 <ion-label>{{ translate('Identification') }}</ion-label>
                 <ion-label slot="end">{{ current.externalId }}</ion-label>
               </ion-item>
-              <!-- Using blur to remove the focus from button on click, as we need to focus the input field inside the modal opened
-              and we can't focus two elements at the same time -->
               <ion-button fill="clear" @click="$event.target.blur(); editFacilityExternalId()">{{ translate("Edit") }}</ion-button>
               <ion-button fill="clear" color="danger" @click="removeFacilityExternalID()">{{ translate("Remove") }}</ion-button>
             </ion-card>
@@ -456,7 +454,7 @@
 
             <ion-label class="tablet">
               <ion-chip outline>{{ getDate(party.fromDate) }}</ion-chip>
-              <p>{{ "added" }}</p>
+              <p>{{ translate("added") }}</p>
             </ion-label>
 
             <ion-button @click="removePartyFromFacility(party)" fill="clear" color="medium">
@@ -543,8 +541,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import {
   IonAvatar,
   IonBackButton,
@@ -577,7 +574,8 @@ import {
   IonToolbar,
   alertController,
   modalController,
-  popoverController
+  popoverController,
+  onIonViewWillEnter
 } from '@ionic/vue'
 import { 
   addCircleOutline,
@@ -599,6 +597,7 @@ import {
   trashOutline,
   unlinkOutline
 } from 'ionicons/icons'
+import { ref, computed } from 'vue';
 import { translate } from '@hotwax/dxp-components';
 import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
@@ -612,7 +611,6 @@ import AddStaffMemberModal from '@/components/AddStaffMemberModal.vue';
 import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModal.vue'
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
 import CustomScheduleModal from '@/components/CustomScheduleModal.vue';
-import { mapGetters, useStore } from 'vuex';
 import { DateTime } from 'luxon';
 import { FacilityService } from '@/services/FacilityService';
 import { hasError } from '@/adapter';
@@ -620,7 +618,7 @@ import logger from '@/logger';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityExternalIdModal from '@/components/FacilityExternalIdModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
-import { showToast } from '@/utils';
+import { showToast, copyToClipboard } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
@@ -630,945 +628,881 @@ import AddFacilityGroupModal from '@/components/AddFacilityGroupModal.vue'
 import Image from '@/components/Image.vue';
 import emitter from '@/event-bus'
 import CreateFacilityGroupModal from '@/components/CreateFacilityGroupModal.vue';
-import { copyToClipboard } from '@/utils';
 import FacilityTimeZoneModal from '@/components/FacilityTimeZoneSwitcher.vue'
+import { useFacilityStore } from '@/store/facility';
+import { useUtilStore } from '@/store/util';
+import { useUserStore } from '@/store/user';
 
-export default defineComponent({
-  name: 'FacilityDetails',
-  components: {
-    IonAvatar,
-    IonBackButton,
-    IonBadge,
-    IonButton,
-    IonCard,
-    IonCardContent,
-    IonCardHeader,
-    IonCardSubtitle,
-    IonCardTitle,
-    IonChip,
-    IonContent,
-    IonHeader, 
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonPage,
-    IonProgressBar,
-    IonRadio,
-    IonRadioGroup,
-    IonSegment,
-    IonSegmentButton,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTitle,
-    IonToggle,
-    IonToolbar,
-    Image
-  },
-  data() {
-    return {
-      isLoading: true, // shows whether the facility information fetching is completed or not
-      segment: 'external-mappings',
-      defaultDaysToShip: '', // not assinging 0 by default as it will convey the user that the facility can ship same day, but actually defaultDays are not setup on the facility
-      isCalendarFound: true,
-      selectedCalendarId: '',
-      isRegenerationRequired: false,  // keeping value as false, as initially we does not know whether the zipCode is valid or not, if making it true, the UI changes from danger to normal which is not a good experience
-      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-      externalId: '',
-      facilityTypeId: '',
-      parentFacilityTypeId: '',
-      facilityTypeIdOptions: {} as any,
-      dateTimeFormat: 't ZZZZ'
-    }
-  },
-  computed: {
-    ...mapGetters({
-      calendars: 'util/getCalendars',
-      current: 'facility/getCurrent',
-      externalMappingTypes: 'util/getExternalMappingTypes',
-      facilityCalendar: 'facility/getFacilityCalendar',
-      facilityParties: 'facility/getFacilityParties',
-      facilityProductStores: 'facility/getFacilityProductStores',
-      getProductStore: 'util/getProductStore',
-      locationTypes: 'util/getLocationTypes',
-      partyRoles: 'util/getPartyRoles',
-      productStores: 'util/getProductStores',
-      postalAddress: 'facility/getPostalAddress',
-      userProfile: 'user/getUserProfile',
-      shopifyShopIdForProductStore: 'util/getShopifyShopIdForProductStore',
-      facilityTypes: "util/getFacilityTypes",
-      baseUrl: "user/getBaseUrl",
-      facilityGroupTypes: 'util/getFacilityGroupTypes',
-      inventoryGroups: 'util/getInventoryGroups',
-      contactDetails: 'facility/getTelecomAndEmailAddress'
-    }),
-    mapUrl() {
-      return this.contactDetails?.googleMapUrl?.infoString || ''
-    }
-  },
-  props: ["facilityId"],
-  async ionViewWillEnter() {
-    await Promise.all([this.store.dispatch('util/fetchFacilityGroupTypes'), this.store.dispatch('util/fetchInventoryGroups')])
-    await Promise.all([this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId }), this.store.dispatch('util/fetchExternalMappingTypes'), this.store.dispatch('util/fetchLocationTypes'), this.store.dispatch('util/fetchPartyRoles'), this.store.dispatch('util/fetchFacilityTypes', {
+const props = defineProps(["facilityId"]);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
+const userStore = useUserStore();
+
+const isLoading = ref(true);
+const segment = ref('external-mappings');
+const defaultDaysToShip = ref('');
+const selectedCalendarId = ref('');
+const isRegenerationRequired = ref(false);
+const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const facilityTypeId = ref('');
+const parentFacilityTypeId = ref('');
+const facilityTypeIdOptions = ref({} as any);
+const dateTimeFormat = 't ZZZZ';
+
+const calendars = computed(() => utilStore.getCalendars);
+const current = computed(() => facilityStore.getCurrent);
+const externalMappingTypes = computed(() => utilStore.getExternalMappingTypes);
+const facilityCalendar = computed(() => facilityStore.getFacilityCalendar);
+const facilityParties = computed(() => facilityStore.getFacilityParties);
+const facilityProductStores = computed(() => facilityStore.getFacilityProductStores);
+const getProductStore = computed(() => (id: string) => utilStore.getProductStore(id));
+const locationTypes = computed(() => utilStore.getLocationTypes);
+const partyRoles = computed(() => utilStore.getPartyRoles);
+const postalAddress = computed(() => facilityStore.getPostalAddress);
+const shopifyShopIdForProductStore = computed(() => (id: string) => utilStore.getShopifyShopIdForProductStore(id));
+const facilityTypes = computed(() => utilStore.getFacilityTypes);
+const baseUrl = computed(() => userStore.getBaseUrl);
+const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
+const inventoryGroups = computed(() => utilStore.getInventoryGroups);
+const contactDetails = computed(() => facilityStore.getTelecomAndEmailAddress);
+
+const mapUrl = computed(() => contactDetails.value?.googleMapUrl?.infoString || '');
+
+onIonViewWillEnter(async () => {
+  await Promise.all([utilStore.fetchFacilityGroupTypes(), utilStore.fetchInventoryGroups()]);
+  await Promise.all([
+    facilityStore.fetchCurrentFacility({ facilityId: props.facilityId }),
+    utilStore.fetchExternalMappingTypes(),
+    utilStore.fetchLocationTypes(),
+    utilStore.fetchPartyRoles(),
+    utilStore.fetchFacilityTypes({
       parentTypeId: 'VIRTUAL_FACILITY',
       parentTypeId_op: 'notEqual',
       facilityTypeId: 'VIRTUAL_FACILITY',
       facilityTypeId_op: 'notEqual'
-    })])
-    await Promise.all([this.store.dispatch('facility/fetchFacilityLocations', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes)}), this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId }), this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId }), this.store.dispatch('util/fetchProductStores'), this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId }), this.store.dispatch('util/fetchCalendars'), this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId }), this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.facilityId })])
-    this.defaultDaysToShip = this.current.defaultDaysToShip
-    this.isLoading = false
-    this.parentFacilityTypeId = this.current.parentFacilityTypeId
-    this.facilityTypeId = this.current.facilityTypeId
-    // not calling the method (getFacilityTypesByParentTypeId) here, as the method will be called on ionChange of parentType
-    this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
-      if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
-        facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
-      }
-      return facilityTypesByParentTypeId
-    }, {}) : this.facilityTypes
-    if(this.postalAddress.latitude) this.fetchPostalCodeByGeoPoints()
-  },
-  methods: {
-    getCurrentTime (zone: string, format = 't ZZZZ') {
-      return DateTime.now().setZone(zone).toFormat(format)
-    },
-    async openTimeZoneModal() {
-      const timeZoneModal = await modalController.create({
-        component: FacilityTimeZoneModal
-      })
-      timeZoneModal.present()
-    },
-    async editMapUrl() {
-      const alert = await alertController.create({
-        header: translate("Map Link"),
-        inputs: [
-          {
-            name: 'mapUrl',
-            type: 'url',
-            placeholder: translate("Enter new Map Url"),
-            value: this.contactDetails?.googleMapUrl?.infoString || ""
-          }
-        ],
-        buttons: [
-          {
-            text: translate('Cancel'),
-            role: 'cancel'
-          },
-          {
-            text: translate('Save'),
-            handler: async (data) => {
-
-              let isValidUrl = true;
-              try {
-                new URL(data.mapUrl);
-              } catch (_) {
-                isValidUrl = false;
-              }
-
-              if (!isValidUrl) {
-                showToast(translate("Please enter a valid URL"));
-                return false;
-              }
-
-              try {
-                const payload = {
-                  facilityId: this.facilityId,
-                  infoString: data.mapUrl.trim()
-                };
-
-                let resp;
-
-                if (this.contactDetails?.googleMapUrl?.contactMechId) {
-                  if (this.isMapUrlUpdated(data.mapUrl)) {
-                    resp = await FacilityService.updateFacilityContactMech({
-                      ...payload,
-                      contactMechId: this.contactDetails.googleMapUrl.contactMechId,
-                      contactMechTypeId: "MAP_URL",
-                    });
-                  } else {
-                    return;
-                  }
-                } else {
-                  resp = await FacilityService.createFacilityContactMech({
-                    ...payload,
-                    contactMechTypeId: "MAP_URL",
-                    contactMechPurposeTypeId: "GOOGLE_MAP_URL"
-                  });
-                }
-
-                if (!hasError(resp)) {
-                  showToast(translate("Map URL updated successfully"));
-                  await this.store.dispatch("facility/fetchFacilityContactDetailsAndTelecom", { facilityId: this.facilityId });
-                } else {
-                  throw resp.data;
-                }
-              } catch (err) {
-                logger.error("Failed to update Map URL", err);
-                showToast(translate("Failed to update Map URL"));
-              }
-            }
-          }
-        ]
-      });
-
-      await alert.present();
-    },
-    async deleteMapUrl() {
-      try {
-        const payload = {
-          facilityId: this.facilityId,
-          contactMechId: this.contactDetails?.googleMapUrl?.contactMechId
-        }
-        const resp = await FacilityService.deleteFacilityContactMech(payload)
-        if (!hasError(resp)) {
-          showToast(translate('Map URL removed successfully.'))
-          await this.store.dispatch('facility/fetchFacilityContactDetailsAndTelecom', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        logger.error('Failed to remove map url.', err)
-        showToast(translate('Failed to remove map url.'))
-      }
-    },
-    isMapUrlUpdated(newMapUrl: string) {
-      return newMapUrl && JSON.stringify(newMapUrl) !== JSON.stringify(this.contactDetails?.googleMapUrl?.infoString)
-    },
-    getImageUrl(imageUrl: string) {
-      return (this.baseUrl.startsWith('http') ? this.baseUrl.replace(/api\/?/, "") : `https://${this.baseUrl}.hotwax.io/`) + imageUrl
-    },
-    goToLink(link: string) {
-      const url = link.startsWith('http') ? link : `https://${link}`
-      // opening link in new tab without passing any reference
-      window.open(url, '_blank', 'noopener, noreferrer')
-    },
-    async productStorePopover(ev: Event, store: any) {
-      const popover = await popoverController.create({
-        component: ProductStorePopover,
-        componentProps: {
-          currentProductStore: store,
-          facilityId: this.facilityId
-        },
-        event: ev,
-        showBackdrop: false
-      });
-
-      return popover.present()
-    },
-    async openLatLongPopover(event: Event) {
-      const popover = await popoverController.create({
-        component: GeoPointPopover,
-        componentProps: { facilityId: this.facilityId, isRegenerationRequired: this.isRegenerationRequired },
-        event,
-        showBackdrop: false
-      });
-
-      popover.onDidDismiss().then(async(result) => {
-        if(result?.data?.generatedLatLong) {
-          // changing the value for the variable, as if the popover has returned some value, it simply
-          // means that the latLng are correct for current zipCode
-          this.isRegenerationRequired = false
-        }
-      })
-
-      return popover.present()
-    },
-    async associateCalendarToFacility() {
-      emitter.emit('presentLoader')
-
-      let resp;
-
-       try {
-        resp = await FacilityService.associateCalendarToFacility({
-          facilityId: this.facilityId,
-          calendarId: this.selectedCalendarId,
-          fromDate: DateTime.now().toMillis(),
-          facilityCalendarTypeId: 'OPERATING_HOURS'
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate("Successfully associated calendar to the facility."))
-          await this.store.dispatch('facility/fetchFacilityCalendar', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate("Failed to associate calendar to the facility."))
-        logger.error(err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async openAddressModal() {
-      const addressModal = await modalController.create({
-        component: FacilityAddressModal,
-        componentProps: { facilityId: this.facilityId, facilityName: this.current.facilityName }
-      })
-
-      addressModal.onDidDismiss().then(async(result) => {
-        if(result.data?.postalAddress) {
-          await this.fetchPostalCodeByGeoPoints()
-        }
-      })
-
-      addressModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    async addCustomSchedule() {
-      const customScheduleModal = await modalController.create({
-        component: CustomScheduleModal,
-        componentProps: { facilityId: this.facilityId }
-      })
-
-      customScheduleModal.present()
-    },
-    async openGeoPointModal() {
-      const geoPointModal = await modalController.create({
-        component: FacilityGeoPointModal,
-        componentProps: { facilityId: this.facilityId }
-      })
-
-      geoPointModal.onDidDismiss().then(async(result) => {
-        if(result.data?.geoPoints) {
-          await this.fetchPostalCodeByGeoPoints()
-        }
-      })
-
-      geoPointModal.present()
-    },
-    async selectProductStores() {
-      const selectProductStoreModal = await modalController.create({
-        component: SelectProductStoreModal,
-        componentProps: { selectedProductStores: this.facilityProductStores }
-      })
-
-      selectProductStoreModal.onDidDismiss().then(async(result: any) => {
-        if (result.data && result.data.value) {
-          emitter.emit('presentLoader')
-
-          const productStoresToCreate = result.data.value.productStoresToCreate
-          const productStoresToRemove = result.data.value.productStoresToRemove
-
-          const updateResponses = await Promise.allSettled(productStoresToRemove
-            .map(async (payload: any) => await FacilityService.updateProductStoreFacility({
-              facilityId: this.facilityId,
-              fromDate: this.facilityProductStores.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
-              productStoreId: payload.productStoreId,
-              thruDate: DateTime.now().toMillis()
-            }))
-          )
-
-          let createResponses = []
-          for (const payload of productStoresToCreate) {
-            createResponses.push(await FacilityService.createProductStoreFacility({
-              productStoreId: payload.productStoreId,
-              facilityId: this.facilityId,
-              fromDate: DateTime.now().toMillis(),
-            }))
-          }
-
-          const hasFailedResponse = [...updateResponses, ...createResponses].some((response: any) => response.status === 'rejected')
-          if(hasFailedResponse) {
-            showToast(translate("Failed to update some product stores"))
-          } else {
-            showToast(translate("Product stores updated successfully."))
-          }
-
-          // refetching product stores with updated roles
-          await this.store.dispatch('facility/getFacilityProductStores', { facilityId: this.facilityId })
-          emitter.emit('dismissLoader')
-        }
-      })
-
-      selectProductStoreModal.present()
-    },
-    async addLocationModal() {
-      const addLocationModal = await modalController.create({
-        component: AddLocationModal
-      })
-
-      addLocationModal.present()
-    },
-    async addStaffMemberModal() {
-      const addStaffModal = await modalController.create({
-        component: AddStaffMemberModal,
-        componentProps: { facilityId: this.facilityId, selectedParties: this.facilityParties }
-      })
-
-      addStaffModal.present()
-    },
-    async addFacilityGroupModal() {
-      const addFacilityGroupModal = await modalController.create({
-        component: AddFacilityGroupModal
-      })
-
-      addFacilityGroupModal.present()
-
-      // fetch the latest facilityGroups information only if facility is linked to some new groups
-      addFacilityGroupModal.onDidDismiss().then((result: any) => {
-        if(result?.data?.fetchGroups) {
-          this.store.dispatch('facility/fetchFacilityAdditionalInformation')
-        }
-      })
-    },
-    async addOperatingHours() {
-      const addOperatingHoursModal = await modalController.create({
-        component: AddOperatingHoursModal,
-        componentProps: { facilityId: this.facilityId }
-      })
-
-      addOperatingHoursModal.present()
-    },
-    async openLocationDetailsPopover(ev: Event, location: any) {
-      const locationDetailsPopover = await popoverController.create({
-        component: LocationDetailsPopover,
-        componentProps: { location },
-        event: ev,
-        showBackdrop: false
-      });
-      return locationDetailsPopover.present()
-    },
-    async openExternalMappingPopover(ev: Event) {
-      const externalMappingPopover = await popoverController.create({
-        component: FacilityMappingPopover,
-        event: ev,
-        showBackdrop: false
-      });
-      return externalMappingPopover.present()
-    },
-    async openOperatingHoursPopover(ev: Event) {
-      const operatingHoursPopover = await popoverController.create({
-        component: OperatingHoursPopover,
-        componentProps: { facilityId: this.facilityId },
-        event: ev,
-        showBackdrop: false
-      });
-
-      operatingHoursPopover.present()
-    },
-    getDate(date: any) {
-      return DateTime.fromMillis(date).toFormat('dd LLL yyyy')
-    },
-    async removePartyFromFacility(party: any) {
-      emitter.emit('presentLoader')
-
-      try {
-        const resp = await FacilityService.removePartyFromFacility({
-          facilityId: party.facilityId,
-          fromDate: party.fromDate,
-          thruDate: DateTime.now().toMillis(),
-          partyId: party.partyId,
-          roleTypeId: party.roleTypeId
-        })
-
-        if(!hasError(resp)){
-          showToast(translate("Party was removed from facility.", {"partyName": party.fullName, "facilityName": this.current.facilityName}))
-
-          // Refreshes the parties in facility
-          await this.store.dispatch('facility/getFacilityParties', { facilityId: this.facilityId })
-        } else {
-          throw resp
-        }
-      } catch(err) {
-        showToast(translate("Failed to remove party from facility."))
-        logger.error(err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async changeOrderLimitPopover(ev: Event) {
-      const popover = await popoverController.create({
-        component: OrderLimitPopover,
-        event: ev,
-        showBackdrop: false,
-        componentProps: { fulfillmentOrderLimit: this.current.maximumOrderLimit }
-      });
-      popover.present();
-
-      const result = await popover.onDidDismiss();
-      // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
-      if(result.data != undefined && result.data !== this.current.maximumOrderLimit) {
-        emitter.emit('presentLoader')
-
-        await this.updateFacility(result.data, this.current)
-        // refetching the facility to update the maximumOrderLimit
-        await this.store.dispatch('facility/fetchCurrentFacility', { facilityId: this.facilityId, skipState: true })
-
-        emitter.emit('dismissLoader')
-      }
-    },
-    async updateFacility(maximumOrderLimit: number | string, facility: any) {
-      let resp;
-
-      try {
-        resp = await FacilityService.updateFacility({
-          "facilityId": facility.facilityId,
-          maximumOrderLimit
-        })
-
-        if(!hasError(resp)) {
-          facility.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
-          showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }))
-        logger.error('Failed to update facility', err)
-      }
-    },
-    async closeFacility(event: any) {
-      event.stopImmediatePropagation();
-      emitter.emit("presentLoader");
-      const isChecked = !event.target.checked;
-
-      let resp;
-      let closedDate = isChecked ? DateTime.now().toMillis() : ""
-
-      try {
-        resp = await FacilityService.updateFacility({
-          "facilityId": this.current.facilityId,
-          "closedDate": closedDate
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate('Facility has been marked as ', { status: isChecked ? 'closed' : 'open' }))
-          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, closedDate })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update facility.'))
-        logger.error('Failed to update facility.', err)
-      }
-      emitter.emit("dismissLoader");
-    },
-    async openFacilityOrderCountModal() {
-      const facilityOrderCountModal = await modalController.create({
-        component: ViewFacilityOrderCountModal,
-        componentProps: { facilityId: this.facilityId }
-      })
+    })
+  ]);
+  await Promise.all([
+    facilityStore.fetchFacilityLocations({ facilityId: props.facilityId }),
+    facilityStore.getFacilityParties({ facilityId: props.facilityId }),
+    facilityStore.fetchFacilityMappings({ facilityId: props.facilityId, facilityIdenTypeIds: Object.keys(externalMappingTypes.value) }),
+    facilityStore.fetchShopifyFacilityMappings({ facilityId: props.facilityId }),
+    facilityStore.getFacilityProductStores({ facilityId: props.facilityId }),
+    utilStore.fetchProductStores(),
+    facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId }),
+    utilStore.fetchCalendars(),
+    facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId }),
+    facilityStore.fetchFacilityLogins({ facilityId: props.facilityId })
+  ]);
   
-      facilityOrderCountModal.present()
-    },
-
-    async updateFulfillmentSetting(event: any, facilityGroupId: string) {
-      event.stopImmediatePropagation();
-      emitter.emit("presentLoader");
-
-      // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
-      const isChecked = !event.target.checked;
-
-      try {
-        let resp;
-        if (isChecked) {
-          resp = await FacilityService.addFacilityToGroup({
-            "facilityId": this.current.facilityId,
-            "facilityGroupId": facilityGroupId
-          });
-        } else {
-          const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
-          resp = await FacilityService.updateFacilityToGroup({
-            "facilityId": this.current.facilityId,
-            "facilityGroupId": facilityGroupId,
-            "fromDate": groupInformation.fromDate,
-            "thruDate": DateTime.now().toMillis()
-          })
-        }
-        if (!hasError(resp)) {
-          showToast(translate('Fulfillment setting updated successfully'))
-          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        showToast(translate('Failed to update fulfillment setting'))
-        logger.error('Failed to update fulfillment setting', err)
-      }
-      emitter.emit("dismissLoader");
-    },
-
-    async updateSellInventoryOnlineSetting(event: any, facilityGroup: any) {
-      event.stopImmediatePropagation();
-      emitter.emit("presentLoader");
-
-      // Using `not` as the click event returns the current status of toggle, but on click we want to change the toggle status
-      const isChecked = !event.target.checked;
-
-      try {
-        let resp;
-        let successMessage;
-        if (isChecked) {
-          resp = await FacilityService.addFacilityToGroup({
-            "facilityId": this.current.facilityId,
-            "facilityGroupId": facilityGroup.facilityGroupId
-          });
-          successMessage = translate('is now selling on', { "facilityName": this.current.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
-        } else {
-          const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
-          resp = await FacilityService.updateFacilityToGroup({
-            "facilityId": this.current.facilityId,
-            "facilityGroupId": facilityGroup.facilityGroupId,
-            "fromDate": groupInformation.fromDate,
-            "thruDate": DateTime.now().toMillis()
-          })
-          successMessage = translate('no longer sells on', { "facilityName": this.current.facilityName, "facilityGroupId": facilityGroup.facilityGroupName })
-        }
-        if (!hasError(resp)) {
-          showToast(successMessage)
-          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update sell inventory online setting'))
-        logger.error('Failed to update sell inventory online setting', err)
-      }
-      emitter.emit("dismissLoader");
-    },
-    async removeFacilityFromGroup(facilityGroupId: string) {
-      emitter.emit("presentLoader");
-
-      let resp;
-
-      const groupInformation = this.current.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId)
-
-      try {
-
-        resp = await FacilityService.updateFacilityToGroup({
-          "facilityId": this.current.facilityId,
-          "facilityGroupId": facilityGroupId,
-          "fromDate": groupInformation.fromDate,
-          "thruDate": DateTime.now().toMillis()
-        })
-
-        if (!hasError(resp)) {
-          showToast(translate('Group unlinked from facility'))
-          await this.store.dispatch('facility/fetchFacilityAdditionalInformation')
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        showToast(translate('Failed to unlink group'))
-        logger.error('Failed to unlink group', err)
-      }
-
-      emitter.emit("dismissLoader");
-    },
-    async updateDefaultDaysToShip() {
-      emitter.emit('presentLoader')
-
-      try {
-        const payload = {
-          facilityId: this.current.facilityId,
-          defaultDaysToShip: this.defaultDaysToShip
-        }
-
-        const resp = await FacilityService.updateFacility(payload)
-
-        if(!hasError(resp)) {
-          showToast(translate('Updated default days to ship'))
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error('Failed to update default days to ship', err)
-        showToast(translate('Failed to update default days to ship'))
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async removeFacilityMapping(mapping: any) {
-      emitter.emit('presentLoader')
-
-      try {
-        const payload = {
-          facilityId: this.current.facilityId,
-          facilityIdenTypeId: mapping.facilityIdenTypeId,
-          fromDate: mapping.fromDate,
-          thruDate: DateTime.now().toMillis()
-        }
-
-        const resp = await FacilityService.updateFacilityIdentification(payload)
-
-        if(!hasError(resp)) {
-          showToast(translate('Removed facility mapping successfully'))
-          await this.store.dispatch('facility/fetchFacilityMappings', { facilityId: this.facilityId, facilityIdenTypeIds: Object.keys(this.externalMappingTypes) })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error('Failed to remove facility mapping', err)
-        showToast(translate('Failed to remove facility mapping'))
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async removeFacilityExternalID() {
-      emitter.emit('presentLoader')
-
-      try {
-        const payload = {
-          facilityId: this.current.facilityId,
-          externalId: ''
-        }
-
-        const resp = await FacilityService.updateFacility(payload)
-
-        if(!hasError(resp)) {
-          this.current.externalId = ''
-          showToast(translate('Removed facility external ID'))
-          await this.store.dispatch('facility/updateCurrentFacility', this.current)
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error('Failed to remove external id', err)
-        showToast(translate('Failed to remove external id'))
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
-      try {
-        const payload = {
-          facilityId: this.current.facilityId,
-          shopId: shopifyFacilityMapping.shopId,
-          shopifyLocationId: shopifyFacilityMapping.shopifyLocationId,
-        }
-
-        const resp = await FacilityService.deleteShopifyShopLocation(payload)
-
-        if(!hasError(resp)) {
-          showToast(translate('Removed shopify mapping successfully'))
-          await this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.facilityId })
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error('Failed to remove shopify mapping', err)
-        showToast(translate('Failed to remove shopify mapping'))
-      }
-    },
-    async editFacilityMapping(mapping: any) {
-      const customMappingModal = await modalController.create({
-        component: FacilityMappingModal,
-        componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
-      })
-
-      customMappingModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    async editFacilityExternalId() {
-      const facilityExternalIdModal = await modalController.create({
-        component: FacilityExternalIdModal
-      })
-
-      facilityExternalIdModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    async editShopifyFacilityMapping(shopifyFacilityMapping: any) {
-      const customMappingModal = await modalController.create({
-        component: FacilityShopifyMappingModal,
-        componentProps: { shopifyFacilityMapping, type: 'update' }
-      })
-
-      customMappingModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    getOpenEndTime(startTime: any, capacity: any) {
-      const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
-      const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a')
-      return `${openTime} - ${endTime}`
-    },
-    async fetchPostalCodeByGeoPoints() {
-      const payload = {
-        json: {
-          "query": "*:*",
-          "filter": "{!geofilt sfield=location}",
-          "params": {
-            "pt": `${this.postalAddress.latitude}, ${this.postalAddress.longitude}`,
-            "d": "10"
-          },
-          sort: 'geodist(location, ' + this.postalAddress.latitude + ',' + this.postalAddress.longitude + ') asc',
-          "limit": 1
-        }
-      }
-
-      try {
-        const resp = await UtilService.generateLatLong(payload)
-
-        if(!hasError(resp)) {
-          const postalCode = this.postalAddress.postalCode
-          const fetchedPostcode = resp.data.response.docs[0].postcode
-          this.isRegenerationRequired = !(postalCode.startsWith('0') ? postalCode.substring(1) === fetchedPostcode || postalCode === fetchedPostcode : postalCode === fetchedPostcode);
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-    },
-    async renameFacility() {
-      const alert = await alertController.create({
-        header: translate("Rename facility"),
-        inputs: [{
-          name: "facilityName",
-          value: this.current.facilityName
-        }],
-        buttons: [{
-          text: translate('Cancel'),
-          role: "cancel"
-        },
-        {
-          text: translate('Apply'),
-          handler: async (data: any) => {
-            if(data.facilityName) {
-              emitter.emit('presentLoader')
-
-              try {
-                const resp = await FacilityService.updateFacility({
-                  facilityId: this.facilityId,
-                  facilityName: data.facilityName
-                })
-
-                if (!hasError(resp)) {
-                  showToast(translate("Facility renamed successfully."))
-                  await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityName: data.facilityName })
-                } else {
-                  throw resp.data
-                }
-              } catch (error) {
-                showToast(translate('Failed to rename facility.'))
-                logger.error('Failed to rename facility.', error)
-              }
-
-              emitter.emit('dismissLoader')
-            }
-          }
-        }]
-      })
-
-      await alert.present()
-    },
-    getFacilityTypesByParentTypeId() {
-      this.facilityTypeIdOptions = this.parentFacilityTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
-        if (this.facilityTypes[facilityTypeId].parentTypeId === this.parentFacilityTypeId) {
-          facilityTypesByParentTypeId[facilityTypeId] = this.facilityTypes[facilityTypeId]
-        }
-        return facilityTypesByParentTypeId
-      }, {}) : this.facilityTypes
-
-      // added this check to stop the programatic execution of this flow on initial load
-      if(this.current.parentFacilityTypeId === this.parentFacilityTypeId) {
-        return;
-      }
-      // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
-      // as default elements within the list. These elements may appear at any index within the list structure.
-      // Hence to meet requirement we explicitly handling the default nature of RETAIL STORE and WAREHOUSE.
-      this.facilityTypeId = this.facilityTypeIdOptions['RETAIL_STORE'] ? 'RETAIL_STORE' : this.facilityTypeIdOptions['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(this.facilityTypeIdOptions)[0]
-      this.updateFacilityType()
-    },
-    async updateFacilityType() {
-      try {
-        const resp = await FacilityService.updateFacility({
-          facilityId: this.facilityId,
-          facilityTypeId: this.facilityTypeId
-        })
-
-        if (!hasError(resp)) {
-          showToast(translate("Facility type updated"))
-          await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, facilityTypeId: this.facilityTypeId, parentFacilityTypeId: this.parentFacilityTypeId })
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        // if api fails then revert the type selection, and also revert the parentTypeSelection
-        this.parentFacilityTypeId = this.current.parentFacilityTypeId
-        this.facilityTypeId = this.current.facilityTypeId
-        showToast(translate('Failed to update facility type.'))
-        logger.error('Failed to update facility type.', error)
-      }
-    },
-    async openFacilityLoginActionPopover(ev: Event, facilityUser: any) {
-      const popover = await popoverController.create({
-        component: FacilityLoginActionPopover,
-        componentProps: { currentFacility: this.current, currentFacilityUser: facilityUser, facilityTypeDesc: this.facilityTypes[this.current.facilityTypeId]?.description },
-        event: ev,
-        showBackdrop: false
-      });
-      return popover.present()
-    },
-    async createFacilityLoginModal() {
-      const facilityLoginModal = await modalController.create({
-      component: CreateFacilityLoginModal,
-        componentProps: { currentFacility: this.current, facilityTypeDesc: this.facilityTypes[this.current.facilityTypeId]?.description }
-      })
-      facilityLoginModal.present()
-    },
-    getFacilityGroupTypeDesc(groupTypeId: string) {
-      return this.facilityGroupTypes.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId
-    },
-    async openCreateInventoryGroupModal() {
-      const createInventoryGroup = await modalController.create({
-        component: CreateFacilityGroupModal,
-        componentProps: { selectedFacilityGroupTypeId: 'CHANNEL_FAC_GROUP' }
-      })
-
-      createInventoryGroup.onDidDismiss().then(async() => {
-        await this.store.dispatch('util/fetchInventoryGroups')
-
-        const inventoryGroups = JSON.parse(JSON.stringify(this.inventoryGroups));
-        // Creating a key called 'isChecked' for inventory groups already associated with current facility.
-        inventoryGroups.forEach((group: any) => {
-          group['isChecked'] = (this.current.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId))
-        });
-
-        await this.store.dispatch('facility/updateCurrentFacility', { ...this.current, inventoryGroups })
-      })
-
-      createInventoryGroup.present()
-    },
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      addCircleOutline,
-      addOutline,
-      albumsOutline,
-      bookmarkOutline,
-      bookmarksOutline,
-      closeCircleOutline,
-      closeOutline,
-      copyOutline,
-      copyToClipboard,
-      chevronForwardOutline,
-      ellipsisVerticalOutline,
-      globeOutline,
-      locationOutline,
-      lockClosedOutline,
-      openOutline,
-      pencilOutline,
-      personOutline,
-      store,
-      translate,
-      unlinkOutline,
-      trashOutline
+  defaultDaysToShip.value = current.value.defaultDaysToShip;
+  isLoading.value = false;
+  parentFacilityTypeId.value = current.value.parentFacilityTypeId;
+  facilityTypeId.value = current.value.facilityTypeId;
+  
+  facilityTypeIdOptions.value = parentFacilityTypeId.value ? Object.keys(facilityTypes.value).reduce((acc: any, fId: string) => {
+    if (facilityTypes.value[fId].parentTypeId === parentFacilityTypeId.value) {
+      acc[fId] = facilityTypes.value[fId];
     }
-  }
+    return acc;
+  }, {}) : facilityTypes.value;
+
+  if (postalAddress.value.latitude) fetchPostalCodeByGeoPoints();
 });
+
+function getCurrentTime(zone: string, format = 't ZZZZ') {
+  return DateTime.now().setZone(zone).toFormat(format);
+}
+
+async function openTimeZoneModal() {
+  const modal = await modalController.create({
+    component: FacilityTimeZoneModal
+  });
+  modal.present();
+}
+
+async function editMapUrl() {
+  const alert = await alertController.create({
+    header: translate("Map Link"),
+    inputs: [
+      {
+        name: 'mapUrl',
+        type: 'url',
+        placeholder: translate("Enter new Map Url"),
+        value: contactDetails.value?.googleMapUrl?.infoString || ""
+      }
+    ],
+    buttons: [
+      {
+        text: translate('Cancel'),
+        role: 'cancel'
+      },
+      {
+        text: translate('Save'),
+        handler: async (data) => {
+          let isValidUrl = true;
+          try {
+            new URL(data.mapUrl);
+          } catch (_) {
+            isValidUrl = false;
+          }
+
+          if (!isValidUrl) {
+            showToast(translate("Please enter a valid URL"));
+            return false;
+          }
+
+          try {
+            const payload = {
+              facilityId: props.facilityId,
+              infoString: data.mapUrl.trim()
+            };
+
+            let resp;
+            if (contactDetails.value?.googleMapUrl?.contactMechId) {
+              if (data.mapUrl && data.mapUrl !== contactDetails.value?.googleMapUrl?.infoString) {
+                resp = await FacilityService.updateFacilityContactMech({
+                  ...payload,
+                  contactMechId: contactDetails.value.googleMapUrl.contactMechId,
+                  contactMechTypeId: "MAP_URL",
+                });
+              } else {
+                return;
+              }
+            } else {
+              resp = await FacilityService.createFacilityContactMech({
+                ...payload,
+                contactMechTypeId: "MAP_URL",
+                contactMechPurposeTypeId: "GOOGLE_MAP_URL"
+              });
+            }
+
+            if (!hasError(resp)) {
+              showToast(translate("Map URL updated successfully"));
+              await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+            } else {
+              throw resp.data;
+            }
+          } catch (err) {
+            logger.error("Failed to update Map URL", err);
+            showToast(translate("Failed to update Map URL"));
+          }
+        }
+      }
+    ]
+  });
+
+  await alert.present();
+}
+
+async function deleteMapUrl() {
+  try {
+    const payload = {
+      facilityId: props.facilityId,
+      contactMechId: contactDetails.value?.googleMapUrl?.contactMechId
+    };
+    const resp = await FacilityService.deleteFacilityContactMech(payload);
+    if (!hasError(resp)) {
+      showToast(translate('Map URL removed successfully.'));
+      await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to remove map url.', err);
+    showToast(translate('Failed to remove map url.'));
+  }
+}
+
+function getImageUrl(imageUrl: string) {
+  return (baseUrl.value.startsWith('http') ? baseUrl.value.replace(/api\/?/, "") : `https://${baseUrl.value}.hotwax.io/`) + imageUrl;
+}
+
+function goToLink(link: string) {
+  const url = link.startsWith('http') ? link : `https://${link}`;
+  window.open(url, '_blank', 'noopener, noreferrer');
+}
+
+async function productStorePopover(ev: Event, store: any) {
+  const popover = await popoverController.create({
+    component: ProductStorePopover,
+    componentProps: {
+      currentProductStore: store,
+      facilityId: props.facilityId
+    },
+    event: ev,
+    showBackdrop: false
+  });
+
+  return popover.present();
+}
+
+async function openLatLongPopover(event: Event) {
+  const popover = await popoverController.create({
+    component: GeoPointPopover,
+    componentProps: { facilityId: props.facilityId, isRegenerationRequired: isRegenerationRequired.value },
+    event,
+    showBackdrop: false
+  });
+
+  popover.onDidDismiss().then((result) => {
+    if (result?.data?.generatedLatLong) {
+      isRegenerationRequired.value = false;
+    }
+  });
+
+  return popover.present();
+}
+
+async function associateCalendarToFacility() {
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.associateCalendarToFacility({
+      facilityId: props.facilityId,
+      calendarId: selectedCalendarId.value,
+      fromDate: DateTime.now().toMillis(),
+      facilityCalendarTypeId: 'OPERATING_HOURS'
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Successfully associated calendar to the facility."));
+      await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate("Failed to associate calendar to the facility."));
+    logger.error(err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function openAddressModal() {
+  const modal = await modalController.create({
+    component: FacilityAddressModal,
+    componentProps: { facilityId: props.facilityId, facilityName: current.value.facilityName }
+  });
+
+  modal.onDidDismiss().then(async (result) => {
+    if (result.data?.postalAddress) {
+      await fetchPostalCodeByGeoPoints();
+    }
+  });
+
+  modal.present().then(() => {
+    const el = document.querySelector("#inputElement") as any;
+    if (el) el.setFocus();
+  });
+}
+
+async function addCustomSchedule() {
+  const modal = await modalController.create({
+    component: CustomScheduleModal,
+    componentProps: { facilityId: props.facilityId }
+  });
+  modal.present();
+}
+
+async function openGeoPointModal() {
+  const modal = await modalController.create({
+    component: FacilityGeoPointModal,
+    componentProps: { facilityId: props.facilityId }
+  });
+
+  modal.onDidDismiss().then(async (result) => {
+    if (result.data?.geoPoints) {
+      await fetchPostalCodeByGeoPoints();
+    }
+  });
+
+  modal.present();
+}
+
+async function selectProductStores() {
+  const modal = await modalController.create({
+    component: SelectProductStoreModal,
+    componentProps: { selectedProductStores: facilityProductStores.value }
+  });
+
+  modal.onDidDismiss().then(async (result: any) => {
+    if (result.data && result.data.value) {
+      emitter.emit('presentLoader');
+
+      const productStoresToCreate = result.data.value.productStoresToCreate;
+      const productStoresToRemove = result.data.value.productStoresToRemove;
+
+      const updatePromises = productStoresToRemove.map((payload: any) => 
+        FacilityService.updateProductStoreFacility({
+          facilityId: props.facilityId,
+          fromDate: facilityProductStores.value.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
+          productStoreId: payload.productStoreId,
+          thruDate: DateTime.now().toMillis()
+        })
+      );
+
+      const createPromises = productStoresToCreate.map((payload: any) => 
+        FacilityService.createProductStoreFacility({
+          productStoreId: payload.productStoreId,
+          facilityId: props.facilityId,
+          fromDate: DateTime.now().toMillis(),
+        })
+      );
+
+      const responses = await Promise.allSettled([...updatePromises, ...createPromises]);
+      const hasFailed = responses.some((response: any) => response.status === 'rejected');
+      if (hasFailed) {
+        showToast(translate("Failed to update some product stores"));
+      } else {
+        showToast(translate("Product stores updated successfully."));
+      }
+
+      await facilityStore.getFacilityProductStores({ facilityId: props.facilityId });
+      emitter.emit('dismissLoader');
+    }
+  });
+
+  modal.present();
+}
+
+async function addLocationModal() {
+  const modal = await modalController.create({
+    component: AddLocationModal
+  });
+  modal.present();
+}
+
+async function addStaffMemberModal() {
+  const modal = await modalController.create({
+    component: AddStaffMemberModal,
+    componentProps: { facilityId: props.facilityId, selectedParties: facilityParties.value }
+  });
+  modal.present();
+}
+
+async function addFacilityGroupModal() {
+  const modal = await modalController.create({
+    component: AddFacilityGroupModal
+  });
+
+  modal.present();
+
+  modal.onDidDismiss().then((result: any) => {
+    if (result?.data?.fetchGroups) {
+      facilityStore.fetchFacilityAdditionalInformation();
+    }
+  });
+}
+
+async function addOperatingHours() {
+  const modal = await modalController.create({
+    component: AddOperatingHoursModal,
+    componentProps: { facilityId: props.facilityId }
+  });
+  modal.present();
+}
+
+async function openLocationDetailsPopover(ev: Event, location: any) {
+  const popover = await popoverController.create({
+    component: LocationDetailsPopover,
+    componentProps: { location },
+    event: ev,
+    showBackdrop: false
+  });
+  return popover.present();
+}
+
+async function openExternalMappingPopover(ev: Event) {
+  const popover = await popoverController.create({
+    component: FacilityMappingPopover,
+    event: ev,
+    showBackdrop: false
+  });
+  return popover.present();
+}
+
+async function openOperatingHoursPopover(ev: Event) {
+  const popover = await popoverController.create({
+    component: OperatingHoursPopover,
+    componentProps: { facilityId: props.facilityId },
+    event: ev,
+    showBackdrop: false
+  });
+  popover.present();
+}
+
+function getDate(date: any) {
+  return DateTime.fromMillis(date).toFormat('dd LLL yyyy');
+}
+
+async function removePartyFromFacility(party: any) {
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.removePartyFromFacility({
+      facilityId: party.facilityId,
+      fromDate: party.fromDate,
+      thruDate: DateTime.now().toMillis(),
+      partyId: party.partyId,
+      roleTypeId: party.roleTypeId
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Party was removed from facility.", {"partyName": party.fullName, "facilityName": current.value.facilityName}));
+      await facilityStore.getFacilityParties({ facilityId: props.facilityId });
+    } else {
+      throw resp;
+    }
+  } catch (err) {
+    showToast(translate("Failed to remove party from facility."));
+    logger.error(err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function changeOrderLimitPopover(ev: Event) {
+  const popover = await popoverController.create({
+    component: OrderLimitPopover,
+    event: ev,
+    showBackdrop: false,
+    componentProps: { fulfillmentOrderLimit: current.value.maximumOrderLimit }
+  });
+  popover.present();
+
+  const result = await popover.onDidDismiss();
+  if (result.data !== undefined && result.data !== current.value.maximumOrderLimit) {
+    emitter.emit('presentLoader');
+    await updateFacility(result.data, current.value);
+    await facilityStore.fetchCurrentFacility({ facilityId: props.facilityId, skipState: true });
+    emitter.emit('dismissLoader');
+  }
+}
+
+async function updateFacility(maximumOrderLimit: number | string, facility: any) {
+  try {
+    const resp = await FacilityService.updateFacility({
+      "facilityId": facility.facilityId,
+      maximumOrderLimit: maximumOrderLimit === "" ? null : maximumOrderLimit
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }));
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }));
+    logger.error('Failed to update facility', err);
+  }
+}
+
+async function closeFacility(event: any) {
+  event.stopImmediatePropagation();
+  emitter.emit("presentLoader");
+  const isChecked = !event.target.checked;
+
+  const closedDate = isChecked ? DateTime.now().toMillis() : "";
+
+  try {
+    const resp = await FacilityService.updateFacility({
+      "facilityId": current.value.facilityId,
+      "closedDate": closedDate
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Facility has been marked as ', { status: isChecked ? 'closed' : 'open' }));
+      await facilityStore.updateCurrentFacility({ ...current.value, closedDate });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update facility.'));
+    logger.error('Failed to update facility.', err);
+  }
+  emitter.emit("dismissLoader");
+}
+
+async function openFacilityOrderCountModal() {
+  const modal = await modalController.create({
+    component: ViewFacilityOrderCountModal,
+    componentProps: { facilityId: props.facilityId }
+  });
+  modal.present();
+}
+
+async function updateFulfillmentSetting(event: any, facilityGroupId: string) {
+  event.stopImmediatePropagation();
+  emitter.emit("presentLoader");
+  const isChecked = !event.target.checked;
+
+  try {
+    let resp;
+    if (isChecked) {
+      resp = await FacilityService.addFacilityToGroup({
+        "facilityId": current.value.facilityId,
+        "facilityGroupId": facilityGroupId
+      });
+    } else {
+      const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId);
+      resp = await FacilityService.updateFacilityToGroup({
+        "facilityId": current.value.facilityId,
+        "facilityGroupId": facilityGroupId,
+        "fromDate": groupInformation.fromDate,
+        "thruDate": DateTime.now().toMillis()
+      });
+    }
+    if (!hasError(resp)) {
+      showToast(translate('Fulfillment setting updated successfully'));
+      await facilityStore.fetchFacilityAdditionalInformation();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update fulfillment setting'));
+    logger.error('Failed to update fulfillment setting', err);
+  }
+  emitter.emit("dismissLoader");
+}
+
+async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) {
+  event.stopImmediatePropagation();
+  emitter.emit("presentLoader");
+  const isChecked = !event.target.checked;
+
+  try {
+    let resp;
+    let successMessage;
+    if (isChecked) {
+      resp = await FacilityService.addFacilityToGroup({
+        "facilityId": current.value.facilityId,
+        "facilityGroupId": facilityGroup.facilityGroupId
+      });
+      successMessage = translate('is now selling on', { "facilityName": current.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
+    } else {
+      const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId);
+      resp = await FacilityService.updateFacilityToGroup({
+        "facilityId": current.value.facilityId,
+        "facilityGroupId": facilityGroup.facilityGroupId,
+        "fromDate": groupInformation.fromDate,
+        "thruDate": DateTime.now().toMillis()
+      });
+      successMessage = translate('no longer sells on', { "facilityName": current.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
+    }
+    if (!hasError(resp)) {
+      showToast(successMessage);
+      await facilityStore.fetchFacilityAdditionalInformation();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update sell inventory online setting'));
+    logger.error('Failed to update sell inventory online setting', err);
+  }
+  emitter.emit("dismissLoader");
+}
+
+async function removeFacilityFromGroup(facilityGroupId: string) {
+  emitter.emit("presentLoader");
+  const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId);
+
+  try {
+    const resp = await FacilityService.updateFacilityToGroup({
+      "facilityId": current.value.facilityId,
+      "facilityGroupId": facilityGroupId,
+      "fromDate": groupInformation.fromDate,
+      "thruDate": DateTime.now().toMillis()
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Group unlinked from facility'));
+      await facilityStore.fetchFacilityAdditionalInformation();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to unlink group'));
+    logger.error('Failed to unlink group', err);
+  }
+  emitter.emit("dismissLoader");
+}
+
+async function updateDefaultDaysToShip() {
+  emitter.emit('presentLoader');
+  try {
+    const payload = {
+      facilityId: current.value.facilityId,
+      defaultDaysToShip: defaultDaysToShip.value
+    };
+    const resp = await FacilityService.updateFacility(payload);
+    if (!hasError(resp)) {
+      showToast(translate('Updated default days to ship'));
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to update default days to ship', err);
+    showToast(translate('Failed to update default days to ship'));
+  }
+  emitter.emit('dismissLoader');
+}
+
+async function removeFacilityMapping(mapping: any) {
+  emitter.emit('presentLoader');
+  try {
+    const payload = {
+      facilityId: current.value.facilityId,
+      facilityIdenTypeId: mapping.facilityIdenTypeId,
+      fromDate: mapping.fromDate,
+      thruDate: DateTime.now().toMillis()
+    };
+    const resp = await FacilityService.updateFacilityIdentification(payload);
+    if (!hasError(resp)) {
+      showToast(translate('Removed facility mapping successfully'));
+      await facilityStore.fetchFacilityMappings({ facilityId: props.facilityId, facilityIdenTypeIds: Object.keys(externalMappingTypes.value) });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to remove facility mapping', err);
+    showToast(translate('Failed to remove facility mapping'));
+  }
+  emitter.emit('dismissLoader');
+}
+
+async function removeFacilityExternalID() {
+  emitter.emit('presentLoader');
+  try {
+    const payload = {
+      facilityId: current.value.facilityId,
+      externalId: ''
+    };
+    const resp = await FacilityService.updateFacility(payload);
+    if (!hasError(resp)) {
+      showToast(translate('Removed facility external ID'));
+      await facilityStore.updateCurrentFacility({ ...current.value, externalId: '' });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to remove external id', err);
+    showToast(translate('Failed to remove external id'));
+  }
+  emitter.emit('dismissLoader');
+}
+
+async function removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
+  try {
+    const payload = {
+      facilityId: current.value.facilityId,
+      shopId: shopifyFacilityMapping.shopId,
+      shopifyLocationId: shopifyFacilityMapping.shopifyLocationId,
+    };
+    const resp = await FacilityService.deleteShopifyShopLocation(payload);
+    if (!hasError(resp)) {
+      showToast(translate('Removed shopify mapping successfully'));
+      await facilityStore.fetchShopifyFacilityMappings({ facilityId: props.facilityId });
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to remove shopify mapping', err);
+    showToast(translate('Failed to remove shopify mapping'));
+  }
+}
+
+async function editFacilityMapping(mapping: any) {
+  const modal = await modalController.create({
+    component: FacilityMappingModal,
+    componentProps: { mappingId: mapping.facilityIdenTypeId, mapping, type: 'update' }
+  });
+
+  modal.present().then(() => {
+    const el = document.querySelector("#inputElement") as any;
+    if (el) el.setFocus();
+  });
+}
+
+async function editFacilityExternalId() {
+  const modal = await modalController.create({
+    component: FacilityExternalIdModal
+  });
+
+  modal.present().then(() => {
+    const el = document.querySelector("#inputElement") as any;
+    if (el) el.setFocus();
+  });
+}
+
+async function editShopifyFacilityMapping(shopifyFacilityMapping: any) {
+  const modal = await modalController.create({
+    component: FacilityShopifyMappingModal,
+    componentProps: { shopifyFacilityMapping, type: 'update' }
+  });
+
+  modal.present().then(() => {
+    const el = document.querySelector("#inputElement") as any;
+    if (el) el.setFocus();
+  });
+}
+
+function getOpenEndTime(startTime: any, capacity: any) {
+  const openTime = DateTime.fromFormat(startTime, 'HH:mm:ss').toFormat('HH:mm a');
+  const endTime = DateTime.fromMillis(DateTime.fromFormat(startTime, 'HH:mm:ss').toMillis() + capacity).toFormat('hh:mm a');
+  return `${openTime} - ${endTime}`;
+}
+
+async function fetchPostalCodeByGeoPoints() {
+  const payload = {
+    json: {
+      "query": "*:*",
+      "filter": "{!geofilt sfield=location}",
+      "params": {
+        "pt": `${postalAddress.value.latitude}, ${postalAddress.value.longitude}`,
+        "d": "10"
+      },
+      sort: 'geodist(location, ' + postalAddress.value.latitude + ',' + postalAddress.value.longitude + ') asc',
+      "limit": 1
+    }
+  };
+
+  try {
+    const resp = await UtilService.generateLatLong(payload);
+    if (!hasError(resp)) {
+      const pCode = postalAddress.value.postalCode;
+      const fetchedPostcode = resp.data.response.docs[0].postcode;
+      isRegenerationRequired.value = !(pCode.startsWith('0') ? pCode.substring(1) === fetchedPostcode || pCode === fetchedPostcode : pCode === fetchedPostcode);
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+}
+
+async function renameFacility() {
+  const alert = await alertController.create({
+    header: translate("Rename facility"),
+    inputs: [{
+      name: "facilityName",
+      value: current.value.facilityName
+    }],
+    buttons: [{
+      text: translate('Cancel'),
+      role: "cancel"
+    },
+    {
+      text: translate('Apply'),
+      handler: async (data: any) => {
+        if (data.facilityName) {
+          emitter.emit('presentLoader');
+
+          try {
+            const resp = await FacilityService.updateFacility({
+              facilityId: props.facilityId,
+              facilityName: data.facilityName
+            });
+
+            if (!hasError(resp)) {
+              showToast(translate("Facility renamed successfully."));
+              await facilityStore.updateCurrentFacility({ ...current.value, facilityName: data.facilityName });
+            } else {
+              throw resp.data;
+            }
+          } catch (error) {
+            showToast(translate('Failed to rename facility.'));
+            logger.error('Failed to rename facility.', error);
+          }
+
+          emitter.emit('dismissLoader');
+        }
+      }
+    }]
+  });
+
+  await alert.present();
+}
+
+function getFacilityTypesByParentTypeId() {
+  facilityTypeIdOptions.value = parentFacilityTypeId.value ? Object.keys(facilityTypes.value).reduce((acc: any, fId: string) => {
+    if (facilityTypes.value[fId].parentTypeId === parentFacilityTypeId.value) {
+      acc[fId] = facilityTypes.value[fId];
+    }
+    return acc;
+  }, {}) : facilityTypes.value;
+
+  if (current.value.parentFacilityTypeId === parentFacilityTypeId.value) {
+    return;
+  }
+  facilityTypeId.value = facilityTypeIdOptions.value['RETAIL_STORE'] ? 'RETAIL_STORE' : facilityTypeIdOptions.value['WAREHOUSE'] ? 'WAREHOUSE' : Object.keys(facilityTypeIdOptions.value)[0];
+  updateFacilityType();
+}
+
+async function updateFacilityType() {
+  try {
+    const resp = await FacilityService.updateFacility({
+      facilityId: props.facilityId,
+      facilityTypeId: facilityTypeId.value
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate("Facility type updated"));
+      await facilityStore.updateCurrentFacility({ ...current.value, facilityTypeId: facilityTypeId.value, parentFacilityTypeId: parentFacilityTypeId.value });
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    parentFacilityTypeId.value = current.value.parentFacilityTypeId;
+    facilityTypeId.value = current.value.facilityTypeId;
+    showToast(translate('Failed to update facility type.'));
+    logger.error('Failed to update facility type.', error);
+  }
+}
+
+async function openFacilityLoginActionPopover(ev: Event, facilityUser: any) {
+  const popover = await popoverController.create({
+    component: FacilityLoginActionPopover,
+    componentProps: { currentFacility: current.value, currentFacilityUser: facilityUser, facilityTypeDesc: facilityTypes.value[current.value.facilityTypeId]?.description },
+    event: ev,
+    showBackdrop: false
+  });
+  return popover.present();
+}
+
+async function createFacilityLoginModal() {
+  const modal = await modalController.create({
+  component: CreateFacilityLoginModal,
+    componentProps: { currentFacility: current.value, facilityTypeDesc: facilityTypes.value[current.value.facilityTypeId]?.description }
+  });
+  modal.present();
+}
+
+function getFacilityGroupTypeDesc(groupTypeId: string) {
+  return facilityGroupTypes.value.find((groupType: any) => groupType.facilityGroupTypeId === groupTypeId)?.description || groupTypeId;
+}
+
+async function openCreateInventoryGroupModal() {
+  const modal = await modalController.create({
+    component: CreateFacilityGroupModal,
+    componentProps: { selectedFacilityGroupTypeId: 'CHANNEL_FAC_GROUP' }
+  });
+
+  modal.onDidDismiss().then(async () => {
+    await utilStore.fetchInventoryGroups();
+    const invGroups = JSON.parse(JSON.stringify(inventoryGroups.value));
+    invGroups.forEach((group: any) => {
+      group['isChecked'] = (current.value.groupInformation?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId));
+    });
+
+    await facilityStore.updateCurrentFacility({ ...current.value, inventoryGroups: invGroups });
+  });
+
+  modal.present();
+}
 </script>
 
 <style scoped>
-
 section {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1620,7 +1554,6 @@ ion-card > ion-button[expand="block"] {
 }
 
 @media screen and (min-width: 700px) {
-
   ion-content > main {
     margin: var(--spacer-lg)
   }

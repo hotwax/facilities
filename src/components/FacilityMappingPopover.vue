@@ -18,7 +18,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonContent,
   IonItem,
@@ -27,74 +27,63 @@ import {
   modalController,
   popoverController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { translate } from "@hotwax/dxp-components";
 import CustomMappingModal from "./CustomMappingModal.vue";
 import FacilityMappingModal from "./FacilityMappingModal.vue";
-import { mapGetters } from "vuex";
 import FacilityShopifyMappingModal from "./FacilityShopifyMappingModal.vue";
 import FacilityExternalIdModal from './FacilityExternalIdModal.vue';
+import { useUtilStore } from "@/store/util";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "FacilityMappingPopover",
-  components: {
-    IonContent,
-    IonItem,
-    IonList,
-    IonListHeader
-  },
-  computed: {
-    ...mapGetters({
-      externalMappingTypes: 'util/getExternalMappingTypes'
-    })
-  },
-  methods: {
-    async openCustomMappingModal() {
-      const customMappingModal = await modalController.create({
-        component: CustomMappingModal
-      })
+const utilStore = useUtilStore();
+const externalMappingTypes = computed(() => utilStore.getExternalMappingTypes);
 
-      await popoverController.dismiss()
-      customMappingModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    async addMappingModal(type: any) {
-      const addMappingModal = await modalController.create({
-        component: FacilityMappingModal,
-        componentProps: { mappingId: type }
-      })
-  
-      await popoverController.dismiss()
-      addMappingModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    async createShopifyFacilityMappingModal() {
-      const facilityShopifyMappingModal = await modalController.create({
-        component: FacilityShopifyMappingModal
-      })
-  
-      await popoverController.dismiss()
-      facilityShopifyMappingModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-    async createFacilityExternalId() {
-      const facilityExternalIdModal = await modalController.create({
-        component: FacilityExternalIdModal
-      })
+async function openCustomMappingModal() {
+  const customMappingModal = await modalController.create({
+    component: CustomMappingModal
+  });
 
-      await popoverController.dismiss()
-      facilityExternalIdModal.present().then(() => {
-        (document.querySelector("#inputElement") as any).setFocus()
-      })
-    },
-  },
-  setup() {
-    return {
-      translate
-    };
-  }
-});
+  await popoverController.dismiss();
+  await customMappingModal.present();
+  setTimeout(() => {
+    (document.querySelector("#inputElement") as any)?.setFocus();
+  }, 100);
+}
+
+async function addMappingModal(type: any) {
+  const addMappingModal = await modalController.create({
+    component: FacilityMappingModal,
+    componentProps: { mappingId: type }
+  });
+
+  await popoverController.dismiss();
+  await addMappingModal.present();
+  setTimeout(() => {
+    (document.querySelector("#inputElement") as any)?.setFocus();
+  }, 100);
+}
+
+async function createShopifyFacilityMappingModal() {
+  const facilityShopifyMappingModal = await modalController.create({
+    component: FacilityShopifyMappingModal
+  });
+
+  await popoverController.dismiss();
+  await facilityShopifyMappingModal.present();
+  setTimeout(() => {
+    (document.querySelector("#inputElement") as any)?.setFocus();
+  }, 100);
+}
+
+async function createFacilityExternalId() {
+  const facilityExternalIdModal = await modalController.create({
+    component: FacilityExternalIdModal
+  });
+
+  await popoverController.dismiss();
+  await facilityExternalIdModal.present();
+  setTimeout(() => {
+    (document.querySelector("#inputElement") as any)?.setFocus();
+  }, 100);
+}
 </script>

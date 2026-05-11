@@ -17,7 +17,7 @@
           <div class="ion-text-wrap" slot="label">{{ translate('Username') }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
       </ion-item>
-      <ion-item ref="password" lines="none">
+      <ion-item ref="passwordInput" lines="none">
         <ion-input label-placement="floating" v-model="password" @keyup="validatePassword" @ionBlur="markPasswordTouched" type="password" :helperText="translate('Password should be at least 5 characters long, it contains at least one number, one alphabet and one special character.')">
           <div slot="label">{{ translate('Password') }} <ion-text color="danger">*</ion-text></div>
         </ion-input>
@@ -37,7 +37,7 @@
   </ion-content>
 </template>
   
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButtons,
   IonButton,
@@ -54,7 +54,6 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import {
   closeOutline,
   eyeOutline,
@@ -62,103 +61,76 @@ import {
   lockClosedOutline,
   mailOutline
 } from "ionicons/icons";
-import { useStore } from "vuex";
 import { translate } from '@hotwax/dxp-components'
 import { isValidEmail, isValidPassword, showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { ref, onMounted } from "vue";
 
-export default defineComponent({
-  name: "CustomFieldModal",
-  components: {
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonList,
-    IonText,
-    IonTitle,
-    IonToolbar,
-  },
-  data() {
-    return {
-      username: this.currentFacility?.facilityId,
-      password: '',
-      emailAddress: '',
-    }
-  },
-  props: ["currentFacility", "facilityTypeDesc"],
-  methods: {
-    closeModal() {
-      modalController.dismiss({ dismissed: true });
-    },
-    async createFacilityLogin() {
-      if (!this.username) {
-        showToast(translate('Username is required.'))
-        return
-      } else if (await UserService.isUserLoginIdExists(this.username)) {
-        showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: this.username }))
-        return;
-      }
-      try {
-        const payload = {
-          "facilityId": this.currentFacility?.facilityId,
-          "facilityName": this.currentFacility?.facilityName,
-          "username": this.username,
-          "password": this.password,
-          "emailAddress": this.emailAddress
-        }
+const props = defineProps(["currentFacility", "facilityTypeDesc"]);
+const facilityStore = useFacilityStore();
 
-        emitter.emit('presentLoader')
-        await FacilityService.createFacilityLogin(payload);
-        showToast(translate('Facility login created.'))
-        await this.store.dispatch('facility/fetchFacilityLogins', { facilityId: this.currentFacility?.facilityId });
-      } catch (error) {
-        showToast(translate('Failed to create facility login.'))
-      }
-      this.closeModal();
-      emitter.emit('dismissLoader')
-    },
-    checkCreateUserButtonStatus() {
-      return ((!this.username.length || !this.password.length) || !isValidPassword(this.password) || !isValidEmail(this.emailAddress));
-    },
-    validatePassword(event: any) {
-      const value = event.target.value;
-      (this as any).$refs.password.$el.classList.remove('ion-valid');
-      (this as any).$refs.password.$el.classList.remove('ion-invalid');
+const username = ref(props.currentFacility?.facilityId || '');
+const password = ref('');
+const emailAddress = ref('');
+const passwordInput = ref(null as any);
 
-      if (value === '') return;
+function closeModal() {
+  modalController.dismiss({ dismissed: true });
+}
 
-      isValidPassword(value)
-        ? (this as any).$refs.password.$el.classList.add('ion-valid')
-        : (this as any).$refs.password.$el.classList.add('ion-invalid');
-    },
-    markPasswordTouched() {
-      (this as any).$refs.password.$el.classList.add('ion-touched');
-    },
-    markConfirmPasswordTouched() {
-      (this as any).$refs.confirmPassword.$el.classList.add('ion-touched');
-    },
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      eyeOutline,
-      eyeOffOutline,
-      lockClosedOutline,
-      mailOutline,
-      store,
-      translate
+async function createFacilityLogin() {
+  if (!username.value) {
+    showToast(translate('Username is required.'));
+    return;
+  } else if (await UserService.isUserLoginIdExists(username.value)) {
+    showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
+    return;
+  }
+  try {
+    const payload = {
+      "facilityId": props.currentFacility?.facilityId,
+      "facilityName": props.currentFacility?.facilityName,
+      "username": username.value,
+      "password": password.value,
+      "emailAddress": emailAddress.value
     };
-  },
-});
+
+    emitter.emit('presentLoader');
+    await FacilityService.createFacilityLogin(payload);
+    showToast(translate('Facility login created.'));
+    await facilityStore.fetchFacilityLogins({ facilityId: props.currentFacility?.facilityId });
+  } catch (error) {
+    showToast(translate('Failed to create facility login.'));
+  }
+  closeModal();
+  emitter.emit('dismissLoader');
+}
+
+function checkCreateUserButtonStatus() {
+  return ((!username.value.length || !password.value.length) || !isValidPassword(password.value) || !isValidEmail(emailAddress.value));
+}
+
+function validatePassword(event: any) {
+  const value = event.target.value;
+  if (!passwordInput.value) return;
+
+  const el = passwordInput.value.$el;
+  el.classList.remove('ion-valid');
+  el.classList.remove('ion-invalid');
+
+  if (value === '') return;
+
+  isValidPassword(value)
+    ? el.classList.add('ion-valid')
+    : el.classList.add('ion-invalid');
+}
+
+function markPasswordTouched() {
+  if (passwordInput.value) {
+    passwordInput.value.$el.classList.add('ion-touched');
+  }
+}
 </script>
-  

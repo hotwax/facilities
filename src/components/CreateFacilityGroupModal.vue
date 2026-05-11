@@ -19,7 +19,7 @@
           </ion-input>
         </ion-item>
         <ion-item lines="none">
-          <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupId" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
+          <ion-input label-placement="floating" :label="translate('Internal ID')" ref="facilityGroupIdInput" v-model="formData.facilityGroupId" @ionInput="validateFacilityGroupId" @ionBlur="markFacilityGroupIdTouched" :error-text="translate('Internal ID cannot be more than 20 characters.')" />
         </ion-item>
         <ion-item lines="none">
           <ion-select :label="translate('System group type')" :disabled="isFacilityGroupTypeDisabled" interface="popover" v-model="formData.facilityGroupTypeId">
@@ -42,7 +42,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -61,131 +61,108 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
 import { FacilityService } from "@/services/FacilityService";
-import { mapGetters, useStore } from 'vuex'
 import { hasError } from "@/adapter";
 import { generateInternalId, showToast } from "@/utils";
 import logger from "@/logger";
+import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
+import { ref, computed, onMounted } from "vue";
 
-export default defineComponent({
-  name: "CreateFacilityGroupModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonList,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      groups: 'facility/getFacilityGroups',
-      facilityGroupTypes: 'util/getFacilityGroupTypes',
-    })
-  },
-  data() {
-    return {
-      formData: {
-        facilityGroupId: '',
-        facilityGroupName: '',
-        facilityGroupTypeId: '',
-        description: '',
-      },
-      isFacilityGroupTypeDisabled: false,
-    }
-  },
-  props: ['selectedFacilityGroupTypeId'],
-  mounted() {
-    if(this.selectedFacilityGroupTypeId) {
-      this.formData.facilityGroupTypeId = this.selectedFacilityGroupTypeId
-      this.isFacilityGroupTypeDisabled = true
-    }
-  },
-  methods: {
-    setFacilityGroupId(event: any) {
-      this.formData.facilityGroupId = generateInternalId(event.target.value)
-    },
-    closeModal() {
-      modalController.dismiss();
-    },
-    async createFacilityGroup() {
-      if (!this.formData.facilityGroupName?.trim()) {
-        showToast(translate('Please fill all the required fields'))
-        return;
-      }
+const props = defineProps(['selectedFacilityGroupTypeId']);
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      if (this.formData.facilityGroupId.length > 20) {
-        showToast(translate('Internal ID cannot be more than 20 characters.'))
-        return
-      }
+const groups = computed(() => facilityStore.getFacilityGroups);
+const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
 
-      // In case the user does not lose focus from the facility name input
-      // and click on create the button, we need to set the internal id manually
-      if (!this.formData.facilityGroupId) {
-        this.formData.facilityGroupId = generateInternalId(this.formData.facilityGroupName)
-      }
-
-      try {
-        const payload = {
-          ...this.formData,
-        }
-
-        const resp = await FacilityService.createFacilityGroup(payload);
-        if (!hasError(resp)) {
-          showToast(translate("Facility group created."))
-          const createdGroup = {
-            ...this.formData,
-            facilityGroupId: resp.data.facilityGroupId,
-            facilityCount: 0
-          }
-          const updatedFacilityGroups = [...this.groups, createdGroup]
-          await this.store.dispatch('facility/updateFacilityGroups', updatedFacilityGroups)
-          await this.store.dispatch('util/fetchFacilityGroupTypes')
-        } else {
-          throw resp.data;
-        }
-      } catch (error) {
-        logger.error(error)
-        showToast(translate('Failed to create facility group.'))
-      }
-      modalController.dismiss()
-    },
-    validateFacilityGroupId(event: any) {
-      const value = event.target.value;
-      (this as any).$refs.facilityGroupId.$el.classList.remove('ion-valid');
-      (this as any).$refs.facilityGroupId.$el.classList.remove('ion-invalid');
-
-      if (value === '') return;
-
-      this.formData.facilityGroupId.length <= 20
-        ? (this as any).$refs.facilityGroupId.$el.classList.add('ion-valid')
-        : (this as any).$refs.facilityGroupId.$el.classList.add('ion-invalid');
-    },
-    markFacilityGroupIdTouched() {
-      (this as any).$refs.facilityGroupId.$el.classList.add('ion-touched');
-    },
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+const formData = ref({
+  facilityGroupId: '',
+  facilityGroupName: '',
+  facilityGroupTypeId: '',
+  description: '',
 });
+const isFacilityGroupTypeDisabled = ref(false);
+const facilityGroupIdInput = ref(null as any);
+
+onMounted(() => {
+  if (props.selectedFacilityGroupTypeId) {
+    formData.value.facilityGroupTypeId = props.selectedFacilityGroupTypeId;
+    isFacilityGroupTypeDisabled.value = true;
+  }
+});
+
+function setFacilityGroupId(event: any) {
+  formData.value.facilityGroupId = generateInternalId(event.target.value);
+}
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function createFacilityGroup() {
+  if (!formData.value.facilityGroupName?.trim()) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  if (formData.value.facilityGroupId.length > 20) {
+    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    return;
+  }
+
+  // In case the user does not lose focus from the facility name input
+  // and click on create the button, we need to set the internal id manually
+  if (!formData.value.facilityGroupId) {
+    formData.value.facilityGroupId = generateInternalId(formData.value.facilityGroupName);
+  }
+
+  try {
+    const payload = {
+      ...formData.value,
+    };
+
+    const resp = await FacilityService.createFacilityGroup(payload);
+    if (!hasError(resp)) {
+      showToast(translate("Facility group created."));
+      const createdGroup = {
+        ...formData.value,
+        facilityGroupId: resp.data.facilityGroupId,
+        facilityCount: 0
+      };
+      const updatedFacilityGroups = [...groups.value, createdGroup];
+      await facilityStore.updateFacilityGroups(updatedFacilityGroups);
+      await utilStore.fetchFacilityGroupTypes();
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    logger.error(error);
+    showToast(translate('Failed to create facility group.'));
+  }
+  modalController.dismiss();
+}
+
+function validateFacilityGroupId(event: any) {
+  const value = event.target.value;
+  if (!facilityGroupIdInput.value) return;
+
+  const el = facilityGroupIdInput.value.$el;
+  el.classList.remove('ion-valid');
+  el.classList.remove('ion-invalid');
+
+  if (value === '') return;
+
+  formData.value.facilityGroupId.length <= 20
+    ? el.classList.add('ion-valid')
+    : el.classList.add('ion-invalid');
+}
+
+function markFacilityGroupIdTouched() {
+  if (facilityGroupIdInput.value) {
+    facilityGroupIdInput.value.$el.classList.add('ion-touched');
+  }
+}
 </script>

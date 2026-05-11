@@ -107,15 +107,7 @@
           </ion-fab-button>
         </ion-fab-list>
       </ion-fab>
-        <!--
-        When searching for a keyword, and if the user moves to the last item, then the didFire value inside infinite scroll becomes true and thus the infinite scroll does not trigger again on the same page(https://github.com/hotwax/users/issues/84).
-        Also if we are at the section that has been loaded by infinite-scroll and then move to the details page then the list infinite scroll does not work after coming back to the page
-        In ionic v7.6.0, an issue related to infinite scroll has been fixed that when more items can be added to the DOM, but infinite scroll does not fire as the window is not completely filled with the content(https://github.com/ionic-team/ionic-framework/issues/18071).
-        The above fix in ionic 7.6.0 is resulting in the issue of infinite scroll not being called again.
-        To fix this we have maintained another variable `isScrollingEnabled` to check whether the scrolling can be performed or not.
-        If we do not define an extra variable and just use v-show to check for `isScrollable` then when coming back to the page infinite-scroll is called programatically.
-        We have added an ionScroll event on ionContent to check whether the infiniteScroll can be enabled or not by toggling the value of isScrollingEnabled whenever the height < 0.
-        -->
+
       <ion-infinite-scroll
         @ionInfinite="loadMoreFacilities($event)"
         threshold="100px"
@@ -130,7 +122,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButtons,
   IonChip,
@@ -155,7 +147,6 @@ import {
   IonToolbar,
   popoverController
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
 import {
   addOutline,
   albumsOutline,
@@ -168,7 +159,7 @@ import {
   storefrontOutline
 } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
-import { mapGetters, useStore } from 'vuex';
+import { computed, onMounted, ref } from 'vue';
 import { translate } from '@hotwax/dxp-components'
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
 import { hasError } from '@/adapter';
@@ -177,190 +168,150 @@ import { showToast, updateFacilityGroup } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
 import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
+import { useFacilityStore } from '@/store/facility';
+import { useUtilStore } from '@/store/util';
+import { onIonViewWillEnter } from '@ionic/vue';
 
-export default defineComponent({
-  name: 'FindFacilities',
-  components: {
-    FacilityFilters,
-    IonButtons,
-    IonChip,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonFabList,
-    IonHeader,
-    IonIcon,
-    IonInfiniteScroll,
-    IonInfiniteScrollContent,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonMenuButton,
-    IonNote,
-    IonPage,
-    IonSearchbar,
-    IonSelect,
-    IonSelectOption,
-    IonTitle,
-    IonToolbar
-  },
-  data() {
-    return {
-      facilityGroups: [] as any,
-    }
-  },
-  computed: {
-    ...mapGetters({
-      facilities: "facility/getFacilities",
-      query: "facility/getFacilityQuery",
-      isScrollable: "facility/isFacilitiesScrollable",
-      facilityTypes: "util/getFacilityTypes",
-      productStores: "util/getProductStores",
-      inventoryGroups: "util/getInventoryGroups"
-    })
-  },
-  async mounted() {
-    // We only need to fetch those types whose parent is not virtual facility
-    await Promise.all([this.store.dispatch('util/fetchFacilityTypes', { parentTypeId: 'VIRTUAL_FACILITY', parentTypeId_op: 'notEqual', facilityTypeId: 'VIRTUAL_FACILITY', facilityTypeId_op: 'notEqual' }), this.store.dispatch('util/fetchProductStores')])
-  },
-  async ionViewWillEnter() {
-    // fetching facilities information in the ionViewWillEnter hook as when updating facilityGroup or fulfillment limit
-    // from the details page and again coming to the list page, the UI does not gets updated when fetching information in
-    // the mounted hook
-    await this.fetchFacilityGroups();
-    await this.store.dispatch('util/fetchInventoryGroups')
-    if(this.router.currentRoute.value?.query?.productStoreId) {
-      this.query.productStoreId = this.router.currentRoute.value.query.productStoreId
-      await this.store.dispatch('facility/updateFacilityQuery', this.query)
-    }
-    await this.fetchFacilities();
-  },
-  methods: {
-    async updateQuery() {
-      await this.store.dispatch('facility/updateFacilityQuery', this.query)
-      this.fetchFacilities();
-    },
-    async fetchFacilities(vSize?: any, vIndex?: any) {
-      const viewSize = vSize ? vSize : process.env.VUE_APP_VIEW_SIZE;
-      const viewIndex = vIndex ? vIndex : 0;
-      const payload = {
-        viewSize,
-        viewIndex
-      };
-      await this.store.dispatch('facility/fetchFacilities', payload)
-    },
-    async viewFacilityDetails(facilityId: string) {
-      this.router.push({ path: `/facility-details/${facilityId}` })
-    },
-    async loadMoreFacilities(event: any) {
-      this.fetchFacilities(
-        undefined,
-        Math.ceil(
-          this.facilities?.length / (process.env.VUE_APP_VIEW_SIZE as any)
-        ).toString()
-      ).then(async () => {
-        await event.target.complete();
-      });
-    },
-    async changeOrderLimitPopover(ev: Event, facility: any) {
-      const popover = await popoverController.create({
-        component: OrderLimitPopover,
-        event: ev,
-        showBackdrop: false,
-        componentProps: { fulfillmentOrderLimit: facility.maximumOrderLimit }
-      });
-      popover.present();
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
+const router = useRouter();
 
-      const result = await popover.onDidDismiss();
-      // Note: here result.data returns 0 in some cases that's why it is compared with 'undefined'.
-      if(result.data != undefined && result.data !== facility.maximumOrderLimit) {
-        await this.updateFacility(result.data, facility)
-      }
-    },
-    async updateFacility(maximumOrderLimit: number | string, facility: any) {
-      let resp;
+const facilityGroups = ref([] as any);
 
-      try {
-        resp = await FacilityService.updateFacility({
-          "facilityId": facility.facilityId,
-          maximumOrderLimit
-        })
+const facilities = computed(() => facilityStore.getFacilities);
+const query = computed(() => facilityStore.getFacilityQuery);
+const isScrollable = computed(() => facilityStore.isFacilitiesScrollable);
+const facilityTypes = computed(() => utilStore.getFacilityTypes);
+const productStores = computed(() => utilStore.getProductStores);
+const inventoryGroups = computed(() => utilStore.getInventoryGroups);
 
-        if (!hasError(resp)) {
-          // updating the facilities state instead of refetching
-          const updatedFacilities = JSON.parse(JSON.stringify(this.facilities)).map((facilityData: any) => {
-            if (facility.facilityId === facilityData.facilityId) {
-              facilityData.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit
-              facilityData.orderLimitType = facilityData.maximumOrderLimit === null ? 'unlimited' : (facilityData.maximumOrderLimit === 0 ? 'no-capacity' : 'custom')
-            }
-            return facilityData
-          })
-          this.store.dispatch('facility/updateFacilities', updatedFacilities)
-          showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }))
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }))
-        logger.error('Failed to update facility', err)
-      }
-    },
-    async fetchFacilityGroups() {
-      const params = {
-        entityName: "FacilityGroup",
-        noConditionFind: 'Y',
-        orderBy: "facilityGroupTypeId ASC",
-        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-        viewSize: 50
-      }
-
-      try {
-        const resp = await FacilityService.fetchFacilityGroups(params);
-
-        if (!hasError(resp) && resp.data?.docs?.length > 0) {
-          this.facilityGroups = resp.data.docs;
-        } else {
-          throw resp.data
-        }
-      } catch (err) {
-        logger.error('Failed to find facility groups', err)
-      }
-    },
-    async openSellOnlineGroupPopover(ev: Event, facility: any) {
-      if(this.inventoryGroups.length === 1) {
-        const isGroupAdded = !facility.groupInformation.some((info: any) => info.facilityGroupId === this.inventoryGroups[0].facilityGroupId);
-        await updateFacilityGroup(facility, this.inventoryGroups[0], isGroupAdded);
-      } else {
-        const popover = await popoverController.create({
-          component: SellOnlineGroupPopover,
-          event: ev,
-          showBackdrop: false,
-          componentProps: { facility: facility }
-        });
-        popover.present();
-      }
-    }
-  },
-  setup() {
-    const router = useRouter();
-    const store = useStore();
-
-    return {
-      addOutline,
-      albumsOutline,
-      businessOutline,
-      filterOutline,
-      globeOutline,
-      lockClosedOutline,
-      lockOpenOutline,
-      router,
-      shareOutline,
-      storefrontOutline,
-      store,
-      translate
-    };
-  }
+onMounted(async () => {
+  await Promise.all([
+    utilStore.fetchFacilityTypes({ 
+      parentTypeId: 'VIRTUAL_FACILITY', 
+      parentTypeId_op: 'notEqual', 
+      facilityTypeId: 'VIRTUAL_FACILITY', 
+      facilityTypeId_op: 'notEqual' 
+    }), 
+    utilStore.fetchProductStores()
+  ]);
 });
+
+onIonViewWillEnter(async () => {
+  await fetchFacilityGroups();
+  await utilStore.fetchInventoryGroups();
+  if (router.currentRoute.value?.query?.productStoreId) {
+    query.value.productStoreId = router.currentRoute.value.query.productStoreId;
+    await facilityStore.updateFacilityQuery(query.value);
+  }
+  await fetchFacilities();
+});
+
+async function updateQuery() {
+  await facilityStore.updateFacilityQuery(query.value);
+  await fetchFacilities();
+}
+
+async function fetchFacilities(vSize?: any, vIndex?: any) {
+  const viewSize = vSize ? vSize : import.meta.env.VITE_APP_VIEW_SIZE;
+  const viewIndex = vIndex ? vIndex : 0;
+  const payload = {
+    viewSize,
+    viewIndex
+  };
+  await facilityStore.fetchFacilities(payload);
+}
+
+function viewFacilityDetails(facilityId: string) {
+  router.push({ path: `/facility-details/${facilityId}` });
+}
+
+async function loadMoreFacilities(event: any) {
+  await fetchFacilities(
+    undefined,
+    Math.ceil(
+      facilities.value?.length / (import.meta.env.VITE_APP_VIEW_SIZE as any)
+    ).toString()
+  );
+  await event.target.complete();
+}
+
+async function changeOrderLimitPopover(ev: Event, facility: any) {
+  const popover = await popoverController.create({
+    component: OrderLimitPopover,
+    event: ev,
+    showBackdrop: false,
+    componentProps: { fulfillmentOrderLimit: facility.maximumOrderLimit }
+  });
+  popover.present();
+
+  const result = await popover.onDidDismiss();
+  if (result.data != undefined && result.data !== facility.maximumOrderLimit) {
+    await updateFacility(result.data, facility);
+  }
+}
+
+async function updateFacility(maximumOrderLimit: number | string, facility: any) {
+  try {
+    const resp = await FacilityService.updateFacility({
+      "facilityId": facility.facilityId,
+      maximumOrderLimit
+    });
+
+    if (!hasError(resp)) {
+      const updatedFacilities = JSON.parse(JSON.stringify(facilities.value)).map((facilityData: any) => {
+        if (facility.facilityId === facilityData.facilityId) {
+          facilityData.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit;
+          facilityData.orderLimitType = facilityData.maximumOrderLimit === null ? 'unlimited' : (facilityData.maximumOrderLimit === 0 ? 'no-capacity' : 'custom');
+        }
+        return facilityData;
+      });
+      facilityStore.updateFacilities(updatedFacilities);
+      showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }));
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }));
+    logger.error('Failed to update facility', err);
+  }
+}
+
+async function fetchFacilityGroups() {
+  const params = {
+    entityName: "FacilityGroup",
+    noConditionFind: 'Y',
+    orderBy: "facilityGroupTypeId ASC",
+    fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
+    viewSize: 50
+  };
+
+  try {
+    const resp = await FacilityService.fetchFacilityGroups(params);
+    if (!hasError(resp) && resp.data?.docs?.length > 0) {
+      facilityGroups.value = resp.data.docs;
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error('Failed to find facility groups', err);
+  }
+}
+
+async function openSellOnlineGroupPopover(ev: Event, facility: any) {
+  if (inventoryGroups.value.length === 1) {
+    const isGroupAdded = !facility.groupInformation.some((info: any) => info.facilityGroupId === inventoryGroups.value[0].facilityGroupId);
+    await updateFacilityGroup(facility, inventoryGroups.value[0], isGroupAdded);
+  } else {
+    const popover = await popoverController.create({
+      component: SellOnlineGroupPopover,
+      event: ev,
+      showBackdrop: false,
+      componentProps: { facility: facility }
+    });
+    popover.present();
+  }
+}
 </script>
 
 <style scoped>

@@ -97,7 +97,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonBackButton,
   IonButton,
@@ -116,9 +116,9 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
+  onIonViewDidEnter
 } from "@ionic/vue";
-import { defineComponent } from "vue";
-import { mapGetters, useStore } from "vuex";
+import { ref, computed, reactive } from "vue";
 import { useRouter } from 'vue-router'
 import { colorWandOutline, locationOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
@@ -127,172 +127,144 @@ import logger from "@/logger";
 import { getTelecomCountryCode, hasError } from "@/adapter";
 import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
+import { useFacilityStore } from '@/store/facility';
+import { useUtilStore } from '@/store/util';
 
-export default defineComponent({
-  name: "AddFacilityAddress",
-  components: {
-    IonBackButton,
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonList,
-    IonPage,
-    IonSelect,
-    IonSelectOption,
-    IonText,
-    IonTitle,
-    IonToolbar,
-  },
-  computed: {
-    ...mapGetters({
-      countries: 'util/getCountries',
-      states: 'util/getStates',
-      current: 'facility/getCurrent',
-    })
-  },
-  data() {
-    return {
-      formData: {
-        toName: '',
-        address1: '',
-        address2: '',
-        directions: '',
-        city: '',
-        postalCode: '',
-        stateProvinceGeoId: '',
-        countryGeoId: '',
-        latitude: '',
-        longitude: '',
-      },
-      contactNumber: '',
-      countryCode: '',
-      emailAddress: ''
-    }
-  },
-  props: ['facilityId'],
-  async ionViewDidEnter() {
-    this.formData.toName = this.current?.facilityName ? this.current.facilityName : ''
-    await this.store.dispatch('util/fetchCountries', { countryGeoId: "USA" })
-  },
-  methods: {
-    inputValidation(event: any){
-      if (/[^0-9-]/.test(event.key) && event.key !== 'Backspace') event.preventDefault();
-    },
-    async addAddress() {
-      let resp;
-      if (!this.formData.address1 || !this.formData.city || !this.formData.postalCode) {
-        showToast("Please fill all the required fields.")
-        return
-      }
+const props = defineProps(['facilityId']);
+const router = useRouter();
+const facilityStore = useFacilityStore();
+const utilStore = useUtilStore();
 
-      if(this.emailAddress && !isValidEmail(this.emailAddress)) {
-        showToast(translate("Invalid email address"))
-        return
-      }
-
-      const payload = {
-        facilityId: this.facilityId,
-        contactMechPurposeTypeId: 'PRIMARY_LOCATION',
-        ...this.formData
-      }
-
-      try {
-        resp = await FacilityService.createFacilityPostalAddress(payload)
-        if (!hasError(resp)) {
-          showToast(translate("Facility address created successfully."))
-          this.router.replace(`/add-facility-config/${this.facilityId}`)
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        showToast(translate("Failed to create facility address."))
-        logger.error("Failed to create facility address.", error)
-      }
-      if(this.contactNumber) this.saveTelecomNumber()
-      if(this.emailAddress) this.saveEmailAddress()
-    },
-    async generateLatLong() {
-      const postalCode = this.formData.postalCode;
-      const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
-
-      const payload = {
-        json: {
-          params: {
-            q: `postcode: ${query}`
-          }
-        }
-      }
-      try {
-        const resp = await UtilService.generateLatLong(payload)
-        if (!hasError(resp)) {
-          const result = resp.data.response.docs[0]
-          this.formData.latitude = result.latitude
-          this.formData.longitude = result.longitude
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        showToast(translate("Unable to find the latitude and longitude for the entered zip code."))
-        logger.error("Unable to find the latitude and longitude for the entered zip code.", error)
-      }
-    },
-    async updateState(event: CustomEvent) {
-      await this.store.dispatch('util/fetchStates', { geoId: event.detail.value })
-      const country = this.countries.find((country: any) => country.geoId === event.detail.value)
-      this.countryCode = getTelecomCountryCode(country.geoCode)
-    },
-    async saveTelecomNumber() {
-      try {
-        const resp = await FacilityService.createFacilityTelecomNumber({
-          facilityId: this.facilityId,
-          contactMechPurposeTypeId: 'PRIMARY_PHONE',
-          contactNumber: this.contactNumber.trim(),
-          countryCode: this.countryCode.replace('+', '')
-        })
-
-        if(hasError(resp)) {
-          throw resp.data;
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-    },
-    async saveEmailAddress() {
-      try {
-        const resp = await FacilityService.createFacilityEmailAddress({
-          facilityId: this.facilityId,
-          contactMechTypeId: 'EMAIL_ADDRESS',
-          contactMechPurposeTypeId: 'PRIMARY_EMAIL',
-          emailAddress: this.emailAddress,
-        })
-
-        if(hasError(resp)) {
-          throw resp.data;
-        }
-      } catch(err) {
-        logger.error(err)
-      }
-    }
-  },
-  setup() {
-    const store = useStore();
-    const router = useRouter();
-
-    return {
-      colorWandOutline,
-      locationOutline,
-      store,
-      router,
-      translate
-    };
-  }
+const formData = reactive({
+  toName: '',
+  address1: '',
+  address2: '',
+  directions: '',
+  city: '',
+  postalCode: '',
+  stateProvinceGeoId: '',
+  countryGeoId: '',
+  latitude: '',
+  longitude: '',
 });
+
+const contactNumber = ref('');
+const countryCode = ref('');
+const emailAddress = ref('');
+
+const countries = computed(() => utilStore.getCountries);
+const states = computed(() => utilStore.getStates);
+const current = computed(() => facilityStore.getCurrent);
+
+onIonViewDidEnter(async () => {
+  formData.toName = current.value?.facilityName ? current.value.facilityName : '';
+  await utilStore.fetchCountries({ countryGeoId: "USA" });
+});
+
+function inputValidation(event: any) {
+  if (/[^0-9-]/.test(event.key) && event.key !== 'Backspace') event.preventDefault();
+}
+
+async function addAddress() {
+  if (!formData.address1 || !formData.city || !formData.postalCode) {
+    showToast("Please fill all the required fields.");
+    return;
+  }
+
+  if (emailAddress.value && !isValidEmail(emailAddress.value)) {
+    showToast(translate("Invalid email address"));
+    return;
+  }
+
+  const payload = {
+    facilityId: props.facilityId,
+    contactMechPurposeTypeId: 'PRIMARY_LOCATION',
+    ...formData
+  };
+
+  try {
+    const resp = await FacilityService.createFacilityPostalAddress(payload);
+    if (!hasError(resp)) {
+      showToast(translate("Facility address created successfully."));
+      router.replace(`/add-facility-config/${props.facilityId}`);
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    showToast(translate("Failed to create facility address."));
+    logger.error("Failed to create facility address.", error);
+  }
+  if (contactNumber.value) saveTelecomNumber();
+  if (emailAddress.value) saveEmailAddress();
+}
+
+async function generateLatLong() {
+  const postalCode = formData.postalCode;
+  const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
+
+  const payload = {
+    json: {
+      params: {
+        q: `postcode: ${query}`
+      }
+    }
+  };
+  try {
+    const resp = await UtilService.generateLatLong(payload);
+    if (!hasError(resp)) {
+      const result = resp.data.response.docs[0];
+      formData.latitude = result.latitude;
+      formData.longitude = result.longitude;
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
+    logger.error("Unable to find the latitude and longitude for the entered zip code.", error);
+  }
+}
+
+async function updateState(event: CustomEvent) {
+  await utilStore.fetchStates({ geoId: event.detail.value });
+  const country = countries.value.find((country: any) => country.geoId === event.detail.value);
+  if (country) {
+    countryCode.value = getTelecomCountryCode(country.geoCode);
+  }
+}
+
+async function saveTelecomNumber() {
+  try {
+    const resp = await FacilityService.createFacilityTelecomNumber({
+      facilityId: props.facilityId,
+      contactMechPurposeTypeId: 'PRIMARY_PHONE',
+      contactNumber: contactNumber.value.trim(),
+      countryCode: countryCode.value.replace('+', '')
+    });
+
+    if (hasError(resp)) {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+}
+
+async function saveEmailAddress() {
+  try {
+    const resp = await FacilityService.createFacilityEmailAddress({
+      facilityId: props.facilityId,
+      contactMechTypeId: 'EMAIL_ADDRESS',
+      contactMechPurposeTypeId: 'PRIMARY_EMAIL',
+      emailAddress: emailAddress.value,
+    });
+
+    if (hasError(resp)) {
+      throw resp.data;
+    }
+  } catch (err) {
+    logger.error(err);
+  }
+}
 </script>
 
 <style scoped>

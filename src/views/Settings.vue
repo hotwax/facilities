@@ -51,7 +51,7 @@
   </ion-page>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { 
   IonAvatar,
   IonButton, 
@@ -67,93 +67,62 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/vue';
-import { defineComponent } from 'vue';
-import { codeWorkingOutline, ellipsisVerticalOutline, globeOutline, openOutline, timeOutline } from 'ionicons/icons'
-import { mapGetters, useStore } from 'vuex';
+import { 
+  codeWorkingOutline, 
+  ellipsisVerticalOutline, 
+  globeOutline, 
+  openOutline, 
+  timeOutline 
+} from 'ionicons/icons'
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { translate } from '@hotwax/dxp-components';
 import { Actions, hasPermission } from '@/authorization'
 import { DateTime } from 'luxon';
 import Image from '@/components/Image.vue';
+import { useUserStore } from '@/store/user';
 
-export default defineComponent({
-  name: 'Settings',
-  components: {
-    IonAvatar,
-    IonButton,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonContent,
-    IonHeader,
-    IonIcon,
-    IonItem,
-    IonPage,
-    IonTitle,
-    IonToolbar,
-    Image
-  },
-  data() {
-    return {
-      baseURL: process.env.VUE_APP_BASE_URL,
-      appInfo: (process.env.VUE_APP_VERSION_INFO ? JSON.parse(process.env.VUE_APP_VERSION_INFO) : {}) as any,
-      appVersion: "",
-      locales: process.env.VUE_APP_LOCALES ? JSON.parse(process.env.VUE_APP_LOCALES) : {"en-US": "English"}
-    };
-  },
-  computed: {
-    ...mapGetters({
-      userProfile: 'user/getUserProfile',
-      instanceUrl: 'user/getInstanceUrl',
-      locale: 'user/getLocale'
-    })
-  },
-  mounted() {
-    this.appVersion = this.appInfo.branch ? (this.appInfo.branch + "-" + this.appInfo.revision) : this.appInfo.tag;
-  },
-  methods: {
-    logout () {
-      this.store.dispatch('user/logout', { isUserUnauthorised: false }).then((redirectionUrl: string) => {
+const userStore = useUserStore();
+const router = useRouter();
 
-        // if not having redirection url then redirect the user to launchpad
-        if(!redirectionUrl) {
-          const redirectUrl = window.location.origin + '/login'
-          window.location.href = `${process.env.VUE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
-        }
-      })
-    },
-    goToLaunchpad() {
-      window.location.href = `${process.env.VUE_APP_LOGIN_URL}`
-    },
-    async timeZoneUpdated(tzId: string) {
-      await this.store.dispatch("user/setUserTimeZone", tzId)
-    },
-    getDateTime(time: any) {
-      return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
-    },
-    setLocale(locale: string) {
-      this.store.dispatch('user/setLocale',locale)
-    }
-  },
-  setup() {
-    const store = useStore();
-    const router = useRouter();
+const baseURL = import.meta.env.VITE_APP_BASE_URL;
+const appInfo = ref((import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any);
+const appVersion = ref("");
+const locales = ref(import.meta.env.VITE_APP_LOCALES ? JSON.parse(import.meta.env.VITE_APP_LOCALES) : {"en-US": "English"});
 
-    return {
-      Actions,
-      codeWorkingOutline,
-      ellipsisVerticalOutline,
-      globeOutline,
-      openOutline,
-      timeOutline,
-      router,
-      store,
-      hasPermission,
-      translate
-    }
-  }
+const userProfile = computed(() => userStore.getUserProfile);
+const instanceUrl = computed(() => userStore.getInstanceUrl);
+const locale = computed(() => userStore.getLocale);
+
+onMounted(() => {
+  appVersion.value = appInfo.value.branch ? (appInfo.value.branch + "-" + appInfo.value.revision) : appInfo.value.tag;
 });
+
+async function logout() {
+  userStore.logout({ isUserUnauthorised: false }).then((redirectionUrl: string) => {
+    // if not having redirection url then redirect the user to launchpad
+    if(!redirectionUrl) {
+      const redirectUrl = window.location.origin + '/login'
+      window.location.href = `${import.meta.env.VITE_APP_LOGIN_URL}?isLoggedOut=true&redirectUrl=${redirectUrl}`
+    }
+  })
+}
+
+function goToLaunchpad() {
+  window.location.href = `${import.meta.env.VITE_APP_LOGIN_URL}`
+}
+
+async function timeZoneUpdated(tzId: string) {
+  await userStore.setUserTimeZone(tzId);
+}
+
+function getDateTime(time: any) {
+  return DateTime.fromMillis(time).toLocaleString(DateTime.DATETIME_MED);
+}
+
+function setLocale(locale: string) {
+  userStore.setLocale(locale);
+}
 </script>
 
 <style scoped>
@@ -179,5 +148,4 @@ hr {
   align-items: center;
   padding: var(--spacer-xs) 10px 0px;
 }
-
 </style>

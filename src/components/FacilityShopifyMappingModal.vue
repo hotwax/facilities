@@ -49,7 +49,7 @@
   </ion-content>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   IonButton,
   IonButtons,
@@ -69,151 +69,112 @@ import {
   IonToolbar,
   modalController
 } from "@ionic/vue";
-import { defineComponent } from "vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from '@hotwax/dxp-components'
-import { mapGetters, useStore } from 'vuex'
 import { FacilityService } from '@/services/FacilityService'
 import { UtilService } from '@/services/UtilService'
 import { showToast } from "@/utils";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
 import emitter from "@/event-bus";
+import { useFacilityStore } from "@/store/facility";
+import { ref, computed, onMounted } from "vue";
 
-export default defineComponent({
-  name: "FacilityShopifyMappingModal",
-  components: {
-    IonButton,
-    IonButtons,
-    IonContent,
-    IonFab,
-    IonFabButton,
-    IonHeader,
-    IonIcon,
-    IonInput,
-    IonItem,
-    IonLabel,
-    IonList,
-    IonListHeader,
-    IonSelect,
-    IonSelectOption,
-    IonTitle,
-    IonToolbar
-  },
-  computed: {
-    ...mapGetters({
-      currentFacility: 'facility/getCurrent'
-    })
-  },
-  data() {
-    return {
-      shopId: '',
-      shopifyLocationId: '',
-      shopifyShops: [] as any
-    }
-  },
-  props: ["shopifyFacilityMapping", "type"],
-  async mounted() {
-    this.shopifyLocationId = this.shopifyFacilityMapping?.shopifyLocationId
-    await this.fetchShopifyShops()
-    this.shopId = this.shopifyShops[0]?.shopId
-  },
-  methods: {
-    closeModal() {
-      modalController.dismiss()
-    },
-    async saveMapping() {
-      if(!this.shopId.trim() || !this.shopifyLocationId) {
-        showToast(translate('Please fill all the required fields'))
-        return;
-      }
+const props = defineProps(["shopifyFacilityMapping", "type"]);
+const facilityStore = useFacilityStore();
+const currentFacility = computed(() => facilityStore.getCurrent);
 
-      emitter.emit('presentLoader')
+const shopId = ref('');
+const shopifyLocationId = ref('');
+const shopifyShops = ref([] as any);
 
-      let resp;
-
-      try {
-        resp = await FacilityService.createShopifyShopLocation({
-          "facilityId": this.currentFacility.facilityId,
-          "shopId": this.shopId,
-          "shopifyLocationId": this.shopifyLocationId
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate('Shopify mapping created successfully'))
-          this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.currentFacility.facilityId })
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to create shopify mapping'))
-        logger.error('Failed to create shopify mapping', err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async updateMapping() {
-      if(!this.shopifyLocationId) {
-        showToast(translate('Please fill all the required fields'))
-        return;
-      }
-
-      emitter.emit('presentLoader')
-
-      let resp;
-
-      try {
-        resp = await FacilityService.updateShopifyShopLocation({
-          "facilityId": this.currentFacility.facilityId,
-          "shopId": this.shopifyFacilityMapping.shopId,
-          "shopifyLocationId": this.shopifyLocationId
-        })
-
-        if(!hasError(resp)) {
-          showToast(translate('Shopify mapping updated successfully'))
-          this.store.dispatch('facility/fetchShopifyFacilityMappings', { facilityId: this.currentFacility.facilityId })
-          // TODO: overlay does not exist error, fix this
-          this.closeModal();
-        } else {
-          throw resp.data
-        }
-      } catch(err) {
-        showToast(translate('Failed to update shopify mapping'))
-        logger.error('Failed to update shopify mapping', err)
-      }
-
-      emitter.emit('dismissLoader')
-    },
-    async fetchShopifyShops() {
-      try {
-        const resp = await UtilService.fetchShopifyShops({
-          entityName: "ShopifyShop",
-          fieldList: ['shopId', 'name'],
-          noConditionFind: 'Y',
-          viewSize: 100
-        })
-
-        if (!hasError(resp)) {
-          this.shopifyShops = resp.data.docs
-        } else {
-          throw resp.data
-        }
-      } catch (error) {
-        showToast(translate('Failed to fetch shopify shops.'))
-        logger.error('Failed to fetch shopify shops.', error)
-      }
-    }
-  },
-  setup() {
-    const store = useStore();
-
-    return {
-      closeOutline,
-      saveOutline,
-      store,
-      translate
-    };
-  },
+onMounted(async () => {
+  shopifyLocationId.value = props.shopifyFacilityMapping?.shopifyLocationId;
+  await fetchShopifyShops();
+  shopId.value = shopifyShops.value[0]?.shopId;
 });
+
+function closeModal() {
+  modalController.dismiss();
+}
+
+async function saveMapping() {
+  if (!shopId.value.trim() || !shopifyLocationId.value) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.createShopifyShopLocation({
+      "facilityId": currentFacility.value.facilityId,
+      "shopId": shopId.value,
+      "shopifyLocationId": shopifyLocationId.value
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Shopify mapping created successfully'));
+      facilityStore.fetchShopifyFacilityMappings({ facilityId: currentFacility.value.facilityId });
+      closeModal();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to create shopify mapping'));
+    logger.error('Failed to create shopify mapping', err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function updateMapping() {
+  if (!shopifyLocationId.value) {
+    showToast(translate('Please fill all the required fields'));
+    return;
+  }
+
+  emitter.emit('presentLoader');
+
+  try {
+    const resp = await FacilityService.updateShopifyShopLocation({
+      "facilityId": currentFacility.value.facilityId,
+      "shopId": props.shopifyFacilityMapping.shopId,
+      "shopifyLocationId": shopifyLocationId.value
+    });
+
+    if (!hasError(resp)) {
+      showToast(translate('Shopify mapping updated successfully'));
+      facilityStore.fetchShopifyFacilityMappings({ facilityId: currentFacility.value.facilityId });
+      closeModal();
+    } else {
+      throw resp.data;
+    }
+  } catch (err) {
+    showToast(translate('Failed to update shopify mapping'));
+    logger.error('Failed to update shopify mapping', err);
+  }
+
+  emitter.emit('dismissLoader');
+}
+
+async function fetchShopifyShops() {
+  try {
+    const resp = await UtilService.fetchShopifyShops({
+      entityName: "ShopifyShop",
+      fieldList: ['shopId', 'name'],
+      noConditionFind: 'Y',
+      viewSize: 100
+    });
+
+    if (!hasError(resp)) {
+      shopifyShops.value = resp.data.docs;
+    } else {
+      throw resp.data;
+    }
+  } catch (error) {
+    showToast(translate('Failed to fetch shopify shops.'));
+    logger.error('Failed to fetch shopify shops.', error);
+  }
+}
 </script>
