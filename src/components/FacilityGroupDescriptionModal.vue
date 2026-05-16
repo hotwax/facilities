@@ -58,11 +58,10 @@ import {
   lockClosedOutline,
   mailOutline
 } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from '@/adapter';
+import { commonUtil } from '@common';
 import emitter from "@/event-bus";
-import { showToast } from '@/utils';
 import { useFacilityStore } from "@/store/facility";
 import { ref, computed } from "vue";
 
@@ -79,7 +78,7 @@ function closeModal() {
 
 async function updateFacilityGroupDescription() {
   if (facilityGroupName.value.trim().length <= 0) {
-    showToast(translate('Facility group name cannot be empty'));
+    commonUtil.showToast(translate('Facility group name cannot be empty'));
     return false;    
   }
   emitter.emit('presentLoader');
@@ -89,8 +88,8 @@ async function updateFacilityGroupDescription() {
       facilityGroupName: facilityGroupName.value,
       description: facilityGroupDescription.value
     });
-    if (!hasError(resp)) {
-      showToast(translate('Group detail updated.'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Group detail updated.'));
       const updatedGroups = groups.value.map((groupData: any) => {
         if (props.facilityGroup.facilityGroupId === groupData.facilityGroupId) {
           return {
@@ -104,7 +103,7 @@ async function updateFacilityGroupDescription() {
       facilityStore.updateFacilityGroups(updatedGroups);
     }
   } catch (error) {
-    showToast(translate('Failed to update group detail.'));
+    commonUtil.showToast(translate('Failed to update group detail.'));
   }
   closeModal();
   emitter.emit('dismissLoader');

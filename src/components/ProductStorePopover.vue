@@ -26,11 +26,10 @@ import {
   popoverController
 } from "@ionic/vue";
 import { removeCircleOutline, star, starOutline } from "ionicons/icons";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
-import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -56,8 +55,8 @@ async function removeStoreFromFacility() {
       thruDate: DateTime.now().toMillis()
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Store unlinked successfully.'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Store unlinked successfully.'));
 
       // TODO: need to check if we need to remove primary value from the facility if product store is removed.
       // Removing primaryFacilityGroupId from the facility, if present
@@ -66,7 +65,7 @@ async function removeStoreFromFacility() {
           facilityId: props.facilityId,
           primaryFacilityGroupId: ''
         });
-        if (!hasError(updateResp)) {
+        if (!commonUtil.hasError(updateResp)) {
           await facilityStore.updateCurrentFacility({ ...current.value, primaryFacilityGroupId: '' });
         } else {
           throw updateResp.data;
@@ -79,7 +78,7 @@ async function removeStoreFromFacility() {
     }
   } catch (err) {
     logger.error(err);
-    showToast(translate('Store unlink failed.'));
+    commonUtil.showToast(translate('Store unlink failed.'));
   }
   popoverController.dismiss();
   emitter.emit('dismissLoader');
@@ -91,13 +90,13 @@ async function updatePrimaryStore(shopifyShopId = '') {
       facilityId: props.facilityId,
       primaryFacilityGroupId: shopifyShopId
     });
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       await facilityStore.updateCurrentFacility({ ...current.value, primaryFacilityGroupId: shopifyShopId });
     } else {
       throw resp.data;
     }
   } catch (error) {
-    showToast(translate('Failed to update primary product store'));
+    commonUtil.showToast(translate('Failed to update primary product store'));
     logger.error('Failed to update primary product store', error);
   }
 }
@@ -115,7 +114,7 @@ async function togglePrimary() {
 
   // if we does not get shopify shop id for the store then not making product store as primary
   if (!shopifyShopId) {
-    showToast(translate('Failed to make product store primary due to missing Shopify shop'));
+    commonUtil.showToast(translate('Failed to make product store primary due to missing Shopify shop'));
     popoverController.dismiss();
     emitter.emit('dismissLoader');
     return;
@@ -147,7 +146,7 @@ async function togglePrimary() {
   if (facilityGroupId) {
     await updatePrimaryStore(shopifyShopId);
   } else {
-    showToast(translate('Failed to make product store primary due to missing group'));
+    commonUtil.showToast(translate('Failed to make product store primary due to missing group'));
   }
   popoverController.dismiss();
   emitter.emit('dismissLoader');
@@ -165,7 +164,7 @@ async function fetchFacilityGroup(shopifyShopId: string) {
       viewSize: 1
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       facilityGroupId = resp.data.docs[0].facilityGroupId;
     } else {
       throw resp.data;
@@ -185,7 +184,7 @@ async function createFacilityGroup(shopifyShopId: string) {
       facilityGroupTypeId: 'FEATURING'
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       facilityGroupId = resp.data.facilityGroupId;
     } else {
       throw resp.data;

@@ -59,10 +59,9 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from '@/services/FacilityService'
-import { showToast } from "@/utils";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -79,7 +78,7 @@ function closeModal() {
 
 async function updateExternalId() {
   if (!externalId.value?.trim()) {
-    showToast(translate('Please enter a valid value'));
+    commonUtil.showToast(translate('Please enter a valid value'));
     return;
   }
 
@@ -91,8 +90,8 @@ async function updateExternalId() {
       "externalId": externalId.value
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Facility external ID updated.'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Facility external ID updated.'));
       await facilityStore.updateCurrentFacility({
         ...currentFacility.value,
         externalId: externalId.value
@@ -102,7 +101,7 @@ async function updateExternalId() {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to create external mapping'));
+    commonUtil.showToast(translate('Failed to create external mapping'));
     logger.error('Failed to create external mapping', err);
   }
 

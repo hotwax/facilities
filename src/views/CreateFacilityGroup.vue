@@ -84,17 +84,15 @@ import {
 } from "@ionic/vue";
 import { ref, computed, reactive, onMounted } from "vue";
 import { arrowForwardOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { commonUtil, translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { useRouter } from 'vue-router'
-import { hasError } from "@/adapter";
-import { generateInternalId, showToast } from "@/utils";
+import { generateInternalId } from "@/utils";
 import logger from "@/logger";
 import { DateTime } from "luxon";
 import { useUtilStore } from '@/store/util';
+import router from "@/router";
 
 const props = defineProps(['selectedFacilityGroupTypeId']);
-const router = useRouter();
 const utilStore = useUtilStore();
 
 const formData = reactive({
@@ -131,12 +129,12 @@ function setFacilityGroupId(event: any) {
 
 async function createFacilityGroup() {
   if (!formData.facilityGroupName?.trim()) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
   if (formData.facilityGroupId.length > 20) {
-    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    commonUtil.showToast(translate('Internal ID cannot be more than 20 characters.'));
     return;
   }
 
@@ -150,7 +148,7 @@ async function createFacilityGroup() {
     };
 
     const resp = await FacilityService.createFacilityGroup(payload);
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const facilityGroupId = resp.data.facilityGroupId;
       if (selectedProductStoreIds.value.length > 0) {
         await associateFacilityGroupToStore(facilityGroupId, selectedProductStoreIds.value);
@@ -161,7 +159,7 @@ async function createFacilityGroup() {
     }
   } catch (error) {
     logger.error(error);
-    showToast(translate('Failed to create facility group.'));
+    commonUtil.showToast(translate('Failed to create facility group.'));
   }
 }
 

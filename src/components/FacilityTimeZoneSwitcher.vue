@@ -85,19 +85,19 @@ import {
 } from '@ionic/vue';
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
-import { translate } from '@hotwax/dxp-components'
+import { commonUtil, translate } from "@common"
 import { DateTime } from 'luxon' 
-import { getAvailableTimeZones, hasError } from '../adapter';
 import { FacilityService } from '@/services/FacilityService';
-import { showToast } from '@/utils';
 import logger from '@/logger';
 import { useFacilityStore } from "@/store/facility";
+import { useUserStore } from '@/store/user';
 
 const facilityStore = useFacilityStore();
+const userStore = useUserStore();
 
 const currentFacility = computed(() => facilityStore.getCurrent);
 const currentTimeZoneId = computed(() => currentFacility.value?.facilityTimeZone);
-const timeZones = ref([] as any[]);
+const timeZones = computed(() => userStore.getTimeZones);
 
 const isLoading = ref(true);
 const queryString = ref('');
@@ -140,7 +140,7 @@ function findTimeZone() {
 
 onMounted(async () => {
   isLoading.value = true;
-  timeZones.value = await getAvailableTimeZones() as any[];
+  await userStore.getAvailableTimeZones();
   timeZoneId.value = currentFacility.value?.facilityTimeZone;
   
   if (props.showBrowserTimeZone) {
@@ -158,15 +158,15 @@ async function setFacilityTimeZone() {
       "facilityTimeZone": timeZoneId.value
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       await facilityStore.fetchCurrentFacility({ facilityId: currentFacility.value.facilityId, skipState: true });
-      showToast(translate('Facility timezone updated successfully.'));
+      commonUtil.showToast(translate('Facility timezone updated successfully.'));
     } else {
       throw resp.data;
     }
   } catch (err) {
     logger.error('Failed to update facility timezone.', err);
-    showToast(translate('Failed to update facility timezone.'));
+    commonUtil.showToast(translate('Failed to update facility timezone.'));
   }
   closeModal();
 }

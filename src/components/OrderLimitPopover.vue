@@ -30,8 +30,7 @@ import {
   popoverController
 } from "@ionic/vue";
 import { lockClosedOutline, lockOpenOutline } from 'ionicons/icons'
-import { translate } from '@hotwax/dxp-components'
-import { showToast } from '@/utils';
+import { translate, commonUtil } from "@common"
 import { ref } from "vue";
 
 const props = defineProps(['fulfillmentOrderLimit']);
@@ -59,10 +58,10 @@ async function showOrderLimitAlert(header: string, message: string, showInput: b
 
         if (showInput) {
           if (data.setLimit === '') {
-            showToast(translate('Please provide a value'));
+            commonUtil.showToast(translate('Please provide a value'));
             return false;
           } else if (parseFloat(data.setLimit) < 0) {
-            showToast(translate('Provide a value greater than or equal to 0'));
+            commonUtil.showToast(translate('Provide a value greater than or equal to 0'));
             return false;
           } else {
             finalLimit = data.setLimit;

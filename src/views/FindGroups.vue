@@ -134,19 +134,17 @@ import {
 } from '@ionic/vue';
 import { ref, computed, onMounted } from 'vue';
 import { addOutline, bagHandleOutline, businessOutline, ellipsisVerticalOutline } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
-import { translate } from '@hotwax/dxp-components'
-import { customSort, showToast } from '@/utils';
+import { commonUtil, translate } from "@common"
+import { customSort } from '@/utils';
 import { FacilityService } from '@/services/FacilityService';
-import { hasError } from '@/adapter';
 import logger from '@/logger';
 import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 import GroupTypeModal from "@/components/GroupTypeModal.vue";
 import FacilityGroupDescriptionModal from "@/components/FacilityGroupDescriptionModal.vue";
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
+import router from '@/router';
 
-const router = useRouter();
 const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
 
@@ -199,9 +197,9 @@ async function updateFacilityGroup(facilityGroup: any) {
       "facilityGroupTypeId": isChecked ? currentFacilityGroupTypeId.value : ''
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const message = isChecked ? "Group associated to parent group." : "Group removed from parent group.";
-      showToast(translate(message));
+      commonUtil.showToast(translate(message));
       const updatedGroups = groups.value.map((group: any) => {
         if (group.facilityGroupId === facilityGroup.facilityGroupId) {
           return { ...group, facilityGroupTypeId: isChecked ? currentFacilityGroupTypeId.value : '' };
@@ -215,7 +213,7 @@ async function updateFacilityGroup(facilityGroup: any) {
   } catch (err) {
     const message = isChecked ? "Failed to associate group to parent group." : "Failed to remove group from parent group.";
     logger.error(message, err);
-    showToast(translate(message));
+    commonUtil.showToast(translate(message));
   }
 }
 

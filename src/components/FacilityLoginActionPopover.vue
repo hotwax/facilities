@@ -29,25 +29,21 @@ import {
   popoverController
 } from "@ionic/vue";
 import { removeCircleOutline, mailOutline, keyOutline } from "ionicons/icons";
-import { translate } from "@hotwax/dxp-components";
+import { translate, commonUtil, cookieHelper } from "@common";
 import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService"
 import { DateTime } from "luxon";
-import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
 import logger from "@/logger";
 import emitter from "@/event-bus";
-import { useAuthStore } from '@hotwax/dxp-components'
 import router from "@/router";
 import { useFacilityStore } from "@/store/facility";
 
 const props = defineProps(['currentFacility', 'currentFacilityUser', "facilityTypeDesc"]);
 const facilityStore = useFacilityStore();
-const authStore = useAuthStore();
 
 async function viewDetails() {
   popoverController.dismiss();
-  const userDetailUrl = `${import.meta.env.VITE_APP_USERS_LOGIN_URL}?oms=${authStore.oms}&token=${authStore.token.value}&expirationTime=${authStore.token.expiration}&partyId=${props.currentFacilityUser.partyId}&redirectedFrom=${router.currentRoute.value.path}`;
+  const userDetailUrl = `${import.meta.env.VITE_APP_USERS_LOGIN_URL}?oms=${cookieHelper().get('oms')}&token=${commonUtil.getToken()}&expirationTime=${commonUtil.getTokenExpiration()}&partyId=${props.currentFacilityUser.partyId}&redirectedFrom=${router.currentRoute.value.path}`;
   window.location.href = userDetailUrl;
 }
 
@@ -57,13 +53,13 @@ async function sendResetPasswordEmail() {
       emailAddress: props.currentFacilityUser.infoString,
       userName: props.currentFacilityUser.userLoginId
     });
-    if (!hasError(resp)) {
-      showToast(translate('Password reset email sent successfully.'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Password reset email sent successfully.'));
     } else {
       throw resp.data;
     }
   } catch (error) {
-    showToast(translate('Failed to send password reset email.'));
+    commonUtil.showToast(translate('Failed to send password reset email.'));
     console.error(error);
   }
   popoverController.dismiss();
@@ -84,7 +80,7 @@ async function removePartyFromFacilityCompletely(payload: any) {
       filterByDate: 'Y',
       viewSize: 50
     });
-    if (!hasError(resp) && resp.data.count > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
       const facilityParties = resp.data.docs;
 
       const promises = facilityParties.map((facilityParty: any) => 
@@ -96,7 +92,7 @@ async function removePartyFromFacilityCompletely(payload: any) {
       
       const responses = await Promise.all(promises);
       responses.forEach(response => {
-        if (hasError(response)) {
+        if (commonUtil.hasError(response)) {
           throw response.data;
         }
       });
@@ -104,7 +100,7 @@ async function removePartyFromFacilityCompletely(payload: any) {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to remove party from facility'));
+    commonUtil.showToast(translate('Failed to remove party from facility'));
     logger.error('Failed to remove party from facility', err);
     return;
   }
@@ -123,8 +119,8 @@ async function unlinkFacilityLogin(data: any) {
         fromDate: props.currentFacilityUser.fromDate,
         thruDate: DateTime.now().toMillis(),
       });
-      if (!hasError(resp)) {
-        showToast(translate("Facility login removed."));
+      if (!commonUtil.hasError(resp)) {
+        commonUtil.showToast(translate("Facility login removed."));
       } else {
         throw resp.data;
       }
@@ -138,8 +134,8 @@ async function unlinkFacilityLogin(data: any) {
         partyId: props.currentFacilityUser.partyId,
         userLoginId: props.currentFacilityUser.userLoginId
       });
-      if (!hasError(resp)) {
-        showToast(translate("Facility login removed."));
+      if (!commonUtil.hasError(resp)) {
+        commonUtil.showToast(translate("Facility login removed."));
       } else {
         throw resp.data;
       }
@@ -147,7 +143,7 @@ async function unlinkFacilityLogin(data: any) {
     //fetching updated facility logins
     await facilityStore.fetchFacilityLogins({ facilityId: props.currentFacility?.facilityId });
   } catch (err) {
-    showToast(translate("Failed to remove facility login."));
+    commonUtil.showToast(translate("Failed to remove facility login."));
     logger.error(err);
   }
   emitter.emit('dismissLoader');

@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import emitter from "@/event-bus";
 import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import { useUtilStore } from "./util";
 
@@ -33,9 +33,9 @@ export const useFacilityStore = defineStore("facility", {
     current: {} as any
   }),
   getters: {
-    getFacilities: (state) => JSON.parse(JSON.stringify(state.facilities.list)),
-    getVirtualFacilities: (state) => JSON.parse(JSON.stringify(state.virtualFacilities.list)),
-    getFacilityGroups: (state) => JSON.parse(JSON.stringify(state.facilityGroups.list)),
+    getFacilities: (state) => (state.facilities.list ? JSON.parse(JSON.stringify(state.facilities.list)) : []),
+    getVirtualFacilities: (state) => (state.virtualFacilities.list ? JSON.parse(JSON.stringify(state.virtualFacilities.list)) : []),
+    getFacilityGroups: (state) => (state.facilityGroups.list ? JSON.parse(JSON.stringify(state.facilityGroups.list)) : []),
     getArchivedFacilities: (state) => JSON.parse(JSON.stringify(state.archivedFacilities)),
     getFacilityProductStores: (state) => state.current.productStores,
     getFacilityQuery: (state) => JSON.parse(JSON.stringify(state.facilityQuery)),
@@ -51,8 +51,8 @@ export const useFacilityStore = defineStore("facility", {
   },
   actions: {
     async fetchFacilitiesAdditionalInformation(payload = { viewIndex: 0 }) {
-      const cachedFacilities = JSON.parse(JSON.stringify(this.facilities.list));
-      let stateFacilities = JSON.parse(JSON.stringify(this.facilities.list));
+      const cachedFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
+      let stateFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
       const total = this.facilities.total;
 
       const facilityIds: Array<string> = [];
@@ -88,7 +88,7 @@ export const useFacilityStore = defineStore("facility", {
         }
       });
 
-      this.facilities = { facilities: stateFacilities.concat(facilities), total };
+      this.facilities = { list: stateFacilities.concat(facilities), total };
     },
     async fetchFacilities(payload: any) {
       if (payload.viewIndex === 0) emitter.emit("presentLoader");
@@ -141,12 +141,12 @@ export const useFacilityStore = defineStore("facility", {
         ...payload
       };
 
-      let facilities = JSON.parse(JSON.stringify(this.facilities.list));
+      let facilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
       let total = 0;
 
       try {
         const resp = await FacilityService.fetchFacilities(params);
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           if (payload.viewIndex && payload.viewIndex > 0) {
             facilities = facilities.concat(resp.data.docs);
           } else {
@@ -214,7 +214,7 @@ export const useFacilityStore = defineStore("facility", {
       this.current = facility;
     },
     async fetchCurrentFacility(payload: any) {
-      const cachedFacilities = JSON.parse(JSON.stringify(this.facilities.list));
+      const cachedFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
       const current = cachedFacilities.find((facility: any) => facility.facilityId === payload.facilityId);
       if (current?.facilityId && !payload.skipState && current["groupInformation"]) {
         const utilStore = useUtilStore();
@@ -239,7 +239,7 @@ export const useFacilityStore = defineStore("facility", {
       let facility = {} as any;
       try {
         const resp = await FacilityService.fetchFacilities(params);
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           facility = resp.data.docs[0];
         } else {
           throw resp.data;
@@ -275,7 +275,7 @@ export const useFacilityStore = defineStore("facility", {
 
       try {
         const resp = await FacilityService.fetchFacilityContactDetails(payload);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           const docs = resp.data.docs;
           docs.map((item: any) => {
             if (item.contactMechTypeId === "POSTAL_ADDRESS") {
@@ -319,7 +319,7 @@ export const useFacilityStore = defineStore("facility", {
           viewSize: 100
         };
         const resp = await FacilityService.fetchFacilityLocations(params);
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           facilityLocations = resp.data.docs;
         } else {
           throw resp.data;
@@ -339,7 +339,7 @@ export const useFacilityStore = defineStore("facility", {
           viewSize: 1
         };
         const resp = await FacilityService.fetchFacilityCalendar(params);
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           facilityCalendar = resp.data.docs[0];
         } else {
           throw resp.data;
@@ -361,7 +361,7 @@ export const useFacilityStore = defineStore("facility", {
 
       try {
         const resp = await FacilityService.getFacilityProductStores(payload);
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           productStores = resp.data.docs;
           const utilStore = useUtilStore();
           await utilStore.fetchShopifyShopForProductStores(resp.data.docs.map((productStore: any) => productStore.productStoreId));
@@ -388,7 +388,7 @@ export const useFacilityStore = defineStore("facility", {
           viewSize: 100
         };
         const resp = await FacilityService.fetchFacilityMappings(params);
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           mappings = resp.data.docs;
         } else {
           throw resp.data;
@@ -416,7 +416,7 @@ export const useFacilityStore = defineStore("facility", {
 
       try {
         const resp = await FacilityService.getFacilityParties(params);
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           parties = resp.data.docs;
           parties.map((party: any) => {
             party.fullName = party.groupName || [party.firstName, party.lastName].filter(Boolean).join(" ") || party.partyId;
@@ -439,7 +439,7 @@ export const useFacilityStore = defineStore("facility", {
           viewSize: 100
         };
         const resp = await FacilityService.fetchShopifyFacilityMappings(params);
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           shopifyFacilityMappings = resp.data.docs;
         } else {
           throw resp.data;
@@ -463,7 +463,7 @@ export const useFacilityStore = defineStore("facility", {
           filterByDate: "Y",
           viewSize: 50
         });
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           const facilityParties = resp.data.docs;
           dataList = facilityParties;
           const partyIds = facilityParties.map((party: any) => party.partyId);
@@ -477,7 +477,7 @@ export const useFacilityStore = defineStore("facility", {
             noConditionFind: "Y",
             viewSize: 50
           });
-          if (!hasError(resp) && resp.data.count > 0) {
+          if (!commonUtil.hasError(resp) && resp.data.count > 0) {
             dataList = [...dataList, ...resp.data.docs];
             resp = await UserService.fetchUserContactDetails({
               inputFields: { "partyId": partyIds, "partyId_op": "in", contactMechPurposeTypeId: "PRIMARY_EMAIL" },
@@ -486,7 +486,7 @@ export const useFacilityStore = defineStore("facility", {
               entityName: "PartyContactDetailByPurpose",
               fieldList: ["partyId", "infoString", "contactMechId", "contactMechPurposeTypeId"]
             });
-            if (!hasError(resp) && resp.data.count > 0) {
+            if (!commonUtil.hasError(resp) && resp.data.count > 0) {
               dataList = [...dataList, ...resp.data.docs];
             }
             const facilityPartyData = dataList.reduce((partyData: any, doc: any) => {
@@ -529,7 +529,7 @@ export const useFacilityStore = defineStore("facility", {
           ...payload
         };
         const resp = await FacilityService.fetchFacilities(params);
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           if (payload.viewIndex && payload.viewIndex > 0) {
             facilities = facilities.concat(resp.data.docs);
           } else {
@@ -592,7 +592,7 @@ export const useFacilityStore = defineStore("facility", {
           filterByDate: "Y",
           viewSize: 1
         });
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           facility = resp.data.docs[0];
         } else {
           throw resp.data;
@@ -646,7 +646,7 @@ export const useFacilityStore = defineStore("facility", {
           ...payload
         };
         const resp = await FacilityService.fetchFacilityGroups(params);
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           if (payload.viewIndex && payload.viewIndex > 0) {
             groups = groups.concat(resp.data.docs);
           } else {

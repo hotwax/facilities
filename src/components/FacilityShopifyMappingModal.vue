@@ -70,11 +70,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from '@/services/FacilityService'
 import { UtilService } from '@/services/UtilService'
-import { showToast } from "@/utils";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -100,7 +99,7 @@ function closeModal() {
 
 async function saveMapping() {
   if (!shopId.value.trim() || !shopifyLocationId.value) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
@@ -113,15 +112,15 @@ async function saveMapping() {
       "shopifyLocationId": shopifyLocationId.value
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Shopify mapping created successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Shopify mapping created successfully'));
       facilityStore.fetchShopifyFacilityMappings({ facilityId: currentFacility.value.facilityId });
       closeModal();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to create shopify mapping'));
+    commonUtil.showToast(translate('Failed to create shopify mapping'));
     logger.error('Failed to create shopify mapping', err);
   }
 
@@ -130,7 +129,7 @@ async function saveMapping() {
 
 async function updateMapping() {
   if (!shopifyLocationId.value) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
@@ -143,15 +142,15 @@ async function updateMapping() {
       "shopifyLocationId": shopifyLocationId.value
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Shopify mapping updated successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Shopify mapping updated successfully'));
       facilityStore.fetchShopifyFacilityMappings({ facilityId: currentFacility.value.facilityId });
       closeModal();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update shopify mapping'));
+    commonUtil.showToast(translate('Failed to update shopify mapping'));
     logger.error('Failed to update shopify mapping', err);
   }
 
@@ -167,13 +166,13 @@ async function fetchShopifyShops() {
       viewSize: 100
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       shopifyShops.value = resp.data.docs;
     } else {
       throw resp.data;
     }
   } catch (error) {
-    showToast(translate('Failed to fetch shopify shops.'));
+    commonUtil.showToast(translate('Failed to fetch shopify shops.'));
     logger.error('Failed to fetch shopify shops.', error);
   }
 }

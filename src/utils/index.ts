@@ -1,47 +1,17 @@
-import { translate } from '@hotwax/dxp-components';
-import { Plugins } from '@capacitor/core';
-import { toastController } from '@ionic/vue';
+import { commonUtil, translate } from "@common";
+import { Clipboard } from '@capacitor/clipboard';
 import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from 'luxon';
-import { hasError } from "@/adapter";
-import store from '@/store'
 import logger from "@/logger";
+import { useFacilityStore } from "@/store/facility";
 
 // TODO Use separate files for specific utilities
-
-const showToast = async (message: string, options?: any) => {  
-  const config = {
-    message,
-    ...options
-  } as any;
-
-  if (!options?.position) {
-    config.position = 'bottom';
-  }
-  if (options?.canDismiss) {
-    config.buttons = [
-      {
-        text: translate('Dismiss'),
-        role: 'cancel',
-      },
-    ]
-  }
-  if (!options?.manualDismiss) {
-    config.duration = 3000;
-  }
-
-  const toast = await toastController.create(config)
-  // present toast if manual dismiss is not needed
-  return !options?.manualDismiss ? toast.present() : toast
-}
-
 const copyToClipboard = async (value: string, text?: string) => {
-  const { Clipboard } = Plugins;
 
   await Clipboard.write({
     string: value,
   }).then(() => {
-    text ? showToast(translate(text)) : showToast(translate("Copied", { value }));
+    text ? commonUtil.showToast(translate(text)) : commonUtil.showToast(translate("Copied", { value }));
   });
 }
 
@@ -89,12 +59,13 @@ const updateFacilityGroup = async (currentFacility: any, facilityGroup: any, isC
       })
       successMessage = translate('no longer sells on', { "facilityName": currentFacility.facilityName, "facilityGroupId": facilityGroup.facilityGroupName })
     }
-    if(!hasError(resp)) {
-      showToast(successMessage);
+    if(!commonUtil.hasError(resp)) {
+      commonUtil.showToast(successMessage);
       const updatedGroupInformation = await FacilityService.fetchFacilityGroupInformation([currentFacility.facilityId])
       currentFacility.groupInformation = Object.values(updatedGroupInformation)[0];
+      const facilityStore = useFacilityStore();
       // Update the facility list to reflect the change in sell online status
-      const facilitiesList = JSON.parse(JSON.stringify(store.getters["facility/getFacilities"]));
+      const facilitiesList = JSON.parse(JSON.stringify(facilityStore.getFacilities));
       const updatedFacilities = facilitiesList.map((facility: any) => {
         if(facility.facilityId === currentFacility.facilityId) {
           facility.sellOnline = currentFacility.groupInformation.some((facilityGroup: any) => facilityGroup.facilityGroupTypeId === 'CHANNEL_FAC_GROUP');
@@ -102,14 +73,14 @@ const updateFacilityGroup = async (currentFacility: any, facilityGroup: any, isC
         }
         return facility;
       });
-      store.dispatch('facility/updateFacilities', updatedFacilities);
+      facilityStore.updateFacilities(updatedFacilities);
     } else {
       throw resp.data
     }
   } catch (err) {
-    showToast('Failed to update sell inventory online setting');
+    commonUtil.showToast('Failed to update sell inventory online setting');
     logger.error('Failed to update sell inventory online setting', err);
   }
 }
 
-export { copyToClipboard, customSort, generateInternalId, isValidEmail, isValidPassword, showToast, updateFacilityGroup }
+export { copyToClipboard, customSort, generateInternalId, isValidEmail, isValidPassword, updateFacilityGroup }

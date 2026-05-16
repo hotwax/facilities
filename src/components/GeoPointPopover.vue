@@ -18,10 +18,9 @@ import {
   IonList,
   popoverController
 } from "@ionic/vue";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import { UtilService } from '@/services/UtilService';
 import emitter from "@/event-bus";
@@ -50,7 +49,7 @@ async function regenerateLatitudeAndLongitude() {
       }
     });
 
-    if (!hasError(resp) && resp.data.response.docs.length > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.response.docs.length > 0) {
       generatedLatLong = resp.data.response.docs[0];
 
       if (generatedLatLong.latitude && generatedLatLong.longitude) {
@@ -61,8 +60,8 @@ async function regenerateLatitudeAndLongitude() {
           longitude: generatedLatLong.longitude
         });
 
-        if (!hasError(resp)) {
-          showToast(translate("Successfully regenerated latitude and longitude for the facility."));
+        if (!commonUtil.hasError(resp)) {
+          commonUtil.showToast(translate("Successfully regenerated latitude and longitude for the facility."));
           await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
         } else {
           throw resp.data;
@@ -72,7 +71,7 @@ async function regenerateLatitudeAndLongitude() {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to regenerate latitude and longitude for the facility."));
+    commonUtil.showToast(translate("Failed to regenerate latitude and longitude for the facility."));
     logger.error(err);
   }
 
@@ -91,14 +90,14 @@ async function removeLatitudeAndLongitude() {
       longitude: ''
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Facility latitude and longitude removed successfully."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Facility latitude and longitude removed successfully."));
       await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to remove facility latitude and longitude."));
+    commonUtil.showToast(translate("Failed to remove facility latitude and longitude."));
     logger.error(err);
   }
 

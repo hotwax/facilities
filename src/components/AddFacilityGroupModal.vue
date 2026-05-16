@@ -55,12 +55,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
-import { hasError } from "@hotwax/oms-api";
+import { commonUtil, translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import emitter from "@/event-bus";
-import { showToast } from "@/utils";
 import { DateTime } from "luxon";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -107,7 +105,7 @@ function updateGroupsForFacility(facilityGroupId: string) {
 
 async function updateGroups() {
   if (!groupsToAdd.value.length && !groupsToRemove.value.length) {
-    showToast(translate('Please select/de-select groups to link/unlink from facility'));
+    commonUtil.showToast(translate('Please select/de-select groups to link/unlink from facility'));
     return;
   }
 
@@ -132,9 +130,9 @@ async function updateGroups() {
   }
 
   if (isFacilityGroupRespHasError) {
-    showToast(translate('Failed to update some groups for facility'));
+    commonUtil.showToast(translate('Failed to update some groups for facility'));
   } else {
-    showToast(translate('Updated groups for facility'));
+    commonUtil.showToast(translate('Updated groups for facility'));
   }
   emitter.emit("dismissLoader");
   closeModal(true);
@@ -147,7 +145,7 @@ async function addFacilityToGroup(facilityGroupId: string) {
       "facilityGroupId": facilityGroupId
     });
 
-    if (hasError(resp)) {
+    if (commonUtil.hasError(resp)) {
       throw resp.data;
     }
     return Promise.resolve(resp.data);
@@ -168,7 +166,7 @@ async function removeFacilityFromGroup(facilityGroupId: string) {
       "thruDate": DateTime.now().toMillis()
     });
 
-    if (hasError(resp)) {
+    if (commonUtil.hasError(resp)) {
       throw resp.data;
     }
     return Promise.resolve(resp.data);
@@ -193,7 +191,7 @@ async function fetchFacilityGroups() {
       };
       resp = await FacilityService.fetchFacilityGroups(params);
 
-      if (!hasError(resp) && resp.data?.docs?.length > 0) {
+      if (!commonUtil.hasError(resp) && resp.data?.docs?.length > 0) {
         const newFacilityGroups = resp.data.docs.reduce((groupsByType: any, group: any) => {
           const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
 

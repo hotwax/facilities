@@ -61,8 +61,8 @@ import {
   lockClosedOutline,
   mailOutline
 } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
-import { isValidEmail, isValidPassword, showToast } from "@/utils";
+import { translate, commonUtil } from "@common"
+import { isValidEmail, isValidPassword } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService";
 import emitter from "@/event-bus";
@@ -83,10 +83,10 @@ function closeModal() {
 
 async function createFacilityLogin() {
   if (!username.value) {
-    showToast(translate('Username is required.'));
+    commonUtil.showToast(translate('Username is required.'));
     return;
   } else if (await UserService.isUserLoginIdExists(username.value)) {
-    showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
+    commonUtil.showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
     return;
   }
   try {
@@ -100,10 +100,10 @@ async function createFacilityLogin() {
 
     emitter.emit('presentLoader');
     await FacilityService.createFacilityLogin(payload);
-    showToast(translate('Facility login created.'));
+    commonUtil.showToast(translate('Facility login created.'));
     await facilityStore.fetchFacilityLogins({ facilityId: props.currentFacility?.facilityId });
   } catch (error) {
-    showToast(translate('Failed to create facility login.'));
+    commonUtil.showToast(translate('Failed to create facility login.'));
   }
   closeModal();
   emitter.emit('dismissLoader');

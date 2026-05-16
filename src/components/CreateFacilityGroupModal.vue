@@ -62,10 +62,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
-import { generateInternalId, showToast } from "@/utils";
+import { commonUtil } from "@common";
+import { generateInternalId } from "@/utils";
 import logger from "@/logger";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -104,12 +104,12 @@ function closeModal() {
 
 async function createFacilityGroup() {
   if (!formData.value.facilityGroupName?.trim()) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
   if (formData.value.facilityGroupId.length > 20) {
-    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    commonUtil.showToast(translate('Internal ID cannot be more than 20 characters.'));
     return;
   }
 
@@ -125,8 +125,8 @@ async function createFacilityGroup() {
     };
 
     const resp = await FacilityService.createFacilityGroup(payload);
-    if (!hasError(resp)) {
-      showToast(translate("Facility group created."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Facility group created."));
       const createdGroup = {
         ...formData.value,
         facilityGroupId: resp.data.facilityGroupId,
@@ -140,7 +140,7 @@ async function createFacilityGroup() {
     }
   } catch (error) {
     logger.error(error);
-    showToast(translate('Failed to create facility group.'));
+    commonUtil.showToast(translate('Failed to create facility group.'));
   }
   modalController.dismiss();
 }

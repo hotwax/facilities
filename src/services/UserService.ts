@@ -1,5 +1,4 @@
-import { api, client, hasError } from '@/adapter';
-import store from '@/store';
+import { api, client, commonUtil } from '@common';
 
 const login = async (username: string, password: string): Promise <any> => {
   return api({
@@ -8,12 +7,13 @@ const login = async (username: string, password: string): Promise <any> => {
     data: {
       'USERNAME': username, 
       'PASSWORD': password
-    }
+    },
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
 const getUserPermissions = async (payload: any, token: any): Promise<any> => {
-  const baseURL = store.getters['user/getBaseUrl'];
+  const baseURL = commonUtil.getOmsURL();
   let serverPermissions = [] as any;
 
   // If the server specific permission list doesn't exist, getting server permissions will be of no use
@@ -42,7 +42,7 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
         'Content-Type': 'application/json'
       }
     })
-    if (resp.status === 200 && resp.data.docs?.length && !hasError(resp)) {
+    if (resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
       serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
       const total = resp.data.count;
       const remainingPermissions = total - serverPermissions.length;
@@ -64,7 +64,7 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
               'Content-Type': 'application/json'
             }
           })
-          if (!hasError(response)) {
+          if (!commonUtil.hasError(response)) {
             return Promise.resolve(response);
           } else {
             return Promise.reject(response);
@@ -75,7 +75,7 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
           failed: []
         }
         responses.reduce((permissionResponses: any, permissionResponse: any) => {
-          if (permissionResponse.status !== 200 || hasError(permissionResponse) || !permissionResponse.data?.docs) {
+          if (permissionResponse.status !== 200 || commonUtil.hasError(permissionResponse) || !permissionResponse.data?.docs) {
             permissionResponses.failed.push(permissionResponse);
           } else {
             permissionResponses.success.push(permissionResponse);
@@ -102,18 +102,12 @@ const getUserPermissions = async (payload: any, token: any): Promise<any> => {
 }
 
 const getUserProfile = async (token: any): Promise<any> => {
-  const baseURL = store.getters['user/getBaseUrl'];
   try {
     const resp = await client({
-      url: "user-profile",
-      method: "get",
-      baseURL,
-      headers: {
-        Authorization:  'Bearer ' + token,
-        'Content-Type': 'application/json'
-      }
+      url: "admin/user/profile",
+      method: "GET"
     });
-    if(hasError(resp)) return Promise.reject("Error getting user profile: " + JSON.stringify(resp.data));
+    if(commonUtil.hasError(resp)) return Promise.reject("Error getting user profile: " + JSON.stringify(resp.data));
     return Promise.resolve(resp.data)
   } catch(error: any) {
     return Promise.reject(error)
@@ -124,7 +118,8 @@ const createRelationship = async (payload: any): Promise <any> => {
   return api({
     url: "service/createRelationship", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -132,7 +127,8 @@ const createNewUserLogin = async (payload: any): Promise <any> => {
   return api({
     url: "service/createNewUserLoginAndSetUserPreference", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -140,7 +136,8 @@ const addUserToSecurityGroup = async (payload: any): Promise <any> => {
   return api({
     url: "service/addSecurityGroupToUserLogin", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -158,10 +155,11 @@ const isUserLoginIdExists = async(username: string): Promise<any> => {
         fieldList: ['userLoginId', 'partyId'],
         distinct: 'Y',
         noConditionFind: 'Y'
-      }
+      },
+      baseURL: commonUtil.getOmsURL()
     }) as any;
 
-    if (!hasError(resp) && resp.data.docs.length) {
+    if (!commonUtil.hasError(resp) && resp.data.docs.length) {
       return true
     }
     return false
@@ -174,7 +172,8 @@ const createRoleType = async (payload: any): Promise <any> => {
   return api({
     url: "service/createRoleType", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -192,9 +191,10 @@ const isRoleTypeExists = async(roleTypeId: string): Promise<any> => {
         viewSize: 1,
         fieldList: ['roleTypeId'],
         noConditionFind: 'Y'
-      }
+      },
+      baseURL: commonUtil.getOmsURL()
     }) as any
-    if (!hasError(resp) && resp.data.docs.length) {
+    if (!commonUtil.hasError(resp) && resp.data.docs.length) {
       return true
     }
     return false
@@ -207,7 +207,8 @@ const sendResetPasswordEmail = async (payload: any): Promise <any> => {
   return api({
     url: "sendResetPasswordMail", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -215,7 +216,8 @@ const updateUserLoginStatus = async (payload: any): Promise <any> => {
   return api({
     url: "service/updateUserLoginStatus", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -223,7 +225,8 @@ const createUpdatePartyEmailAddress = async (payload: any): Promise <any> => {
   return api({
     url: "service/createUpdatePartyEmailAddress", 
     method: "post",
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   });
 }
 
@@ -231,7 +234,8 @@ const fetchUserLoginAndPartyDetails = async (payload: any): Promise<any> => {
   return api({
     url: 'performFind',
     method: 'POST',
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   })
 }
 
@@ -239,7 +243,8 @@ const fetchUserContactDetails = async (payload: any): Promise<any> => {
   return api({
     url: 'performFind',
     method: 'POST',
-    data: payload
+    data: payload,
+    baseURL: commonUtil.getOmsURL()
   })
 }
 
@@ -261,9 +266,10 @@ const fetchLogoImageForParties = async (partyIds: any): Promise<any> => {
         fieldList: ['partyId', 'dataResourceId'],
         noConditionFind: 'Y',
         filterByDate: 'Y'
-      }
+      },
+      baseURL: commonUtil.getOmsURL()
     }) as any
-    if (!hasError(resp) && resp.data.count > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
       const partyContents = resp.data.docs;
       const dataResourceIds = partyContents.map((partyContent: any) => partyContent.dataResourceId);
       resp = await api({
@@ -278,9 +284,10 @@ const fetchLogoImageForParties = async (partyIds: any): Promise<any> => {
           viewSize: 1,
           fieldList: ['dataResourceId', 'objectInfo'],
           noConditionFind: 'Y'
-        }
+        },
+        baseURL: commonUtil.getOmsURL()
       })
-      if (!hasError(resp) && resp.data.count > 0) {
+      if (!commonUtil.hasError(resp) && resp.data.count > 0) {
         logoImages = [...partyContents, ...resp.data.docs].reduce((contentData: any, doc: any) => {
           const dataResourceId = doc.dataResourceId;
           contentData[dataResourceId] = { ...contentData[dataResourceId], ...doc };

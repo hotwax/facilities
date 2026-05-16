@@ -10,17 +10,14 @@
 import { IonApp, IonRouterOutlet, IonSplitPane, loadingController, onIonViewWillEnter } from '@ionic/vue';
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import emitter from "@/event-bus";
-import { initialise, resetConfig } from '@/adapter'
 import { Settings } from 'luxon'
-import { translate } from '@hotwax/dxp-components';
+import { translate } from "@common";
 import { useUserStore } from '@/store/user';
 
 const userStore = useUserStore();
 const loader = ref(null as any);
 const maxAge = import.meta.env.VITE_APP_CACHE_MAX_AGE ? parseInt(import.meta.env.VITE_APP_CACHE_MAX_AGE) : 0;
 
-const userToken = computed(() => userStore.getUserToken);
-const instanceUrl = computed(() => userStore.getInstanceUrl);
 const userProfile = computed(() => userStore.getUserProfile);
 
 async function presentLoader(options = { message: '', backdropDismiss: false }) {
@@ -45,28 +42,6 @@ function dismissLoader() {
   }
 }
 
-async function unauthorised() {
-  // Mark the user as unauthorised, this will help in not making the logout api call in actions
-  await userStore.logout({ isUserUnauthorised: true });
-  const redirectUrl = window.location.origin + '/login';
-  window.location.href = `${import.meta.env.VITE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`;
-}
-
-initialise({
-  token: userToken.value,
-  instanceUrl: instanceUrl.value,
-  cacheMaxAge: maxAge,
-  events: {
-    unauthorised,
-    responseError: () => {
-      setTimeout(() => dismissLoader(), 100);
-    },
-    queueTask: (payload: any) => {
-      emitter.emit("queueTask", payload);
-    }
-  }
-})
-
 onMounted(async () => {
   emitter.on('presentLoader', presentLoader);
   emitter.on('dismissLoader', dismissLoader);
@@ -81,7 +56,6 @@ onMounted(async () => {
 onUnmounted(() => {
   emitter.off('presentLoader', presentLoader);
   emitter.off('dismissLoader', dismissLoader);
-  resetConfig()
 });
 </script>
 

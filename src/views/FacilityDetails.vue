@@ -598,7 +598,7 @@ import {
   unlinkOutline
 } from 'ionicons/icons'
 import { ref, computed } from 'vue';
-import { translate } from '@hotwax/dxp-components';
+import { commonUtil, translate } from "@common";
 import FacilityMappingPopover from '@/components/FacilityMappingPopover.vue'
 import LocationDetailsPopover from '@/components/LocationDetailsPopover.vue';
 import FacilityAddressModal from '@/components/FacilityAddressModal.vue'
@@ -613,12 +613,11 @@ import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
 import CustomScheduleModal from '@/components/CustomScheduleModal.vue';
 import { DateTime } from 'luxon';
 import { FacilityService } from '@/services/FacilityService';
-import { hasError } from '@/adapter';
 import logger from '@/logger';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityExternalIdModal from '@/components/FacilityExternalIdModal.vue'
 import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
-import { showToast, copyToClipboard } from '@/utils';
+import { copyToClipboard } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
 import { UtilService } from '@/services/UtilService';
@@ -748,7 +747,7 @@ async function editMapUrl() {
           }
 
           if (!isValidUrl) {
-            showToast(translate("Please enter a valid URL"));
+            commonUtil.showToast(translate("Please enter a valid URL"));
             return false;
           }
 
@@ -777,15 +776,15 @@ async function editMapUrl() {
               });
             }
 
-            if (!hasError(resp)) {
-              showToast(translate("Map URL updated successfully"));
+            if (!commonUtil.hasError(resp)) {
+              commonUtil.showToast(translate("Map URL updated successfully"));
               await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
             } else {
               throw resp.data;
             }
           } catch (err) {
             logger.error("Failed to update Map URL", err);
-            showToast(translate("Failed to update Map URL"));
+            commonUtil.showToast(translate("Failed to update Map URL"));
           }
         }
       }
@@ -802,15 +801,15 @@ async function deleteMapUrl() {
       contactMechId: contactDetails.value?.googleMapUrl?.contactMechId
     };
     const resp = await FacilityService.deleteFacilityContactMech(payload);
-    if (!hasError(resp)) {
-      showToast(translate('Map URL removed successfully.'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Map URL removed successfully.'));
       await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
     logger.error('Failed to remove map url.', err);
-    showToast(translate('Failed to remove map url.'));
+    commonUtil.showToast(translate('Failed to remove map url.'));
   }
 }
 
@@ -865,14 +864,14 @@ async function associateCalendarToFacility() {
       facilityCalendarTypeId: 'OPERATING_HOURS'
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Successfully associated calendar to the facility."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Successfully associated calendar to the facility."));
       await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to associate calendar to the facility."));
+    commonUtil.showToast(translate("Failed to associate calendar to the facility."));
     logger.error(err);
   }
 
@@ -953,9 +952,9 @@ async function selectProductStores() {
       const responses = await Promise.allSettled([...updatePromises, ...createPromises]);
       const hasFailed = responses.some((response: any) => response.status === 'rejected');
       if (hasFailed) {
-        showToast(translate("Failed to update some product stores"));
+        commonUtil.showToast(translate("Failed to update some product stores"));
       } else {
-        showToast(translate("Product stores updated successfully."));
+        commonUtil.showToast(translate("Product stores updated successfully."));
       }
 
       await facilityStore.getFacilityProductStores({ facilityId: props.facilityId });
@@ -1048,14 +1047,14 @@ async function removePartyFromFacility(party: any) {
       roleTypeId: party.roleTypeId
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Party was removed from facility.", {"partyName": party.fullName, "facilityName": current.value.facilityName}));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Party was removed from facility.", {"partyName": party.fullName, "facilityName": current.value.facilityName}));
       await facilityStore.getFacilityParties({ facilityId: props.facilityId });
     } else {
       throw resp;
     }
   } catch (err) {
-    showToast(translate("Failed to remove party from facility."));
+    commonUtil.showToast(translate("Failed to remove party from facility."));
     logger.error(err);
   }
 
@@ -1087,13 +1086,13 @@ async function updateFacility(maximumOrderLimit: number | string, facility: any)
       maximumOrderLimit: maximumOrderLimit === "" ? null : maximumOrderLimit
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }));
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }));
+    commonUtil.showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }));
     logger.error('Failed to update facility', err);
   }
 }
@@ -1111,14 +1110,14 @@ async function closeFacility(event: any) {
       "closedDate": closedDate
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Facility has been marked as ', { status: isChecked ? 'closed' : 'open' }));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Facility has been marked as ', { status: isChecked ? 'closed' : 'open' }));
       await facilityStore.updateCurrentFacility({ ...current.value, closedDate });
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update facility.'));
+    commonUtil.showToast(translate('Failed to update facility.'));
     logger.error('Failed to update facility.', err);
   }
   emitter.emit("dismissLoader");
@@ -1153,14 +1152,14 @@ async function updateFulfillmentSetting(event: any, facilityGroupId: string) {
         "thruDate": DateTime.now().toMillis()
       });
     }
-    if (!hasError(resp)) {
-      showToast(translate('Fulfillment setting updated successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Fulfillment setting updated successfully'));
       await facilityStore.fetchFacilityAdditionalInformation();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update fulfillment setting'));
+    commonUtil.showToast(translate('Failed to update fulfillment setting'));
     logger.error('Failed to update fulfillment setting', err);
   }
   emitter.emit("dismissLoader");
@@ -1190,14 +1189,14 @@ async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) 
       });
       successMessage = translate('no longer sells on', { "facilityName": current.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
     }
-    if (!hasError(resp)) {
-      showToast(successMessage);
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(successMessage);
       await facilityStore.fetchFacilityAdditionalInformation();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update sell inventory online setting'));
+    commonUtil.showToast(translate('Failed to update sell inventory online setting'));
     logger.error('Failed to update sell inventory online setting', err);
   }
   emitter.emit("dismissLoader");
@@ -1215,14 +1214,14 @@ async function removeFacilityFromGroup(facilityGroupId: string) {
       "thruDate": DateTime.now().toMillis()
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('Group unlinked from facility'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Group unlinked from facility'));
       await facilityStore.fetchFacilityAdditionalInformation();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to unlink group'));
+    commonUtil.showToast(translate('Failed to unlink group'));
     logger.error('Failed to unlink group', err);
   }
   emitter.emit("dismissLoader");
@@ -1236,14 +1235,14 @@ async function updateDefaultDaysToShip() {
       defaultDaysToShip: defaultDaysToShip.value
     };
     const resp = await FacilityService.updateFacility(payload);
-    if (!hasError(resp)) {
-      showToast(translate('Updated default days to ship'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Updated default days to ship'));
     } else {
       throw resp.data;
     }
   } catch (err) {
     logger.error('Failed to update default days to ship', err);
-    showToast(translate('Failed to update default days to ship'));
+    commonUtil.showToast(translate('Failed to update default days to ship'));
   }
   emitter.emit('dismissLoader');
 }
@@ -1258,15 +1257,15 @@ async function removeFacilityMapping(mapping: any) {
       thruDate: DateTime.now().toMillis()
     };
     const resp = await FacilityService.updateFacilityIdentification(payload);
-    if (!hasError(resp)) {
-      showToast(translate('Removed facility mapping successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Removed facility mapping successfully'));
       await facilityStore.fetchFacilityMappings({ facilityId: props.facilityId, facilityIdenTypeIds: Object.keys(externalMappingTypes.value) });
     } else {
       throw resp.data;
     }
   } catch (err) {
     logger.error('Failed to remove facility mapping', err);
-    showToast(translate('Failed to remove facility mapping'));
+    commonUtil.showToast(translate('Failed to remove facility mapping'));
   }
   emitter.emit('dismissLoader');
 }
@@ -1279,15 +1278,15 @@ async function removeFacilityExternalID() {
       externalId: ''
     };
     const resp = await FacilityService.updateFacility(payload);
-    if (!hasError(resp)) {
-      showToast(translate('Removed facility external ID'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Removed facility external ID'));
       await facilityStore.updateCurrentFacility({ ...current.value, externalId: '' });
     } else {
       throw resp.data;
     }
   } catch (err) {
     logger.error('Failed to remove external id', err);
-    showToast(translate('Failed to remove external id'));
+    commonUtil.showToast(translate('Failed to remove external id'));
   }
   emitter.emit('dismissLoader');
 }
@@ -1300,15 +1299,15 @@ async function removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
       shopifyLocationId: shopifyFacilityMapping.shopifyLocationId,
     };
     const resp = await FacilityService.deleteShopifyShopLocation(payload);
-    if (!hasError(resp)) {
-      showToast(translate('Removed shopify mapping successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Removed shopify mapping successfully'));
       await facilityStore.fetchShopifyFacilityMappings({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
     logger.error('Failed to remove shopify mapping', err);
-    showToast(translate('Failed to remove shopify mapping'));
+    commonUtil.showToast(translate('Failed to remove shopify mapping'));
   }
 }
 
@@ -1369,7 +1368,7 @@ async function fetchPostalCodeByGeoPoints() {
 
   try {
     const resp = await UtilService.generateLatLong(payload);
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const pCode = postalAddress.value.postalCode;
       const fetchedPostcode = resp.data.response.docs[0].postcode;
       isRegenerationRequired.value = !(pCode.startsWith('0') ? pCode.substring(1) === fetchedPostcode || pCode === fetchedPostcode : pCode === fetchedPostcode);
@@ -1404,14 +1403,14 @@ async function renameFacility() {
               facilityName: data.facilityName
             });
 
-            if (!hasError(resp)) {
-              showToast(translate("Facility renamed successfully."));
+            if (!commonUtil.hasError(resp)) {
+              commonUtil.showToast(translate("Facility renamed successfully."));
               await facilityStore.updateCurrentFacility({ ...current.value, facilityName: data.facilityName });
             } else {
               throw resp.data;
             }
           } catch (error) {
-            showToast(translate('Failed to rename facility.'));
+            commonUtil.showToast(translate('Failed to rename facility.'));
             logger.error('Failed to rename facility.', error);
           }
 
@@ -1446,8 +1445,8 @@ async function updateFacilityType() {
       facilityTypeId: facilityTypeId.value
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Facility type updated"));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Facility type updated"));
       await facilityStore.updateCurrentFacility({ ...current.value, facilityTypeId: facilityTypeId.value, parentFacilityTypeId: parentFacilityTypeId.value });
     } else {
       throw resp.data;
@@ -1455,7 +1454,7 @@ async function updateFacilityType() {
   } catch (error) {
     parentFacilityTypeId.value = current.value.parentFacilityTypeId;
     facilityTypeId.value = current.value.facilityTypeId;
-    showToast(translate('Failed to update facility type.'));
+    commonUtil.showToast(translate('Failed to update facility type.'));
     logger.error('Failed to update facility type.', error);
   }
 }

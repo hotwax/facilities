@@ -44,7 +44,7 @@ import {
   menuController
 } from '@ionic/vue'
 import { businessOutline, globeOutline } from 'ionicons/icons'
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
 import { computed } from 'vue';

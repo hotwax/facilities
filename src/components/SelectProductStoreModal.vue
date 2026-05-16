@@ -47,7 +47,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { useUtilStore } from "@/store/util";
 import { ref, computed } from "vue";
 

@@ -1,131 +1,324 @@
 import { defineStore } from "pinia";
 import { UserService } from "@/services/UserService";
-import { showToast } from "@/utils";
-import { Settings } from "luxon";
-import { logout, updateInstanceUrl, updateToken, resetConfig } from "@/adapter";
+import { DateTime, Settings } from "luxon";
+import { api, client, translate, commonUtil, useAuth } from "@common";
 import logger from "@/logger";
-import { getServerPermissionsFromRules, prepareAppPermissions, resetPermissions, setPermissions } from "@/authorization";
-import { translate, useAuthStore, useUserStore as useDxpUserStore } from "@hotwax/dxp-components";
-import emitter from "@/event-bus";
 import router from "@/router";
 import { useUtilStore } from "./util";
 import { useFacilityStore } from "./facility";
 
+interface UserState {
+  permissions: string[];
+  current: any;
+  oms: string;
+  locale: string;
+  localeOptions: any;
+  currentTimeZoneId: string;
+  timeZones: any[];
+  facilities: any[];
+  currentFacility: any;
+  pwaState: {
+    updateExists: boolean;
+    registration: any;
+  };
+}
+
 export const useUserStore = defineStore("user", {
-  state: () => ({
-    token: "",
+  state: (): UserState => ({
     permissions: [],
-    current: {} as any,
-    instanceUrl: "",
+    current: {},
+    oms: "",
+    locale: "en-US",
+    localeOptions: import.meta.env.VITE_APP_LOCALES ? JSON.parse(import.meta.env.VITE_APP_LOCALES) : { "en-US": "English" },
+    currentTimeZoneId: "",
+    timeZones: [],
+    facilities: [],
+    currentFacility: {} as any,
     pwaState: {
       updateExists: false,
       registration: null as any,
     }
   }),
   getters: {
-    isAuthenticated: (state) => !!state.token,
     getUserPermissions: (state) => state.permissions,
     getUserProfile: (state) => state.current,
-    getInstanceUrl: (state) => state.instanceUrl,
     getPwaState: (state) => state.pwaState,
+    getLocale: (state) => state.locale,
+    getLocaleOptions: (state) => state.localeOptions,
+    getTimeZones: (state) => state.timeZones,
+    getCurrentTimeZone: (state) => state.currentTimeZoneId,
+    getFacilities: (state) => state.facilities,
+    getCurrentFacility: (state) => state.currentFacility,
+    hasPermission: (state: UserState) => (permissionId: string): boolean => {
+      const permissions = state.permissions;
+
+      if (!permissionId) {
+        return true;
+      }
+
+      // Handle OR/AND logic in permission string
+      if (permissionId.includes(' OR ')) {
+        const parts = permissionId.split(' OR ');
+        return parts.some(part => useUserStore().hasPermission(part.trim()));
+      }
+
+      if (permissionId.includes(' AND ')) {
+        const parts = permissionId.split(' AND ');
+        return parts.every(part => useUserStore().hasPermission(part.trim()));
+      }
+
+      return permissions.includes(permissionId);
+    }
   },
   actions: {
     async login(payload: any) {
+      return await useAuth().login(payload.username, payload.password);
+    },
+    async logout(payload?: any) {
+      return await useAuth().logout(payload);
+    },
+    async fetchPermissions() {
       try {
-        const { token, oms } = payload;
-        this.setUserInstanceUrl(oms);
+        const token = commonUtil.getToken();
+        const serverPermissions = await UserService.getUserPermissions({}, token);
+        this.permissions = serverPermissions;
+      } catch (err) {
+        console.error("Error fetching permissions", err);
+        this.permissions = [];
+      }
+    },
+    async postLogin() {
+      try {
+        await this.fetchPermissions();
 
         const permissionId = import.meta.env.VITE_APP_PERMISSION_ID;
-        const serverPermissionsFromRules = getServerPermissionsFromRules();
-        if (permissionId) serverPermissionsFromRules.push(permissionId);
-
-        const serverPermissions = await UserService.getUserPermissions({
-          permissionIds: [...new Set(serverPermissionsFromRules)]
-        }, token);
-        const appPermissions = prepareAppPermissions(serverPermissions);
-
-        if (permissionId) {
-          const hasPermission = appPermissions.some((appPermission: any) => appPermission.action === permissionId);
-          if (!hasPermission) {
-            const permissionError = "You do not have permission to access the app.";
-            showToast(translate(permissionError));
-            logger.error("error", permissionError);
-            return Promise.reject(new Error(permissionError));
-          }
+        if (permissionId && !this.hasPermission(permissionId)) {
+          const permissionError = "You do not have permission to access the app.";
+          commonUtil.showToast(translate(permissionError));
+          logger.error("error", permissionError);
+          return Promise.reject(new Error(permissionError));
         }
 
-        const userProfile = await UserService.getUserProfile(token);
+      try {
+        const userProfile = await api({
+          url: "admin/user/profile",
+          method: "get",
+        }) as any;
+        this.current = userProfile.data
+        useAuth().updateUserId(this.current.userId)
 
-        setPermissions(appPermissions);
-        if (userProfile.userTimeZone) {
-          Settings.defaultZone = userProfile.userTimeZone;
+        if (this.current.timeZone) {
+          Settings.defaultZone = this.current.timeZone;
         }
-
-        this.current = userProfile;
-        this.permissions = appPermissions;
-        this.token = token;
-        updateToken(token);
+      } catch (error: any) {
+        commonUtil.showToast(translate("Failed to fetch user profile information"));
+        console.error("error", error);
+        useAuth().clearAuth();
+        return Promise.reject(new Error(error));
+      }
         
         const utilStore = useUtilStore();
         await utilStore.fetchOrganizationPartyId();
 
         const productStoreId = router.currentRoute.value?.query?.productStoreId;
         if (productStoreId) {
-          return `/tabs/find-facilities?productStoreId=${productStoreId}`;
+          router.push(`/tabs/find-facilities?productStoreId=${productStoreId}`);
         }
       } catch (err: any) {
-        showToast(translate("Something went wrong while login. Please contact administrator."));
+        commonUtil.showToast(translate("Something went wrong while login. Please contact administrator."));
         logger.error("error: ", err.toString());
         return Promise.reject(err instanceof Object ? err : new Error(err));
       }
     },
-    async logout(payload?: any) {
-      let redirectionUrl = "";
-      emitter.emit("presentLoader", { message: "Logging out" });
-
-      if (!payload?.isUserUnauthorised) {
-        let resp;
-        try {
-          resp = await logout();
-          resp = JSON.parse(resp.startsWith("//") ? resp.replace("//", "") : resp);
-        } catch (err) {
-          logger.error("Error parsing data", err);
-        }
-
-        if (resp?.logoutAuthType === "SAML2SSO") {
-          redirectionUrl = resp.logoutUrl;
-        }
-      }
-
-      const authStore = useAuthStore();
-      const dxpUserStore = useDxpUserStore();
+    async postLogout() {
       const utilStore = useUtilStore();
       const facilityStore = useFacilityStore();
 
       this.$reset();
-      resetConfig();
-      resetPermissions();
 
       utilStore.clearUtilState();
       facilityStore.clearFacilityState();
+    },
+    async setLocale(locale: string) {
+      let newLocale, matchingLocale
+      newLocale = this.locale
+      try {
+        if (locale) {
+          matchingLocale = Object.keys(this.localeOptions).find((option: string) => option === locale)
+          matchingLocale = matchingLocale || Object.keys(this.localeOptions).find((option: string) => option.slice(0, 2) === locale.slice(0, 2))
+          newLocale = matchingLocale || this.locale
+          
+          const resp: any = await api({
+            url: "setUserLocale",
+            method: "post",
+            data: { userId: this.current.userId, newLocale },
+            baseURL: commonUtil.getOmsURL()
+          })
 
-      authStore.$reset();
-      dxpUserStore.$reset();
-
-      if (redirectionUrl) {
-        window.location.href = redirectionUrl;
+          if (commonUtil.hasError(resp)) {
+            throw resp.data
+          }
+        }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        this.locale = newLocale
+      }
+    },
+    async setUserTimeZone(tzId: string) {
+      if (this.currentTimeZoneId === tzId) {
+        return;
       }
 
-      emitter.emit("dismissLoader");
-      return redirectionUrl;
+      try {
+        const resp: any = await api({
+          url: "setUserTimeZone",
+          method: "post",
+          data: { userId: this.current.userId, tzId },
+          baseURL: commonUtil.getOmsURL()
+        });
+
+        if (commonUtil.hasError(resp)) {
+          throw resp.data
+        }
+        this.currentTimeZoneId = tzId
+        this.current.userTimeZone = tzId;
+        Settings.defaultZone = tzId;
+
+        commonUtil.showToast(translate("Time zone updated successfully"));
+        return Promise.resolve(tzId)
+      } catch (err) {
+        console.error('Error', err)
+        return Promise.reject('')
+      }
     },
-    async setUserTimeZone(timeZoneId: string) {
-      this.current.userTimeZone = timeZoneId;
-      Settings.defaultZone = timeZoneId;
+    async getAvailableTimeZones() {
+      if (this.timeZones.length) {
+        return;
+      }
+
+      try {
+        const resp: any = await api({
+          url: "getAvailableTimeZones",
+          method: "get",
+          cache: true,
+          baseURL: commonUtil.getOmsURL()
+        });
+
+        if (commonUtil.hasError(resp)) {
+          throw resp.data
+        }
+
+        this.timeZones = resp.data.filter((timeZone: any) => DateTime.local().setZone(timeZone.id).isValid);
+      } catch (err) {
+        console.error('Error', err)
+      }
     },
-    setUserInstanceUrl(payload: any) {
-      this.instanceUrl = payload;
-      updateInstanceUrl(payload);
+    async getUserFacilities(partyId: any, facilityGroupId: any, isAdminUser: boolean, payload = {}) {
+      try {
+        const params = {
+          "inputFields": {} as any,
+          "filterByDate": "Y",
+          "viewSize": 200,
+          "distinct": "Y",
+          "noConditionFind" : "Y",
+          ...payload
+        } as any
+        
+        if (facilityGroupId) {
+          params.entityName = "FacilityGroupAndParty";
+          params.fieldList = ["facilityId", "facilityName", "sequenceNum", "facilityTypeId"];
+          params.fromDateName = "FGMFromDate";
+          params.thruDateName = "FGMThruDate";
+          params.orderBy = "sequenceNum ASC | facilityName ASC";
+          params.inputFields["facilityGroupId"] = facilityGroupId;
+        } else {
+          params.entityName = "FacilityAndParty";
+          params.fieldList = ["facilityId", "facilityName", "facilityTypeId"];
+          params.inputFields["facilityParentTypeId"] = "VIRTUAL_FACILITY";
+          params.inputFields["facilityParentTypeId_op"] = "notEqual";
+          params.orderBy = "facilityName ASC";
+        }
+        if (!isAdminUser) {
+          params.inputFields["partyId"] = partyId;
+        }
+
+        const resp = await client({
+          url: "performFind",
+          method: "get",
+          baseURL: commonUtil.getOmsURL(),
+          params,
+          headers: {
+            Authorization:  'Bearer ' + commonUtil.getToken(),
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (resp.status === 200 && !commonUtil.hasError(resp)) {
+          this.facilities = resp.data.docs;
+        } else {
+          throw resp.data
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      return this.facilities
+    },
+    async getFacilityPreference(userPrefTypeId: any, userId = "") {
+      if (!this.facilities.length) {
+        return;
+      }
+      let preferredFacility = this.facilities[0];
+
+      try {
+        const resp = await client({
+          url: "service/getUserPreference",
+          method: "post",
+          data: { userPrefTypeId },
+          baseURL: commonUtil.getOmsURL(),
+          headers: {
+            Authorization: 'Bearer ' + commonUtil.getToken(),
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (commonUtil.hasError(resp)) {
+          throw resp.data
+        }
+
+        const preferredFacilityId = commonUtil.jsonParse(resp.data.userPrefValue);
+        if (preferredFacilityId) {
+          const facility = this.facilities.find((facility: any) => facility.facilityId == preferredFacilityId);
+          facility && (preferredFacility = facility)
+        }
+      } catch (error) {
+        console.error(error);
+      }
+      this.currentFacility = preferredFacility;
+    },
+    async setFacilityPreference(payload: any) {
+      try {
+        const resp: any = await api({
+          url: "service/setUserPreference",
+          method: "post",
+          data: {
+            userPrefTypeId: 'SELECTED_FACILITY',
+            userPrefValue: payload.facilityId,
+            userId: this.current.userId
+          },
+          baseURL: commonUtil.getOmsURL()
+        });
+
+        if (commonUtil.hasError(resp)) {
+          throw resp.data
+        }
+      } catch (error) {
+        console.error('error', error)
+      }
+      this.currentFacility = payload;
+    },
+    updateTimeZone(tzId: string) {
+      this.currentTimeZoneId = tzId
     },
     updatePwaState(payload: any) {
       this.pwaState = payload;

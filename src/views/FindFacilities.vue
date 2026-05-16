@@ -158,23 +158,21 @@ import {
   shareOutline,
   storefrontOutline
 } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
 import { computed, onMounted, ref } from 'vue';
-import { translate } from '@hotwax/dxp-components'
+import { commonUtil, translate } from "@common"
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
-import { hasError } from '@/adapter';
 import { FacilityService } from '@/services/FacilityService'
-import { showToast, updateFacilityGroup } from '@/utils';
+import { updateFacilityGroup } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
 import SellOnlineGroupPopover from '@/components/SellOnlineGroupPopover.vue'
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
 import { onIonViewWillEnter } from '@ionic/vue';
+import router from '@/router';
 
 const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
-const router = useRouter();
 
 const facilityGroups = ref([] as any);
 
@@ -258,7 +256,7 @@ async function updateFacility(maximumOrderLimit: number | string, facility: any)
       maximumOrderLimit
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const updatedFacilities = JSON.parse(JSON.stringify(facilities.value)).map((facilityData: any) => {
         if (facility.facilityId === facilityData.facilityId) {
           facilityData.maximumOrderLimit = maximumOrderLimit === "" ? null : maximumOrderLimit;
@@ -267,12 +265,12 @@ async function updateFacility(maximumOrderLimit: number | string, facility: any)
         return facilityData;
       });
       facilityStore.updateFacilities(updatedFacilities);
-      showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }));
+      commonUtil.showToast(translate('Fulfillment capacity updated successfully for ', { facilityName: facility.facilityName }));
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }));
+    commonUtil.showToast(translate('Failed to update fulfillment capacity for ', { facilityName: facility.facilityName }));
     logger.error('Failed to update facility', err);
   }
 }
@@ -288,7 +286,7 @@ async function fetchFacilityGroups() {
 
   try {
     const resp = await FacilityService.fetchFacilityGroups(params);
-    if (!hasError(resp) && resp.data?.docs?.length > 0) {
+    if (!commonUtil.hasError(resp) && resp.data?.docs?.length > 0) {
       facilityGroups.value = resp.data.docs;
     } else {
       throw resp.data;

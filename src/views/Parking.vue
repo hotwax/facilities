@@ -88,15 +88,14 @@ import {
   onIonViewWillEnter
 } from '@ionic/vue'
 import { addOutline, archiveOutline, ellipsisVerticalOutline } from 'ionicons/icons'
-import { translate } from '@hotwax/dxp-components';
+import { commonUtil, translate } from "@common";
 import { computed } from 'vue';
 import { DateTime } from 'luxon';
 import CreateVirtualFacilityModal from '@/components/CreateVirtualFacilityModal.vue';
 import VirtualFacilityActionsPopover from '@/components/VirtualFacilityActionsPopover.vue';
 import ArchivedFacilityModal from '@/components/ArchivedFacilityModal.vue';
 import { FacilityService } from '@/services/FacilityService';
-import { hasError } from '@/adapter';
-import { customSort, showToast } from '@/utils';
+import { customSort } from '@/utils';
 import logger from "@/logger";
 import { useFacilityStore } from '@/store/facility';
 
@@ -139,7 +138,7 @@ async function openVirtualFacilityActionsPopover(event: Event, facility: any) {
         facilityName: result.data
       });
 
-      if (!hasError(resp)) {
+      if (!commonUtil.hasError(resp)) {
         const updatedVirtualFacilities = JSON.parse(JSON.stringify(virtualFacilities.value))
           .map((facilityData: any) => {
             if (facility.facilityId === facilityData.facilityId) {
@@ -148,12 +147,12 @@ async function openVirtualFacilityActionsPopover(event: Event, facility: any) {
             return facilityData;
           });
         facilityStore.updateVirtualFacilities(updatedVirtualFacilities);
-        showToast(translate('Parking renamed successfully.'));
+        commonUtil.showToast(translate('Parking renamed successfully.'));
       } else {
         throw resp.data;
       }
     } catch (error) {
-      showToast(translate('Failed to rename parking.'));
+      commonUtil.showToast(translate('Failed to rename parking.'));
       logger.error('Failed to rename parking.', error);
     }
   }

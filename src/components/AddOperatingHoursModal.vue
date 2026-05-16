@@ -65,12 +65,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { commonUtil, translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
-import { hasError } from "@/adapter";
 import logger from "@/logger";
-import { showToast } from "@/utils";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -113,14 +111,14 @@ async function addOperatingHours() {
       facilityCalendarTypeId: 'OPERATING_HOURS'
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Successfully associated calendar to the facility."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Successfully associated calendar to the facility."));
       await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to associate calendar to the facility."));
+    commonUtil.showToast(translate("Failed to associate calendar to the facility."));
     logger.error(err);
   }
 
@@ -139,7 +137,7 @@ async function updateOperatingHours() {
       fromDate: facilityCalendar.value.fromDate
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       resp = await FacilityService.associateCalendarToFacility({
         facilityId: props.facilityId,
         calendarId: selectedCalendarId.value,
@@ -147,8 +145,8 @@ async function updateOperatingHours() {
         facilityCalendarTypeId: 'OPERATING_HOURS'
       });
 
-      if (!hasError(resp)) {
-        showToast(translate("Successfully associated calendar to the facility."));
+      if (!commonUtil.hasError(resp)) {
+        commonUtil.showToast(translate("Successfully associated calendar to the facility."));
         await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
       } else {
         throw resp.data;
@@ -157,7 +155,7 @@ async function updateOperatingHours() {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to associate calendar to the facility."));
+    commonUtil.showToast(translate("Failed to associate calendar to the facility."));
     logger.error(err);
   }
 

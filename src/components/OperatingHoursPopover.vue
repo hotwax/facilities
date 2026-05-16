@@ -31,13 +31,12 @@ import {
   modalController,
   popoverController
 } from "@ionic/vue";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import AddOperatingHoursModal from "@/components/AddOperatingHoursModal.vue";
 import CustomScheduleModal from "@/components/CustomScheduleModal.vue";
 import { FacilityService } from "@/services/FacilityService";
-import { showToast } from "@/utils";
 import logger from "@/logger";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
 import { computed } from "vue";
@@ -84,14 +83,14 @@ async function removeCalendarFromFacility() {
       fromDate: facilityCalendar.value.fromDate
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Successfully revoked calendar associativity with the facility."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Successfully revoked calendar associativity with the facility."));
       await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) { 
-    showToast(translate("Failed to revoke calendar associativity with the facility."));
+    commonUtil.showToast(translate("Failed to revoke calendar associativity with the facility."));
     logger.error(err);
   }
 

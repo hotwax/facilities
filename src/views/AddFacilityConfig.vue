@@ -135,7 +135,6 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { ref, computed, reactive } from "vue";
-import { useRouter } from 'vue-router'
 import {
   addCircleOutline,
   ellipsisVerticalOutline,
@@ -144,9 +143,8 @@ import {
   star,
   starOutline
 } from 'ionicons/icons';
-import { translate } from "@hotwax/dxp-components";
-import { isValidPassword, isValidEmail, showToast } from "@/utils";
-import { hasError } from "@/adapter";
+import { commonUtil, translate } from "@common";
+import { isValidPassword, isValidEmail } from "@/utils";
 import logger from "@/logger";
 import { FacilityService } from "@/services/FacilityService";
 import { UserService } from "@/services/UserService"
@@ -154,9 +152,9 @@ import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue';
 import { DateTime } from "luxon";
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
+import router from "@/router";
 
 const props = defineProps(['facilityId']);
-const router = useRouter();
 const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
 
@@ -206,7 +204,7 @@ async function saveFulfillmentSettings() {
   }
 
   const results = await Promise.all(promises);
-  const hasFailed = results.some((response: any) => hasError(response));
+  const hasFailed = results.some((response: any) => commonUtil.hasError(response));
   if (hasFailed) {
     throw { message: translate('Failed to update some fulfillment settings.') };
   }
@@ -231,15 +229,15 @@ async function createFacilityLogin() {
 async function saveStoreConfig() {
   if (createLoginCreds.value) {
     if (!username.value || !password.value || !emailAddress.value) {
-      showToast(translate('Please fill all the required fields'));
+      commonUtil.showToast(translate('Please fill all the required fields'));
       return;
     }
     if (username.value && await UserService.isUserLoginIdExists(username.value)) {
-      showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
+      commonUtil.showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
       return;
     }
     if (!isValidEmail(emailAddress.value)) {
-      showToast(translate('Please provide a valid email.'));
+      commonUtil.showToast(translate('Please provide a valid email.'));
       return;
     }
   }
@@ -261,10 +259,11 @@ async function saveStoreConfig() {
       }
     }
 
-    showToast(translate("Facility configurations created successfully."));
+
+    commonUtil.showToast(translate("Facility configurations created successfully."));
     router.replace({ path: `/facility-details/${props.facilityId}` });
   } catch (error: any) {
-    showToast(error.message);
+    commonUtil.showToast(error.message);
     logger.error(error.message);
   }
 }
@@ -279,7 +278,7 @@ async function addProductStoresToFacility() {
   );
 
   const results = await Promise.all(promises);
-  const hasFailed = results.some((response: any) => hasError(response));
+  const hasFailed = results.some((response: any) => commonUtil.hasError(response));
   if (hasFailed) {
     throw { message: translate('Failed to add some product stores to the facility.') };
   }
@@ -296,7 +295,7 @@ async function fetchFacilityGroup(shopifyShopId: string) {
       fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
       viewSize: 100
     });
-    if (!hasError(resp) && resp.data.docs.length > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.docs.length > 0) {
       facilityGroupId = resp.data.docs[0].facilityGroupId;
     }
   } catch (err) {
@@ -316,7 +315,7 @@ async function makeProductStorePrimary(shopifyShopId: string) {
         facilityGroupId: shopifyShopId
       });
 
-      if (!hasError(resp)) {
+      if (!commonUtil.hasError(resp)) {
         facilityGroupId = resp.data.facilityGroupId;
       }
     }
@@ -326,7 +325,7 @@ async function makeProductStorePrimary(shopifyShopId: string) {
         facilityId: props.facilityId,
         primaryFacilityGroupId: facilityGroupId
       });
-      if (hasError(resp)) {
+      if (commonUtil.hasError(resp)) {
         throw { message: translate('Failed to make product store as primary.') };
       }
     } else {

@@ -17,12 +17,12 @@
             is added on sides from ion-item and ion-padding-vertical to compensate the removed
             vertical padding -->
             <ion-card-header class="ion-no-padding ion-padding-vertical">
-              <ion-card-subtitle>{{ userProfile?.userLoginId }}</ion-card-subtitle>
-              <ion-card-title>{{ userProfile?.partyName }}</ion-card-title>
+              <ion-card-subtitle>{{ userProfile.username }}</ion-card-subtitle>
+              <ion-card-title>{{ userProfile?.userFullName }}</ion-card-title>
             </ion-card-header>
           </ion-item>
           <ion-button color="danger" @click="logout()">{{ translate("Logout") }}</ion-button>
-          <ion-button :standalone-hidden="!hasPermission(Actions.APP_PWA_STANDALONE_ACCESS)" fill="outline" @click="goToLaunchpad()">
+          <ion-button :standalone-hidden="!userStore.hasPermission('COMMON_ADMIN')" fill="outline" @click="goToLaunchpad()">
             {{ translate("Go to Launchpad") }}
             <ion-icon slot="end" :icon="openOutline" />
           </ion-button>
@@ -36,16 +36,16 @@
       </div>
 
       <section>
-        <DxpOmsInstanceNavigator />
+        <OmsInstanceNavigator />
       </section>
 
       <hr />
 
-      <DxpAppVersionInfo />
+      <AppVersionInfo />
 
       <section>
-        <DxpTimeZoneSwitcher @timeZoneUpdated="timeZoneUpdated" />
-        <DxpLanguageSwitcher />
+        <TimeZoneSwitcher @timeZoneUpdated="timeZoneUpdated" />
+        <LanguageSwitcher />
       </section>
     </ion-content>
   </ion-page>
@@ -75,15 +75,15 @@ import {
   timeOutline 
 } from 'ionicons/icons'
 import { computed, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { translate } from '@hotwax/dxp-components';
-import { Actions, hasPermission } from '@/authorization'
+import { translate } from '@common';
 import { DateTime } from 'luxon';
 import Image from '@/components/Image.vue';
 import { useUserStore } from '@/store/user';
-
+import OmsInstanceNavigator from '@/components/OmsInstanceNavigator.vue';
+import TimeZoneSwitcher from '@/components/TimeZoneSwitcher.vue';
+import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
+import AppVersionInfo from '@/components/AppVersionInfo.vue';
 const userStore = useUserStore();
-const router = useRouter();
 
 const baseURL = import.meta.env.VITE_APP_BASE_URL;
 const appInfo = ref((import.meta.env.VITE_APP_VERSION_INFO ? JSON.parse(import.meta.env.VITE_APP_VERSION_INFO) : {}) as any);
@@ -91,7 +91,6 @@ const appVersion = ref("");
 const locales = ref(import.meta.env.VITE_APP_LOCALES ? JSON.parse(import.meta.env.VITE_APP_LOCALES) : {"en-US": "English"});
 
 const userProfile = computed(() => userStore.getUserProfile);
-const instanceUrl = computed(() => userStore.getInstanceUrl);
 const locale = computed(() => userStore.getLocale);
 
 onMounted(() => {

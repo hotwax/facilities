@@ -92,17 +92,15 @@ import {
 } from '@ionic/vue';
 import { ref } from 'vue';
 import { addCircleOutline, arrowForwardOutline, removeCircleOutline, saveOutline } from 'ionicons/icons';
-import { useRouter, onBeforeRouteLeave } from 'vue-router';
-import { translate } from '@hotwax/dxp-components'
-import { showToast } from '@/utils';
+import { onBeforeRouteLeave } from 'vue-router';
+import { commonUtil, translate } from "@common"
 import { FacilityService } from '@/services/FacilityService';
-import { hasError } from '@/adapter';
 import logger from '@/logger';
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
+import router from '@/router';
 
 const props = defineProps(['facilityGroupId']);
-const router = useRouter();
 
 const queryString = ref('');
 const facilities = ref([] as any[]);
@@ -175,7 +173,7 @@ async function fetchFacilityGroup() {
   try {
     const resp = await FacilityService.fetchFacilityGroups(params);
 
-    if (!hasError(resp) && resp.data?.docs?.length > 0) {
+      if (!commonUtil.hasError(resp) && resp.data.count) {
       currentFacilityGroup.value = resp.data.docs[0];
     } else {
       throw resp.data;
@@ -200,7 +198,7 @@ async function fetchFacilities() {
         "noConditionFind": "Y"
       }) as any;
 
-      if (!hasError(resp) && resp.data.count) {
+      if (!commonUtil.hasError(resp) && resp.data.count) {
         facilities.value = facilities.value.concat(resp.data.docs);
         viewIndex++;
       } else {
@@ -237,7 +235,7 @@ async function fetchMemberFacilities() {
         "orderBy" : "sequenceNum",
       }) as any;
 
-      if (!hasError(resp) && resp.data.count) {
+      if (!commonUtil.hasError(resp) && resp.data.count) {
         const currentMemberFacilities = resp.data.docs.map((memberFacility: any) => {
           const facility = facilityDetail[memberFacility.facilityId];
           if (facility) {
@@ -343,9 +341,9 @@ async function save() {
   const hasFailedResponse = responses.some((response: any) => response.status === 'rejected');
 
   if (hasFailedResponse) {
-    showToast(translate("Failed to update some member facilities."));
+    commonUtil.showToast(translate("Failed to update some member facilities."));
   } else {
-    showToast(translate("Member facilities updated successfully."));
+    commonUtil.showToast(translate("Member facilities updated successfully."));
   }
   
   isFacilityMembersModified.value = false;
@@ -370,7 +368,7 @@ async function doReorder(event: CustomEvent) {
 
   if (diffSeq.length) {
     isFacilityMembersModified.value = true;
-    showToast(translate("Facilities order has been changed. Click save button to update them."));
+    commonUtil.showToast(translate("Facilities order has been changed. Click save button to update them."));
   }
 }
 

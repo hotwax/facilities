@@ -42,11 +42,10 @@ import {
   modalController,
 } from "@ionic/vue";
 import { closeOutline, gitPullRequestOutline } from 'ionicons/icons'
-import { translate } from '@hotwax/dxp-components'
-import { showToast } from '@/utils';
+import { translate } from "@common"
 import logger from "@/logger";
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import { useFacilityStore } from "@/store/facility";
 import { DateTime } from "luxon";
 import { computed } from "vue";
@@ -67,8 +66,8 @@ async function unarchiveFacility(archivedFacility: any) {
       thruDate: DateTime.now().toMillis()
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Parking unarchived successfully."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Parking unarchived successfully."));
       const updatedArchivedFacilities = archivedFacilities.value.filter((facility: any) => facility.facilityId !== archivedFacility.facilityId);
       facilityStore.updateArchivedFacilities(updatedArchivedFacilities);
       await facilityStore.fetchVirtualFacility({ facilityId: archivedFacility.facilityId });
@@ -76,7 +75,7 @@ async function unarchiveFacility(archivedFacility: any) {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to unarchive parking."));
+    commonUtil.showToast(translate("Failed to unarchive parking."));
     logger.error(err);
   }
 }

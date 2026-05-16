@@ -2,8 +2,6 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
 import logger from './logger';
-import { showToast } from '@/utils'
-
 import { IonicVue } from '@ionic/vue';
 
 /* Core CSS required for Ionic components to work properly */
@@ -23,20 +21,14 @@ import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/display.css';
 
 /* Theme variables */
+import "@common/css/settings.css"
+import "@common/css/theme.css"
 import './theme/variables.css';
-import '@hotwax/apps-theme';
 
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { createDxpI18n, initialiseConfig } from '@hotwax/dxp-components'
+import { createDxpI18n, initialiseConfig } from '@common'
 import { useUserStore } from '@/store/user'
-import { setPermissions } from '@/authorization'
-import permissionPlugin, { Actions, hasPermission } from '@/authorization';
-import permissionRules from '@/authorization/Rules';
-import permissionActions from '@/authorization/Actions';
-import { dxpComponents } from '@hotwax/dxp-components'; 
-import { login, logout, loader } from '@/utils/user';
-import { getConfig, initialise, setUserLocale, setUserTimeZone, getAvailableTimeZones } from './adapter';
 import localeMessages from '@/locales';
 
 import defaultImage from "@/assets/images/defaultImage.png";
@@ -54,27 +46,7 @@ const app = createApp(App)
 })
 .use(router)
 .use(pinia)
-.use(i18n)
-.use(permissionPlugin, {
-  rules: permissionRules,
-  actions: permissionActions
-})
-.use(dxpComponents, {
-  Actions,
-  defaultImgUrl: defaultImage,
-  login,
-  logout,
-  loader,
-  appLoginUrl: import.meta.env.VITE_APP_LOGIN_URL as string,
-  getConfig,
-  initialise,
-  localeMessages,
-  setUserLocale,
-  showToast,
-  setUserTimeZone, 
-  getAvailableTimeZones,
-  hasPermission
-  });
+.use(i18n);
 
 initialiseConfig({
   postLogin: useUserStore().postLogin,
@@ -86,7 +58,6 @@ initialiseConfig({
   router: router
 })
 
-setPermissions(useUserStore().getUserPermissions);
 
 router.isReady().then(() => {
   app.mount('#app');

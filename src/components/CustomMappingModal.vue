@@ -64,10 +64,9 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
-import { showToast } from "@/utils";
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -88,7 +87,7 @@ function closeModal() {
 
 async function saveMapping() {
   if (!mappingId.value.trim() || !mappingName.value.trim() || !mappingValue.value.trim()) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
@@ -101,15 +100,15 @@ async function saveMapping() {
       "description": mappingName.value
     });
 
-    if (!hasError(resp) && resp.data.enumId) {
+    if (!commonUtil.hasError(resp) && resp.data.enumId) {
       resp = await FacilityService.createFacilityIdentification({
         "facilityId": currentFacility.value.facilityId,
         "facilityIdenTypeId": resp.data.enumId,
         "idValue": mappingValue.value
       });
 
-      if (!hasError(resp)) {
-        showToast(translate('External mapping created successfully'));
+      if (!commonUtil.hasError(resp)) {
+        commonUtil.showToast(translate('External mapping created successfully'));
         // fetching external mapping types again, as we have created a new mapping type that needs to be included in popover
         // added skipState property to not check for cached type and always make an api call
         await utilStore.fetchExternalMappingTypes({ skipState: true });
@@ -122,7 +121,7 @@ async function saveMapping() {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to create external mapping'));
+    commonUtil.showToast(translate('Failed to create external mapping'));
     logger.error('Failed to create external mapping', err);
   }
 

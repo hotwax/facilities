@@ -1,18 +1,15 @@
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { RouteRecordRaw } from 'vue-router';
 import FacilityDetails from '@/views/FacilityDetails.vue';
-import store from '@/store'
-import { hasPermission } from '@/authorization';
-import { showToast } from '@/utils'
 import 'vue-router'
-import { useAuthStore, DxpLogin, translate } from '@hotwax/dxp-components'
-import { loader } from '@/utils/user';
+import { useAuth, Login, translate, commonUtil } from '@common'
 import CreateFacility from '@/views/CreateFacility.vue';
 import AddFacilityAddress from '@/views/AddFacilityAddress.vue';
 import AddFacilityConfig from '@/views/AddFacilityConfig.vue';
 import Tabs from '@/components/Tabs.vue'
 import ManageFacilities from '@/views/ManageFacilities.vue';
 import CreateFacilityGroup from '@/views/CreateFacilityGroup.vue';
+import { useUserStore } from '@/store/user';
 
 // Defining types for the meta values
 declare module 'vue-router' {
@@ -21,24 +18,10 @@ declare module 'vue-router' {
   }
 }
 
-const authGuard = async (to: any, from: any, next: any) => {
-  const authStore = useAuthStore()
-  if (!authStore.isAuthenticated || !store.getters['user/isAuthenticated']) {
-    await loader.present('Authenticating')
-    // TODO use authenticate() when support is there
-    const redirectUrl = window.location.origin + '/login'
-    window.location.href = `${import.meta.env.VITE_APP_LOGIN_URL}?redirectUrl=${redirectUrl}`
-    loader.dismiss()
+const authGuard = async () => {
+  if (!useAuth().isAuthenticated.value) {
+    return { path: '/login' };
   }
-  next()
-};
-
-const loginGuard = (to: any, from: any, next: any) => {
-  const authStore = useAuthStore()
-  if (authStore.isAuthenticated && !to.query?.token && !to.query?.oms) {
-    next('/')
-  }
-  next();
 };
 
 const routes: Array<RouteRecordRaw> = [
@@ -49,8 +32,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'Login',
-    component: DxpLogin,
-    beforeEnter: loginGuard
+    component: Login,
   },
   {
     path: '/tabs',
@@ -123,11 +105,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from) => {
-  if (to.meta.permissionId && !hasPermission(to.meta.permissionId)) {
+  if (to.meta.permissionId && !useUserStore().hasPermission(to.meta.permissionId)) {
     let redirectToPath = from.path;
     // If the user has navigated from Login page or if it is page load, redirect user to settings page without showing any toast
     if (redirectToPath == "/login" || redirectToPath == "/") redirectToPath = "/tabs/settings";
-    else showToast(translate('You do not have permission to access this page'));
+    else commonUtil.showToast(translate('You do not have permission to access this page'));
     return {
       path: redirectToPath,
     }

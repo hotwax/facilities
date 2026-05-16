@@ -57,11 +57,9 @@ import {
   modalController,
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from "@hotwax/dxp-components";
+import { translate, commonUtil } from "@common";
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
 import logger from "@/logger";
-import { showToast } from "@/utils";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
 import { ref, computed } from "vue";
@@ -90,8 +88,8 @@ async function saveGroupType() {
       facilityGroupTypeId: facilityGroupValue.value.facilityGroupTypeId
     });
 
-    if (!hasError(resp)) {
-      showToast(translate("Facility group type updated successfully."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Facility group type updated successfully."));
       const updatedGroups = groups.value.map((group: any) => {
         if (group.facilityGroupId === facilityGroupValue.value.facilityGroupId) {
           return {
@@ -108,7 +106,7 @@ async function saveGroupType() {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to update facility group type."));
+    commonUtil.showToast(translate("Failed to update facility group type."));
     logger.error(err);
   }
 }

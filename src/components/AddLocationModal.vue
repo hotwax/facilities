@@ -71,10 +71,8 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { commonUtil, translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -100,7 +98,7 @@ function closeModal() {
 
 async function saveFacilityLocation() {
   if (!locationInfo.value.aisleId?.trim() || !locationInfo.value.areaId?.trim() || !locationInfo.value.sectionId?.trim() || !locationInfo.value.levelId?.trim()) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
@@ -126,14 +124,14 @@ async function addFacilityLocation() {
   try {
     const resp = await FacilityService.createFacilityLocation(params);
 
-    if (!hasError(resp)) {
-      showToast(translate('Facility location created successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Facility location created successfully'));
       closeModal();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to create facility location'));
+    commonUtil.showToast(translate('Failed to create facility location'));
     logger.error('Failed to create facility location', err);
   }
 
@@ -151,14 +149,14 @@ async function updateFacilityLocation() {
   try {
     const resp = await FacilityService.updateFacilityLocation(params);
 
-    if (!hasError(resp)) {
-      showToast(translate('Facility location updated successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Facility location updated successfully'));
       closeModal();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update facility location'));
+    commonUtil.showToast(translate('Failed to update facility location'));
     logger.error('Failed to update facility location', err);
   }
 

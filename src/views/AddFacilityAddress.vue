@@ -119,19 +119,18 @@ import {
   onIonViewDidEnter
 } from "@ionic/vue";
 import { ref, computed, reactive } from "vue";
-import { useRouter } from 'vue-router'
 import { colorWandOutline, locationOutline } from 'ionicons/icons';
-import { translate } from "@hotwax/dxp-components";
-import { showToast, isValidEmail } from "@/utils";
+import { translate } from "@common";
+import { isValidEmail } from "@/utils";
 import logger from "@/logger";
-import { getTelecomCountryCode, hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import { FacilityService } from "@/services/FacilityService";
 import { UtilService } from "@/services/UtilService";
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
+import router from "@/router";
 
 const props = defineProps(['facilityId']);
-const router = useRouter();
 const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
 
@@ -167,12 +166,12 @@ function inputValidation(event: any) {
 
 async function addAddress() {
   if (!formData.address1 || !formData.city || !formData.postalCode) {
-    showToast("Please fill all the required fields.");
+    commonUtil.showToast("Please fill all the required fields.");
     return;
   }
 
   if (emailAddress.value && !isValidEmail(emailAddress.value)) {
-    showToast(translate("Invalid email address"));
+    commonUtil.showToast(translate("Invalid email address"));
     return;
   }
 
@@ -184,14 +183,14 @@ async function addAddress() {
 
   try {
     const resp = await FacilityService.createFacilityPostalAddress(payload);
-    if (!hasError(resp)) {
-      showToast(translate("Facility address created successfully."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Facility address created successfully."));
       router.replace(`/add-facility-config/${props.facilityId}`);
     } else {
       throw resp.data;
     }
   } catch (error) {
-    showToast(translate("Failed to create facility address."));
+    commonUtil.showToast(translate("Failed to create facility address."));
     logger.error("Failed to create facility address.", error);
   }
   if (contactNumber.value) saveTelecomNumber();
@@ -211,7 +210,7 @@ async function generateLatLong() {
   };
   try {
     const resp = await UtilService.generateLatLong(payload);
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const result = resp.data.response.docs[0];
       formData.latitude = result.latitude;
       formData.longitude = result.longitude;
@@ -219,7 +218,7 @@ async function generateLatLong() {
       throw resp.data;
     }
   } catch (error) {
-    showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
+    commonUtil.showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
     logger.error("Unable to find the latitude and longitude for the entered zip code.", error);
   }
 }
@@ -228,7 +227,7 @@ async function updateState(event: CustomEvent) {
   await utilStore.fetchStates({ geoId: event.detail.value });
   const country = countries.value.find((country: any) => country.geoId === event.detail.value);
   if (country) {
-    countryCode.value = getTelecomCountryCode(country.geoCode);
+    countryCode.value = commonUtil.getTelecomCountryCode(country.geoCode);
   }
 }
 
@@ -241,7 +240,7 @@ async function saveTelecomNumber() {
       countryCode: countryCode.value.replace('+', '')
     });
 
-    if (hasError(resp)) {
+    if (commonUtil.hasError(resp)) {
       throw resp.data;
     }
   } catch (err) {
@@ -258,7 +257,7 @@ async function saveEmailAddress() {
       emailAddress: emailAddress.value,
     });
 
-    if (hasError(resp)) {
+    if (commonUtil.hasError(resp)) {
       throw resp.data;
     }
   } catch (err) {

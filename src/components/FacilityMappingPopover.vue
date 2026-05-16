@@ -27,7 +27,7 @@ import {
   modalController,
   popoverController
 } from "@ionic/vue";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import CustomMappingModal from "./CustomMappingModal.vue";
 import FacilityMappingModal from "./FacilityMappingModal.vue";
 import FacilityShopifyMappingModal from "./FacilityShopifyMappingModal.vue";

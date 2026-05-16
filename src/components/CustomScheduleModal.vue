@@ -95,14 +95,13 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
-import { hasError } from "@hotwax/oms-api";
+import { commonUtil } from "@common";
 import { DateTime } from "luxon";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
-import { showToast } from "@/utils";
 import emitter from "@/event-bus";
 import { ref, computed } from "vue";
 
@@ -143,7 +142,7 @@ function updateDailyTimings() {
 async function addCustomSchedule(payload: any) {
   try {
     let resp = await FacilityService.createFacilityCalendar({ ...payload, description: selectedTimesForWeek.value.description.trim() });
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const calendarId = resp.data.calendarId;
 
       resp = await FacilityService.associateCalendarToFacility({
@@ -153,8 +152,8 @@ async function addCustomSchedule(payload: any) {
         facilityCalendarTypeId: 'OPERATING_HOURS'
       });
 
-      if (!hasError(resp)) {
-        showToast(translate("Successfully created and associated calendar to the facility."));
+      if (!commonUtil.hasError(resp)) {
+        commonUtil.showToast(translate("Successfully created and associated calendar to the facility."));
         await facilityStore.fetchFacilityCalendar({ facilityId: props.facilityId });
         await utilStore.fetchCalendars();
         modalController.dismiss();
@@ -165,7 +164,7 @@ async function addCustomSchedule(payload: any) {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to create calendar to the facility."));
+    commonUtil.showToast(translate("Failed to create calendar to the facility."));
     logger.error(err);
   }
 }
@@ -195,7 +194,7 @@ async function saveCustomSchedule() {
   }
 
   if (!Object.keys(payload).length) {
-    showToast(translate("Please check start time and end time entries. End time cannot be less than start time."));
+    commonUtil.showToast(translate("Please check start time and end time entries. End time cannot be less than start time."));
     return;
   }
 
@@ -210,7 +209,7 @@ async function saveCustomSchedule() {
         fromDate: facilityCalendar.value.fromDate
       });
 
-      if (!hasError(resp)) {
+      if (!commonUtil.hasError(resp)) {
         await addCustomSchedule(payload);
       } else {
         throw resp.data;

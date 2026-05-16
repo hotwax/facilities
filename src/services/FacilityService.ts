@@ -1,12 +1,12 @@
-import { api, hasError } from '@/adapter';
+import { api, commonUtil } from '@common';
 import logger from '@/logger';
 import { DateTime } from 'luxon';
 import { prepareOrderQuery } from '@/utils/solrHelper';
 import { UserService } from './UserService';
-import store from '@/store';
+import { useUtilStore } from '@/store/util';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityPostalAddress",
     method: "post",
     data: payload
@@ -14,7 +14,7 @@ const createFacilityPostalAddress = async (payload: any): Promise<any> => {
 }
 
 const fetchFacilities = async(query: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind", 
     method: "post",
     data: query
@@ -39,13 +39,13 @@ const fetchFacilityGroupInformation = async(facilityIds: Array<string>): Promise
         viewIndex
       }
 
-      resp = await api({
+      resp = await api({ baseURL: commonUtil.getOmsURL(),
         url: "performFind", 
         method: "post",
         data: params
       }) as any;
 
-      if(!hasError(resp) && resp.data.count > 0) {
+      if(!commonUtil.hasError(resp) && resp.data.count > 0) {
         const newFacilitiesGroupInformation = resp.data.docs.reduce((facilityGroups: any, facilityGroup: any) => {
 
           if(facilityGroups[facilityGroup.facilityId]) {
@@ -88,13 +88,13 @@ const fetchInactiveFacilityGroupAssociations = async (groupId: string): Promise<
   }
 
   try {
-    const resp = await api({
+    const resp = await api({ baseURL: commonUtil.getOmsURL(),
       url: "performFind",
       method: "post",
       data: params
     }) as any;
 
-    if (!hasError(resp) && resp.data.count > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
       facilitiesGroupMembers = resp.data.docs
     } else {
       throw resp.data;
@@ -119,13 +119,13 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
       fieldList: ["entryDate", "facilityId", "lastOrderCount"],
     }
 
-    resp = await api({
+    resp = await api({ baseURL: commonUtil.getOmsURL(),
       url: "performFind",
       method: "post",
       data: params
     })
 
-    if (!hasError(resp) && resp.data.count > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
       facilitiesOrderCount = resp.data.docs.reduce((facilitiesCount: any, facilityCount: any) => {
         facilitiesCount[facilityCount.facilityId] = facilityCount.lastOrderCount
         return facilitiesCount
@@ -141,7 +141,7 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
 }
 
 const getFacilityParties = async(payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -149,7 +149,7 @@ const getFacilityParties = async(payload: any): Promise <any> => {
 }
 
 const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -169,13 +169,13 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
       orderBy: "entryDate DESC"
     }
 
-    resp = await api({
+    resp = await api({ baseURL: commonUtil.getOmsURL(),
       url: "performFind",
       method: "post",
       data: params
     })
 
-    if (!hasError(resp) && resp.data.count > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
       facilityOrderCounts = resp.data.docs.map((facilityOrderCount: any) => {
         facilityOrderCount.entryDate = DateTime.fromMillis(facilityOrderCount.entryDate).toFormat('MMM dd yyyy')
         return facilityOrderCount
@@ -191,7 +191,7 @@ const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
 }
 
 const fetchFacilityGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -199,7 +199,7 @@ const fetchFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -207,7 +207,7 @@ const fetchFacilityContactDetails = async(payload: any): Promise <any> => {
 }
 
 const getFacilityProductStores = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "POST",
     data: payload
@@ -215,7 +215,7 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
 }
 
 const addPartyToFacility = async (payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/addPartyToFacility",
     method: "post",
     data: payload
@@ -223,7 +223,7 @@ const addPartyToFacility = async (payload: any): Promise <any> => {
 }
 
 const removePartyFromFacility = async (payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/removePartyFromFacility",
     method: "post",
     data: payload
@@ -231,7 +231,7 @@ const removePartyFromFacility = async (payload: any): Promise <any> => {
 }
 
 const updateProductStoreFacility = async (payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateProductStoreFacility",
     method: "post",
     data: payload
@@ -239,7 +239,7 @@ const updateProductStoreFacility = async (payload: any): Promise <any> => {
 }
 
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "POST",
     data: payload
@@ -247,7 +247,7 @@ const fetchFacilityLocations = async(payload: any): Promise<any> => {
 }
 
 const addFacilityToGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/addFacilityToGroup",
     method: "post",
     data: payload
@@ -255,7 +255,7 @@ const addFacilityToGroup = async (payload: any): Promise<any> => {
 }
 
 const removeFacilityFromGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/removeFacilityFromGroup",
     method: "post",
     data: payload
@@ -263,7 +263,7 @@ const removeFacilityFromGroup = async (payload: any): Promise<any> => {
 }
 
 const associateCalendarToFacility = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityCalendar",
     method: "post",
     data: payload
@@ -271,7 +271,7 @@ const associateCalendarToFacility = async (payload: any): Promise<any> => {
 }
 
 const createFacilityGroup = async(payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityGroup",
     method: "post",
     data: payload
@@ -279,7 +279,7 @@ const createFacilityGroup = async(payload: any): Promise<any> => {
 }
 
 const createFacilityLocation = async(payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityLocation",
     method: "post",
     data: payload
@@ -287,7 +287,7 @@ const createFacilityLocation = async(payload: any): Promise<any> => {
 }
 
 const createProductStoreFacility = async (payload: any): Promise <any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createProductStoreFacility",
     method: "post",
     data: payload
@@ -295,7 +295,7 @@ const createProductStoreFacility = async (payload: any): Promise <any> => {
 }
 
 const updateFacility = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacility",
     method: "post",
     data: payload
@@ -303,7 +303,7 @@ const updateFacility = async (payload: any): Promise<any> => {
 }
 
 const updateFacilityLocation = async(payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityLocation",
     method: "post",
     data: payload
@@ -311,7 +311,7 @@ const updateFacilityLocation = async(payload: any): Promise<any> => {
 }
 
 const deleteFacilityLocation = async(payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/deleteFacilityLocation",
     method: "post",
     data: payload
@@ -319,7 +319,7 @@ const deleteFacilityLocation = async(payload: any): Promise<any> => {
 }
 
 const updateFacilityToGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityToGroup",
     method: "post",
     data: payload
@@ -327,7 +327,7 @@ const updateFacilityToGroup = async (payload: any): Promise<any> => {
 }
 
 const createFacility = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacility",
     method: "post",
     data: payload
@@ -335,7 +335,7 @@ const createFacility = async (payload: any): Promise<any> => {
 }
 
 const createVirtualFacility = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacility",
     method: "post",
     data: payload
@@ -343,7 +343,7 @@ const createVirtualFacility = async (payload: any): Promise<any> => {
 }
 
 const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityPostalAddress",
     method: "post",
     data: payload
@@ -352,7 +352,7 @@ const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
 
 
 const fetchFacilityMappings = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -360,7 +360,7 @@ const fetchFacilityMappings = async (payload: any): Promise<any> => {
 }
 
 const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -368,7 +368,7 @@ const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
 }
 
 const createFacilityIdentification = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityIdentification",
     method: "post",
     data: payload
@@ -376,7 +376,7 @@ const createFacilityIdentification = async (payload: any): Promise<any> => {
 }
 
 const updateFacilityIdentification = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityIdentification",
     method: "post",
     data: payload
@@ -384,7 +384,7 @@ const updateFacilityIdentification = async (payload: any): Promise<any> => {
 }
 
 const createShopifyShopLocation = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createShopifyShopLocation",
     method: "post",
     data: payload
@@ -392,7 +392,7 @@ const createShopifyShopLocation = async (payload: any): Promise<any> => {
 }
 
 const updateShopifyShopLocation = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateShopifyShopLocation",
     method: "post",
     data: payload
@@ -400,7 +400,7 @@ const updateShopifyShopLocation = async (payload: any): Promise<any> => {
 }
 
 const deleteShopifyShopLocation = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/deleteShopifyShopLocation",
     method: "post",
     data: payload
@@ -408,7 +408,7 @@ const deleteShopifyShopLocation = async (payload: any): Promise<any> => {
 }
 
 const createEnumeration = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createEnumeration",
     method: "post",
     data: payload
@@ -416,7 +416,7 @@ const createEnumeration = async (payload: any): Promise<any> => {
 }
 
 const fetchFacilityCalendar = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -424,7 +424,7 @@ const fetchFacilityCalendar = async (payload: any): Promise<any> => {
 }
 
 const createFacilityCalendar = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/calendarDataSetup",
     method: "post",
     data: payload
@@ -432,7 +432,7 @@ const createFacilityCalendar = async (payload: any): Promise<any> => {
 }
 
 const removeFacilityCalendar = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/expireFacilityCalendar",
     method: "post",
     data: payload
@@ -453,13 +453,13 @@ const fetchJobData = async(): Promise <any> => {
   }
 
   try {
-    const resp = await api({
+    const resp = await api({ baseURL: commonUtil.getOmsURL(),
       url: "performFind", 
       method: "post",
       data: payload
     }) as any;
 
-    if (!hasError(resp) && resp.data.count > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
       const jobs = resp.data.docs;
       const brokeringJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_BKR_ORD');
       const autoReleaseJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_RLS_ORD_DTE');
@@ -497,12 +497,12 @@ const fetchOrderCountsByFacility = async (facilityIds: Array<string>): Promise<a
         }
       }
     })
-    const resp = await api({
+    const resp = await api({ baseURL: commonUtil.getOmsURL(),
       url: "solr-query",
       method: "post",
       data: query
     }) as any;
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const facilityFacets = resp.data.facets.facilityFacet.buckets;
       const facilityOrderCounts = facilityFacets.reduce((countObject: any, facet: any) => {
         countObject[facet.val] = facet.groups;
@@ -518,7 +518,7 @@ const fetchOrderCountsByFacility = async (facilityIds: Array<string>): Promise<a
 }
 
 const fetchFacilityGroups = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -530,7 +530,7 @@ const fetchArchivedFacilities = async (): Promise<any> => {
 
   try {
     do {
-      resp = await api({
+      resp = await api({ baseURL: commonUtil.getOmsURL(),
         url: "performFind",
         method: "post",
         data: {
@@ -547,7 +547,7 @@ const fetchArchivedFacilities = async (): Promise<any> => {
         }
       }) as any
   
-      if (!hasError(resp) && resp.data.docs?.length) {
+      if (!commonUtil.hasError(resp) && resp.data.docs?.length) {
         facilities = facilities.concat(resp.data.docs)
         viewIndex++;
       } else {
@@ -583,13 +583,13 @@ const fetchFacilityCountByGroup = async (facilityGroupIds: any): Promise<any> =>
         fieldList: ['facilityGroupId', 'facilityId']
       };
 
-      resp = await api({
+      resp = await api({ baseURL: commonUtil.getOmsURL(),
         url: 'performFind',
         method: 'POST',
         data: params
       });
 
-      if (!hasError(resp) && resp.data.count) {
+      if (!commonUtil.hasError(resp) && resp.data.count) {
         facilityMemberResponses = [...facilityMemberResponses, ...resp.data.docs];
         viewIndex++;
       } else {
@@ -632,13 +632,13 @@ const fetchProductStoreCountByGroup = async (facilityGroupIds: Array<string>): P
     requests.push(params)
   }
 
-  const productStoreCountResponse = await Promise.allSettled(requests.map((params) => api({
+  const productStoreCountResponse = await Promise.allSettled(requests.map((params) => api({ baseURL: commonUtil.getOmsURL(),
     url: 'performFind',
     method: 'POST',
     data: params
   })))
 
-  const hasFailedResponse = productStoreCountResponse.some((response: any) => hasError(response.value) && !response?.data?.count)
+  const hasFailedResponse = productStoreCountResponse.some((response: any) => commonUtil.hasError(response.value) && !response?.data?.count)
 
   if (hasFailedResponse) {
     logger.error('Failed to fetch product store count for some groups')
@@ -647,7 +647,7 @@ const fetchProductStoreCountByGroup = async (facilityGroupIds: Array<string>): P
   // taking out the response from Promise.allSettled's 'value' field first 
   const allResponseData = productStoreCountResponse.map((response: any) => response.value)
     .reduce((responseData: any, response: any) => {
-      if (!hasError(response)) {
+      if (!commonUtil.hasError(response)) {
         responseData.push(...response.data.docs)
       }
       return responseData
@@ -664,7 +664,7 @@ const fetchProductStoreCountByGroup = async (facilityGroupIds: Array<string>): P
 }
 
 const updateFacilityGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityGroup",
     method: "post",
     data: payload
@@ -672,7 +672,7 @@ const updateFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const deleteFacilityGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/deleteFacilityGroup",
     method: "post",
     data: payload
@@ -680,7 +680,7 @@ const deleteFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const createFacilityLogin = async (payload: any): Promise <any> => {
-  const organizationPartyId = store.getters['util/getOrganizationPartyId'];
+  const organizationPartyId = useUtilStore().getOrganizationPartyId;
 
   try {
     //Create role type if not exists. This is required for associating facility login user to facility.
@@ -689,7 +689,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
         "roleTypeId": "FAC_LOGIN",
         "description": "Facility Login",
       })
-      if (hasError(resp)) {
+      if (commonUtil.hasError(resp)) {
         throw resp.data;
       }
     }
@@ -704,7 +704,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
     }
 
     let resp = await UserService.createRelationship(params);
-    if (hasError(resp)) {
+    if (commonUtil.hasError(resp)) {
       throw resp.data;
     }
     const partyId = resp.data.partyId;
@@ -719,7 +719,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
       "userPrefTypeId": "ORGANIZATION_PARTY",
       "userPrefValue": organizationPartyId
     });
-    if (hasError(resp)) {
+    if (commonUtil.hasError(resp)) {
       throw resp.data;
     }
 
@@ -747,7 +747,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
     }));
     await Promise.all(promises).then(responses => {
       responses.forEach(response => {
-        if (hasError(response)) {
+        if (commonUtil.hasError(response)) {
           throw response.data;
         }
       });
@@ -758,7 +758,7 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
 }
 
 const fetchAssociatedFacilitiesToGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -766,7 +766,7 @@ const fetchAssociatedFacilitiesToGroup = async (payload: any): Promise<any> => {
 }
 
 const fetchAssociatedProductStoresToGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
     data: payload
@@ -774,7 +774,7 @@ const fetchAssociatedProductStoresToGroup = async (payload: any): Promise<any> =
 }
 
 const createFacilityTelecomNumber = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityTelecomNumber",
     method: "post",
     data: payload
@@ -782,7 +782,7 @@ const createFacilityTelecomNumber = async (payload: any): Promise<any> => {
 }
 
 const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityTelecomNumber",
     method: "post",
     data: payload
@@ -790,7 +790,7 @@ const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
 }
 
 const createFacilityEmailAddress = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityEmailAddress",
     method: "post",
     data: payload
@@ -798,7 +798,7 @@ const createFacilityEmailAddress = async (payload: any): Promise<any> => {
 }
 
 const updateFacilityEmailAddress = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityEmailAddress",
     method: "post",
     data: payload
@@ -806,7 +806,7 @@ const updateFacilityEmailAddress = async (payload: any): Promise<any> => {
 }
 
 const createProductStoreFacilityGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createProductStoreFacilityGroup",
     method: "post",
     data: payload
@@ -814,7 +814,7 @@ const createProductStoreFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const updateProductStoreFacilityGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateProductStoreFacilityGroup",
     method: "post",
     data: payload
@@ -822,7 +822,7 @@ const updateProductStoreFacilityGroup = async (payload: any): Promise<any> => {
 }
 
 const addFacilitiesToGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/addFacilitiesToGroup",
     method: "post",
     data: payload
@@ -830,7 +830,7 @@ const addFacilitiesToGroup = async (payload: any): Promise<any> => {
 }
 
 const updateFacilitiesToGroup = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilitiesToGroup",
     method: "post",
     data: payload
@@ -838,7 +838,7 @@ const updateFacilitiesToGroup = async (payload: any): Promise<any> => {
 }
 
 const createFacilityContactMech = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/createFacilityContactMech",
     method: "post",
     data: payload
@@ -846,7 +846,7 @@ const createFacilityContactMech = async (payload: any): Promise<any> => {
 }
 
 const updateFacilityContactMech = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityContactMech",
     method: "post",
     data: payload
@@ -854,7 +854,7 @@ const updateFacilityContactMech = async (payload: any): Promise<any> => {
 }
 
 const deleteFacilityContactMech = async (payload: any): Promise<any> => {
-  return api({
+  return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/deleteFacilityContactMech", 
     method: "post",
     data: payload

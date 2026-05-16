@@ -93,11 +93,11 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from '@/services/FacilityService';
-import { getTelecomCountryCode, hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
-import { showToast, isValidEmail } from "@/utils";
+import { isValidEmail } from "@/utils";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -126,7 +126,7 @@ onMounted(async () => {
   if (address.value.countryGeoId) {
     const country = countries.value.find((country: any) => country.geoId === address.value.countryGeoId);
     if (country) {
-      telecomNumberValue.value.countryCode = getTelecomCountryCode(country.geoCode);
+      telecomNumberValue.value.countryCode = commonUtil.getTelecomCountryCode(country.geoCode);
     }
   }
   if (!address.value.toName) {
@@ -177,7 +177,7 @@ async function saveTelecomNumber() {
       resp = await FacilityService.createFacilityTelecomNumber(payload);
     }
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
     } else {
       throw resp.data;
@@ -208,7 +208,7 @@ async function saveEmailAddress() {
       });
     }
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
     } else {
       throw resp.data;
@@ -223,12 +223,12 @@ async function saveContact() {
   let savedPostalAddress = '';
 
   if (!address.value?.address1 || !address.value?.city || !address.value?.postalCode) {
-    showToast("Please fill all the required fields.");
+    commonUtil.showToast("Please fill all the required fields.");
     return;
   }
 
   if (emailAddress.value.infoString && !isValidEmail(emailAddress.value.infoString)) {
-    showToast(translate("Invalid email address"));
+    commonUtil.showToast(translate("Invalid email address"));
     return;
   }
 
@@ -248,15 +248,15 @@ async function saveContact() {
         });
       }
 
-      if (!hasError(resp)) {
+      if (!commonUtil.hasError(resp)) {
         savedPostalAddress = address.value;
         await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
-        showToast(translate("Facility contact updated successfully."));
+        commonUtil.showToast(translate("Facility contact updated successfully."));
       } else {
         throw resp.data;
       }
     } catch (err) {
-      showToast(translate("Failed to update facility contact."));
+      commonUtil.showToast(translate("Failed to update facility contact."));
       logger.error(err);
     }
   }
@@ -272,7 +272,7 @@ function updateState(ev: CustomEvent) {
   utilStore.fetchStates({ geoId: ev.detail.value });
   const country = countries.value.find((country: any) => country.geoId === ev.detail.value);
   if (country) {
-    telecomNumberValue.value.countryCode = getTelecomCountryCode(country.geoCode);
+    telecomNumberValue.value.countryCode = commonUtil.getTelecomCountryCode(country.geoCode);
   }
 }
 </script>

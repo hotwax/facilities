@@ -53,10 +53,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
-import { generateInternalId, showToast } from "@/utils";
+import { commonUtil } from "@common";
+import { generateInternalId } from "@/utils";
 import logger from "@/logger";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -88,12 +88,12 @@ function closeModal() {
 
 async function createVirtualFacility() {
   if (!formData.value.facilityName?.trim()) {
-    showToast(translate('Please fill all the required fields'));
+    commonUtil.showToast(translate('Please fill all the required fields'));
     return;
   }
 
   if (formData.value.facilityId.length > 20) {
-    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    commonUtil.showToast(translate('Internal ID cannot be more than 20 characters.'));
     return;
   }
 
@@ -111,8 +111,8 @@ async function createVirtualFacility() {
     };
 
     const resp = await FacilityService.createVirtualFacility(payload);
-    if (!hasError(resp)) {
-      showToast(translate("New parking created successfully."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("New parking created successfully."));
       const createdFacility = {
         ...formData.value,
         facilityTypeId: 'VIRTUAL_FACILITY',
@@ -126,9 +126,9 @@ async function createVirtualFacility() {
   } catch (error: any) {
     logger.error(error);
     if (error?.response?.data?.error?.message) {
-      showToast(error.response.data.error.message);
+      commonUtil.showToast(error.response.data.error.message);
     } else {
-      showToast(translate('Failed to create parking.'));
+      commonUtil.showToast(translate('Failed to create parking.'));
     }
   }
   modalController.dismiss();

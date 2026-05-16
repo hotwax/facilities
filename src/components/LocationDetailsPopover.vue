@@ -21,11 +21,10 @@ import {
   modalController,
   popoverController
 } from "@ionic/vue";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import AddLocationModal from "./AddLocationModal.vue";
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -56,14 +55,14 @@ async function removeLocation() {
   try {
     const resp = await FacilityService.deleteFacilityLocation(params);
 
-    if (!hasError(resp)) {
-      showToast(translate('Facility location removed successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('Facility location removed successfully'));
       await facilityStore.fetchFacilityLocations({ facilityId: current.value.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to remove facility location'));
+    commonUtil.showToast(translate('Failed to remove facility location'));
     logger.error('Failed to remove facility location', err);
   }
   popoverController.dismiss();

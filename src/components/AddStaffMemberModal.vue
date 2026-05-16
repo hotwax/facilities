@@ -59,11 +59,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
-import { showToast } from "@/utils";
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -125,7 +124,7 @@ async function findParties() {
 
   try {
     const resp = await FacilityService.getPartyRoleAndPartyDetails(payload);
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const docs = resp.data.docs;
 
       docs.map((party: any) => {
@@ -151,7 +150,7 @@ async function saveParties() {
   partiesRoleChanged.map((party: any) => partiesToRemove.push(party));
 
   if (!(partiesToAdd.length > 0 || partiesToRemove.length > 0)) {
-    showToast(translate("Please update atleast one party role."));
+    commonUtil.showToast(translate("Please update atleast one party role."));
     emitter.emit('dismissLoader');
     return;
   }
@@ -178,9 +177,9 @@ async function saveParties() {
   const hasFailed = responses.some((response: any) => response.status === 'rejected');
   
   if (hasFailed) {
-    showToast(translate("Failed to update some role(s)."));
+    commonUtil.showToast(translate("Failed to update some role(s)."));
   } else {
-    showToast(translate("Role(s) updated successfully."));
+    commonUtil.showToast(translate("Role(s) updated successfully."));
   }
 
   // refetching parties with updated roles

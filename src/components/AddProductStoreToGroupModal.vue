@@ -47,11 +47,10 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
-import { hasError } from "@/adapter";
-import { showToast } from "@/utils";
+import { commonUtil } from "@common";
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -90,7 +89,7 @@ async function fetchGroupProductStores() {
       "filterByDate": 'Y'
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       selectedProductStores.value = resp.data.docs;
       selectedProductStoreValues.value = JSON.parse(JSON.stringify(resp.data.docs));
     } else {
@@ -139,9 +138,9 @@ async function saveProductStores() {
   const hasFailed = responses.some((response: any) => response.status === 'rejected');
   
   if (hasFailed) {
-    showToast(translate("Failed to associate some product stores to group."));
+    commonUtil.showToast(translate("Failed to associate some product stores to group."));
   } else {
-    showToast(translate("Product stores associated to group successfully."));
+    commonUtil.showToast(translate("Product stores associated to group successfully."));
   }
   fetchGroupsCount();
   modalController.dismiss();

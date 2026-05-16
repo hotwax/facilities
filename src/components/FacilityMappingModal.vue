@@ -59,10 +59,9 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
+import { translate } from "@common"
 import { FacilityService } from '@/services/FacilityService'
-import { showToast } from "@/utils";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -90,7 +89,7 @@ function closeModal() {
 
 async function saveMapping() {
   if (!mappingValue.value?.trim()) {
-    showToast(translate('Please enter a valid value'));
+    commonUtil.showToast(translate('Please enter a valid value'));
     return;
   }
 
@@ -103,15 +102,15 @@ async function saveMapping() {
       "idValue": mappingValue.value
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('External mapping created successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('External mapping created successfully'));
       await facilityStore.fetchFacilityMappings({ facilityId: currentFacility.value.facilityId });
       closeModal();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to create external mapping'));
+    commonUtil.showToast(translate('Failed to create external mapping'));
     logger.error('Failed to create external mapping', err);
   }
 
@@ -120,7 +119,7 @@ async function saveMapping() {
 
 async function updateMapping() {
   if (!mappingValue.value?.trim()) {
-    showToast(translate('Please enter a valid value'));
+    commonUtil.showToast(translate('Please enter a valid value'));
     return;
   }
 
@@ -134,15 +133,15 @@ async function updateMapping() {
       "idValue": mappingValue.value
     });
 
-    if (!hasError(resp)) {
-      showToast(translate('External mapping updated successfully'));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate('External mapping updated successfully'));
       await facilityStore.fetchFacilityMappings({ facilityId: currentFacility.value.facilityId });
       closeModal();
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate('Failed to update external mapping'));
+    commonUtil.showToast(translate('Failed to update external mapping'));
     logger.error('Failed to update external mapping', err);
   }
 

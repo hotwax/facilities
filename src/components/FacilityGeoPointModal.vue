@@ -58,9 +58,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
-import { translate } from '@hotwax/dxp-components'
-import { showToast } from "@/utils";
-import { hasError } from "@/adapter";
+import { translate, commonUtil } from "@common"
 import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
 import { FacilityService } from '@/services/FacilityService'
@@ -97,7 +95,7 @@ function validateZipCode(e: any) {
 
 async function generateLatLong() {
   if (!geoPoint.value.postalCode?.trim()) {
-    showToast(translate("Please fill in the required Zipcode"));
+    commonUtil.showToast(translate("Please fill in the required Zipcode"));
     return;
   }
   isGeneratingLatLong.value = true;
@@ -115,7 +113,7 @@ async function generateLatLong() {
   try {
     const resp = await UtilService.generateLatLong(payload);
 
-    if (!hasError(resp) && resp.data.response.docs.length > 0) {
+    if (!commonUtil.hasError(resp) && resp.data.response.docs.length > 0) {
       const result = resp.data.response.docs[0];
       geoPoint.value.latitude = result.latitude;
       geoPoint.value.longitude = result.longitude;
@@ -123,7 +121,7 @@ async function generateLatLong() {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
+    commonUtil.showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
     logger.error('Unable to find the latitude and longitude for the entered zip code.', err);
   }
   isGeneratingLatLong.value = false;
@@ -131,7 +129,7 @@ async function generateLatLong() {
 
 async function saveGeoPoint() {
   if (!geoPoint.value.latitude || !geoPoint.value.longitude) {
-    showToast("Please fill all the required fields");
+    commonUtil.showToast("Please fill all the required fields");
     return;
   }
   // Convert latitude and longitude to numeric form
@@ -147,15 +145,15 @@ async function saveGeoPoint() {
     // and the user can only update the latLon from here
     const resp = await FacilityService.updateFacilityPostalAddress({ ...geoPoint.value, postalCode: postalAddress.value.postalCode, facilityId: props.facilityId });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       geoPointsResult = geoPoint.value;
-      showToast(translate("Facility latitude and longitude updated successfully."));
+      commonUtil.showToast(translate("Facility latitude and longitude updated successfully."));
       await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
   } catch (err) {
-    showToast(translate("Failed to update facility latitude and longitude."));
+    commonUtil.showToast(translate("Failed to update facility latitude and longitude."));
     logger.error(err);
   }
   modalController.dismiss({ geoPoints: geoPointsResult });

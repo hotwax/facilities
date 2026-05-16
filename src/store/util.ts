@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { UtilService } from "@/services/UtilService";
-import { hasError } from "@/adapter";
+import { commonUtil } from "@common";
 import logger from "@/logger";
 
 export const useUtilStore = defineStore("util", {
@@ -44,7 +44,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchProductStores(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           productStores = resp.data.docs;
         } else {
           throw resp.data;
@@ -70,7 +70,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchFacilityTypes(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
             facilityType[type.facilityTypeId] = { description: type.description, parentTypeId: type.parentTypeId };
             return facilityType;
@@ -94,7 +94,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchFacilityGroupTypes(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           facilityGroupTypes = resp.data.docs;
         } else {
           throw resp.data;
@@ -120,7 +120,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchLocationTypes(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           locationTypes = resp.data.docs.reduce((locationType: any, type: any) => {
             locationType[type.enumId] = type.description;
             return locationType;
@@ -150,7 +150,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchPartyRoles(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           resp.data.docs.map((role: any) => {
             partyRoles[role.roleTypeId] = role.description;
           });
@@ -183,7 +183,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchExternalMappingTypes(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           externalMappingTypes = resp.data.docs.reduce((externalMappingType: any, type: any) => {
             externalMappingType[type.enumId] = type.description;
             return externalMappingType;
@@ -207,7 +207,7 @@ export const useUtilStore = defineStore("util", {
           noConditionFind: "Y"
         });
 
-        if (!hasError(resp) && resp.data.count) {
+        if (!commonUtil.hasError(resp) && resp.data.count) {
           calendars = resp.data.docs;
 
           resp = await UtilService.fetchCalendarWeekTimings({
@@ -217,7 +217,7 @@ export const useUtilStore = defineStore("util", {
             noConditionFind: "Y"
           });
 
-          if (!hasError(resp) && resp.data.count) {
+          if (!commonUtil.hasError(resp) && resp.data.count) {
             calendarWeekTimings = resp.data.docs;
             calendars = calendars.map((calendar: any) => ({
               ...calendar,
@@ -246,7 +246,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchCountries(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           countries = resp.data.docs;
           this.fetchStates({ geoId: payload.countryGeoId ? payload.countryGeoId : "USA" });
         } else {
@@ -275,7 +275,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchStates(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           states = resp.data.docs;
         } else {
           throw resp.data;
@@ -300,7 +300,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchShopifyShop(params);
-        if (!hasError(resp) && resp.data.count > 0) {
+        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           shopifyShops = resp.data.docs;
         } else {
           throw resp.data;
@@ -327,7 +327,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchInventoryGroups(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           inventoryGroups = resp.data.docs;
         } else {
           throw resp.data;
@@ -349,7 +349,7 @@ export const useUtilStore = defineStore("util", {
 
       try {
         const resp = await UtilService.fetchOrganizationPartyId(params);
-        if (!hasError(resp)) {
+        if (!commonUtil.hasError(resp)) {
           partyId = resp.data.docs[0]?.partyId;
         } else {
           throw resp.data;
@@ -372,6 +372,7 @@ export const useUtilStore = defineStore("util", {
     }
   },
   persist: {
-    paths: ["organizationPartyId"]
+    storage: localStorage,
+    pick: ["organizationPartyId"]
   }
 });

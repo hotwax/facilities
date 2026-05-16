@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { IonCheckbox, IonContent, IonItem, IonList, IonListHeader } from '@ionic/vue';
 import { computed } from "vue";
-import { translate } from "@hotwax/dxp-components";
+import { translate } from "@common";
 import { updateFacilityGroup } from "@/utils";
 import emitter from '@/event-bus'
 import { useUtilStore } from "@/store/util";

@@ -67,18 +67,16 @@ import {
   onIonViewWillEnter
 } from "@ionic/vue";
 import { ref, computed, reactive } from "vue";
-import { useRouter, useRoute } from 'vue-router'
 import { addOutline } from 'ionicons/icons';
-import { translate } from "@hotwax/dxp-components";
-import { generateInternalId, showToast } from "@/utils";
+import { commonUtil, translate } from "@common";
+import { generateInternalId } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
+import router from "@/router";
 
-const router = useRouter();
-const route = useRoute();
+const route = router.currentRoute.value
 const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
 
@@ -130,12 +128,12 @@ function setFacilityId(event: any) {
 
 async function createFacility() {
   if (!formData.facilityName?.trim()) {
-    showToast(translate('Facility name is required.'));
+    commonUtil.showToast(translate('Facility name is required.'));
     return;
   }
 
   if (formData.facilityId.length > 20) {
-    showToast(translate('Internal ID cannot be more than 20 characters.'));
+    commonUtil.showToast(translate('Internal ID cannot be more than 20 characters.'));
     return;
   }
 
@@ -151,20 +149,19 @@ async function createFacility() {
     };
 
     const resp = await FacilityService.createFacility(payload);
-    if (!hasError(resp)) {
-      const { facilityId } = resp.data;
-      showToast(translate("Facility created successfully."));
+    if (!commonUtil.hasError(resp)) {
+      commonUtil.showToast(translate("Facility created successfully."));
       facilityStore.updateCurrentFacility(payload);
-      router.replace(`/add-facility-address/${facilityId}`);
+      router.replace(`/add-facility-address/${resp.data.facilityId}`);
     } else {
       throw resp.data;
     }
   } catch (error: any) {
     logger.error(error);
     if (error?.response?.data?.error?.message) {
-      showToast(error.response.data.error.message);
+      commonUtil.showToast(error.response.data.error.message);
     } else {
-      showToast(translate('Failed to create facility.'));
+      commonUtil.showToast(translate('Failed to create facility.'));
     }
     return;
   }

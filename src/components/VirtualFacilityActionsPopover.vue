@@ -23,10 +23,8 @@ import {
   IonListHeader,
   popoverController
 } from "@ionic/vue";
-import { translate } from '@hotwax/dxp-components'
-import { showToast } from '@/utils';
+import { translate, commonUtil } from "@common"
 import { FacilityService } from "@/services/FacilityService";
-import { hasError } from "@/adapter";
 import logger from "@/logger";
 import { useFacilityStore } from "@/store/facility";
 import { computed } from "vue";
@@ -65,7 +63,7 @@ async function archiveVirtualFacility() {
   }
 
   if (!facilityGroupId) {
-    showToast(translate('Failed to archive parking.'));
+    commonUtil.showToast(translate('Failed to archive parking.'));
     return;
   }
 
@@ -75,17 +73,17 @@ async function archiveVirtualFacility() {
       facilityGroupId
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       const updatedVirtualFacilities = JSON.parse(JSON.stringify(virtualFacilities.value))
         .filter((facility: any) => facility.facilityId !== props.facility.facilityId);
       facilityStore.updateVirtualFacilities(updatedVirtualFacilities);
       await facilityStore.fetchArchivedFacilities();
-      showToast(translate("Parking archived successfully."));
+      commonUtil.showToast(translate("Parking archived successfully."));
     } else {
       throw resp.data;
     }
   } catch (error) {
-    showToast(translate('Failed to archive parking.'));
+    commonUtil.showToast(translate('Failed to archive parking.'));
     logger.error('Failed to archive parking.', error);
   }
 
@@ -121,14 +119,14 @@ async function createArchiveGroup() {
       facilityGroupTypeId: '', // TODO need to decide group type ID
     });
 
-    if (!hasError(resp)) {
+    if (!commonUtil.hasError(resp)) {
       createdFacilityGroupId = resp.data.facilityGroupId;
     } else {
       throw resp.data;
     }
 
   } catch (error) {
-    showToast(translate('Failed to archive parking.'));
+    commonUtil.showToast(translate('Failed to archive parking.'));
     logger.error('Failed to archive parking.', error);
   }
   return createdFacilityGroupId;
