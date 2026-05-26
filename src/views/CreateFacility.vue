@@ -148,7 +148,7 @@ async function createFacility() {
       ownerPartyId: organizationPartyId.value
     };
 
-    const resp = await FacilityService.createFacility(payload);
+    const resp = await useFacilityStore().createFacility(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate("Facility created successfully."));
       facilityStore.updateCurrentFacility(payload);
@@ -166,7 +166,7 @@ async function createFacility() {
     return;
   }
 
-  await FacilityService.createFacilityLocation({
+  await useFacilityStore().createFacilityLocation({
     facilityId: formData.facilityId,
     locationTypeEnumId: "FLT_PICKLOC",
     areaId: "TL",

@@ -235,7 +235,7 @@ async function fetchGroups() {
       viewSize,
       viewIndex
     };
-    await facilityStore.fetchFacilityGroups(payload);
+    await facilityStore.fetchFacilityGroupsByQuery(payload);
     viewIndex++;
   }
   while (isScrollable.value);

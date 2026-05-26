@@ -72,11 +72,11 @@ import {
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
 import { FacilityService } from '@/services/FacilityService'
-import { UtilService } from '@/services/UtilService'
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
 import { ref, computed, onMounted } from "vue";
 
 const props = defineProps(["shopifyFacilityMapping", "type"]);
@@ -158,19 +158,16 @@ async function updateMapping() {
 }
 
 async function fetchShopifyShops() {
+  const utilStore = useUtilStore();
   try {
-    const resp = await UtilService.fetchShopifyShops({
+    const resp = await utilStore.fetchShopifyShops({
       entityName: "ShopifyShop",
       fieldList: ['shopId', 'name'],
       noConditionFind: 'Y',
       viewSize: 100
     });
 
-    if (!commonUtil.hasError(resp)) {
-      shopifyShops.value = resp.data.docs;
-    } else {
-      throw resp.data;
-    }
+    shopifyShops.value = resp.docs;
   } catch (error) {
     commonUtil.showToast(translate('Failed to fetch shopify shops.'));
     logger.error('Failed to fetch shopify shops.', error);

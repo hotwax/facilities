@@ -68,7 +68,7 @@ async function archiveVirtualFacility() {
   }
 
   try {
-    const resp = await FacilityService.addFacilityToGroup({
+    const resp = await useFacilityStore().addFacilityToGroup({
       facilityId: props.facility.facilityId,
       facilityGroupId
     });

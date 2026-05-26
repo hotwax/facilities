@@ -620,7 +620,6 @@ import FacilityMappingModal from '@/components/FacilityMappingModal.vue'
 import { copyToClipboard } from '@/utils';
 import OperatingHoursPopover from '@/components/OperatingHoursPopover.vue'
 import GeoPointPopover from '@/components/GeoPointPopover.vue'
-import { UtilService } from '@/services/UtilService';
 import FacilityLoginActionPopover from '@/components/FacilityLoginActionPopover.vue'
 import CreateFacilityLoginModal from '@/components/CreateFacilityLoginModal.vue'
 import AddFacilityGroupModal from '@/components/AddFacilityGroupModal.vue'
@@ -660,7 +659,7 @@ const partyRoles = computed(() => utilStore.getPartyRoles);
 const postalAddress = computed(() => facilityStore.getPostalAddress);
 const shopifyShopIdForProductStore = computed(() => (id: string) => utilStore.getShopifyShopIdForProductStore(id));
 const facilityTypes = computed(() => utilStore.getFacilityTypes);
-const baseUrl = computed(() => userStore.getBaseUrl);
+const baseUrl = computed(() => commonUtil.getOmsURL());
 const facilityGroupTypes = computed(() => utilStore.getFacilityGroupTypes);
 const inventoryGroups = computed(() => utilStore.getInventoryGroups);
 const contactDetails = computed(() => facilityStore.getTelecomAndEmailAddress);
@@ -676,14 +675,14 @@ onIonViewWillEnter(async () => {
     utilStore.fetchPartyRoles(),
     utilStore.fetchFacilityTypes({
       parentTypeId: 'VIRTUAL_FACILITY',
-      parentTypeId_op: 'notEqual',
+      parentTypeId_not: 'Y',
       facilityTypeId: 'VIRTUAL_FACILITY',
-      facilityTypeId_op: 'notEqual'
+      facilityTypeId_not: 'Y'
     })
   ]);
   await Promise.all([
     facilityStore.fetchFacilityLocations({ facilityId: props.facilityId }),
-    facilityStore.getFacilityParties({ facilityId: props.facilityId }),
+    facilityStore.fetchFacilityParties({ facilityId: props.facilityId }),
     facilityStore.fetchFacilityMappings({ facilityId: props.facilityId, facilityIdenTypeIds: Object.keys(externalMappingTypes.value) }),
     facilityStore.fetchShopifyFacilityMappings({ facilityId: props.facilityId }),
     facilityStore.getFacilityProductStores({ facilityId: props.facilityId }),
@@ -1139,7 +1138,7 @@ async function updateFulfillmentSetting(event: any, facilityGroupId: string) {
   try {
     let resp;
     if (isChecked) {
-      resp = await FacilityService.addFacilityToGroup({
+      resp = await useFacilityStore().addFacilityToGroup({
         "facilityId": current.value.facilityId,
         "facilityGroupId": facilityGroupId
       });
@@ -1174,7 +1173,7 @@ async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) 
     let resp;
     let successMessage;
     if (isChecked) {
-      resp = await FacilityService.addFacilityToGroup({
+      resp = await useFacilityStore().addFacilityToGroup({
         "facilityId": current.value.facilityId,
         "facilityGroupId": facilityGroup.facilityGroupId
       });
@@ -1367,14 +1366,10 @@ async function fetchPostalCodeByGeoPoints() {
   };
 
   try {
-    const resp = await UtilService.generateLatLong(payload);
-    if (!commonUtil.hasError(resp)) {
-      const pCode = postalAddress.value.postalCode;
-      const fetchedPostcode = resp.data.response.docs[0].postcode;
-      isRegenerationRequired.value = !(pCode.startsWith('0') ? pCode.substring(1) === fetchedPostcode || pCode === fetchedPostcode : pCode === fetchedPostcode);
-    } else {
-      throw resp.data;
-    }
+    const resp = await utilStore.generateLatLong(payload);
+    const pCode = postalAddress.value.postalCode;
+    const fetchedPostcode = resp.response.docs[0].postcode;
+    isRegenerationRequired.value = !(pCode.startsWith('0') ? pCode.substring(1) === fetchedPostcode || pCode === fetchedPostcode : pCode === fetchedPostcode);
   } catch (err) {
     logger.error(err);
   }

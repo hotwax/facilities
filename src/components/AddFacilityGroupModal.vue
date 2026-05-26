@@ -140,7 +140,7 @@ async function updateGroups() {
 
 async function addFacilityToGroup(facilityGroupId: string) {
   try {
-    const resp = await FacilityService.addFacilityToGroup({
+    const resp = await useFacilityStore().addFacilityToGroup({
       "facilityId": current.value.facilityId,
       "facilityGroupId": facilityGroupId
     });

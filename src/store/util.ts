@@ -1,7 +1,5 @@
 import { defineStore } from "pinia";
-import { UtilService } from "@/services/UtilService";
-import { commonUtil } from "@common";
-import logger from "@/logger";
+import { commonUtil, api, logger } from "@common";
 
 export const useUtilStore = defineStore("util", {
   state: () => ({
@@ -22,30 +20,29 @@ export const useUtilStore = defineStore("util", {
     getCalendars: (state) => state.calendars,
     getPartyRoles: (state) => state.partyRoles,
     getProductStores: (state) => state.productStores,
+    getProductStore: (state) => (productStoreId: any) => { return state.productStores.find((productStore: any) => productStore.productStoreId === productStoreId) },
     getFacilityTypes: (state) => state.facilityTypes,
     getFacilityGroupTypes: (state) => state.facilityGroupTypes,
     getLocationTypes: (state) => state.locationTypes,
     getExternalMappingTypes: (state) => state.externalMappingTypes,
     getCountries: (state) => state.countries,
     getStates: (state) => state.states,
-    getShopifyShopForProductStore: (state) => state.shopifyShopForProductStore,
+    getShopifyShopIdForProductStore: (state) => (productStoreId: any) => state.shopifyShopForProductStore[productStoreId] ? state.shopifyShopForProductStore[productStoreId] : '',
     getInventoryGroups: (state) => state.inventoryGroups,
     getOrganizationPartyId: (state) => state.organizationPartyId,
   },
   actions: {
     async fetchProductStores() {
       let productStores = [];
-      const params = {
-        viewSize: 100,
-        noConditionFind: "Y",
-        entityName: "ProductStore",
-        fieldList: ["productStoreId", "storeName"]
-      };
 
       try {
-        const resp = await UtilService.fetchProductStores(params);
-        if (!commonUtil.hasError(resp)) {
-          productStores = resp.data.docs;
+        const resp = await api({
+          url: "admin/productStores",
+          method: "get",
+          params: { pageNoLimit: true }
+        });
+        if (resp.data?.length > 0) {
+          productStores = resp.data;
         } else {
           throw resp.data;
         }
@@ -61,17 +58,23 @@ export const useUtilStore = defineStore("util", {
 
       let facilityTypes = {};
       const params = {
-        inputFields: { ...payload },
-        viewSize: 100,
-        noConditionFind: "Y",
-        entityName: "FacilityType",
-        fieldList: ["facilityTypeId", "description", "parentTypeId"]
+        customParametersMap: {
+          ...payload,
+          pageNoLimit: true,
+          fieldsToSelect: "facilityTypeId,description,parentTypeId"
+        },
+        dataDocumentId: 'FACILITY_TYPE'
       } as any;
 
       try {
-        const resp = await UtilService.fetchFacilityTypes(params);
-        if (!commonUtil.hasError(resp)) {
-          facilityTypes = resp.data.docs.reduce((facilityType: any, type: any) => {
+        const resp = await api({
+          url: "oms/dataDocumentView",
+          method: "POST",
+          data: params,
+          cache: true,
+        });
+        if (resp.data && resp.data.entityValueList?.length > 0) {
+          facilityTypes = resp.data.entityValueList.reduce((facilityType: any, type: any) => {
             facilityType[type.facilityTypeId] = { description: type.description, parentTypeId: type.parentTypeId };
             return facilityType;
           }, {});
@@ -85,17 +88,14 @@ export const useUtilStore = defineStore("util", {
     },
     async fetchFacilityGroupTypes() {
       let facilityGroupTypes = [];
-      const params = {
-        viewSize: 100,
-        noConditionFind: "Y",
-        entityName: "FacilityGroupType",
-        fieldList: ["facilityGroupTypeId", "description"]
-      } as any;
-
       try {
-        const resp = await UtilService.fetchFacilityGroupTypes(params);
-        if (!commonUtil.hasError(resp)) {
-          facilityGroupTypes = resp.data.docs;
+        const resp = await api({
+          url: "oms/facilityGroups/types",
+          method: "get",
+          params: { pageNoLimit: true },
+        });
+        if (resp.data && resp.data.length > 0) {
+          facilityGroupTypes = resp.data;
         } else {
           throw resp.data;
         }
@@ -111,17 +111,18 @@ export const useUtilStore = defineStore("util", {
 
       let locationTypes = {};
       const params = {
-        inputFields: { enumTypeId: "FACLOC_TYPE" },
-        viewSize: 100,
-        noConditionFind: "Y",
-        entityName: "Enumeration",
-        fieldList: ["enumId", "description"]
+        enumTypeId: "FACLOC_TYPE",
+        pageNoLimit: true,
       } as any;
 
       try {
-        const resp = await UtilService.fetchLocationTypes(params);
-        if (!commonUtil.hasError(resp)) {
-          locationTypes = resp.data.docs.reduce((locationType: any, type: any) => {
+        const resp = await api({
+          url: "admin/enums",
+          method: "get",
+          params
+        });
+        if (resp.data && resp.data.length) {
+          locationTypes = resp.data.reduce((locationType: any, type: any) => {
             locationType[type.enumId] = type.description;
             return locationType;
           }, {});
@@ -140,18 +141,20 @@ export const useUtilStore = defineStore("util", {
 
       const partyRoles = {} as any;
       const params = {
-        inputFields: { roleTypeGroupId: "FACILITY_PARTY_ROLE" },
-        viewSize: 100,
-        entityName: "RoleTypeGroupMemberAndRoleType",
-        orderBy: "sequenceNum",
-        filterByDate: "Y",
-        fieldList: ["roleTypeId", "description"]
+        dataDocumentId: 'ROLE_TYPE_GROUP_MEMBBR_AND_ROLE_TYPE',
+        customParamtersMap: { roleTypeGroupId: "FACILITY_PARTY_ROLE", pageNoLimit: true, orderByField: "sequenceNum" },
+        filterByDate: true,
+        fieldsToSelect: "roleTypeId,description"
       };
 
       try {
-        const resp = await UtilService.fetchPartyRoles(params);
-        if (!commonUtil.hasError(resp)) {
-          resp.data.docs.map((role: any) => {
+        const resp = await api({
+          url: 'oms/dataDocumentView',
+          method: 'POST',
+          data: params
+        });
+        if (resp.data && resp.data.entityValueList?.length > 0) {
+          resp.data.entityValueList.map((role: any) => {
             partyRoles[role.roleTypeId] = role.description;
           });
           partyRoles[""] = "none";
@@ -170,21 +173,20 @@ export const useUtilStore = defineStore("util", {
 
       let externalMappingTypes = {};
       const params = {
-        inputFields: {
-          enumTypeId: "FACILITY_IDENTITY",
-          enumId: "SHOPIFY_FAC_ID",
-          enumId_op: "notEqual"
-        },
-        viewSize: 100,
-        noConditionFind: "Y",
-        entityName: "Enumeration",
-        fieldList: ["enumId", "description"]
+        enumTypeId: "FACILITY_IDENTITY",
+        enumId: "SHOPIFY_FAC_ID",
+        enumId_not: "Y",
+        pageNoLimit: true
       } as any;
 
       try {
-        const resp = await UtilService.fetchExternalMappingTypes(params);
-        if (!commonUtil.hasError(resp)) {
-          externalMappingTypes = resp.data.docs.reduce((externalMappingType: any, type: any) => {
+        const resp = await api({
+          url: "admin/enums",
+          method: "get",
+          params,
+        });
+        if (resp.data && resp.data.length) {
+          externalMappingTypes = resp.data.reduce((externalMappingType: any, type: any) => {
             externalMappingType[type.enumId] = type.description;
             return externalMappingType;
           }, {});
@@ -200,21 +202,31 @@ export const useUtilStore = defineStore("util", {
       let calendars = [] as any;
       let calendarWeekTimings = [] as any;
       try {
-        let resp = await UtilService.fetchCalendars({
-          entityName: "TechDataCalendar",
-          fieldList: ["calendarId", "calendarWeekId", "description"],
-          viewSize: 100,
-          noConditionFind: "Y"
+        let resp = await api({
+          url: "performFind",
+          method: "post",
+          data: {
+            entityName: "TechDataCalendar",
+            fieldList: ["calendarId", "calendarWeekId", "description"],
+            viewSize: 100,
+            noConditionFind: "Y"
+          },
+          baseURL: commonUtil.getOmsURL()
         });
 
         if (!commonUtil.hasError(resp) && resp.data.count) {
           calendars = resp.data.docs;
 
-          resp = await UtilService.fetchCalendarWeekTimings({
-            entityName: "TechDataCalendarWeek",
-            fieldList: ["calendarWeekId", "mondayStartTime", "mondayCapacity", "tuesdayStartTime", "tuesdayCapacity", "wednesdayStartTime", "wednesdayCapacity", "thursdayStartTime", "thursdayCapacity", "fridayStartTime", "fridayCapacity", "saturdayStartTime", "saturdayCapacity", "sundayStartTime", "sundayCapacity"],
-            viewSize: 100,
-            noConditionFind: "Y"
+          resp = await api({
+            url: "performFind",
+            method: "post",
+            data: {
+              entityName: "TechDataCalendarWeek",
+              fieldList: ["calendarWeekId", "mondayStartTime", "mondayCapacity", "tuesdayStartTime", "tuesdayCapacity", "wednesdayStartTime", "wednesdayCapacity", "thursdayStartTime", "thursdayCapacity", "fridayStartTime", "fridayCapacity", "saturdayStartTime", "saturdayCapacity", "sundayStartTime", "sundayCapacity"],
+              viewSize: 100,
+              noConditionFind: "Y"
+            },
+            baseURL: commonUtil.getOmsURL()
           });
 
           if (!commonUtil.hasError(resp) && resp.data.count) {
@@ -237,17 +249,19 @@ export const useUtilStore = defineStore("util", {
     async fetchCountries(payload: any = {}) {
       let countries = [] as any;
       const params = {
-        inputFields: { geoIdTo: "DBIC" },
-        entityName: "GeoAssocAndGeoFrom",
-        fieldList: ["geoName", "geoId", "geoCode"],
-        noConditionFind: "Y",
-        viewSize: 250
+        toGeoId: "DBIC",
+        pageNoLimit: true
       } as any;
 
       try {
-        const resp = await UtilService.fetchCountries(params);
-        if (!commonUtil.hasError(resp)) {
-          countries = resp.data.docs;
+        const resp = await api({
+          url: "admin/geos/assocs/assocFrom",
+          method: "get",
+          params,
+          cache: true
+        });
+        if (resp.data && resp.data.length > 0) {
+          countries = resp.data;
           this.fetchStates({ geoId: payload.countryGeoId ? payload.countryGeoId : "USA" });
         } else {
           throw resp.data;
@@ -263,20 +277,20 @@ export const useUtilStore = defineStore("util", {
       }
       let states = [] as any;
       const params = {
-        inputFields: {
-          geoIdFrom: payload.geoId,
-          geoAssocTypeId: "REGIONS"
-        },
-        entityName: "GeoAssocAndGeoTo",
-        fieldList: ["geoName", "geoId", "wellKnownText"],
-        noConditionFind: "Y",
-        viewSize: 250
+        geoId: payload.geoId,
+        geoAssocTypeEnumId: "GAT_REGIONS",
+        pageNoLimit: true
       } as any;
 
       try {
-        const resp = await UtilService.fetchStates(params);
-        if (!commonUtil.hasError(resp)) {
-          states = resp.data.docs;
+        const resp = await api({
+          url: "admin/geos/assocs/assocTo",
+          method: "get",
+          params,
+          cache: true
+        });
+        if (resp.data && resp.data.length > 0) {
+          states = resp.data;
         } else {
           throw resp.data;
         }
@@ -299,7 +313,12 @@ export const useUtilStore = defineStore("util", {
       };
 
       try {
-        const resp = await UtilService.fetchShopifyShop(params);
+        const resp = await api({
+          url: "performFind",
+          method: "POST",
+          data: params,
+          baseURL: commonUtil.getOmsURL()
+        });
         if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           shopifyShops = resp.data.docs;
         } else {
@@ -317,18 +336,19 @@ export const useUtilStore = defineStore("util", {
     async fetchInventoryGroups() {
       let inventoryGroups = [];
       const params = {
-        entityName: "FacilityGroup",
-        inputFields: { facilityGroupTypeId: "CHANNEL_FAC_GROUP" },
-        noConditionFind: "Y",
-        orderBy: "facilityGroupName ASC",
-        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-        viewSize: 50
+        facilityGroupTypeId: "CHANNEL_FAC_GROUP",
+        orderByField: "facilityGroupName ASC",
+        pageNoLimit: true
       };
 
       try {
-        const resp = await UtilService.fetchInventoryGroups(params);
-        if (!commonUtil.hasError(resp)) {
-          inventoryGroups = resp.data.docs;
+        const resp = await api({
+          url: "admin/facilityGroups",
+          method: "get",
+          params,
+        });
+        if (resp.data?.length > 0) {
+          inventoryGroups = resp.data;
         } else {
           throw resp.data;
         }
@@ -348,7 +368,12 @@ export const useUtilStore = defineStore("util", {
       };
 
       try {
-        const resp = await UtilService.fetchOrganizationPartyId(params);
+        const resp = await api({
+          url: "performFind",
+          method: "POST",
+          data: params,
+          baseURL: commonUtil.getOmsURL()
+        });
         if (!commonUtil.hasError(resp)) {
           partyId = resp.data.docs[0]?.partyId;
         } else {
@@ -358,6 +383,44 @@ export const useUtilStore = defineStore("util", {
         logger.error(error);
       }
       this.organizationPartyId = partyId;
+    },
+    async generateLatLong(payload: any) {
+      try {
+        const resp = await api({
+          url: "postcodeLookup",
+          method: "POST",
+          data: payload,
+          cache: true,
+          baseURL: commonUtil.getOmsURL()
+        });
+        if (!commonUtil.hasError(resp)) {
+          return Promise.resolve(resp.data);
+        } else {
+          throw resp.data;
+        }
+      } catch (error) {
+        logger.error(error);
+        return Promise.reject(error);
+      }
+    },
+    async fetchShopifyShops(payload: any) {
+      try {
+        const resp = await api({
+          url: "performFind",
+          method: "POST",
+          data: payload,
+          cache: true,
+          baseURL: commonUtil.getOmsURL()
+        });
+        if (!commonUtil.hasError(resp)) {
+          return Promise.resolve(resp.data.docs);
+        } else {
+          throw resp.data;
+        }
+      } catch (error) {
+        logger.error(error);
+        return Promise.reject(error);
+      }
     },
     clearUtilState() {
       this.productStores = [];
@@ -371,8 +434,5 @@ export const useUtilStore = defineStore("util", {
       this.organizationPartyId = "";
     }
   },
-  persist: {
-    storage: localStorage,
-    pick: ["organizationPartyId"]
-  }
+  persist: true
 });

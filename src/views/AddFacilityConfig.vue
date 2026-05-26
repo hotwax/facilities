@@ -147,16 +147,17 @@ import { commonUtil, translate } from "@common";
 import { isValidPassword, isValidEmail } from "@/utils";
 import logger from "@/logger";
 import { FacilityService } from "@/services/FacilityService";
-import { UserService } from "@/services/UserService"
 import SelectProductStoreModal from '@/components/SelectProductStoreModal.vue';
 import { DateTime } from "luxon";
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
+import { useUserStore } from '@/store/user';
 import router from "@/router";
 
 const props = defineProps(['facilityId']);
 const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
+const userStore = useUserStore();
 
 const fulfillmentSettings = reactive({
   PICKUP: false,
@@ -183,21 +184,21 @@ onIonViewWillEnter(async () => {
 async function saveFulfillmentSettings() {
   const promises = [];
   if (fulfillmentSettings.PICKUP) {
-    promises.push(FacilityService.addFacilityToGroup({
+    promises.push(useFacilityStore().addFacilityToGroup({
       "facilityId": props.facilityId,
       "facilityGroupId": 'PICKUP'
     }));
   }
 
   if (fulfillmentSettings.FAC_GRP) {
-    promises.push(FacilityService.addFacilityToGroup({
+    promises.push(useFacilityStore().addFacilityToGroup({
       "facilityId": props.facilityId,
       "facilityGroupId": 'FAC_GRP'
     }));
   }
 
   if (fulfillmentSettings.OMS_FULFILLMENT) {
-    promises.push(FacilityService.addFacilityToGroup({
+    promises.push(useFacilityStore().addFacilityToGroup({
       "facilityId": props.facilityId,
       "facilityGroupId": 'OMS_FULFILLMENT'
     }));
@@ -232,7 +233,7 @@ async function saveStoreConfig() {
       commonUtil.showToast(translate('Please fill all the required fields'));
       return;
     }
-    if (username.value && await UserService.isUserLoginIdExists(username.value)) {
+    if (username.value && await userStore.isUserLoginIdExists(username.value)) {
       commonUtil.showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
       return;
     }

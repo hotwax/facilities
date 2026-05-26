@@ -7,7 +7,7 @@ import { useUtilStore } from '@/store/util';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityPostalAddress",
+    url: "admin/facilities/contacts/address",
     method: "post",
     data: payload
   })
@@ -242,14 +242,6 @@ const fetchFacilityLocations = async(payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "POST",
-    data: payload
-  })
-}
-
-const addFacilityToGroup = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/addFacilityToGroup",
-    method: "post",
     data: payload
   })
 }
@@ -773,25 +765,9 @@ const fetchAssociatedProductStoresToGroup = async (payload: any): Promise<any> =
   })
 }
 
-const createFacilityTelecomNumber = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityTelecomNumber",
-    method: "post",
-    data: payload
-  })
-}
-
 const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/updateFacilityTelecomNumber",
-    method: "post",
-    data: payload
-  })
-}
-
-const createFacilityEmailAddress = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityEmailAddress",
     method: "post",
     data: payload
   })
@@ -863,7 +839,6 @@ const deleteFacilityContactMech = async (payload: any): Promise<any> => {
 
 export const FacilityService = {
   addFacilitiesToGroup,
-  addFacilityToGroup,
   addPartyToFacility,
   associateCalendarToFacility,
   createFacilityGroup,
@@ -871,11 +846,9 @@ export const FacilityService = {
   createFacilityLocation,
   createVirtualFacility,
   createEnumeration,
-  createFacilityEmailAddress,
   createFacilityCalendar,
   createFacilityIdentification,
   createFacilityPostalAddress,
-  createFacilityTelecomNumber,
   createProductStoreFacility,
   createProductStoreFacilityGroup,
   createShopifyShopLocation,

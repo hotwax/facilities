@@ -31,15 +31,16 @@ import {
 import { removeCircleOutline, mailOutline, keyOutline } from "ionicons/icons";
 import { translate, commonUtil, cookieHelper } from "@common";
 import { FacilityService } from "@/services/FacilityService";
-import { UserService } from "@/services/UserService"
 import { DateTime } from "luxon";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import router from "@/router";
 import { useFacilityStore } from "@/store/facility";
+import { useUserStore } from "@/store/user";
 
 const props = defineProps(['currentFacility', 'currentFacilityUser', "facilityTypeDesc"]);
 const facilityStore = useFacilityStore();
+const userStore = useUserStore();
 
 async function viewDetails() {
   popoverController.dismiss();
@@ -49,7 +50,7 @@ async function viewDetails() {
 
 async function sendResetPasswordEmail() {
   try {
-    const resp = await UserService.sendResetPasswordEmail({
+    const resp = await userStore.sendResetPasswordEmail({
       emailAddress: props.currentFacilityUser.infoString,
       userName: props.currentFacilityUser.userLoginId
     });
@@ -129,7 +130,7 @@ async function unlinkFacilityLogin(data: any) {
     //Blocking user will remove all the roles from facility in which the user is associated, also block the userlogin.
     if (data === 'BLOCK') {
       await removePartyFromFacilityCompletely({ facilityId: props.currentFacility.facilityId, partyId: props.currentFacilityUser.partyId });
-      const resp = await UserService.updateUserLoginStatus({
+      const resp = await userStore.updateUserLoginStatus({
         enabled: 'N',
         partyId: props.currentFacilityUser.partyId,
         userLoginId: props.currentFacilityUser.userLoginId

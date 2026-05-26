@@ -44,7 +44,7 @@ const updateFacilityGroup = async (currentFacility: any, facilityGroup: any, isC
   try {
     let resp, successMessage;
     if(isChecked) {
-      resp = await FacilityService.addFacilityToGroup({
+      resp = await useFacilityStore().addFacilityToGroup({
         "facilityId": currentFacility.facilityId,
         "facilityGroupId": facilityGroup.facilityGroupId
       });

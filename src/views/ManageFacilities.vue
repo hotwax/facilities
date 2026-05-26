@@ -99,6 +99,7 @@ import logger from '@/logger';
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
 import router from '@/router';
+import { useFacilityStore } from '@/store';
 
 const props = defineProps(['facilityGroupId']);
 
@@ -160,20 +161,11 @@ function getFilteredFacilities() {
 }
 
 async function fetchFacilityGroup() {
-  const params = {
-    "inputFields": {
-      "facilityGroupId": props.facilityGroupId
-    },
-    entityName: "FacilityGroup",
-    noConditionFind: 'Y',
-    fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-    viewSize: 1
-  };
 
   try {
-    const resp = await FacilityService.fetchFacilityGroups(params);
+    const resp = await useFacilityStore().fetchFacilityGroups({ facilityGroupId: props.facilityGroupId });
 
-      if (!commonUtil.hasError(resp) && resp.data.count) {
+      if (resp.data?.length > 0) {
       currentFacilityGroup.value = resp.data.docs[0];
     } else {
       throw resp.data;

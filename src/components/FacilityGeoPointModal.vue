@@ -59,11 +59,11 @@ import {
 } from "@ionic/vue";
 import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
 import { translate, commonUtil } from "@common"
-import { UtilService } from "@/services/UtilService";
 import logger from "@/logger";
 import { FacilityService } from '@/services/FacilityService'
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
 import { ref, computed, onMounted } from "vue";
 
 const props = defineProps(['facilityId']);
@@ -99,6 +99,7 @@ async function generateLatLong() {
     return;
   }
   isGeneratingLatLong.value = true;
+  const utilStore = useUtilStore();
   const postalCode = geoPoint.value.postalCode;
   const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
 
@@ -111,14 +112,14 @@ async function generateLatLong() {
   };
 
   try {
-    const resp = await UtilService.generateLatLong(payload);
+    const resp = await utilStore.generateLatLong(payload);
 
-    if (!commonUtil.hasError(resp) && resp.data.response.docs.length > 0) {
-      const result = resp.data.response.docs[0];
+    if (resp.response.docs.length > 0) {
+      const result = resp.response.docs[0];
       geoPoint.value.latitude = result.latitude;
       geoPoint.value.longitude = result.longitude;
     } else {
-      throw resp.data;
+      throw resp;
     }
   } catch (err) {
     commonUtil.showToast(translate("Unable to find the latitude and longitude for the entered zip code."));

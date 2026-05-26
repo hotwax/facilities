@@ -64,13 +64,14 @@ import {
 import { translate, commonUtil } from "@common"
 import { isValidEmail, isValidPassword } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
-import { UserService } from "@/services/UserService";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
+import { useUserStore } from "@/store/user";
 import { ref, onMounted } from "vue";
 
 const props = defineProps(["currentFacility", "facilityTypeDesc"]);
 const facilityStore = useFacilityStore();
+const userStore = useUserStore();
 
 const username = ref(props.currentFacility?.facilityId || '');
 const password = ref('');
@@ -85,7 +86,7 @@ async function createFacilityLogin() {
   if (!username.value) {
     commonUtil.showToast(translate('Username is required.'));
     return;
-  } else if (await UserService.isUserLoginIdExists(username.value)) {
+  } else if (await userStore.isUserLoginIdExists(username.value)) {
     commonUtil.showToast(translate('Could not create login user: user with ID already exists.', { userLoginId: username.value }));
     return;
   }

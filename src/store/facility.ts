@@ -1,10 +1,11 @@
 import { defineStore } from "pinia";
 import emitter from "@/event-bus";
-import { FacilityService } from "@/services/FacilityService";
-import { UserService } from "@/services/UserService";
-import { commonUtil } from "@common";
+import { api, client, commonUtil } from "@common";
 import logger from "@/logger";
 import { useUtilStore } from "./util";
+import { useUserStore } from "./user";
+import { DateTime } from 'luxon';
+import { prepareOrderQuery } from '@/utils/solrHelper';
 
 export const useFacilityStore = defineStore("facility", {
   state: () => ({
@@ -50,6 +51,60 @@ export const useFacilityStore = defineStore("facility", {
     getTelecomAndEmailAddress: (state) => state.current?.contactDetails,
   },
   actions: {
+    async createFacility(payload: any) {
+      return api({
+        url: "admin/facilities",
+        method: "post",
+        data: payload
+      })
+    },
+    async createFacilityLocation(payload: any) {
+      return api({
+        url: `oms/facilities/${payload.facilityId}/locations`,
+        method: "post",
+        data: payload
+      });
+    },
+    async createFacilityPostalAddress(payload: any) {
+      return api({
+        url: `oms/facilityContactMechs/facilityAddress`,
+        method: "post",
+        data: {
+          ...payload,
+          facilityId: payload.facilityId,
+          contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+        }
+      })
+    },
+    async fetchFacilityGroups(params: any) {
+      return api({
+        url: 'admin/facilityGroups',
+        method: 'get',
+        params: params
+      });
+    },
+
+    async createFacilityEmailAddress(payload: any) {
+      return api({
+        url: `oms/facilityContactMechs/facilityEmail`,
+        method: "post",
+        data: payload
+      })
+    },
+    async createFacilityTelecomNumber(payload: any) {
+      return api({
+        url: `oms/facilityContactMechs/facilityPhone`,
+        method: "post",
+        data: payload
+      })
+    },
+    async addFacilityToGroup(payload: any) {
+      return api({
+        url: `oms/facilities/${payload.facilityId}/groups`,
+        method: "post",
+        data: payload
+      })
+    },
     async fetchFacilitiesAdditionalInformation(payload = { viewIndex: 0 }) {
       const cachedFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
       let stateFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
@@ -61,10 +116,65 @@ export const useFacilityStore = defineStore("facility", {
 
       stateFacilities = stateFacilities.filter((facility: any) => !facilityIds.includes(facility.facilityId));
 
-      const [facilitiesGroupInformation, facilitiesOrderCount] = await Promise.all([
-        FacilityService.fetchFacilityGroupInformation(facilityIds),
-        FacilityService.fetchFacilitiesOrderCount(facilityIds)
-      ]);
+      let facilitiesGroupInformation = {} as any;
+      let facilitiesOrderCount = {} as any;
+
+      try {
+        // Inlining fetchFacilityGroupInformation logic
+        let groupResp: any, groupViewIndex = 0;
+        do {
+          groupResp = await api({
+            url: "oms/dataDocumentView",
+            method: "post",
+            data: {
+              dataDocumentId: "FacilityGroupAndMember",
+              customParametersMap: {
+                facilityId: facilityIds,
+                facilityId_op: "in",
+                fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
+                distinct: true,
+                filterByDate: true,
+                pageSize: 250,
+                pageIndex: groupViewIndex
+              }
+            }
+          });
+
+          if (groupResp.data && groupResp.data.entityValueList.length > 0) {
+            const newInformation = groupResp.data.entityValueList.reduce((acc: any, item: any) => {
+              if (acc[item.facilityId]) {
+                acc[item.facilityId].push(item);
+              } else {
+                acc[item.facilityId] = [item];
+              }
+              return acc;
+            }, {});
+            facilitiesGroupInformation = { ...facilitiesGroupInformation, ...newInformation };
+          }
+          groupViewIndex++;
+        } while (groupResp.data.entityValueList?.length >= 250);
+
+        // Inlining fetchFacilitiesOrderCount logic
+        const orderCountResp: any = await api({
+          url: "admin/facilities/orderCount",
+          method: "get",
+          params: {
+            facilityId: facilityIds,
+            facilityId_op: "in",
+            entryDate: DateTime.now().toFormat('yyyy-MM-dd'),
+            pageSize: facilityIds.length
+          }
+        });
+
+        if (orderCountResp.data && orderCountResp.data.length > 0) {
+          facilitiesOrderCount = orderCountResp.data.reduce((acc: any, item: any) => {
+            acc[item.facilityId] = item.lastOrderCount;
+            return acc;
+          }, {});
+        }
+      } catch (err) {
+        logger.error(err);
+      }
 
       facilities.map((facility: any) => {
         const fulfillmentOrderLimit = facility.maximumOrderLimit;
@@ -91,12 +201,12 @@ export const useFacilityStore = defineStore("facility", {
       this.facilities = { list: stateFacilities.concat(facilities), total };
     },
     async fetchFacilities(payload: any) {
-      if (payload.viewIndex === 0) emitter.emit("presentLoader");
+      if (payload.pageIndex === 0) emitter.emit("presentLoader");
       const filters = {
         "parentFacilityTypeId": "VIRTUAL_FACILITY",
-        "parentFacilityTypeId_op": "notEqual",
+        "parentFacilityTypeId_not": "Y",
         "facilityTypeId": "VIRTUAL_FACILITY",
-        "facilityTypeId_op": "notEqual",
+        "facilityTypeId_not": "Y",
       } as any;
 
       if (this.facilityQuery.productStoreId) {
@@ -110,34 +220,17 @@ export const useFacilityStore = defineStore("facility", {
       }
 
       if (this.facilityQuery.queryString) {
-        filters["facilityId_value"] = this.facilityQuery.queryString;
-        filters["facilityId_op"] = "contains";
-        filters["facilityId_ic"] = "Y";
-        filters["facilityId_grp"] = "1";
-        filters["facilityName_value"] = this.facilityQuery.queryString;
-        filters["facilityName_op"] = "contains";
-        filters["facilityName_ic"] = "Y";
-        filters["facilityName_grp"] = "1";
-        filters["grp_op_1"] = "OR";
+        filters["keyword"] = this.facilityQuery.queryString;
       }
 
       if (this.facilityQuery.facilityGroupId) {
         filters["facilityGroupId"] = this.facilityQuery.facilityGroupId;
         filters["facilityGroupId_op"] = "equals";
-        filters["filterByDate"] = "Y";
       }
 
       const params = {
-        "inputFields": {
-          "grp_op": "AND",
-          ...filters
-        },
-        "entityName": "FacilityView",
-        "noConditionFind": "Y",
-        "distinct": "Y",
-        "fromDateName": "facilityGroupFromDate",
-        "thruDateName": "facilityGroupThruDate",
-        "fieldList": ["facilityId", "facilityName", "facilityTypeId", "maximumOrderLimit", "defaultDaysToShip", "externalId", "primaryFacilityGroupId", "parentFacilityTypeId", "closedDate", "facilityTimeZone"],
+        ...filters,
+        fieldsToSelect: "facilityId,facilityName,facilityTypeId,maximumOrderLimit,defaultDaysToShip,externalId,primaryFacilityGroupId,parentFacilityTypeId,closedDate,facilityTimeZone",
         ...payload
       };
 
@@ -145,19 +238,23 @@ export const useFacilityStore = defineStore("facility", {
       let total = 0;
 
       try {
-        const resp = await FacilityService.fetchFacilities(params);
+        const resp = await api({
+          url: "oms/facilities/facilityView",
+          method: "get",
+          params
+        });
         if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          if (payload.viewIndex && payload.viewIndex > 0) {
-            facilities = facilities.concat(resp.data.docs);
+          if (payload.pageIndex && payload.pageIndex > 0) {
+            facilities = facilities.concat(resp.data.facilities);
           } else {
-            facilities = resp.data.docs;
+            facilities = resp.data.facilities;
           }
           total = resp.data.count;
         } else {
           throw resp.data;
         }
       } catch (error) {
-        if (payload.viewIndex === 0) {
+        if (payload.pageIndex === 0) {
           facilities = [];
           total = 0;
         }
@@ -178,10 +275,57 @@ export const useFacilityStore = defineStore("facility", {
       const utilStore = useUtilStore();
       const inventoryGroups = utilStore.getInventoryGroups;
 
-      const [facilityGroupInformation, facilityOrderCount] = await Promise.all([
-        FacilityService.fetchFacilityGroupInformation([facility.facilityId]),
-        FacilityService.fetchFacilitiesOrderCount([facility.facilityId])
-      ]);
+      let facilitiesGroupInformation = {} as any;
+      let facilitiesOrderCount = {} as any;
+
+      try {
+        // Inlining fetchFacilityGroupInformation logic
+        const groupResp: any = await api({
+          url: "oms/dataDocumentView",
+          method: "post",
+          data: {
+            dataDocumentId: "FacilityGroupAndMember",
+            customParametersMap: {
+              facilityId: facility.facilityId,
+              fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
+              distinct: true,
+              filterByDate: true,
+              pageNoLimit: true
+            }
+          }
+        });
+
+        if (groupResp.data?.entityValueList?.length > 0) {
+          facilitiesGroupInformation = groupResp.data.entityValueList.reduce((acc: any, item: any) => {
+            if (acc[item.facilityId]) {
+              acc[item.facilityId].push(item);
+            } else {
+              acc[item.facilityId] = [item];
+            }
+            return acc;
+          }, {});
+        }
+
+        // Inlining fetchFacilitiesOrderCount logic
+        const orderCountResp: any = await api({
+          url: "admin/facilities/orderCount",
+          method: "get",
+          data: {
+            facilityId: facility.facilityId,
+            entryDate: DateTime.now().toFormat('yyyy-MM-dd'),
+            pageSize: 1
+          }
+        });
+
+        if (orderCountResp.data && orderCountResp.data.length > 0) {
+          facilitiesOrderCount = orderCountResp.data.reduce((acc: any, item: any) => {
+            acc[item.facilityId] = item.lastOrderCount;
+            return acc;
+          }, {});
+        }
+      } catch (err) {
+        logger.error(err);
+      }
 
       const fulfillmentOrderLimit = facility.maximumOrderLimit;
       if (fulfillmentOrderLimit === 0) {
@@ -192,8 +336,8 @@ export const useFacilityStore = defineStore("facility", {
         facility.orderLimitType = "unlimited";
       }
 
-      facility.orderCount = facilityOrderCount[facility.facilityId] ? facilityOrderCount[facility.facilityId] : 0;
-      const facilityGroupInfo = facilityGroupInformation[facility.facilityId];
+      facility.orderCount = facilitiesOrderCount[facility.facilityId] ? facilitiesOrderCount[facility.facilityId] : 0;
+      const facilityGroupInfo = facilitiesGroupInformation[facility.facilityId];
       if (facilityGroupInfo?.length) {
         facility.groupInformation = facilityGroupInfo;
         facility.useOMSFulfillment = facilityGroupInfo.some((facilityGroup: any) => facilityGroup.facilityGroupId === "OMS_FULFILLMENT");
@@ -228,19 +372,20 @@ export const useFacilityStore = defineStore("facility", {
       }
 
       const params = {
-        inputFields: { facilityId: payload.facilityId },
-        entityName: "FacilityAndProductStore",
-        noConditionFind: "Y",
-        distinct: "Y",
-        fieldList: ["facilityId", "facilityName", "facilityTypeId", "maximumOrderLimit", "defaultDaysToShip", "externalId", "primaryFacilityGroupId", "parentFacilityTypeId", "closedDate", "facilityTimeZone"],
-        viewSize: 1
+        facilityId: payload.facilityId,
+        fieldsToSelect: "facilityId,facilityName,facilityTypeId,maximumOrderLimit,defaultDaysToShip,externalId,primaryFacilityGroupId,parentFacilityTypeId,closedDate,facilityTimeZone",
+        pageSize: 1
       };
 
       let facility = {} as any;
       try {
-        const resp = await FacilityService.fetchFacilities(params);
-        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          facility = resp.data.docs[0];
+        const resp = await api({
+          url: "oms/facilities/facilitiesAndProductStore",
+          method: "get",
+          params
+        });
+        if (resp.data && resp.data.length > 0) {
+          facility = resp.data[0];
         } else {
           throw resp.data;
         }
@@ -259,24 +404,24 @@ export const useFacilityStore = defineStore("facility", {
       const contactDetails = {} as any;
 
       const payload = {
-        inputFields: {
-          contactMechPurposeTypeId: ["PRIMARY_PHONE", "PRIMARY_EMAIL", "PRIMARY_LOCATION", "GOOGLE_MAP_URL"],
-          contactMechPurposeTypeId_op: "in",
-          contactMechTypeId: ["TELECOM_NUMBER", "EMAIL_ADDRESS", "POSTAL_ADDRESS", "MAP_URL"],
-          contactMechTypeId_op: "in",
-          facilityId: facility.facilityId
-        },
-        entityName: "FacilityContactDetailByPurpose",
-        orderBy: "fromDate DESC",
-        filterByDate: "Y",
-        fieldList: ["address1", "address2", "city", "contactMechId", "contactMechTypeId", "contactNumber", "countryCode", "countryGeoId", "countryGeoName", "directions", "infoString", "latitude", "longitude", "postalCode", "stateGeoId", "stateGeoName", "toName"],
-        viewSize: 4
+        contactMechPurposeTypeId: "PRIMARY_PHONE,PRIMARY_EMAIL,PRIMARY_LOCATION,GOOGLE_MAP_URL",
+        contactMechPurposeTypeId_op: "in",
+        contactMechTypeId: "TELECOM_NUMBER,EMAIL_ADDRESS,POSTAL_ADDRESS,MAP_URL",
+        contactMechTypeId_op: "in",
+        facilityId: facility.facilityId,
+        orderByField: "fromDate DESC",
+        fieldsToSelect: "address1,address2,city,contactMechId,contactMechTypeId,contactNumber,countryCode,countryGeoId,countryGeoName,directions,infoString,latitude,longitude,postalCode,stateGeoId,stateGeoName,toName",
+        pageSize: 4
       };
 
       try {
-        const resp = await FacilityService.fetchFacilityContactDetails(payload);
-        if (!commonUtil.hasError(resp)) {
-          const docs = resp.data.docs;
+        const resp = await api({
+          url: "oms/facilities/facilityContactDetailByPurpose",
+          method: "get",
+          params: payload
+        });
+        if (resp.data && resp.data.facilityContactDetails?.length) {
+          const docs = resp.data.facilityContactDetails;
           docs.map((item: any) => {
             if (item.contactMechTypeId === "POSTAL_ADDRESS") {
               postalAddress = { ...item, stateProvinceGeoId: item.stateGeoId };
@@ -313,14 +458,16 @@ export const useFacilityStore = defineStore("facility", {
       let facilityLocations = [];
       try {
         const params = {
-          inputFields: { facilityId: payload.facilityId },
-          entityName: "FacilityLocation",
-          fieldList: ["facilityId", "locationSeqId", "locationTypeEnumId", "areaId", "aisleId", "sectionId", "levelId", "positionId"],
-          viewSize: 100
+          facilityId: payload.facilityId,
+          pageNoLimit: true
         };
-        const resp = await FacilityService.fetchFacilityLocations(params);
-        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          facilityLocations = resp.data.docs;
+        const resp = await api({
+          url: `oms/facilities/${payload.facilityId}/locations`,
+          method: "get",
+          params
+        });
+        if (resp.data && resp.data.length > 0) {
+          facilityLocations = resp.data;
         } else {
           throw resp.data;
         }
@@ -338,7 +485,12 @@ export const useFacilityStore = defineStore("facility", {
           filterByDate: "Y",
           viewSize: 1
         };
-        const resp = await FacilityService.fetchFacilityCalendar(params);
+        const resp = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "performFind",
+          method: "post",
+          data: params
+        });
         if (!commonUtil.hasError(resp) && resp.data.count) {
           facilityCalendar = resp.data.docs[0];
         } else {
@@ -352,19 +504,22 @@ export const useFacilityStore = defineStore("facility", {
     async getFacilityProductStores(params: any) {
       let productStores = [];
       const payload = {
-        inputFields: { facilityId: params.facilityId },
-        viewSize: 100,
-        entityName: "ProductStoreFacility",
-        filterByDate: "Y",
-        fieldList: ["fromDate", "productStoreId"]
+        dataDocumentId: 'PRODUCT_STORE_FACILITY',
+        customParamtersMap: { facilityId: params.facilityId, pageNoLimit: true },
+        filterByDate: true,
+        fieldList: "fromDate,productStoreId"
       };
 
       try {
-        const resp = await FacilityService.getFacilityProductStores(payload);
-        if (!commonUtil.hasError(resp) && resp.data.count) {
-          productStores = resp.data.docs;
+        const resp = await api({
+          url: "oms/dataDocumentView",
+          method: "POST",
+          data: payload
+        });
+        if (resp.data && resp.data.entityValueList?.length > 0) {
+          productStores = resp.data.entityValueList;
           const utilStore = useUtilStore();
-          await utilStore.fetchShopifyShopForProductStores(resp.data.docs.map((productStore: any) => productStore.productStoreId));
+          await utilStore.fetchShopifyShopForProductStores(resp.data.entityValueList.map((productStore: any) => productStore.productStoreId));
         } else {
           throw resp.data;
         }
@@ -377,19 +532,23 @@ export const useFacilityStore = defineStore("facility", {
       let mappings = [];
       try {
         const params = {
-          inputFields: {
+          dataDocumentId: "FACILITY_IDENTIFICATION",
+          customParametersMap: {
             facilityId: payload.facilityId,
             facilityIdenTypeId: payload.facilityIdenTypeIds,
-            facilityIdenTypeId_op: "in"
+            facilityIdenTypeId_op: "in",
+            pageNolimit: true
           },
-          entityName: "FacilityIdentification",
-          filterByDate: "Y",
-          fieldList: ["facilityIdenTypeId", "idValue", "fromDate"],
-          viewSize: 100
+          fieldsToSelect: "facilityIdenTypeId,idValue,fromDate",
+          filterByDate: true
         };
-        const resp = await FacilityService.fetchFacilityMappings(params);
-        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          mappings = resp.data.docs;
+        const resp = await api({
+          url: "oms/dataDocumentView",
+          method: "post",
+          data: params
+        });
+        if (resp.data && resp.data.entityValueList?.length > 0) {
+          mappings = resp.data.entityValueList;
         } else {
           throw resp.data;
         }
@@ -398,26 +557,31 @@ export const useFacilityStore = defineStore("facility", {
       }
       this.current.mappings = mappings;
     },
-    async getFacilityParties(payload: any) {
+    async fetchFacilityParties(payload: any) {
       let parties = [];
       const params = {
-        inputFields: {
+        customParametersMap: {
           facilityId: payload.facilityId,
-          partyId_op: "not-empty",
+          partyId_op: "empty",
+          partyId_not: "Y",
           roleTypeId: "FAC_LOGIN",
-          roleTypeId_op: "notEqual"
+          roleTypeId_not: "Y",
+          orderByField: "partyId DESC",
+          pageNoLimit: true
         },
-        entityName: "FacilityAndParty",
-        filterByDate: "Y",
-        orderBy: "partyId DESC",
-        fieldList: ["facilityId", "firstName", "fromDate", "lastName", "groupName", "partyId", "roleTypeId"],
-        viewSize: 100
+        dataDocumentId: "FACILITY_AND_PARTY",
+        filterByDate: true,
+        fieldsToSelect: "facilityId,firstName,fromDate,lastName,groupName,partyId,roleTypeId",
       };
 
       try {
-        const resp = await FacilityService.getFacilityParties(params);
-        if (!commonUtil.hasError(resp) && resp.data.count) {
-          parties = resp.data.docs;
+        const resp = await api({
+          url: "oms/dataDocumentView",
+          method: "post",
+          data: params
+        });
+        if (resp.data && resp.data.entityValueList?.length) {
+          parties = resp.data.entityValueList;
           parties.map((party: any) => {
             party.fullName = party.groupName || [party.firstName, party.lastName].filter(Boolean).join(" ") || party.partyId;
           });
@@ -433,14 +597,16 @@ export const useFacilityStore = defineStore("facility", {
       let shopifyFacilityMappings = [];
       try {
         const params = {
-          inputFields: { facilityId: payload.facilityId },
-          entityName: "ShopifyShopLocationView",
-          fieldList: ["shopifyShopId", "domain", "name", "myshopifyDomain", "shopId", "shopifyLocationId"],
-          viewSize: 100
+          facilityId: payload.facilityId,
+          pageNoLimit: true
         };
-        const resp = await FacilityService.fetchShopifyFacilityMappings(params);
-        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          shopifyFacilityMappings = resp.data.docs;
+        const resp = await api({
+          url: "oms/ShopFacilityMappings",
+          method: "get",
+          params
+        });
+        if (resp.data?.length > 0) {
+          shopifyFacilityMappings = resp.data;
         } else {
           throw resp.data;
         }
@@ -454,37 +620,101 @@ export const useFacilityStore = defineStore("facility", {
       let dataList = [] as any;
 
       try {
-        let resp = await FacilityService.getFacilityParties({
-          inputFields: { "facilityId": payload.facilityId, "roleTypeId": "FAC_LOGIN" },
-          fieldList: ["facilityId", "partyId", "roleTypeId", "fromDate"],
-          entityName: "FacilityParty",
-          distinct: "Y",
-          noConditionFind: "Y",
-          filterByDate: "Y",
-          viewSize: 50
+        let resp = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "performFind",
+          method: "post",
+          data: {
+            inputFields: { "facilityId": payload.facilityId, "roleTypeId": "FAC_LOGIN" },
+            fieldList: ["facilityId", "partyId", "roleTypeId", "fromDate"],
+            entityName: "FacilityParty",
+            distinct: "Y",
+            noConditionFind: "Y",
+            filterByDate: "Y",
+            viewSize: 50
+          }
         });
         if (!commonUtil.hasError(resp) && resp.data.count > 0) {
           const facilityParties = resp.data.docs;
           dataList = facilityParties;
           const partyIds = facilityParties.map((party: any) => party.partyId);
-          dataList = [...dataList, ...await UserService.fetchLogoImageForParties(partyIds)];
 
-          resp = await UserService.fetchUserLoginAndPartyDetails({
-            inputFields: { "partyId": partyIds, "partyId_op": "in" },
-            fieldList: ["partyId", "groupName", "userLoginId"],
-            entityName: "UserLoginAndPartyDetails",
-            distinct: "Y",
-            noConditionFind: "Y",
-            viewSize: 50
+          // Inlining fetchLogoImageForParties logic
+          try {
+            let logoResp = await api({
+              baseURL: commonUtil.getOmsURL(),
+              url: 'performFind',
+              method: 'POST',
+              data: {
+                entityName: "PartyContentDetail",
+                inputFields: {
+                  partyId: partyIds,
+                  partyId_op: 'in',
+                  partyContentTypeId: 'LGOIMGURL'
+                },
+                viewSize: 1,
+                fieldList: ['partyId', 'dataResourceId'],
+                noConditionFind: 'Y',
+                filterByDate: 'Y'
+              }
+            }) as any;
+            if (!commonUtil.hasError(logoResp) && logoResp.data.count > 0) {
+              const partyContents = logoResp.data.docs;
+              const dataResourceIds = partyContents.map((partyContent: any) => partyContent.dataResourceId);
+              logoResp = await api({
+                baseURL: commonUtil.getOmsURL(),
+                url: 'performFind',
+                method: 'POST',
+                data: {
+                  entityName: "DataResource",
+                  inputFields: {
+                    dataResourceId: dataResourceIds,
+                    dataResourceId_op: 'in'
+                  },
+                  viewSize: 1,
+                  fieldList: ['dataResourceId', 'objectInfo'],
+                  noConditionFind: 'Y'
+                }
+              });
+              if (!commonUtil.hasError(logoResp) && logoResp.data.count > 0) {
+                const logoImages = [...partyContents, ...logoResp.data.docs].reduce((contentData: any, doc: any) => {
+                  const dataResourceId = doc.dataResourceId;
+                  contentData[dataResourceId] = { ...contentData[dataResourceId], ...doc };
+                  return contentData;
+                }, {});
+                dataList = [...dataList, ...Object.values(logoImages)];
+              }
+            }
+          } catch (error) {
+            logger.error("Failed to fetch logo images", error);
+          }
+
+          resp = await api({
+            baseURL: commonUtil.getOmsURL(),
+            url: "performFind",
+            method: "POST",
+            data: {
+              inputFields: { "partyId": partyIds, "partyId_op": "in" },
+              fieldList: ["partyId", "groupName", "userLoginId"],
+              entityName: "UserLoginAndPartyDetails",
+              distinct: "Y",
+              noConditionFind: "Y",
+              viewSize: 50
+            }
           });
           if (!commonUtil.hasError(resp) && resp.data.count > 0) {
             dataList = [...dataList, ...resp.data.docs];
-            resp = await UserService.fetchUserContactDetails({
-              inputFields: { "partyId": partyIds, "partyId_op": "in", contactMechPurposeTypeId: "PRIMARY_EMAIL" },
-              viewSize: 100,
-              filterByDate: "Y",
-              entityName: "PartyContactDetailByPurpose",
-              fieldList: ["partyId", "infoString", "contactMechId", "contactMechPurposeTypeId"]
+            resp = await api({
+              baseURL: commonUtil.getOmsURL(),
+              url: "performFind",
+              method: "POST",
+              data: {
+                inputFields: { "partyId": partyIds, "partyId_op": "in", contactMechPurposeTypeId: "PRIMARY_EMAIL" },
+                viewSize: 100,
+                filterByDate: "Y",
+                entityName: "PartyContactDetailByPurpose",
+                fieldList: ["partyId", "infoString", "contactMechId", "contactMechPurposeTypeId"]
+              }
             });
             if (!commonUtil.hasError(resp) && resp.data.count > 0) {
               dataList = [...dataList, ...resp.data.docs];
@@ -506,7 +736,7 @@ export const useFacilityStore = defineStore("facility", {
     },
     async fetchVirtualFacilities(payload: any) {
       if (payload.viewIndex === 0) emitter.emit("presentLoader");
-      let archivedFacilityIds = [];
+      let archivedFacilityIds = [] as any;
       if (this.archivedFacilities.length) {
         archivedFacilityIds = JSON.parse(JSON.stringify(this.archivedFacilities)).map((facility: any) => facility.facilityId);
       }
@@ -528,7 +758,12 @@ export const useFacilityStore = defineStore("facility", {
           fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
           ...payload
         };
-        const resp = await FacilityService.fetchFacilities(params);
+        const resp = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "performFind",
+          method: "post",
+          data: params
+        });
         if (!commonUtil.hasError(resp) && resp.data.count) {
           if (payload.viewIndex && payload.viewIndex > 0) {
             facilities = facilities.concat(resp.data.docs);
@@ -544,17 +779,14 @@ export const useFacilityStore = defineStore("facility", {
       }
 
       emitter.emit("dismissLoader");
-      const filteredFacilities = await this.filterParkingFacilities({ facilities, archivedFacilityIds });
-      this.virtualFacilities = { list: filteredFacilities, total };
-      if (filteredFacilities.length) {
-        await this.fetchVirtualFacilitiesAdditionalDetail(payload);
-      }
-    },
-    async filterParkingFacilities({ facilities, archivedFacilityIds }: any) {
       const matchedFacilities = facilities.filter((facility: any) => archivedFacilityIds.includes(facility.facilityId));
       const updatedFacilities = facilities.filter((facility: any) => !archivedFacilityIds.includes(facility.facilityId));
       if (matchedFacilities.length) this.updateArchivedFacilities(matchedFacilities);
-      return updatedFacilities;
+
+      this.virtualFacilities = { list: updatedFacilities, total };
+      if (updatedFacilities.length) {
+        await this.fetchVirtualFacilitiesAdditionalDetail(payload);
+      }
     },
     async fetchVirtualFacilitiesAdditionalDetail(payload: any) {
       const cachedFacilities = JSON.parse(JSON.stringify(this.virtualFacilities.list));
@@ -567,30 +799,100 @@ export const useFacilityStore = defineStore("facility", {
 
       stateFacilities = stateFacilities.filter((facility: any) => !facilityIds.includes(facility.facilityId));
 
+      let jobData = {} as any;
+      let facilitiesOrderCount = {} as any;
+
       try {
-        const [jobData, facilitiesOrderCount] = await Promise.all([FacilityService.fetchJobData(), FacilityService.fetchOrderCountsByFacility(facilityIds)]);
-        facilities.map((facility: any) => {
-          if (facility.facilityId === "_NA_") {
-            facility.brokeringJob = jobData.brokeringJob;
-          } else if (facility.facilityTypeId === "BACKORDER" || facility.facilityTypeId === "PRE_ORDER") {
-            facility.autoReleaseJob = jobData.autoReleaseJob;
+        // Inlining fetchJobData
+        const jobResp: any = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "performFind",
+          method: "post",
+          data: {
+            inputFields: {
+              "statusId": "SERVICE_PENDING",
+              "systemJobEnumId": ["JOB_RLS_ORD_DTE", "JOB_BKR_ORD"],
+              "systemJobEnumId_op": "in",
+            },
+            orderBy: "runTime ASC",
+            entityName: "JobSandbox",
+            fieldList: ["jobId", "statusId", "serviceName", "systemJobEnumId", "runTime"],
+            viewSize: 10
           }
-          facility.orderCount = facilitiesOrderCount[facility.facilityId] || 0;
         });
+        if (!commonUtil.hasError(jobResp) && jobResp.data.count > 0) {
+          const jobs = jobResp.data.docs;
+          const brokeringJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_BKR_ORD');
+          const autoReleaseJob = jobs.find((job: any) => job.systemJobEnumId === 'JOB_RLS_ORD_DTE');
+          jobData = { brokeringJob, autoReleaseJob };
+        }
+
+        // Inlining fetchOrderCountsByFacility
+        const query = prepareOrderQuery({
+          viewSize: "0",
+          sort: 'orderDate asc',
+          defType: "edismax",
+          docType: "ORDER",
+          filters: {
+            '-shipmentMethodTypeId': { value: 'STOREPICKUP' },
+            orderStatusId: { value: '(ORDER_APPROVED OR ORDER_CREATED)' },
+            orderTypeId: { value: 'SALES_ORDER' },
+            facilityId: { value: facilityIds }
+          },
+          facet: {
+            "facilityFacet": {
+              "field": "facilityId",
+              "mincount": 1,
+              "limit": -1,
+              "sort": "index",
+              "type": "terms",
+              "facet": {
+                "groups": "unique(orderId)",
+              }
+            }
+          }
+        });
+        const orderResp: any = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "solr-query",
+          method: "post",
+          data: query
+        });
+        if (!commonUtil.hasError(orderResp)) {
+          const facilityFacets = orderResp.data.facets.facilityFacet.buckets;
+          facilitiesOrderCount = facilityFacets.reduce((countObject: any, facet: any) => {
+            countObject[facet.val] = facet.groups;
+            return countObject;
+          }, {});
+        }
       } catch (error) {
         logger.error(error);
       }
+
+      facilities.map((facility: any) => {
+        if (facility.facilityId === "_NA_") {
+          facility.brokeringJob = jobData.brokeringJob;
+        } else if (facility.facilityTypeId === "BACKORDER" || facility.facilityTypeId === "PRE_ORDER") {
+          facility.autoReleaseJob = jobData.autoReleaseJob;
+        }
+        facility.orderCount = facilitiesOrderCount[facility.facilityId] || 0;
+      });
       this.virtualFacilities = { list: stateFacilities.concat(facilities), total };
     },
     async fetchVirtualFacility(payload: any) {
       let facility = {};
       try {
-        const resp = await FacilityService.fetchFacilities({
-          inputFields: { facilityId: payload.facilityId },
-          entityName: "FacilityAndProductStore",
-          fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
-          filterByDate: "Y",
-          viewSize: 1
+        const resp = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "performFind",
+          method: "post",
+          data: {
+            inputFields: { facilityId: payload.facilityId },
+            entityName: "FacilityAndProductStore",
+            fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
+            filterByDate: "Y",
+            viewSize: 1
+          }
         });
         if (!commonUtil.hasError(resp) && resp.data.count) {
           facility = resp.data.docs[0];
@@ -610,18 +912,41 @@ export const useFacilityStore = defineStore("facility", {
       this.virtualFacilities = { list: facilities, total: facilities.length };
     },
     async fetchArchivedFacilities() {
-      let facilities = [];
+      let facilities = [] as any, viewIndex = 0, resp = {} as any;
       try {
-        facilities = await FacilityService.fetchArchivedFacilities();
+        do {
+          resp = await api({
+            baseURL: commonUtil.getOmsURL(),
+            url: "performFind",
+            method: "post",
+            data: {
+              inputFields: {
+                facilityGroupId: 'ARCHIVE',
+              },
+              fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
+              entityName: "FacilityAndGroupMember",
+              distinct: 'Y',
+              noConditionFind: 'Y',
+              filterByDate: 'Y',
+              viewSize: 50,
+              viewIndex
+            }
+          });
+
+          if (!commonUtil.hasError(resp) && resp.data.docs?.length) {
+            facilities = facilities.concat(resp.data.docs)
+            viewIndex++;
+          }
+        } while (resp.data.docs?.length >= 50);
       } catch (error) {
-        logger.error(error);
+        logger.error('Failed to fetch archived facilities.', error);
       }
       this.updateArchivedFacilities(facilities);
     },
     updateArchivedFacilities(facilities: any) {
       this.archivedFacilities = facilities;
     },
-    async fetchFacilityGroups(payload: any) {
+    async fetchFacilityGroupsByQuery(payload: any) {
       if (payload.viewIndex === 0) emitter.emit("presentLoader");
       const filters = {} as any;
       if (this.groupQuery.queryString) {
@@ -645,7 +970,12 @@ export const useFacilityStore = defineStore("facility", {
           fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
           ...payload
         };
-        const resp = await FacilityService.fetchFacilityGroups(params);
+        const resp = await api({
+          baseURL: commonUtil.getOmsURL(),
+          url: "performFind",
+          method: "post",
+          data: params
+        });
         if (!commonUtil.hasError(resp) && resp.data.count) {
           if (payload.viewIndex && payload.viewIndex > 0) {
             groups = groups.concat(resp.data.docs);
@@ -677,13 +1007,88 @@ export const useFacilityStore = defineStore("facility", {
 
       stateGroups = stateGroups.filter((group: any) => !facilityGroupIds.includes(group.facilityGroupId));
 
+      let facilityCountByGroup = {} as any;
+      let productStoreCountByGroup = {} as any;
+
       try {
-        const facilityCountByGroup = await FacilityService.fetchFacilityCountByGroup(JSON.parse(JSON.stringify(facilityGroupIds)));
+        // Inlining fetchFacilityCountByGroup
+        if (facilityGroupIds.length) {
+          let facilityMemberResponses = [] as any;
+          let groupViewIndex = 0;
+          let groupResp = {} as any;
+          do {
+            groupResp = await api({
+              baseURL: commonUtil.getOmsURL(),
+              url: 'performFind',
+              method: 'POST',
+              data: {
+                inputFields: {
+                  facilityGroupId: facilityGroupIds,
+                  facilityGroupId_op: "in"
+                },
+                viewSize: 250,
+                viewIndex: groupViewIndex,
+                entityName: 'FacilityGroupAndMember',
+                noConditionFind: "Y",
+                filterByDate: 'Y',
+                fieldList: ['facilityGroupId', 'facilityId']
+              }
+            });
+
+            if (!commonUtil.hasError(groupResp) && groupResp.data.count) {
+              facilityMemberResponses = [...facilityMemberResponses, ...groupResp.data.docs];
+              groupViewIndex++;
+            }
+          } while (groupResp.data.docs?.length >= 250);
+
+          facilityCountByGroup = facilityMemberResponses.reduce((acc: any, item: any) => {
+            acc[item.facilityGroupId] = (acc[item.facilityGroupId] || 0) + 1;
+            return acc;
+          }, {});
+        }
+
+        // Inlining fetchProductStoreCountByGroup
+        if (facilityGroupIds.length) {
+          const idsCopy = [...facilityGroupIds];
+          const requests = [];
+          while (idsCopy.length) {
+            const batch = idsCopy.splice(0, 10);
+            requests.push({
+              inputFields: {
+                facilityGroupId: batch,
+                facilityGroupId_op: "in"
+              },
+              viewSize: 250,
+              entityName: 'ProductStoreFacilityGroup',
+              noConditionFind: "Y",
+              filterByDate: 'Y',
+              fieldList: ['facilityGroupId', 'productStoreId']
+            });
+          }
+
+          const psResponses = await Promise.allSettled(requests.map((p) => api({
+            baseURL: commonUtil.getOmsURL(),
+            url: 'performFind',
+            method: 'POST',
+            data: p
+          })));
+
+          const allPsData = psResponses.map((r: any) => r.value)
+            .reduce((acc: any, r: any) => {
+              if (!commonUtil.hasError(r)) {
+                acc = [...acc, ...r.data.docs];
+              }
+              return acc;
+            }, []);
+
+          productStoreCountByGroup = allPsData.reduce((acc: any, item: any) => {
+            acc[item.facilityGroupId] = (acc[item.facilityGroupId] || 0) + 1;
+            return acc;
+          }, {});
+        }
+
         groups.map((group: any) => {
           group.facilityCount = facilityCountByGroup[group.facilityGroupId] || 0;
-        });
-        const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup(facilityGroupIds);
-        groups.map((group: any) => {
           group.productStoreCount = productStoreCountByGroup[group.facilityGroupId] || 0;
         });
       } catch (error) {
@@ -694,5 +1099,6 @@ export const useFacilityStore = defineStore("facility", {
     updateFacilityGroups(groups: any) {
       this.facilityGroups = { list: groups, total: groups.length };
     }
-  }
+  },
+  persist: true
 });

@@ -125,7 +125,6 @@ import { isValidEmail } from "@/utils";
 import logger from "@/logger";
 import { commonUtil } from "@common";
 import { FacilityService } from "@/services/FacilityService";
-import { UtilService } from "@/services/UtilService";
 import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
 import router from "@/router";
@@ -182,7 +181,7 @@ async function addAddress() {
   };
 
   try {
-    const resp = await FacilityService.createFacilityPostalAddress(payload);
+    const resp = await useFacilityStore().createFacilityPostalAddress(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate("Facility address created successfully."));
       router.replace(`/add-facility-config/${props.facilityId}`);
@@ -209,14 +208,10 @@ async function generateLatLong() {
     }
   };
   try {
-    const resp = await UtilService.generateLatLong(payload);
-    if (!commonUtil.hasError(resp)) {
-      const result = resp.data.response.docs[0];
-      formData.latitude = result.latitude;
-      formData.longitude = result.longitude;
-    } else {
-      throw resp.data;
-    }
+    const resp = await utilStore.generateLatLong(payload);
+    const result = resp.response.docs[0];
+    formData.latitude = result.latitude;
+    formData.longitude = result.longitude;
   } catch (error) {
     commonUtil.showToast(translate("Unable to find the latitude and longitude for the entered zip code."));
     logger.error("Unable to find the latitude and longitude for the entered zip code.", error);
@@ -227,13 +222,14 @@ async function updateState(event: CustomEvent) {
   await utilStore.fetchStates({ geoId: event.detail.value });
   const country = countries.value.find((country: any) => country.geoId === event.detail.value);
   if (country) {
-    countryCode.value = commonUtil.getTelecomCountryCode(country.geoCode);
+    countryCode.value = commonUtil.getTelecomCountryCode(country.geoCodeAlpha2);
   }
 }
 
 async function saveTelecomNumber() {
   try {
-    const resp = await FacilityService.createFacilityTelecomNumber({
+    console.log("What is it here: ", contactNumber.value, " and ", countryCode.value)
+    const resp = await useFacilityStore().createFacilityTelecomNumber({
       facilityId: props.facilityId,
       contactMechPurposeTypeId: 'PRIMARY_PHONE',
       contactNumber: contactNumber.value.trim(),
@@ -250,7 +246,7 @@ async function saveTelecomNumber() {
 
 async function saveEmailAddress() {
   try {
-    const resp = await FacilityService.createFacilityEmailAddress({
+    const resp = await useFacilityStore().createFacilityEmailAddress({
       facilityId: props.facilityId,
       contactMechTypeId: 'EMAIL_ADDRESS',
       contactMechPurposeTypeId: 'PRIMARY_EMAIL',

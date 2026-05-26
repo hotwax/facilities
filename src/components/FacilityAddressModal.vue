@@ -93,7 +93,7 @@ import {
   modalController
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
-import { translate } from "@common"
+import { api, translate } from "@common"
 import { FacilityService } from '@/services/FacilityService';
 import { commonUtil } from "@common";
 import logger from "@/logger";
@@ -174,7 +174,7 @@ async function saveTelecomNumber() {
         contactMechId: contactDetails.value.telecomNumber.contactMechId,
       });
     } else {
-      resp = await FacilityService.createFacilityTelecomNumber(payload);
+      resp = await useFacilityStore().createFacilityTelecomNumber(payload);
     }
 
     if (!commonUtil.hasError(resp)) {
@@ -201,7 +201,7 @@ async function saveEmailAddress() {
         contactMechId: emailAddress.value.contactMechId,
       });
     } else {
-      resp = await FacilityService.createFacilityEmailAddress({
+      resp = await useFacilityStore().createFacilityEmailAddress({
         ...payload,
         contactMechTypeId: 'EMAIL_ADDRESS',
         contactMechPurposeTypeId: 'PRIMARY_EMAIL',
@@ -241,11 +241,15 @@ async function saveContact() {
       if (address.value.contactMechId) {
         resp = await FacilityService.updateFacilityPostalAddress({ ...address.value, facilityId: props.facilityId });
       } else {
-        resp = await FacilityService.createFacilityPostalAddress({
-          ...address.value,
-          facilityId: props.facilityId,
-          contactMechPurposeTypeId: 'PRIMARY_LOCATION'
-        });
+        resp = await api({
+          url: `admin/facilities/${props.facilityId}/contacts/address`,
+          method: "post",
+          data: {
+            ...address.value,
+            facilityId: props.facilityId,
+            contactMechPurposeTypeId: 'PRIMARY_LOCATION'
+          }
+        })
       }
 
       if (!commonUtil.hasError(resp)) {

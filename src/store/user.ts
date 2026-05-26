@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
-import { UserService } from "@/services/UserService";
 import { DateTime, Settings } from "luxon";
-import { api, client, translate, commonUtil, useAuth } from "@common";
+import { api, client, translate, commonUtil, useAuth, cookieHelper } from "@common";
 import logger from "@/logger";
 import router from "@/router";
 import { useUtilStore } from "./util";
@@ -77,11 +76,58 @@ export const useUserStore = defineStore("user", {
     async logout(payload?: any) {
       return await useAuth().logout(payload);
     },
+    setOms (oms:string) {
+      this.oms = oms;
+    },
     async fetchPermissions() {
       try {
-        const token = commonUtil.getToken();
-        const serverPermissions = await UserService.getUserPermissions({}, token);
-        this.permissions = serverPermissions;
+        const baseURL = commonUtil.getOmsURL();
+        const viewSize = 200;
+        const params = {
+          "viewIndex": 0,
+          viewSize
+        }
+        let resp: any = await client({
+          url: "getPermissions",
+          method: "post",
+          baseURL,
+          data: params,
+          headers: {
+            Authorization: 'Bearer ' + commonUtil.getToken(),
+            'Content-Type': 'application/json'
+          }
+        })
+        if (resp.status === 200 && resp.data.docs?.length && !commonUtil.hasError(resp)) {
+          let serverPermissions = resp.data.docs.map((permission: any) => permission.permissionId);
+          const total = resp.data.count;
+          const remainingPermissions = total - serverPermissions.length;
+          if (remainingPermissions > 0) {
+            const apiCallsNeeded = Math.floor(remainingPermissions / viewSize) + (remainingPermissions % viewSize != 0 ? 1 : 0);
+            const responses = await Promise.all([...Array(apiCallsNeeded).keys()].map(async (index: any) => {
+              return await client({
+                url: "getPermissions",
+                method: "post",
+                baseURL,
+                data: {
+                  "viewIndex": index + 1,
+                  viewSize
+                },
+                headers: {
+                  Authorization: 'Bearer ' + commonUtil.getToken(),
+                  'Content-Type': 'application/json'
+                }
+              })
+            }))
+
+            serverPermissions = responses.reduce((acc: any, response: any) => {
+              if (response.status === 200 && !commonUtil.hasError(response) && response.data?.docs) {
+                acc.push(...response.data.docs.map((permission: any) => permission.permissionId));
+              }
+              return acc;
+            }, serverPermissions)
+          }
+          this.permissions = serverPermissions;
+        }
       } catch (err) {
         console.error("Error fetching permissions", err);
         this.permissions = [];
@@ -106,7 +152,7 @@ export const useUserStore = defineStore("user", {
         }) as any;
         this.current = userProfile.data
         useAuth().updateUserId(this.current.userId)
-
+        this.setOms(cookieHelper().get("oms") || '');
         if (this.current.timeZone) {
           Settings.defaultZone = this.current.timeZone;
         }
@@ -322,6 +368,45 @@ export const useUserStore = defineStore("user", {
     },
     updatePwaState(payload: any) {
       this.pwaState = payload;
+    },
+    async isUserLoginIdExists(username: string) {
+      try {
+        const resp = await api({
+          url: 'performFind',
+          method: 'POST',
+          data: {
+            entityName: "UserLogin",
+            inputFields: {
+              userLoginId: username
+            },
+            viewSize: 1,
+            fieldList: ['userLoginId', 'partyId'],
+            distinct: 'Y',
+            noConditionFind: 'Y'
+          },
+          baseURL: commonUtil.getOmsURL()
+        }) as any;
+
+        return !commonUtil.hasError(resp) && resp.data.docs.length > 0;
+      } catch(err) {
+        return false;
+      }
+    },
+    async sendResetPasswordEmail(payload: any) {
+      return await api({
+        url: "sendResetPasswordMail",
+        method: "post",
+        data: payload,
+        baseURL: commonUtil.getOmsURL()
+      });
+    },
+    async updateUserLoginStatus(payload: any) {
+      return await api({
+        url: "service/updateUserLoginStatus",
+        method: "post",
+        data: payload,
+        baseURL: commonUtil.getOmsURL()
+      });
     }
   },
   persist: true,

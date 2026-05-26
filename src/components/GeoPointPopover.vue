@@ -22,9 +22,9 @@ import { translate } from "@common";
 import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import logger from "@/logger";
-import { UtilService } from '@/services/UtilService';
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
+import { useUtilStore } from "@/store/util";
 import { computed } from "vue";
 
 const props = defineProps(['facilityId', 'isRegenerationRequired']);
@@ -38,10 +38,11 @@ async function regenerateLatitudeAndLongitude() {
   emitter.emit('presentLoader');
 
   try {
+    const utilStore = useUtilStore();
     const postalCode = postalAddress.value.postalCode;
     const query = postalCode.startsWith('0') ? `${postalCode} OR ${postalCode.substring(1)}` : postalCode;
 
-    resp = await UtilService.generateLatLong({
+    resp = await utilStore.generateLatLong({
       json: {
         params: {
           q: `postcode: ${query}`
@@ -49,8 +50,8 @@ async function regenerateLatitudeAndLongitude() {
       }
     });
 
-    if (!commonUtil.hasError(resp) && resp.data.response.docs.length > 0) {
-      generatedLatLong = resp.data.response.docs[0];
+    if (resp.response.docs.length > 0) {
+      generatedLatLong = resp.response.docs[0];
 
       if (generatedLatLong.latitude && generatedLatLong.longitude) {
         resp = await FacilityService.updateFacilityPostalAddress({
@@ -68,7 +69,7 @@ async function regenerateLatitudeAndLongitude() {
         }
       }
     } else {
-      throw resp.data;
+      throw resp;
     }
   } catch (err) {
     commonUtil.showToast(translate("Failed to regenerate latitude and longitude for the facility."));

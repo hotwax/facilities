@@ -187,9 +187,9 @@ onMounted(async () => {
   await Promise.all([
     utilStore.fetchFacilityTypes({ 
       parentTypeId: 'VIRTUAL_FACILITY', 
-      parentTypeId_op: 'notEqual', 
+      parentTypeId_not: 'Y', 
       facilityTypeId: 'VIRTUAL_FACILITY', 
-      facilityTypeId_op: 'notEqual' 
+      facilityTypeId_not: 'Y' 
     }), 
     utilStore.fetchProductStores()
   ]);
@@ -211,11 +211,11 @@ async function updateQuery() {
 }
 
 async function fetchFacilities(vSize?: any, vIndex?: any) {
-  const viewSize = vSize ? vSize : import.meta.env.VITE_APP_VIEW_SIZE;
-  const viewIndex = vIndex ? vIndex : 0;
+  const pageSize = vSize ? vSize : import.meta.env.VITE_APP_VIEW_SIZE;
+  const pageIndex = vIndex ? vIndex : 0;
   const payload = {
-    viewSize,
-    viewIndex
+    pageSize,
+    pageIndex
   };
   await facilityStore.fetchFacilities(payload);
 }
@@ -277,17 +277,14 @@ async function updateFacility(maximumOrderLimit: number | string, facility: any)
 
 async function fetchFacilityGroups() {
   const params = {
-    entityName: "FacilityGroup",
-    noConditionFind: 'Y',
-    orderBy: "facilityGroupTypeId ASC",
-    fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-    viewSize: 50
+    orderByField: "facilityGroupTypeId ASC",
+    pageNoLimit: true
   };
 
   try {
-    const resp = await FacilityService.fetchFacilityGroups(params);
-    if (!commonUtil.hasError(resp) && resp.data?.docs?.length > 0) {
-      facilityGroups.value = resp.data.docs;
+    const resp = await facilityStore.fetchFacilityGroups(params);
+    if (resp.data?.length > 0) {
+      facilityGroups.value = resp.data;
     } else {
       throw resp.data;
     }
