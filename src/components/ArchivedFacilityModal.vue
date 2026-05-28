@@ -44,7 +44,6 @@ import {
 import { closeOutline, gitPullRequestOutline } from 'ionicons/icons'
 import { translate } from "@common"
 import logger from "@/logger";
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import { useFacilityStore } from "@/store/facility";
 import { DateTime } from "luxon";
@@ -59,9 +58,9 @@ function closeModal() {
 
 async function unarchiveFacility(archivedFacility: any) {
   try {
-    const resp = await FacilityService.updateFacilityToGroup({
-      facilityId: archivedFacility.facilityId,
+    const resp = await facilityStore.updateFacilityToGroup({
       facilityGroupId: "ARCHIVE",
+      facilityId: archivedFacility.facilityId,
       fromDate: archivedFacility.fromDate,
       thruDate: DateTime.now().toMillis()
     });

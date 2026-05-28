@@ -59,7 +59,6 @@ import {
   mailOutline
 } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from '@common';
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -83,7 +82,7 @@ async function updateFacilityGroupDescription() {
   }
   emitter.emit('presentLoader');
   try {
-    const resp = await FacilityService.updateFacilityGroup({
+    const resp = await facilityStore.updateFacilityGroup({
       facilityGroupId: props.facilityGroup.facilityGroupId,
       facilityGroupName: facilityGroupName.value,
       description: facilityGroupDescription.value

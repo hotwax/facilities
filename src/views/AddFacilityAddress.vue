@@ -228,7 +228,6 @@ async function updateState(event: CustomEvent) {
 
 async function saveTelecomNumber() {
   try {
-    console.log("What is it here: ", contactNumber.value, " and ", countryCode.value)
     const resp = await useFacilityStore().createFacilityTelecomNumber({
       facilityId: props.facilityId,
       contactMechPurposeTypeId: 'PRIMARY_PHONE',

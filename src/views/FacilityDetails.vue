@@ -612,7 +612,6 @@ import ViewFacilityOrderCountModal from '@/components/ViewFacilityOrderCountModa
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue';
 import CustomScheduleModal from '@/components/CustomScheduleModal.vue';
 import { DateTime } from 'luxon';
-import { FacilityService } from '@/services/FacilityService';
 import logger from '@/logger';
 import FacilityShopifyMappingModal from '@/components/FacilityShopifyMappingModal.vue'
 import FacilityExternalIdModal from '@/components/FacilityExternalIdModal.vue'
@@ -759,7 +758,7 @@ async function editMapUrl() {
             let resp;
             if (contactDetails.value?.googleMapUrl?.contactMechId) {
               if (data.mapUrl && data.mapUrl !== contactDetails.value?.googleMapUrl?.infoString) {
-                resp = await FacilityService.updateFacilityContactMech({
+                resp = await facilityStore.updateFacilityContactMech({
                   ...payload,
                   contactMechId: contactDetails.value.googleMapUrl.contactMechId,
                   contactMechTypeId: "MAP_URL",
@@ -768,7 +767,7 @@ async function editMapUrl() {
                 return;
               }
             } else {
-              resp = await FacilityService.createFacilityContactMech({
+              resp = await facilityStore.createFacilityContactMech({
                 ...payload,
                 contactMechTypeId: "MAP_URL",
                 contactMechPurposeTypeId: "GOOGLE_MAP_URL"
@@ -799,7 +798,7 @@ async function deleteMapUrl() {
       facilityId: props.facilityId,
       contactMechId: contactDetails.value?.googleMapUrl?.contactMechId
     };
-    const resp = await FacilityService.deleteFacilityContactMech(payload);
+    const resp = await facilityStore.deleteFacilityContactMech(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Map URL removed successfully.'));
       await facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId });
@@ -856,7 +855,7 @@ async function associateCalendarToFacility() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.associateCalendarToFacility({
+    const resp = await facilityStore.associateCalendarToFacility({
       facilityId: props.facilityId,
       calendarId: selectedCalendarId.value,
       fromDate: DateTime.now().toMillis(),
@@ -932,7 +931,7 @@ async function selectProductStores() {
       const productStoresToRemove = result.data.value.productStoresToRemove;
 
       const updatePromises = productStoresToRemove.map((payload: any) => 
-        FacilityService.updateProductStoreFacility({
+        facilityStore.updateProductStoreFacility({
           facilityId: props.facilityId,
           fromDate: facilityProductStores.value.find((store: any) => payload.productStoreId === store.productStoreId).fromDate,
           productStoreId: payload.productStoreId,
@@ -941,7 +940,7 @@ async function selectProductStores() {
       );
 
       const createPromises = productStoresToCreate.map((payload: any) => 
-        FacilityService.createProductStoreFacility({
+        facilityStore.createProductStoreFacility({
           productStoreId: payload.productStoreId,
           facilityId: props.facilityId,
           fromDate: DateTime.now().toMillis(),
@@ -1038,7 +1037,7 @@ async function removePartyFromFacility(party: any) {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.removePartyFromFacility({
+    const resp = await facilityStore.removePartyFromFacility({
       facilityId: party.facilityId,
       fromDate: party.fromDate,
       thruDate: DateTime.now().toMillis(),
@@ -1080,7 +1079,7 @@ async function changeOrderLimitPopover(ev: Event) {
 
 async function updateFacility(maximumOrderLimit: number | string, facility: any) {
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       "facilityId": facility.facilityId,
       maximumOrderLimit: maximumOrderLimit === "" ? null : maximumOrderLimit
     });
@@ -1104,7 +1103,7 @@ async function closeFacility(event: any) {
   const closedDate = isChecked ? DateTime.now().toMillis() : "";
 
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       "facilityId": current.value.facilityId,
       "closedDate": closedDate
     });
@@ -1144,7 +1143,7 @@ async function updateFulfillmentSetting(event: any, facilityGroupId: string) {
       });
     } else {
       const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId);
-      resp = await FacilityService.updateFacilityToGroup({
+      resp = await facilityStore.updateFacilityToGroup({
         "facilityId": current.value.facilityId,
         "facilityGroupId": facilityGroupId,
         "fromDate": groupInformation.fromDate,
@@ -1180,7 +1179,7 @@ async function updateSellInventoryOnlineSetting(event: any, facilityGroup: any) 
       successMessage = translate('is now selling on', { "facilityName": current.value.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
     } else {
       const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId);
-      resp = await FacilityService.updateFacilityToGroup({
+      resp = await facilityStore.updateFacilityToGroup({
         "facilityId": current.value.facilityId,
         "facilityGroupId": facilityGroup.facilityGroupId,
         "fromDate": groupInformation.fromDate,
@@ -1206,7 +1205,7 @@ async function removeFacilityFromGroup(facilityGroupId: string) {
   const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId);
 
   try {
-    const resp = await FacilityService.updateFacilityToGroup({
+    const resp = await facilityStore.updateFacilityToGroup({
       "facilityId": current.value.facilityId,
       "facilityGroupId": facilityGroupId,
       "fromDate": groupInformation.fromDate,
@@ -1233,7 +1232,7 @@ async function updateDefaultDaysToShip() {
       facilityId: current.value.facilityId,
       defaultDaysToShip: defaultDaysToShip.value
     };
-    const resp = await FacilityService.updateFacility(payload);
+    const resp = await facilityStore.updateFacility(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Updated default days to ship'));
     } else {
@@ -1255,7 +1254,7 @@ async function removeFacilityMapping(mapping: any) {
       fromDate: mapping.fromDate,
       thruDate: DateTime.now().toMillis()
     };
-    const resp = await FacilityService.updateFacilityIdentification(payload);
+    const resp = await facilityStore.updateFacilityIdentification(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Removed facility mapping successfully'));
       await facilityStore.fetchFacilityMappings({ facilityId: props.facilityId, facilityIdenTypeIds: Object.keys(externalMappingTypes.value) });
@@ -1276,7 +1275,7 @@ async function removeFacilityExternalID() {
       facilityId: current.value.facilityId,
       externalId: ''
     };
-    const resp = await FacilityService.updateFacility(payload);
+    const resp = await facilityStore.updateFacility(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Removed facility external ID'));
       await facilityStore.updateCurrentFacility({ ...current.value, externalId: '' });
@@ -1297,7 +1296,7 @@ async function removeShopifyFacilityMapping(shopifyFacilityMapping: any) {
       shopId: shopifyFacilityMapping.shopId,
       shopifyLocationId: shopifyFacilityMapping.shopifyLocationId,
     };
-    const resp = await FacilityService.deleteShopifyShopLocation(payload);
+    const resp = await facilityStore.deleteShopifyShopLocation(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Removed shopify mapping successfully'));
       await facilityStore.fetchShopifyFacilityMappings({ facilityId: props.facilityId });
@@ -1393,7 +1392,7 @@ async function renameFacility() {
           emitter.emit('presentLoader');
 
           try {
-            const resp = await FacilityService.updateFacility({
+            const resp = await facilityStore.updateFacility({
               facilityId: props.facilityId,
               facilityName: data.facilityName
             });
@@ -1435,7 +1434,7 @@ function getFacilityTypesByParentTypeId() {
 
 async function updateFacilityType() {
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       facilityId: props.facilityId,
       facilityTypeId: facilityTypeId.value
     });

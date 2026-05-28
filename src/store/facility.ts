@@ -83,6 +83,9 @@ export const useFacilityStore = defineStore("facility", {
         params: params
       });
     },
+    async fetchFacilityGroup(facilityGroupId: string) {
+      return api({ url: `oms/facilityGroups/${facilityGroupId}`, method: "get" });
+    },
 
     async createFacilityEmailAddress(payload: any) {
       return api({
@@ -732,7 +735,7 @@ export const useFacilityStore = defineStore("facility", {
       } catch (err) {
         logger.error("Failed to fetch facility parties", err);
       }
-      this.current.logins = facilityLogins;
+      this.current.facilityLogins = facilityLogins;
     },
     async fetchVirtualFacilities(payload: any) {
       if (payload.viewIndex === 0) emitter.emit("presentLoader");
@@ -743,32 +746,22 @@ export const useFacilityStore = defineStore("facility", {
 
       let facilities = JSON.parse(JSON.stringify(this.virtualFacilities.list)), total = 0;
       try {
-        const params = {
-          inputFields: {
-            parentFacilityTypeId_value: "VIRTUAL_FACILITY",
-            parentFacilityTypeId_op: "equals",
-            parentFacilityTypeId_grp: "1",
-            facilityTypeId_value: "VIRTUAL_FACILITY",
-            facilityTypeId_op: "equals",
-            facilityTypeId_grp: "2"
-          },
-          orderBy: "facilityName ASC",
-          entityName: "FacilityAndProductStore",
-          distinct: "Y",
-          fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
-          ...payload
-        };
         const resp = await api({
-          baseURL: commonUtil.getOmsURL(),
-          url: "performFind",
-          method: "post",
-          data: params
+          url: "oms/facilities/facilitiesAndProductStore",
+          method: "get",
+          params: {
+            facilityType: "VIRTUAL_FACILITY",
+            fieldsToSelect: "facilityId,facilityName,description,facilityTypeId,parentFacilityTypeId,fromDate",
+            orderByField: "facilityName ASC",
+            pageIndex: payload.viewIndex ?? 0,
+            pageSize: payload.viewSize ?? import.meta.env.VITE_APP_VIEW_SIZE
+          }
         });
-        if (!commonUtil.hasError(resp) && resp.data.count) {
+        if (resp.data?.facilities && resp.data.facilities.length > 0) {
           if (payload.viewIndex && payload.viewIndex > 0) {
-            facilities = facilities.concat(resp.data.docs);
+            facilities = facilities.concat(resp.data.facilities);
           } else {
-            facilities = resp.data.docs;
+            facilities = resp.data.facilities;
           }
           total = resp.data.count;
         } else {
@@ -912,32 +905,24 @@ export const useFacilityStore = defineStore("facility", {
       this.virtualFacilities = { list: facilities, total: facilities.length };
     },
     async fetchArchivedFacilities() {
-      let facilities = [] as any, viewIndex = 0, resp = {} as any;
+      let facilities = [] as any;
       try {
-        do {
-          resp = await api({
-            baseURL: commonUtil.getOmsURL(),
-            url: "performFind",
-            method: "post",
-            data: {
-              inputFields: {
-                facilityGroupId: 'ARCHIVE',
-              },
-              fieldList: ['facilityName', 'facilityGroupId', 'facilityId', 'facilityGroupTypeId', "fromDate"],
-              entityName: "FacilityAndGroupMember",
-              distinct: 'Y',
-              noConditionFind: 'Y',
-              filterByDate: 'Y',
-              viewSize: 50,
-              viewIndex
-            }
-          });
-
-          if (!commonUtil.hasError(resp) && resp.data.docs?.length) {
-            facilities = facilities.concat(resp.data.docs)
-            viewIndex++;
+        const resp = await api({
+          url: "oms/dataDocumentView",
+          method: "post",
+          data: {
+            dataDocumentId: "FacilityGroupAndMember",
+            customParametersMap: {
+              facilityGroupId: "ARCHIVE",
+              pageNoLimit: true
+            },
+            filterByDate: true,
+            fieldsToSelect: "facilityName,facilityGroupId,facilityId,facilityGroupTypeId,fromDate",
           }
-        } while (resp.data.docs?.length >= 50);
+        });
+        if (!commonUtil.hasError(resp) && resp.data?.entityValueList?.length) {
+          facilities = resp.data.entityValueList;
+        }
       } catch (error) {
         logger.error('Failed to fetch archived facilities.', error);
       }
@@ -948,39 +933,23 @@ export const useFacilityStore = defineStore("facility", {
     },
     async fetchFacilityGroupsByQuery(payload: any) {
       if (payload.viewIndex === 0) emitter.emit("presentLoader");
-      const filters = {} as any;
-      if (this.groupQuery.queryString) {
-        filters["facilityGroupId_value"] = this.groupQuery.queryString;
-        filters["facilityGroupId_op"] = "contains";
-        filters["facilityGroupId_ic"] = "Y";
-        filters["facilityGroupId_grp"] = "1";
-        filters["facilityGroupName_value"] = this.groupQuery.queryString;
-        filters["facilityGroupName_op"] = "contains";
-        filters["facilityGroupName_ic"] = "Y";
-        filters["facilityGroupName_grp"] = "2";
-      }
 
       let groups = JSON.parse(JSON.stringify(this.facilityGroups.list)), total = 0;
       try {
-        const params = {
-          inputFields: { ...filters },
-          entityName: "FacilityGroup",
-          noConditionFind: "Y",
-          orderBy: "facilityGroupName ASC",
-          fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-          ...payload
-        };
         const resp = await api({
-          baseURL: commonUtil.getOmsURL(),
-          url: "performFind",
-          method: "post",
-          data: params
+          url: "oms/facilityGroups/search",
+          method: "get",
+          params: {
+            keyword: this.groupQuery.queryString || undefined,
+            pageIndex: payload.viewIndex ?? 0,
+            pageSize: payload.viewSize ?? import.meta.env.VITE_APP_VIEW_SIZE
+          }
         });
         if (!commonUtil.hasError(resp) && resp.data.count) {
           if (payload.viewIndex && payload.viewIndex > 0) {
-            groups = groups.concat(resp.data.docs);
+            groups = groups.concat(resp.data.facilityGroups);
           } else {
-            groups = resp.data.docs;
+            groups = resp.data.facilityGroups;
           }
           total = resp.data.count;
         } else {
@@ -1018,28 +987,26 @@ export const useFacilityStore = defineStore("facility", {
           let groupResp = {} as any;
           do {
             groupResp = await api({
-              baseURL: commonUtil.getOmsURL(),
-              url: 'performFind',
-              method: 'POST',
+              url: "oms/dataDocumentView",
+              method: "post",
               data: {
-                inputFields: {
+                dataDocumentId: "FacilityGroupAndMember",
+                customParametersMap: {
                   facilityGroupId: facilityGroupIds,
-                  facilityGroupId_op: "in"
-                },
-                viewSize: 250,
-                viewIndex: groupViewIndex,
-                entityName: 'FacilityGroupAndMember',
-                noConditionFind: "Y",
-                filterByDate: 'Y',
-                fieldList: ['facilityGroupId', 'facilityId']
+                  facilityGroupId_op: "in",
+                  fieldsToSelect: "facilityGroupId,facilityId",
+                  filterByDate: true,
+                  pageSize: 250,
+                  pageIndex: groupViewIndex
+                }
               }
             });
 
-            if (!commonUtil.hasError(groupResp) && groupResp.data.count) {
-              facilityMemberResponses = [...facilityMemberResponses, ...groupResp.data.docs];
+            if (!commonUtil.hasError(groupResp) && groupResp.data?.entityValueList?.length > 0) {
+              facilityMemberResponses = [...facilityMemberResponses, ...groupResp.data.entityValueList];
               groupViewIndex++;
             }
-          } while (groupResp.data.docs?.length >= 250);
+          } while (groupResp.data?.entityValueList?.length >= 250);
 
           facilityCountByGroup = facilityMemberResponses.reduce((acc: any, item: any) => {
             acc[item.facilityGroupId] = (acc[item.facilityGroupId] || 0) + 1;
@@ -1050,36 +1017,30 @@ export const useFacilityStore = defineStore("facility", {
         // Inlining fetchProductStoreCountByGroup
         if (facilityGroupIds.length) {
           const idsCopy = [...facilityGroupIds];
-          const requests = [];
+          const requests: any[] = [];
           while (idsCopy.length) {
             const batch = idsCopy.splice(0, 10);
             requests.push({
-              inputFields: {
-                facilityGroupId: batch,
-                facilityGroupId_op: "in"
-              },
-              viewSize: 250,
-              entityName: 'ProductStoreFacilityGroup',
-              noConditionFind: "Y",
-              filterByDate: 'Y',
-              fieldList: ['facilityGroupId', 'productStoreId']
+              facilityGroupId: batch,
+              facilityGroupId_op: "in",
+              filterByDate: true,
+              fieldsToSelect: "facilityGroupId,productStoreId",
+              pageSize: 250
             });
           }
 
           const psResponses = await Promise.allSettled(requests.map((p) => api({
-            baseURL: commonUtil.getOmsURL(),
-            url: 'performFind',
-            method: 'POST',
-            data: p
+            url: "oms/dataDocumentView",
+            method: "post",
+            data: {
+              dataDocumentId: "PRODUCT_STORE_FACILITY_GROUP",
+              customParametersMap: p
+            }
           })));
 
-          const allPsData = psResponses.map((r: any) => r.value)
-            .reduce((acc: any, r: any) => {
-              if (!commonUtil.hasError(r)) {
-                acc = [...acc, ...r.data.docs];
-              }
-              return acc;
-            }, []);
+          const allPsData = psResponses.flatMap((r: any) =>
+            r.status === "fulfilled" && !commonUtil.hasError(r.value) ? r.value.data?.entityValueList || [] : []
+          );
 
           productStoreCountByGroup = allPsData.reduce((acc: any, item: any) => {
             acc[item.facilityGroupId] = (acc[item.facilityGroupId] || 0) + 1;
@@ -1098,6 +1059,110 @@ export const useFacilityStore = defineStore("facility", {
     },
     updateFacilityGroups(groups: any) {
       this.facilityGroups = { list: groups, total: groups.length };
+    },
+    async updateFacility(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}`, method: "put", data: payload });
+    },
+    async updateFacilityToGroup(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/groups/${payload.facilityGroupId}`, method: "put", data: payload });
+    },
+    async createProductStoreFacility(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/productStores`, method: "post", data: payload });
+    },
+    async updateProductStoreFacility(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/productStores/${payload.productStoreId}`, method: "put", data: payload });
+    },
+    async removePartyFromFacility(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/parties`, method: "delete", data: payload });
+    },
+    async associateCalendarToFacility(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/calendars`, method: "post", data: payload });
+    },
+    async updateFacilityIdentification(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/identifications`, method: "post", data: payload });
+    },
+    async createFacilityContactMech(payload: any) {
+      return api({ url: "oms/facilityContactMechs/facilityMapUrl", method: "post", data: payload });
+    },
+    async updateFacilityContactMech(payload: any) {
+      return api({ url: "oms/facilityContactMechs/facilityMapUrl", method: "put", data: payload });
+    },
+    async deleteFacilityContactMech(payload: any) {
+      return api({ url: "oms/facilityContactMechs/facilityMapUrl", method: "delete", data: payload });
+    },
+    async deleteShopifyShopLocation(payload: any) {
+      return api({ url: `oms/shopifyShops/locations/${payload.shopId}/${payload.facilityId}`, method: "delete" });
+    },
+    async createFacilityGroup(payload: any) {
+      return api({ url: "oms/facilityGroups", method: "post", data: payload });
+    },
+    async updateFacilityGroup(payload: any) {
+      return api({ url: `oms/facilityGroups/${payload.facilityGroupId}`, method: "put", data: payload });
+    },
+    async fetchGroupProductStores(payload: any) {
+      return api({
+        url: "oms/dataDocumentView",
+        method: "post",
+        data: {
+          dataDocumentId: "PRODUCT_STORE_FACILITY_GROUP",
+          customParametersMap: payload
+        }
+      });
+    },
+    async createProductStoreFacilityGroup(payload: any) {
+      return api({ url: `oms/productStores/${payload.productStoreId}/facilityGroups`, method: "post", data: payload });
+    },
+    async updateProductStoreFacilityGroup(payload: any) {
+      return api({ url: `oms/productStores/${payload.productStoreId}/facilityGroups`, method: "post", data: payload });
+    },
+    async fetchProductStoreCountByGroup(facilityGroupIds: string[]) {
+      if (!facilityGroupIds.length) return {};
+      const idsCopy = [...facilityGroupIds];
+      const requests: Promise<any>[] = [];
+      while (idsCopy.length) {
+        const batch = idsCopy.splice(0, 10);
+        requests.push(api({
+          url: "oms/dataDocumentView",
+          method: "post",
+          data: {
+            dataDocumentId: "PRODUCT_STORE_FACILITY_GROUP",
+            customParametersMap: {
+              facilityGroupId: batch,
+              facilityGroupId_op: "in",
+              filterByDate: true,
+              fieldsToSelect: "facilityGroupId,productStoreId",
+              pageSize: 250
+            }
+          }
+        }));
+      }
+      const responses = await Promise.allSettled(requests);
+      const allData = responses.flatMap((r: any) =>
+        r.status === "fulfilled" && !commonUtil.hasError(r.value) ? r.value.data?.entityValueList || [] : []
+      );
+      return allData.reduce((acc: any, item: any) => {
+        acc[item.facilityGroupId] = (acc[item.facilityGroupId] || 0) + 1;
+        return acc;
+      }, {});
+    },
+    async fetchAllFacilities() {
+      return api({ url: "oms/facilities", method: "get", params: { pageNoLimit: true } });
+    },
+    async fetchAssociatedFacilitiesToGroup(payload: any) {
+      return api({
+        url: "oms/dataDocumentView",
+        method: "post",
+        data: {
+          dataDocumentId: "FacilityGroupAndMember",
+          customParametersMap: payload
+        }
+      });
+    },
+    async addFacilitiesToGroup(payload: any) {
+      return api({ url: "oms/facilityGroupMembers", method: "post", data: payload });
+    },
+    async updateFacilitiesToGroup(payload: any) {
+      return api({ url: "oms/facilityGroupMembers", method: "put", data: payload });
     }
   },
   persist: true

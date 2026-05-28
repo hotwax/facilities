@@ -94,7 +94,6 @@ import { DateTime } from 'luxon';
 import CreateVirtualFacilityModal from '@/components/CreateVirtualFacilityModal.vue';
 import VirtualFacilityActionsPopover from '@/components/VirtualFacilityActionsPopover.vue';
 import ArchivedFacilityModal from '@/components/ArchivedFacilityModal.vue';
-import { FacilityService } from '@/services/FacilityService';
 import { customSort } from '@/utils';
 import logger from "@/logger";
 import { useFacilityStore } from '@/store/facility';
@@ -133,7 +132,7 @@ async function openVirtualFacilityActionsPopover(event: Event, facility: any) {
   const result = await parkingActionsPopover.onDidDismiss();
   if (result.data && result.data !== facility.facilityName) {
     try {
-      const resp = await FacilityService.updateFacility({
+      const resp = await facilityStore.updateFacility({
         facilityId: facility.facilityId,
         facilityName: result.data
       });

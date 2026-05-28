@@ -58,7 +58,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate, commonUtil } from "@common";
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -83,7 +82,7 @@ function isGroupTypeUpdated() {
 
 async function saveGroupType() {
   try {
-    const resp = await FacilityService.updateFacilityGroup({
+    const resp = await facilityStore.updateFacilityGroup({
       facilityGroupId: facilityGroupValue.value.facilityGroupId,
       facilityGroupTypeId: facilityGroupValue.value.facilityGroupTypeId
     });

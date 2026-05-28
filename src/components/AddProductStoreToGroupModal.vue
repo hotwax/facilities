@@ -48,7 +48,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { commonUtil } from "@common";
 import { DateTime } from "luxon";
@@ -79,19 +78,15 @@ function closeModal() {
 async function fetchGroupProductStores() {
   emitter.emit('presentLoader');
   try {
-    const resp = await FacilityService.fetchAssociatedProductStoresToGroup({
-      "inputFields": {
-        "facilityGroupId": props.group.facilityGroupId
-      },
-      "viewSize": 250, // maximum view size
-      "entityName": 'ProductStoreFacilityGroup',
-      "noConditionFind": "Y",
-      "filterByDate": 'Y'
+    const resp = await facilityStore.fetchGroupProductStores({
+      "facilityGroupId": props.group.facilityGroupId,
+      "filterByDate": true,
+      "pageSize": 250
     });
 
     if (!commonUtil.hasError(resp)) {
-      selectedProductStores.value = resp.data.docs;
-      selectedProductStoreValues.value = JSON.parse(JSON.stringify(resp.data.docs));
+      selectedProductStores.value = resp.data?.entityValueList || [];
+      selectedProductStoreValues.value = JSON.parse(JSON.stringify(resp.data?.entityValueList || []));
     } else {
       throw resp.data;
     }
@@ -117,8 +112,8 @@ async function saveProductStores() {
   const productStoresToAdd = selectedProductStoreValues.value.filter((selectedStore: any) => !selectedProductStores.value.some((store: any) => store.productStoreId === selectedStore.productStoreId));
   const productStoresToRemove = selectedProductStores.value.filter((store: any) => !selectedProductStoreValues.value.some((selectedStore: any) => store.productStoreId === selectedStore.productStoreId));
 
-  const removePromises = productStoresToRemove.map((store: any) => 
-    FacilityService.updateProductStoreFacilityGroup({
+  const removePromises = productStoresToRemove.map((store: any) =>
+    facilityStore.updateProductStoreFacilityGroup({
       "productStoreId": store.productStoreId,
       "facilityGroupId": props.group.facilityGroupId,
       "fromDate": store.fromDate,
@@ -126,8 +121,8 @@ async function saveProductStores() {
     })
   );
 
-  const addPromises = productStoresToAdd.map((store: any) => 
-    FacilityService.createProductStoreFacilityGroup({
+  const addPromises = productStoresToAdd.map((store: any) =>
+    facilityStore.createProductStoreFacilityGroup({
       "productStoreId": store.productStoreId,
       "facilityGroupId": props.group.facilityGroupId,
       "fromDate": DateTime.now().toMillis()
@@ -147,7 +142,7 @@ async function saveProductStores() {
 }
 
 async function fetchGroupsCount() {
-  const productStoreCountByGroup = await FacilityService.fetchProductStoreCountByGroup([props.group.facilityGroupId]);
+  const productStoreCountByGroup = await facilityStore.fetchProductStoreCountByGroup([props.group.facilityGroupId]);
   const updatedGroups = JSON.parse(JSON.stringify(groups.value));
   const currentGroup = updatedGroups.find((g: any) => g.facilityGroupId === props.group.facilityGroupId);
   if (currentGroup) {

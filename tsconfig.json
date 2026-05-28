@@ -14,7 +14,8 @@
     "baseUrl": ".",
     "types": [
       "vite/client",
-      "vitest/globals"
+      "vitest/globals",
+      "pinia-plugin-persistedstate"
     ],
     "paths": {
       "@/*": [

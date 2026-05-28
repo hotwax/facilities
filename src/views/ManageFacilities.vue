@@ -94,7 +94,6 @@ import { ref } from 'vue';
 import { addCircleOutline, arrowForwardOutline, removeCircleOutline, saveOutline } from 'ionicons/icons';
 import { onBeforeRouteLeave } from 'vue-router';
 import { commonUtil, translate } from "@common"
-import { FacilityService } from '@/services/FacilityService';
 import logger from '@/logger';
 import { DateTime } from "luxon";
 import emitter from "@/event-bus";
@@ -166,7 +165,7 @@ async function fetchFacilityGroup() {
     const resp = await useFacilityStore().fetchFacilityGroups({ facilityGroupId: props.facilityGroupId });
 
       if (resp.data?.length > 0) {
-      currentFacilityGroup.value = resp.data.docs[0];
+      currentFacilityGroup.value = resp.data[0];
     } else {
       throw resp.data;
     }
@@ -177,27 +176,13 @@ async function fetchFacilityGroup() {
 
 async function fetchFacilities() {
   facilities.value = [];
-  let viewIndex = 0, resp;
-
   try {
-    do {
-      resp = await FacilityService.fetchFacilities({
-        "entityName": "Facility",
-        "fieldList": ["facilityId", "facilityName"],
-        "viewIndex": viewIndex,
-        "viewSize": 250,
-        "distinct": "Y",
-        "noConditionFind": "Y"
-      }) as any;
-
-      if (!commonUtil.hasError(resp) && resp.data.count) {
-        facilities.value = facilities.value.concat(resp.data.docs);
-        viewIndex++;
-      } else {
-        throw resp.data;
-      }
+    const resp = await useFacilityStore().fetchAllFacilities() as any;
+    if (!commonUtil.hasError(resp) && resp.data?.length) {
+      facilities.value = resp.data;
+    } else {
+      throw resp.data;
     }
-    while (resp.data.docs.length >= 250);
   } catch (error) {
     logger.error(error);
   }
@@ -213,35 +198,25 @@ async function fetchMemberFacilities() {
       return facilityInfo;
     }, {});
 
-    do {
-      resp = await FacilityService.fetchAssociatedFacilitiesToGroup({
-        "inputFields": {
-          "facilityGroupId": props.facilityGroupId
-        },
-        "viewIndex": viewIndex,
-        "viewSize": 250,
-        "entityName": 'FacilityGroupAndMember',
-        "noConditionFind": "Y",
-        "filterByDate": 'Y',
-        "fieldList": ["facilityGroupId", 'facilityId', 'fromDate', 'sequenceNum'],
-        "orderBy" : "sequenceNum",
-      }) as any;
+    const resp = await useFacilityStore().fetchAssociatedFacilitiesToGroup({
+      facilityGroupId: props.facilityGroupId,
+      filterByDate: true,
+      fieldsToSelect: "facilityGroupId,facilityId,fromDate,sequenceNum",
+      orderByField: "sequenceNum",
+      pageNoLimit: true
+    }) as any;
 
-      if (!commonUtil.hasError(resp) && resp.data.count) {
-        const currentMemberFacilities = resp.data.docs.map((memberFacility: any) => {
-          const facility = facilityDetail[memberFacility.facilityId];
-          if (facility) {
-            memberFacility.facilityName = facility.facilityName;
-          }
-          return memberFacility;
-        });
-        memberFacilities.value = memberFacilities.value.concat(currentMemberFacilities);
-        viewIndex++;
-      } else {
-        throw resp.data;
-      }
+    if (!commonUtil.hasError(resp) && resp.data?.entityValueList?.length) {
+      memberFacilities.value = resp.data.entityValueList.map((memberFacility: any) => {
+        const facility = facilityDetail[memberFacility.facilityId];
+        if (facility) {
+          memberFacility.facilityName = facility.facilityName;
+        }
+        return memberFacility;
+      });
+    } else {
+      throw resp.data;
     }
-    while (resp.data.docs.length >= 250);
     selectedFacilities.value = JSON.parse(JSON.stringify(memberFacilities.value));
   } catch (error) {
     logger.error(error);
@@ -322,11 +297,11 @@ async function save() {
   const requestPayload = [];
 
   if (facilitiesToUpdateList.length > 0) {
-    requestPayload.push(FacilityService.updateFacilitiesToGroup({ "payload": { "facilityList": facilitiesToUpdateList}}));
+    requestPayload.push(useFacilityStore().updateFacilitiesToGroup({ facilityList: facilitiesToUpdateList }));
   }
 
   if (facilitiesToAddList.length > 0) {
-    requestPayload.push(FacilityService.addFacilitiesToGroup({ "payload": { "facilityList": facilitiesToAddList } }));
+    requestPayload.push(useFacilityStore().addFacilitiesToGroup({ facilityList: facilitiesToAddList }));
   }
 
   const responses = await Promise.allSettled(requestPayload);

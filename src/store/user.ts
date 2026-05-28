@@ -195,10 +195,9 @@ export const useUserStore = defineStore("user", {
           newLocale = matchingLocale || this.locale
           
           const resp: any = await api({
-            url: "setUserLocale",
+            url: "admin/user/profile",
             method: "post",
-            data: { userId: this.current.userId, newLocale },
-            baseURL: commonUtil.getOmsURL()
+            data: { userId: this.current.userId, locale: newLocale },
           })
 
           if (commonUtil.hasError(resp)) {
@@ -218,10 +217,9 @@ export const useUserStore = defineStore("user", {
 
       try {
         const resp: any = await api({
-          url: "setUserTimeZone",
+          url: "admin/user/profile",
           method: "post",
-          data: { userId: this.current.userId, tzId },
-          baseURL: commonUtil.getOmsURL()
+          data: { userId: this.current.userId, timeZone: tzId },
         });
 
         if (commonUtil.hasError(resp)) {
@@ -245,17 +243,16 @@ export const useUserStore = defineStore("user", {
 
       try {
         const resp: any = await api({
-          url: "getAvailableTimeZones",
+          url: "admin/user/getAvailableTimeZones",
           method: "get",
           cache: true,
-          baseURL: commonUtil.getOmsURL()
         });
 
         if (commonUtil.hasError(resp)) {
           throw resp.data
         }
 
-        this.timeZones = resp.data.filter((timeZone: any) => DateTime.local().setZone(timeZone.id).isValid);
+        this.timeZones = resp.data.timeZones.filter((timeZone: any) => DateTime.local().setZone(timeZone.id).isValid);
       } catch (err) {
         console.error('Error', err)
       }

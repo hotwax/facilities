@@ -85,14 +85,15 @@ import {
 import { ref, computed, reactive, onMounted } from "vue";
 import { arrowForwardOutline } from "ionicons/icons";
 import { commonUtil, translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import { generateInternalId } from "@/utils";
 import logger from "@/logger";
 import { DateTime } from "luxon";
+import { useFacilityStore } from '@/store/facility';
 import { useUtilStore } from '@/store/util';
 import router from "@/router";
 
 const props = defineProps(['selectedFacilityGroupTypeId']);
+const facilityStore = useFacilityStore();
 const utilStore = useUtilStore();
 
 const formData = reactive({
@@ -147,7 +148,7 @@ async function createFacilityGroup() {
       ...formData,
     };
 
-    const resp = await FacilityService.createFacilityGroup(payload);
+    const resp = await facilityStore.createFacilityGroup(payload);
     if (!commonUtil.hasError(resp)) {
       const facilityGroupId = resp.data.facilityGroupId;
       if (selectedProductStoreIds.value.length > 0) {
@@ -166,7 +167,7 @@ async function createFacilityGroup() {
 async function associateFacilityGroupToStore(facilityGroupId: string, productStoreIds: string[]) {
   try {
     const responses = await Promise.allSettled(productStoreIds
-      .map(async (productStoreId: any) => await FacilityService.createProductStoreFacilityGroup({
+      .map(async (productStoreId: any) => await facilityStore.createProductStoreFacilityGroup({
         "productStoreId": productStoreId,
         "facilityGroupId": facilityGroupId,
         "fromDate": DateTime.now().toMillis()

@@ -54,7 +54,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import { generateInternalId } from "@/utils";
 import logger from "@/logger";
@@ -110,7 +109,7 @@ async function createVirtualFacility() {
       ownerPartyId: organizationPartyId.value
     };
 
-    const resp = await FacilityService.createVirtualFacility(payload);
+    const resp = await facilityStore.createFacility(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate("New parking created successfully."));
       const createdFacility = {

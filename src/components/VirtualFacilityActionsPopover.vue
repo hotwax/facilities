@@ -24,7 +24,6 @@ import {
   popoverController
 } from "@ionic/vue";
 import { translate, commonUtil } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { useFacilityStore } from "@/store/facility";
 import { computed } from "vue";
@@ -94,16 +93,10 @@ async function fetchArchiveGroup() {
   // checking if the archive group exists and return the facilityGroupId if it does
   let fetchedFacilityGroupId = '';
   try {
-    const resp = await FacilityService.fetchFacilityGroup({
-      inputFields: {
-        facilityGroupId: 'ARCHIVE',
-      },
-      entityName: 'FacilityGroup',
-      fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-      viewSize: 1
-    });
-
-    fetchedFacilityGroupId = resp.data.count ? resp.data.docs[0].facilityGroupId : '';
+    const resp = await facilityStore.fetchFacilityGroup('ARCHIVE');
+    if (!commonUtil.hasError(resp)) {
+      fetchedFacilityGroupId = resp.data?.facilityGroupId || '';
+    }
   } catch (error) {
     logger.error(error);
   }
@@ -113,7 +106,7 @@ async function fetchArchiveGroup() {
 async function createArchiveGroup() {
   let createdFacilityGroupId = '';
   try {
-    const resp = await FacilityService.createFacilityGroup({
+    const resp = await facilityStore.createFacilityGroup({
       facilityGroupName: 'Archive',
       facilityGroupId: 'ARCHIVE',
       facilityGroupTypeId: '', // TODO need to decide group type ID

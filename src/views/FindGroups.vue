@@ -136,7 +136,6 @@ import { ref, computed, onMounted } from 'vue';
 import { addOutline, bagHandleOutline, businessOutline, ellipsisVerticalOutline } from 'ionicons/icons';
 import { commonUtil, translate } from "@common"
 import { customSort } from '@/utils';
-import { FacilityService } from '@/services/FacilityService';
 import logger from '@/logger';
 import AddProductStoreToGroupModal from '@/components/AddProductStoreToGroupModal.vue';
 import GroupTypeModal from "@/components/GroupTypeModal.vue";
@@ -192,7 +191,7 @@ function isFacilityGroupLinked(facilityGroupTypeId: any) {
 async function updateFacilityGroup(facilityGroup: any) {
   const isChecked = !isFacilityGroupLinked(facilityGroup.facilityGroupTypeId);
   try {
-    const resp = await FacilityService.updateFacilityGroup({
+    const resp = await facilityStore.updateFacilityGroup({
       "facilityGroupId": facilityGroup.facilityGroupId,
       "facilityGroupTypeId": isChecked ? currentFacilityGroupTypeId.value : ''
     });
