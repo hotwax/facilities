@@ -41,7 +41,7 @@
       </ion-item>
       <ion-item @keyup.enter.stop>
         <ion-select label-placement="floating" :label="translate('State')" interface="popover" :disabled="!address.countryGeoId" :placeholder="translate('Select')" v-model="address.stateProvinceGeoId">
-          <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.geoId" :value="state.geoId">
+          <ion-select-option v-for="state in states[address.countryGeoId]" :key="state.toGeoId" :value="state.toGeoId">
             {{ state.wellKnownText && state.wellKnownText !== state.geoName ? `${state.geoName} (${state.wellKnownText})` : state.geoName }}
           </ion-select-option>
         </ion-select>
@@ -94,7 +94,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { api, translate } from "@common"
-import { FacilityService } from '@/services/FacilityService';
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import { isValidEmail } from "@/utils";
@@ -126,7 +125,7 @@ onMounted(async () => {
   if (address.value.countryGeoId) {
     const country = countries.value.find((country: any) => country.geoId === address.value.countryGeoId);
     if (country) {
-      telecomNumberValue.value.countryCode = commonUtil.getTelecomCountryCode(country.geoCode);
+      telecomNumberValue.value.countryCode = commonUtil.getTelecomCountryCode(country.geoCode) || commonUtil.getTelecomCountryCode(country.geoCodeAlpha2);
     }
   }
   if (!address.value.toName) {
@@ -169,7 +168,7 @@ async function saveTelecomNumber() {
 
   try {
     if (contactDetails.value.telecomNumber?.contactMechId) {
-      resp = await FacilityService.updateFacilityTelecomNumber({
+      resp = await facilityStore.updateFacilityTelecomNumber({
         ...payload,
         contactMechId: contactDetails.value.telecomNumber.contactMechId,
       });
@@ -191,14 +190,15 @@ async function saveEmailAddress() {
   let resp = {} as any;
   const payload = {
     facilityId: props.facilityId,
-    emailAddress: emailAddress.value.infoString
+    infoString: emailAddress.value.infoString
   };
 
   try {
     if (contactDetails.value.emailAddress?.contactMechId) {
-      resp = await FacilityService.updateFacilityEmailAddress({
+      resp = await facilityStore.updateFacilityEmailAddress({
         ...payload,
         contactMechId: emailAddress.value.contactMechId,
+        contactMechPurposeTypeId: 'PRIMARY_EMAIL'
       });
     } else {
       resp = await useFacilityStore().createFacilityEmailAddress({
@@ -239,7 +239,7 @@ async function saveContact() {
   if (isAddressUpdated()) {
     try {
       if (address.value.contactMechId) {
-        resp = await FacilityService.updateFacilityPostalAddress({ ...address.value, facilityId: props.facilityId });
+        resp = await facilityStore.updateFacilityPostalAddress({ ...address.value, facilityId: props.facilityId, contactMechPurposeTypeId: 'PRIMARY_LOCATION' });
       } else {
         resp = await api({
           url: `admin/facilities/${props.facilityId}/contacts/address`,

@@ -19,7 +19,6 @@ import {
   popoverController
 } from "@ionic/vue";
 import { translate } from "@common";
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
@@ -54,7 +53,7 @@ async function regenerateLatitudeAndLongitude() {
       generatedLatLong = resp.response.docs[0];
 
       if (generatedLatLong.latitude && generatedLatLong.longitude) {
-        resp = await FacilityService.updateFacilityPostalAddress({
+        resp = await facilityStore.updateFacilityPostalAddress({
           ...postalAddress.value,
           facilityId: props.facilityId,
           latitude: generatedLatLong.latitude,
@@ -84,7 +83,7 @@ async function removeLatitudeAndLongitude() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.updateFacilityPostalAddress({
+    const resp = await facilityStore.updateFacilityPostalAddress({
       ...postalAddress.value,
       facilityId: props.facilityId,
       latitude: '',

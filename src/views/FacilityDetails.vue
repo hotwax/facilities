@@ -684,7 +684,7 @@ onIonViewWillEnter(async () => {
     facilityStore.fetchFacilityParties({ facilityId: props.facilityId }),
     facilityStore.fetchFacilityMappings({ facilityId: props.facilityId, facilityIdenTypeIds: Object.keys(externalMappingTypes.value) }),
     facilityStore.fetchShopifyFacilityMappings({ facilityId: props.facilityId }),
-    facilityStore.getFacilityProductStores({ facilityId: props.facilityId }),
+    facilityStore.fetchFacilityProductStores({ facilityId: props.facilityId }),
     utilStore.fetchProductStores(),
     facilityStore.fetchFacilityContactDetailsAndTelecom({ facilityId: props.facilityId }),
     utilStore.fetchCalendars(),

@@ -56,7 +56,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { commonUtil, translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { DateTime } from "luxon";
@@ -159,7 +158,7 @@ async function removeFacilityFromGroup(facilityGroupId: string) {
   const groupInformation = current.value.groupInformation.find((group: any) => group.facilityGroupId === facilityGroupId);
 
   try {
-    const resp = await FacilityService.updateFacilityToGroup({
+    const resp = await facilityStore.updateFacilityToGroup({
       "facilityId": current.value.facilityId,
       "facilityGroupId": facilityGroupId,
       "fromDate": groupInformation.fromDate,
@@ -177,38 +176,28 @@ async function removeFacilityFromGroup(facilityGroupId: string) {
 }
 
 async function fetchFacilityGroups() {
-  let viewIndex = 0, resp;
-
   try {
-    do {
-      const params = {
-        entityName: "FacilityGroup",
-        noConditionFind: 'Y',
-        orderBy: "facilityGroupTypeId ASC",
-        fieldList: ["facilityGroupId", "facilityGroupTypeId", "facilityGroupName", "description"],
-        viewSize: 250,
-        viewIndex
-      };
-      resp = await FacilityService.fetchFacilityGroups(params);
+    const resp = await facilityStore.fetchFacilityGroups({
+      orderByField: "facilityGroupTypeId ASC",
+      pageNoLimit: true
+    });
 
-      if (!commonUtil.hasError(resp) && resp.data?.docs?.length > 0) {
-        const newFacilityGroups = resp.data.docs.reduce((groupsByType: any, group: any) => {
-          const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
+    if (!commonUtil.hasError(resp) && resp.data?.length > 0) {
+      const newFacilityGroups = resp.data.reduce((groupsByType: any, group: any) => {
+        const groupTypeId = !group.facilityGroupTypeId ? "Others" : group.facilityGroupTypeId;
 
-          if (groupsByType[groupTypeId]) {
-            groupsByType[groupTypeId].push(group);
-          } else {
-            groupsByType[groupTypeId] = [group];
-          }
-          return groupsByType;
-        }, {});
-        facilityGroupsByType.value = { ...facilityGroupsByType.value, ...newFacilityGroups };
-        filteredFacilityGroupsByType.value = facilityGroupsByType.value;
-      } else {
-        throw resp.data;
-      }
-      viewIndex++;
-    } while (resp.data.docs.length >= 250);
+        if (groupsByType[groupTypeId]) {
+          groupsByType[groupTypeId].push(group);
+        } else {
+          groupsByType[groupTypeId] = [group];
+        }
+        return groupsByType;
+      }, {});
+      facilityGroupsByType.value = newFacilityGroups;
+      filteredFacilityGroupsByType.value = facilityGroupsByType.value;
+    } else {
+      throw resp.data;
+    }
   } catch (err) {
     logger.error('Failed to find facility groups', err);
   }

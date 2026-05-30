@@ -63,7 +63,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import { generateInternalId } from "@/utils";
 import logger from "@/logger";
@@ -124,7 +123,7 @@ async function createFacilityGroup() {
       ...formData.value,
     };
 
-    const resp = await FacilityService.createFacilityGroup(payload);
+    const resp = await facilityStore.createFacilityGroup(payload);
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate("Facility group created."));
       const createdGroup = {

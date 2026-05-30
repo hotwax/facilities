@@ -199,11 +199,13 @@ async function fetchMemberFacilities() {
     }, {});
 
     const resp = await useFacilityStore().fetchAssociatedFacilitiesToGroup({
-      facilityGroupId: props.facilityGroupId,
+      customParametersMap: {
+        facilityGroupId: props.facilityGroupId,
+        orderByField: "sequenceNum",
+        pageNoLimit: true
+      },
       filterByDate: true,
       fieldsToSelect: "facilityGroupId,facilityId,fromDate,sequenceNum",
-      orderByField: "sequenceNum",
-      pageNoLimit: true
     }) as any;
 
     if (!commonUtil.hasError(resp) && resp.data?.entityValueList?.length) {

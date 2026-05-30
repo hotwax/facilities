@@ -270,8 +270,8 @@ async function saveStoreConfig() {
 }
 
 async function addProductStoresToFacility() {
-  const promises = selectedProductStores.value.map((payload: any) => 
-    FacilityService.createProductStoreFacility({
+  const promises = selectedProductStores.value.map((payload: any) =>
+    facilityStore.createProductStoreFacility({
       productStoreId: payload.productStoreId,
       facilityId: props.facilityId,
       fromDate: DateTime.now().toMillis(),
@@ -288,16 +288,9 @@ async function addProductStoresToFacility() {
 async function fetchFacilityGroup(shopifyShopId: string) {
   let facilityGroupId;
   try {
-    const resp = await FacilityService.fetchFacilityGroup({
-      inputFields: {
-        facilityGroupId: shopifyShopId
-      },
-      entityName: 'FacilityGroup',
-      fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-      viewSize: 100
-    });
-    if (!commonUtil.hasError(resp) && resp.data.docs.length > 0) {
-      facilityGroupId = resp.data.docs[0].facilityGroupId;
+    const resp = await facilityStore.fetchFacilityGroup(shopifyShopId);
+    if (!commonUtil.hasError(resp)) {
+      facilityGroupId = resp.data?.facilityGroupId;
     }
   } catch (err) {
     logger.error(err);
@@ -310,7 +303,7 @@ async function makeProductStorePrimary(shopifyShopId: string) {
     let facilityGroupId = await fetchFacilityGroup(shopifyShopId);
 
     if (!facilityGroupId) {
-      const resp = await FacilityService.createFacilityGroup({
+      const resp = await facilityStore.createFacilityGroup({
         facilityGroupTypeId: 'FEATURING',
         facilityGroupName: utilStore.getProductStore(primaryFacilityGroupId.value).storeName,
         facilityGroupId: shopifyShopId
@@ -322,7 +315,7 @@ async function makeProductStorePrimary(shopifyShopId: string) {
     }
 
     if (facilityGroupId) {
-      const resp = await FacilityService.updateFacility({
+      const resp = await facilityStore.updateFacility({
         facilityId: props.facilityId,
         primaryFacilityGroupId: facilityGroupId
       });

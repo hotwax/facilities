@@ -134,12 +134,12 @@ export const useFacilityStore = defineStore("facility", {
               customParametersMap: {
                 facilityId: facilityIds,
                 facilityId_op: "in",
-                fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
-                distinct: true,
-                filterByDate: true,
                 pageSize: 250,
                 pageIndex: groupViewIndex
-              }
+              },
+              fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
+              distinct: true,
+              filterByDate: true,
             }
           });
 
@@ -290,11 +290,11 @@ export const useFacilityStore = defineStore("facility", {
             dataDocumentId: "FacilityGroupAndMember",
             customParametersMap: {
               facilityId: facility.facilityId,
-              fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
-              distinct: true,
-              filterByDate: true,
               pageNoLimit: true
-            }
+            },
+            fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
+            distinct: true,
+            filterByDate: true,
           }
         });
 
@@ -358,6 +358,7 @@ export const useFacilityStore = defineStore("facility", {
         group.isChecked = (facilityGroupInfo?.some((facilityGroup: any) => facilityGroup?.facilityGroupId === group.facilityGroupId));
       });
       facility.inventoryGroups = inventoryGroups;
+      console.log("facility", facility);
       this.current = facility;
     },
     async fetchCurrentFacility(payload: any) {
@@ -387,15 +388,15 @@ export const useFacilityStore = defineStore("facility", {
           method: "get",
           params
         });
-        if (resp.data && resp.data.length > 0) {
-          facility = resp.data[0];
+        if (resp.data?.facilities && resp.data.facilities.length > 0) {
+          facility = resp.data.facilities[0];
         } else {
           throw resp.data;
         }
       } catch (error) {
         logger.error(error);
       }
-
+      console.log("=-=-=-=-=-=-=-=cfacility", facility);
       this.current = { ...this.current, ...facility };
       await this.fetchFacilityAdditionalInformation();
     },
@@ -413,7 +414,7 @@ export const useFacilityStore = defineStore("facility", {
         contactMechTypeId_op: "in",
         facilityId: facility.facilityId,
         orderByField: "fromDate DESC",
-        fieldsToSelect: "address1,address2,city,contactMechId,contactMechTypeId,contactNumber,countryCode,countryGeoId,countryGeoName,directions,infoString,latitude,longitude,postalCode,stateGeoId,stateGeoName,toName",
+        fieldsToSelect: "address1,address2,city,contactMechId,contactMechTypeId,infoString,contactNumber,countryCode,countryGeoId,countryGeoName,directions,infoString,latitude,longitude,postalCode,stateGeoId,stateGeoName,toName",
         pageSize: 4
       };
 
@@ -504,13 +505,13 @@ export const useFacilityStore = defineStore("facility", {
       }
       this.current.calendar = facilityCalendar;
     },
-    async getFacilityProductStores(params: any) {
+    async fetchFacilityProductStores(params: any) {
       let productStores = [];
       const payload = {
         dataDocumentId: 'PRODUCT_STORE_FACILITY',
-        customParamtersMap: { facilityId: params.facilityId, pageNoLimit: true },
+        customParametersMap: { facilityId: params.facilityId, pageNoLimit: true },
         filterByDate: true,
-        fieldList: "fromDate,productStoreId"
+        fieldsToSelect: "fromDate,facilityId,productStoreId"
       };
 
       try {
@@ -994,11 +995,11 @@ export const useFacilityStore = defineStore("facility", {
                 customParametersMap: {
                   facilityGroupId: facilityGroupIds,
                   facilityGroupId_op: "in",
-                  fieldsToSelect: "facilityGroupId,facilityId",
-                  filterByDate: true,
                   pageSize: 250,
                   pageIndex: groupViewIndex
-                }
+                },
+                fieldsToSelect: "facilityGroupId,facilityId",
+                filterByDate: true,
               }
             });
 
@@ -1021,11 +1022,13 @@ export const useFacilityStore = defineStore("facility", {
           while (idsCopy.length) {
             const batch = idsCopy.splice(0, 10);
             requests.push({
-              facilityGroupId: batch,
-              facilityGroupId_op: "in",
+              customParametersMap: {
+                facilityGroupId: batch,
+                facilityGroupId_op: "in",
+                pageSize: 250
+              },
               filterByDate: true,
               fieldsToSelect: "facilityGroupId,productStoreId",
-              pageSize: 250
             });
           }
 
@@ -1034,7 +1037,7 @@ export const useFacilityStore = defineStore("facility", {
             method: "post",
             data: {
               dataDocumentId: "PRODUCT_STORE_FACILITY_GROUP",
-              customParametersMap: p
+              ...p
             }
           })));
 
@@ -1062,6 +1065,45 @@ export const useFacilityStore = defineStore("facility", {
     },
     async updateFacility(payload: any) {
       return api({ url: `oms/facilities/${payload.facilityId}`, method: "put", data: payload });
+    },
+    async updateFacilityLocation(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/locations`, method: "post", data: payload });
+    },
+    async deleteFacilityLocation(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/locations/${payload.locationSeqId}`, method: "delete" });
+    },
+    async updateFacilityPostalAddress(payload: any) {
+      return api({ url: "oms/facilityContactMechs/facilityAddress", method: "put", data: payload });
+    },
+    async updateFacilityTelecomNumber(payload: any) {
+      return api({ url: "oms/facilityContactMechs/facilityPhone", method: "put", data: payload });
+    },
+    async updateFacilityEmailAddress(payload: any) {
+      return api({ url: "oms/facilityContactMechs/facilityEmail", method: "put", data: payload });
+    },
+    async createFacilityIdentification(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/identifications`, method: "post", data: payload });
+    },
+    async addPartyToFacility(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/parties`, method: "post", data: payload });
+    },
+    async createEnumeration(payload: any) {
+      return api({ url: "admin/enums", method: "post", data: payload });
+    },
+    async createShopifyShopLocation(payload: any) {
+      return api({ url: `oms/shopifyShops/${payload.shopId}/locations`, method: "post", data: payload });
+    },
+    async updateShopifyShopLocation(payload: any) {
+      return api({ url: `oms/shopifyShops/${payload.shopId}/locations`, method: "post", data: payload });
+    },
+    async removeFacilityCalendar(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/calendars`, method: "post", data: { ...payload, thruDate: DateTime.now().toMillis() } });
+    },
+    async fetchFacilityPartyRoles(payload: any) {
+      return api({ url: `oms/facilities/${payload.facilityId}/parties`, method: "get", params: { partyId: payload.partyId, filterByDate: true } });
+    },
+    async fetchFacilityOrderCounts(facilityId: string) {
+      return api({ url: "oms/facilities/facilityOrderCounts", method: "get", params: { facilityId, orderByField: "entryDate DESC", pageSize: 10 } });
     },
     async updateFacilityToGroup(payload: any) {
       return api({ url: `oms/facilities/${payload.facilityId}/groups/${payload.facilityGroupId}`, method: "put", data: payload });
@@ -1129,10 +1171,10 @@ export const useFacilityStore = defineStore("facility", {
             customParametersMap: {
               facilityGroupId: batch,
               facilityGroupId_op: "in",
-              filterByDate: true,
-              fieldsToSelect: "facilityGroupId,productStoreId",
               pageSize: 250
-            }
+            },
+            filterByDate: true,
+            fieldsToSelect: "facilityGroupId,productStoreId",
           }
         }));
       }

@@ -51,7 +51,7 @@ const updateFacilityGroup = async (currentFacility: any, facilityGroup: any, isC
       successMessage = translate('is now selling on', { "facilityName": currentFacility.facilityName, "facilityGroupId": facilityGroup.facilityGroupName });
     } else {
       const groupInformation = currentFacility.groupInformation.find((group: any) => group.facilityGroupId === facilityGroup.facilityGroupId)
-      resp = await FacilityService.updateFacilityToGroup({
+      resp = await useFacilityStore().updateFacilityToGroup({
         "facilityId": currentFacility.facilityId,
         "facilityGroupId": facilityGroup.facilityGroupId,
         "fromDate": groupInformation.fromDate,

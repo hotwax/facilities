@@ -96,7 +96,7 @@ async function saveMapping() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.createFacilityIdentification({
+    const resp = await facilityStore.createFacilityIdentification({
       "facilityId": currentFacility.value.facilityId,
       "facilityIdenTypeId": props.mappingId,
       "idValue": mappingValue.value
@@ -126,7 +126,7 @@ async function updateMapping() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.updateFacilityIdentification({
+    const resp = await facilityStore.updateFacilityIdentification({
       "facilityId": currentFacility.value.facilityId,
       "facilityIdenTypeId": props.mappingId,
       "fromDate": props.mapping.fromDate,

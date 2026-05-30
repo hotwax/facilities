@@ -104,7 +104,7 @@ async function addOperatingHours() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.associateCalendarToFacility({
+    const resp = await facilityStore.associateCalendarToFacility({
       facilityId: props.facilityId,
       calendarId: selectedCalendarId.value,
       fromDate: DateTime.now().toMillis(),
@@ -130,7 +130,7 @@ async function updateOperatingHours() {
   emitter.emit('presentLoader');
 
   try {
-    let resp = await FacilityService.removeFacilityCalendar({
+    let resp = await facilityStore.removeFacilityCalendar({
       facilityId: props.facilityId,
       calendarId: facilityCalendar.value.calendarId,
       facilityCalendarTypeId: facilityCalendar.value.facilityCalendarTypeId,
@@ -138,7 +138,7 @@ async function updateOperatingHours() {
     });
 
     if (!commonUtil.hasError(resp)) {
-      resp = await FacilityService.associateCalendarToFacility({
+      resp = await facilityStore.associateCalendarToFacility({
         facilityId: props.facilityId,
         calendarId: selectedCalendarId.value,
         fromDate: DateTime.now().toMillis(),

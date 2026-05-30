@@ -60,7 +60,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from '@/services/FacilityService'
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
@@ -85,7 +84,7 @@ async function updateExternalId() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       "facilityId": currentFacility.value.facilityId,
       "externalId": externalId.value
     });

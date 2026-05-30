@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import { prepareOrderQuery } from '@/utils/solrHelper';
 import { UserService } from './UserService';
 import { useUtilStore } from '@/store/util';
+import { useFacilityStore } from '@/store/facility';
 
 const createFacilityPostalAddress = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
@@ -140,57 +141,7 @@ const fetchFacilitiesOrderCount = async(facilityIds: Array<string>): Promise<any
   return facilitiesOrderCount;
 }
 
-const getFacilityParties = async(payload: any): Promise <any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "performFind",
-    method: "post",
-    data: payload
-  });
-}
-
 const getPartyRoleAndPartyDetails = async(payload: any): Promise <any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "performFind",
-    method: "post",
-    data: payload
-  });
-}
-
-const fetchFacilityOrderCounts = async(facilityId: string): Promise<any> => {
-  let facilityOrderCounts = {}, resp: any;
-  try {
-    const params = {
-      entityName: "FacilityOrderCount",
-      inputFields: {
-        facilityId: facilityId
-      },
-      viewSize: 10, // only fetching last 10 order consumed information for facility
-      fieldList: ["entryDate", "facilityId", "lastOrderCount"],
-      orderBy: "entryDate DESC"
-    }
-
-    resp = await api({ baseURL: commonUtil.getOmsURL(),
-      url: "performFind",
-      method: "post",
-      data: params
-    })
-
-    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-      facilityOrderCounts = resp.data.docs.map((facilityOrderCount: any) => {
-        facilityOrderCount.entryDate = DateTime.fromMillis(facilityOrderCount.entryDate).toFormat('MMM dd yyyy')
-        return facilityOrderCount
-      })
-    } else {
-      throw resp.data
-    }
-  } catch(err) {
-    logger.error("Failed to fetch order consumed history for this facility", err);
-  }
-
-  return facilityOrderCounts;
-}
-
-const fetchFacilityGroup = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
     method: "post",
@@ -214,30 +165,6 @@ const getFacilityProductStores = async (payload: any): Promise<any> => {
   })
 }
 
-const addPartyToFacility = async (payload: any): Promise <any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/addPartyToFacility",
-    method: "post",
-    data: payload
-  });
-}
-
-const removePartyFromFacility = async (payload: any): Promise <any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/removePartyFromFacility",
-    method: "post",
-    data: payload
-  });
-}
-
-const updateProductStoreFacility = async (payload: any): Promise <any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateProductStoreFacility",
-    method: "post",
-    data: payload
-  });
-}
-
 const fetchFacilityLocations = async(payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
@@ -249,70 +176,6 @@ const fetchFacilityLocations = async(payload: any): Promise<any> => {
 const removeFacilityFromGroup = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/removeFacilityFromGroup",
-    method: "post",
-    data: payload
-  })
-}
-
-const associateCalendarToFacility = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityCalendar",
-    method: "post",
-    data: payload
-  })
-}
-
-const createFacilityGroup = async(payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityGroup",
-    method: "post",
-    data: payload
-  })
-}
-
-const createFacilityLocation = async(payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityLocation",
-    method: "post",
-    data: payload
-  })
-}
-
-const createProductStoreFacility = async (payload: any): Promise <any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createProductStoreFacility",
-    method: "post",
-    data: payload
-  });
-}
-
-const updateFacility = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacility",
-    method: "post",
-    data: payload
-  })
-}
-
-const updateFacilityLocation = async(payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacilityLocation",
-    method: "post",
-    data: payload
-  })
-}
-
-const deleteFacilityLocation = async(payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/deleteFacilityLocation",
-    method: "post",
-    data: payload
-  })
-}
-
-const updateFacilityToGroup = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacilityToGroup",
     method: "post",
     data: payload
   })
@@ -334,15 +197,6 @@ const createVirtualFacility = async (payload: any): Promise<any> => {
   })
 }
 
-const updateFacilityPostalAddress = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacilityPostalAddress",
-    method: "post",
-    data: payload
-  })
-}
-
-
 const fetchFacilityMappings = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
@@ -359,49 +213,9 @@ const fetchShopifyFacilityMappings = async (payload: any): Promise<any> => {
   })
 }
 
-const createFacilityIdentification = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createFacilityIdentification",
-    method: "post",
-    data: payload
-  })
-}
-
-const updateFacilityIdentification = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacilityIdentification",
-    method: "post",
-    data: payload
-  })
-}
-
-const createShopifyShopLocation = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createShopifyShopLocation",
-    method: "post",
-    data: payload
-  })
-}
-
-const updateShopifyShopLocation = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateShopifyShopLocation",
-    method: "post",
-    data: payload
-  })
-}
-
 const deleteShopifyShopLocation = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/deleteShopifyShopLocation",
-    method: "post",
-    data: payload
-  })
-}
-
-const createEnumeration = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/createEnumeration",
     method: "post",
     data: payload
   })
@@ -418,14 +232,6 @@ const fetchFacilityCalendar = async (payload: any): Promise<any> => {
 const createFacilityCalendar = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "service/calendarDataSetup",
-    method: "post",
-    data: payload
-  })
-}
-
-const removeFacilityCalendar = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/expireFacilityCalendar",
     method: "post",
     data: payload
   })
@@ -507,14 +313,6 @@ const fetchOrderCountsByFacility = async (facilityIds: Array<string>): Promise<a
   } catch(error) {
     logger.error(error);
   }
-}
-
-const fetchFacilityGroups = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "performFind",
-    method: "post",
-    data: payload
-  })
 }
 
 const fetchArchivedFacilities = async (): Promise<any> => {
@@ -727,12 +525,12 @@ const createFacilityLogin = async (payload: any): Promise <any> => {
         "contactMechPurposeTypeId": "PRIMARY_EMAIL",
       }));
     }
-    promises.push(addPartyToFacility({
+    promises.push(useFacilityStore().addPartyToFacility({
       "partyId": partyId,
       "facilityId": payload.facilityId,
       "roleTypeId": "WAREHOUSE_MANAGER"
     }));
-    promises.push(addPartyToFacility({
+    promises.push(useFacilityStore().addPartyToFacility({
       "partyId": partyId,
       "facilityId": payload.facilityId,
       "roleTypeId": "FAC_LOGIN"
@@ -760,22 +558,6 @@ const fetchAssociatedFacilitiesToGroup = async (payload: any): Promise<any> => {
 const fetchAssociatedProductStoresToGroup = async (payload: any): Promise<any> => {
   return api({ baseURL: commonUtil.getOmsURL(),
     url: "performFind",
-    method: "post",
-    data: payload
-  })
-}
-
-const updateFacilityTelecomNumber = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacilityTelecomNumber",
-    method: "post",
-    data: payload
-  })
-}
-
-const updateFacilityEmailAddress = async (payload: any): Promise<any> => {
-  return api({ baseURL: commonUtil.getOmsURL(),
-    url: "service/updateFacilityEmailAddress",
     method: "post",
     data: payload
   })
@@ -839,28 +621,17 @@ const deleteFacilityContactMech = async (payload: any): Promise<any> => {
 
 export const FacilityService = {
   addFacilitiesToGroup,
-  addPartyToFacility,
-  associateCalendarToFacility,
-  createFacilityGroup,
   createFacility,
-  createFacilityLocation,
   createVirtualFacility,
-  createEnumeration,
   createFacilityCalendar,
-  createFacilityIdentification,
   createFacilityPostalAddress,
-  createProductStoreFacility,
   createProductStoreFacilityGroup,
-  createShopifyShopLocation,
   deleteFacilityGroup,
-  deleteFacilityLocation,
   createFacilityLogin,
   deleteShopifyShopLocation,
   fetchArchivedFacilities,
   fetchAssociatedFacilitiesToGroup,
   fetchAssociatedProductStoresToGroup,
-  fetchFacilityGroup,
-  fetchFacilityGroups,
   fetchFacilityLocations,
   fetchFacilityContactDetails,
   fetchFacilityCountByGroup,
@@ -869,30 +640,17 @@ export const FacilityService = {
   fetchFacilityCalendar,
   fetchFacilityGroupInformation,
   fetchFacilityMappings,
-  fetchFacilityOrderCounts,
   fetchInactiveFacilityGroupAssociations,
   fetchJobData,
   fetchOrderCountsByFacility,
   fetchProductStoreCountByGroup,
   getFacilityProductStores,
   fetchShopifyFacilityMappings,
-  getFacilityParties,
   getPartyRoleAndPartyDetails,
-  removeFacilityCalendar,
   removeFacilityFromGroup,
-  removePartyFromFacility,
-  updateFacility,
-  updateFacilityEmailAddress,
   updateFacilityGroup,
-  updateFacilityIdentification,
-  updateFacilityLocation,
-  updateFacilityPostalAddress,
-  updateFacilityTelecomNumber,
   updateFacilitiesToGroup,
-  updateFacilityToGroup,
-  updateProductStoreFacility,
   updateProductStoreFacilityGroup,
-  updateShopifyShopLocation,
   createFacilityContactMech,
   updateFacilityContactMech,
   deleteFacilityContactMech

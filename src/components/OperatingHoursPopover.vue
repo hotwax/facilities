@@ -34,7 +34,6 @@ import {
 import { translate } from "@common";
 import AddOperatingHoursModal from "@/components/AddOperatingHoursModal.vue";
 import CustomScheduleModal from "@/components/CustomScheduleModal.vue";
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { commonUtil } from "@common";
 import emitter from "@/event-bus";
@@ -76,7 +75,7 @@ async function removeCalendarFromFacility() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.removeFacilityCalendar({
+    const resp = await facilityStore.removeFacilityCalendar({
       facilityId: props.facilityId,
       calendarId: facilityCalendar.value.calendarId,
       facilityCalendarTypeId: facilityCalendar.value.facilityCalendarTypeId,

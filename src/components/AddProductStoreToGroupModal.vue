@@ -79,9 +79,11 @@ async function fetchGroupProductStores() {
   emitter.emit('presentLoader');
   try {
     const resp = await facilityStore.fetchGroupProductStores({
-      "facilityGroupId": props.group.facilityGroupId,
-      "filterByDate": true,
-      "pageSize": 250
+      customParametersMap: {
+        facilityGroupId: props.group.facilityGroupId,
+        pageSize: 250
+      },
+      filterByDate: true,
     });
 
     if (!commonUtil.hasError(resp)) {

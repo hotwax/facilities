@@ -87,7 +87,6 @@ import { closeOutline, saveOutline } from "ionicons/icons";
 import { computed, onMounted, ref } from "vue";
 import { commonUtil, translate } from "@common"
 import { DateTime } from 'luxon' 
-import { FacilityService } from '@/services/FacilityService';
 import logger from '@/logger';
 import { useFacilityStore } from "@/store/facility";
 import { useUserStore } from '@/store/user';
@@ -153,7 +152,7 @@ onMounted(async () => {
 
 async function setFacilityTimeZone() {
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       "facilityId": currentFacility.value.facilityId,
       "facilityTimeZone": timeZoneId.value
     });

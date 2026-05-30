@@ -71,7 +71,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from '@/services/FacilityService'
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
@@ -106,7 +105,7 @@ async function saveMapping() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.createShopifyShopLocation({
+    const resp = await facilityStore.createShopifyShopLocation({
       "facilityId": currentFacility.value.facilityId,
       "shopId": shopId.value,
       "shopifyLocationId": shopifyLocationId.value
@@ -136,7 +135,7 @@ async function updateMapping() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.updateShopifyShopLocation({
+    const resp = await facilityStore.updateShopifyShopLocation({
       "facilityId": currentFacility.value.facilityId,
       "shopId": props.shopifyFacilityMapping.shopId,
       "shopifyLocationId": shopifyLocationId.value

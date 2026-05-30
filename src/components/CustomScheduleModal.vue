@@ -145,7 +145,7 @@ async function addCustomSchedule(payload: any) {
     if (!commonUtil.hasError(resp)) {
       const calendarId = resp.data.calendarId;
 
-      resp = await FacilityService.associateCalendarToFacility({
+      resp = await facilityStore.associateCalendarToFacility({
         facilityId: props.facilityId,
         calendarId: calendarId,
         fromDate: DateTime.now().toMillis(),
@@ -202,7 +202,7 @@ async function saveCustomSchedule() {
 
   if (facilityCalendar.value?.calendarId) {
     try {
-      const resp = await FacilityService.removeFacilityCalendar({
+      const resp = await facilityStore.removeFacilityCalendar({
         facilityId: props.facilityId,
         calendarId: facilityCalendar.value.calendarId,
         facilityCalendarTypeId: facilityCalendar.value.facilityCalendarTypeId,

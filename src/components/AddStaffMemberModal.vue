@@ -155,8 +155,8 @@ async function saveParties() {
     return;
   }
 
-  const removePromises = partiesToRemove.map((party: any) => 
-    FacilityService.removePartyFromFacility({
+  const removePromises = partiesToRemove.map((party: any) =>
+    facilityStore.removePartyFromFacility({
       facilityId: props.facilityId,
       fromDate: party.fromDate,
       thruDate: DateTime.now().toMillis(),
@@ -165,8 +165,8 @@ async function saveParties() {
     })
   );
 
-  const addPromises = partiesToAdd.map((party: any) => 
-    FacilityService.addPartyToFacility({
+  const addPromises = partiesToAdd.map((party: any) =>
+    facilityStore.addPartyToFacility({
       facilityId: props.facilityId,
       partyId: party.partyId,
       roleTypeId: party.roleTypeId

@@ -72,7 +72,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { commonUtil, translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
@@ -122,7 +121,7 @@ async function addFacilityLocation() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.createFacilityLocation(params);
+    const resp = await facilityStore.createFacilityLocation(params);
 
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Facility location created successfully'));
@@ -147,7 +146,7 @@ async function updateFacilityLocation() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.updateFacilityLocation(params);
+    const resp = await facilityStore.updateFacilityLocation(params);
 
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Facility location updated successfully'));

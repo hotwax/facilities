@@ -30,7 +30,6 @@ import {
 } from "@ionic/vue";
 import { removeCircleOutline, mailOutline, keyOutline } from "ionicons/icons";
 import { translate, commonUtil, cookieHelper } from "@common";
-import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
 import logger from "@/logger";
 import emitter from "@/event-bus";
@@ -69,23 +68,12 @@ async function sendResetPasswordEmail() {
 async function removePartyFromFacilityCompletely(payload: any) {
   try {
     //fetching all the roles in which the user is associated with the facility
-    const resp = await FacilityService.getFacilityParties({
-      inputFields: {
-        "partyId": payload.partyId,
-        "facilityId": payload.facilityId,
-      },
-      fieldList: ['facilityId', 'partyId', 'roleTypeId', 'fromDate'],
-      entityName: "FacilityParty",
-      distinct: 'Y',
-      noConditionFind: 'Y',
-      filterByDate: 'Y',
-      viewSize: 50
-    });
-    if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-      const facilityParties = resp.data.docs;
+    const resp = await facilityStore.fetchFacilityPartyRoles({ facilityId: payload.facilityId, partyId: payload.partyId });
+    if (!commonUtil.hasError(resp) && resp.data?.length > 0) {
+      const facilityParties = resp.data;
 
-      const promises = facilityParties.map((facilityParty: any) => 
-        FacilityService.removePartyFromFacility({
+      const promises = facilityParties.map((facilityParty: any) =>
+        facilityStore.removePartyFromFacility({
           ...facilityParty,
           thruDate: DateTime.now().toMillis(),
         })
@@ -113,7 +101,7 @@ async function unlinkFacilityLogin(data: any) {
   try {
     //Unlinking user from facility will only remove FAC_LOGIN role from facility
     if (data === 'UNLINK') {
-      const resp = await FacilityService.removePartyFromFacility({
+      const resp = await facilityStore.removePartyFromFacility({
         facilityId: props.currentFacilityUser.facilityId,
         partyId: props.currentFacilityUser.partyId,
         roleTypeId: props.currentFacilityUser.roleTypeId,

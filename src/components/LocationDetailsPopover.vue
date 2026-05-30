@@ -23,7 +23,6 @@ import {
 } from "@ionic/vue";
 import { translate } from "@common";
 import AddLocationModal from "./AddLocationModal.vue";
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
@@ -53,7 +52,7 @@ async function removeLocation() {
   };
 
   try {
-    const resp = await FacilityService.deleteFacilityLocation(params);
+    const resp = await facilityStore.deleteFacilityLocation(params);
 
     if (!commonUtil.hasError(resp)) {
       commonUtil.showToast(translate('Facility location removed successfully'));

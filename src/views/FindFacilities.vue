@@ -161,7 +161,6 @@ import {
 import { computed, onMounted, ref } from 'vue';
 import { commonUtil, translate } from "@common"
 import OrderLimitPopover from '@/components/OrderLimitPopover.vue'
-import { FacilityService } from '@/services/FacilityService'
 import { updateFacilityGroup } from '@/utils';
 import logger from '@/logger';
 import FacilityFilters from '@/components/FacilityFilters.vue'
@@ -251,7 +250,7 @@ async function changeOrderLimitPopover(ev: Event, facility: any) {
 
 async function updateFacility(maximumOrderLimit: number | string, facility: any) {
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       "facilityId": facility.facilityId,
       maximumOrderLimit
     });

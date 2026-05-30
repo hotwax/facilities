@@ -27,7 +27,6 @@ import {
 } from "@ionic/vue";
 import { removeCircleOutline, star, starOutline } from "ionicons/icons";
 import { translate } from "@common";
-import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from "luxon";
 import { commonUtil } from "@common";
 import logger from "@/logger";
@@ -48,7 +47,7 @@ async function removeStoreFromFacility() {
   emitter.emit('presentLoader');
 
   try {
-    const resp = await FacilityService.updateProductStoreFacility({
+    const resp = await facilityStore.updateProductStoreFacility({
       facilityId: props.facilityId,
       productStoreId: props.currentProductStore.productStoreId,
       fromDate: props.currentProductStore.fromDate,
@@ -61,7 +60,7 @@ async function removeStoreFromFacility() {
       // TODO: need to check if we need to remove primary value from the facility if product store is removed.
       // Removing primaryFacilityGroupId from the facility, if present
       if (shopifyShopIdForProductStore.value(props.currentProductStore.productStoreId) === current.value.primaryFacilityGroupId) {
-        const updateResp = await FacilityService.updateFacility({
+        const updateResp = await facilityStore.updateFacility({
           facilityId: props.facilityId,
           primaryFacilityGroupId: ''
         });
@@ -72,7 +71,7 @@ async function removeStoreFromFacility() {
         }
       }
       // refetching product stores with updated roles
-      await facilityStore.getFacilityProductStores({ facilityId: props.facilityId });
+      await facilityStore.fetchFacilityProductStores({ facilityId: props.facilityId });
     } else {
       throw resp.data;
     }
@@ -86,7 +85,7 @@ async function removeStoreFromFacility() {
 
 async function updatePrimaryStore(shopifyShopId = '') {
   try {
-    const resp = await FacilityService.updateFacility({
+    const resp = await facilityStore.updateFacility({
       facilityId: props.facilityId,
       primaryFacilityGroupId: shopifyShopId
     });
@@ -155,17 +154,9 @@ async function togglePrimary() {
 async function fetchFacilityGroup(shopifyShopId: string) {
   let facilityGroupId;
   try {
-    const resp = await FacilityService.fetchFacilityGroup({
-      inputFields: {
-        facilityGroupId: shopifyShopId
-      },
-      entityName: 'FacilityGroup',
-      fieldList: ['facilityGroupId', 'facilityGroupTypeId'],
-      viewSize: 1
-    });
-
+    const resp = await facilityStore.fetchFacilityGroup(shopifyShopId);
     if (!commonUtil.hasError(resp)) {
-      facilityGroupId = resp.data.docs[0].facilityGroupId;
+      facilityGroupId = resp.data?.facilityGroupId;
     } else {
       throw resp.data;
     }
@@ -178,7 +169,7 @@ async function fetchFacilityGroup(shopifyShopId: string) {
 async function createFacilityGroup(shopifyShopId: string) {
   let facilityGroupId;
   try {
-    const resp = await FacilityService.createFacilityGroup({
+    const resp = await facilityStore.createFacilityGroup({
       facilityGroupId: shopifyShopId,
       facilityGroupName: getProductStore.value(props.currentProductStore.productStoreId).storeName,
       facilityGroupTypeId: 'FEATURING'

@@ -61,8 +61,8 @@ export const useUtilStore = defineStore("util", {
         customParametersMap: {
           ...payload,
           pageNoLimit: true,
-          fieldsToSelect: "facilityTypeId,description,parentTypeId"
         },
+        fieldsToSelect: "facilityTypeId,description,parentTypeId",
         dataDocumentId: 'FACILITY_TYPE'
       } as any;
 

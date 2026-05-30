@@ -43,10 +43,13 @@ import {
 } from "@ionic/vue";
 import { closeOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
+import { DateTime } from "luxon";
+import { useFacilityStore } from "@/store/facility";
+import { commonUtil } from "@common";
 import { onMounted, ref } from "vue";
 
 const props = defineProps(["facilityId"]);
+const facilityStore = useFacilityStore();
 const facilityOrderCounts = ref([] as Array<any>);
 const isLoading = ref(true);
 
@@ -56,7 +59,13 @@ function closeModal() {
 
 onMounted(async () => {
   try {
-    facilityOrderCounts.value = await FacilityService.fetchFacilityOrderCounts(props.facilityId);
+    const resp = await facilityStore.fetchFacilityOrderCounts(props.facilityId);
+    if (!commonUtil.hasError(resp) && resp.data?.length > 0) {
+      facilityOrderCounts.value = resp.data.map((item: any) => ({
+        ...item,
+        entryDate: DateTime.fromMillis(item.entryDate).toFormat('MMM dd yyyy')
+      }));
+    }
   } catch (error) {
     console.error("Failed to fetch facility order counts", error);
   } finally {

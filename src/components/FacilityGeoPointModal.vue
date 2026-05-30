@@ -60,7 +60,6 @@ import {
 import { closeOutline, colorWandOutline, saveOutline } from "ionicons/icons";
 import { translate, commonUtil } from "@common"
 import logger from "@/logger";
-import { FacilityService } from '@/services/FacilityService'
 import emitter from "@/event-bus";
 import { useFacilityStore } from "@/store/facility";
 import { useUtilStore } from "@/store/util";
@@ -144,7 +143,7 @@ async function saveGeoPoint() {
   try {
     // passing old postalCode from here, as we don't allow user to update postalCode from this modal,
     // and the user can only update the latLon from here
-    const resp = await FacilityService.updateFacilityPostalAddress({ ...geoPoint.value, postalCode: postalAddress.value.postalCode, facilityId: props.facilityId });
+    const resp = await facilityStore.updateFacilityPostalAddress({ ...geoPoint.value, postalCode: postalAddress.value.postalCode, facilityId: props.facilityId });
 
     if (!commonUtil.hasError(resp)) {
       geoPointsResult = geoPoint.value;

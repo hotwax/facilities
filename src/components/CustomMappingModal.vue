@@ -65,7 +65,6 @@ import {
 } from "@ionic/vue";
 import { closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import emitter from "@/event-bus";
@@ -94,14 +93,14 @@ async function saveMapping() {
   emitter.emit('presentLoader');
 
   try {
-    let resp = await FacilityService.createEnumeration({
+    let resp = await facilityStore.createEnumeration({
       "enumId": mappingId.value,
       "enumTypeId": "FACILITY_IDENTITY",
       "description": mappingName.value
     });
 
     if (!commonUtil.hasError(resp) && resp.data.enumId) {
-      resp = await FacilityService.createFacilityIdentification({
+      resp = await facilityStore.createFacilityIdentification({
         "facilityId": currentFacility.value.facilityId,
         "facilityIdenTypeId": resp.data.enumId,
         "idValue": mappingValue.value
