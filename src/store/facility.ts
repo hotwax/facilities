@@ -483,20 +483,12 @@ export const useFacilityStore = defineStore("facility", {
     async fetchFacilityCalendar(payload: any) {
       let facilityCalendar = {};
       try {
-        const params = {
-          inputFields: { facilityId: payload.facilityId },
-          entityName: "StoreOperatingHours",
-          filterByDate: "Y",
-          viewSize: 1
-        };
         const resp = await api({
-          baseURL: commonUtil.getOmsURL(),
-          url: "performFind",
-          method: "post",
-          data: params
+          url: `oms/facilities/${payload.facilityId}/calendars/operatingHours`,
+          method: "get",
         });
-        if (!commonUtil.hasError(resp) && resp.data.count) {
-          facilityCalendar = resp.data.docs[0];
+        if (!commonUtil.hasError(resp) && resp.data.storeOperatingHours?.length) {
+          facilityCalendar = resp.data.storeOperatingHours[0];
         } else {
           throw resp.data;
         }
@@ -621,115 +613,13 @@ export const useFacilityStore = defineStore("facility", {
     },
     async fetchFacilityLogins(payload: any) {
       let facilityLogins = [] as any;
-      let dataList = [] as any;
-
       try {
-        let resp = await api({
-          baseURL: commonUtil.getOmsURL(),
-          url: "performFind",
-          method: "post",
-          data: {
-            inputFields: { "facilityId": payload.facilityId, "roleTypeId": "FAC_LOGIN" },
-            fieldList: ["facilityId", "partyId", "roleTypeId", "fromDate"],
-            entityName: "FacilityParty",
-            distinct: "Y",
-            noConditionFind: "Y",
-            filterByDate: "Y",
-            viewSize: 50
-          }
+        const resp = await api({
+          url: `oms/facilities/${payload.facilityId}/logins`,
+          method: "get",
         });
-        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          const facilityParties = resp.data.docs;
-          dataList = facilityParties;
-          const partyIds = facilityParties.map((party: any) => party.partyId);
-
-          // Inlining fetchLogoImageForParties logic
-          try {
-            let logoResp = await api({
-              baseURL: commonUtil.getOmsURL(),
-              url: 'performFind',
-              method: 'POST',
-              data: {
-                entityName: "PartyContentDetail",
-                inputFields: {
-                  partyId: partyIds,
-                  partyId_op: 'in',
-                  partyContentTypeId: 'LGOIMGURL'
-                },
-                viewSize: 1,
-                fieldList: ['partyId', 'dataResourceId'],
-                noConditionFind: 'Y',
-                filterByDate: 'Y'
-              }
-            }) as any;
-            if (!commonUtil.hasError(logoResp) && logoResp.data.count > 0) {
-              const partyContents = logoResp.data.docs;
-              const dataResourceIds = partyContents.map((partyContent: any) => partyContent.dataResourceId);
-              logoResp = await api({
-                baseURL: commonUtil.getOmsURL(),
-                url: 'performFind',
-                method: 'POST',
-                data: {
-                  entityName: "DataResource",
-                  inputFields: {
-                    dataResourceId: dataResourceIds,
-                    dataResourceId_op: 'in'
-                  },
-                  viewSize: 1,
-                  fieldList: ['dataResourceId', 'objectInfo'],
-                  noConditionFind: 'Y'
-                }
-              });
-              if (!commonUtil.hasError(logoResp) && logoResp.data.count > 0) {
-                const logoImages = [...partyContents, ...logoResp.data.docs].reduce((contentData: any, doc: any) => {
-                  const dataResourceId = doc.dataResourceId;
-                  contentData[dataResourceId] = { ...contentData[dataResourceId], ...doc };
-                  return contentData;
-                }, {});
-                dataList = [...dataList, ...Object.values(logoImages)];
-              }
-            }
-          } catch (error) {
-            logger.error("Failed to fetch logo images", error);
-          }
-
-          resp = await api({
-            baseURL: commonUtil.getOmsURL(),
-            url: "performFind",
-            method: "POST",
-            data: {
-              inputFields: { "partyId": partyIds, "partyId_op": "in" },
-              fieldList: ["partyId", "groupName", "userLoginId"],
-              entityName: "UserLoginAndPartyDetails",
-              distinct: "Y",
-              noConditionFind: "Y",
-              viewSize: 50
-            }
-          });
-          if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-            dataList = [...dataList, ...resp.data.docs];
-            resp = await api({
-              baseURL: commonUtil.getOmsURL(),
-              url: "performFind",
-              method: "POST",
-              data: {
-                inputFields: { "partyId": partyIds, "partyId_op": "in", contactMechPurposeTypeId: "PRIMARY_EMAIL" },
-                viewSize: 100,
-                filterByDate: "Y",
-                entityName: "PartyContactDetailByPurpose",
-                fieldList: ["partyId", "infoString", "contactMechId", "contactMechPurposeTypeId"]
-              }
-            });
-            if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-              dataList = [...dataList, ...resp.data.docs];
-            }
-            const facilityPartyData = dataList.reduce((partyData: any, doc: any) => {
-              const partyId = doc.partyId;
-              partyData[partyId] = { ...partyData[partyId], ...doc };
-              return partyData;
-            }, {});
-            facilityLogins = Object.values(facilityPartyData);
-          }
+        if (!commonUtil.hasError(resp) && resp.data.facilityLogins?.length) {
+          facilityLogins = resp.data.facilityLogins;
         } else {
           throw resp.data;
         }

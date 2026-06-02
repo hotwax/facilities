@@ -125,7 +125,7 @@ onMounted(async () => {
   if (address.value.countryGeoId) {
     const country = countries.value.find((country: any) => country.geoId === address.value.countryGeoId);
     if (country) {
-      telecomNumberValue.value.countryCode = commonUtil.getTelecomCountryCode(country.geoCode) || commonUtil.getTelecomCountryCode(country.geoCodeAlpha2);
+      telecomNumberValue.value.countryCode = commonUtil.getTelecomCountryCode(country.geoCodeAlpha2) || commonUtil.getTelecomCountryCode(country.geoCode);
     }
   }
   if (!address.value.toName) {
@@ -242,7 +242,7 @@ async function saveContact() {
         resp = await facilityStore.updateFacilityPostalAddress({ ...address.value, facilityId: props.facilityId, contactMechPurposeTypeId: 'PRIMARY_LOCATION' });
       } else {
         resp = await api({
-          url: `admin/facilities/${props.facilityId}/contacts/address`,
+          url: `oms/facilityContactMechs/facilityAddress`,
           method: "post",
           data: {
             ...address.value,

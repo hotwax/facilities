@@ -395,7 +395,7 @@
               <ion-button fill="clear" @click="editShopifyFacilityMapping(shopifyFacilityMapping)" >{{ translate("Edit") }}</ion-button>
               <ion-button fill="clear" color="danger" @click="removeShopifyFacilityMapping(shopifyFacilityMapping)">{{ translate("Remove") }}</ion-button>
             </ion-card>
-            <ion-card v-for="(mapping, index) in current.facilityMappings" :key="index">
+            <ion-card v-for="(mapping, index) in current.mappings" :key="index">
               <ion-card-header>
                 <ion-card-title>
                   {{ externalMappingTypes[mapping.facilityIdenTypeId] }}

@@ -200,46 +200,20 @@ export const useUtilStore = defineStore("util", {
     },
     async fetchCalendars() {
       let calendars = [] as any;
-      let calendarWeekTimings = [] as any;
       try {
-        let resp = await api({
-          url: "performFind",
-          method: "post",
-          data: {
-            entityName: "TechDataCalendar",
-            fieldList: ["calendarId", "calendarWeekId", "description"],
-            viewSize: 100,
-            noConditionFind: "Y"
-          },
-          baseURL: commonUtil.getOmsURL()
-        });
+        const [calendarsResp, weekTimingsResp] = await Promise.all([
+          api({ url: "oms/calendars/techData", method: "get", params: { pageNoLimit: true } }),
+          api({ url: "oms/calendars/techData/week", method: "get", params: { pageNoLimit: true } })
+        ]);
 
-        if (!commonUtil.hasError(resp) && resp.data.count) {
-          calendars = resp.data.docs;
-
-          resp = await api({
-            url: "performFind",
-            method: "post",
-            data: {
-              entityName: "TechDataCalendarWeek",
-              fieldList: ["calendarWeekId", "mondayStartTime", "mondayCapacity", "tuesdayStartTime", "tuesdayCapacity", "wednesdayStartTime", "wednesdayCapacity", "thursdayStartTime", "thursdayCapacity", "fridayStartTime", "fridayCapacity", "saturdayStartTime", "saturdayCapacity", "sundayStartTime", "sundayCapacity"],
-              viewSize: 100,
-              noConditionFind: "Y"
-            },
-            baseURL: commonUtil.getOmsURL()
-          });
-
-          if (!commonUtil.hasError(resp) && resp.data.count) {
-            calendarWeekTimings = resp.data.docs;
-            calendars = calendars.map((calendar: any) => ({
-              ...calendar,
-              ...calendarWeekTimings.find((calendarWeekTime: any) => calendarWeekTime.calendarWeekId === calendar.calendarWeekId)
-            }));
-          } else {
-            throw resp.data;
-          }
+        if (calendarsResp.data?.length) {
+          const calendarWeekTimings = weekTimingsResp.data || [];
+          calendars = calendarsResp.data.map((calendar: any) => ({
+            ...calendar,
+            ...calendarWeekTimings.find((calendarWeekTime: any) => calendarWeekTime.calendarWeekId === calendar.calendarWeekId)
+          }));
         } else {
-          throw resp.data;
+          throw calendarsResp.data;
         }
       } catch (err) {
         logger.error("Failed to fetch facility calendars", err);
@@ -302,25 +276,19 @@ export const useUtilStore = defineStore("util", {
     async fetchShopifyShopForProductStores(productStoreIds: any) {
       let shopifyShops = [] as any;
       const params = {
-        inputFields: {
-          productStoreId: productStoreIds,
-          productStoreId_op: "in"
-        },
-        entityName: "ShopifyShop",
-        fieldList: ["productStoreId", "shopifyShopId"],
-        noConditionFind: "Y",
-        viewSize: productStoreIds.length,
+        productStoreId: productStoreIds,
+        productStoreId_op: "in",
+        pageSize: productStoreIds.length,
       };
 
       try {
         const resp = await api({
-          url: "performFind",
-          method: "POST",
-          data: params,
-          baseURL: commonUtil.getOmsURL()
+          url: "oms/shopifyShops/shops",
+          method: "get",
+          params
         });
-        if (!commonUtil.hasError(resp) && resp.data.count > 0) {
-          shopifyShops = resp.data.docs;
+        if (resp.data?.length) {
+          shopifyShops = resp.data;
         } else {
           throw resp.data;
         }
