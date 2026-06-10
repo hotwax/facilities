@@ -64,16 +64,18 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
+  modalController,
 } from "@ionic/vue";
 import { defineComponent } from "vue";
 import { mapGetters, useStore } from "vuex";
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { addOutline } from 'ionicons/icons';
 import { translate } from "@hotwax/dxp-components";
 import { generateInternalId, showToast } from "@/utils";
 import { FacilityService } from "@/services/FacilityService";
 import { hasError } from "@/adapter";
 import logger from "@/logger";
+import FacilityAddressModal from '@/components/FacilityAddressModal.vue';
 
 export default defineComponent({
   name: "CreateFacility",
@@ -125,7 +127,7 @@ export default defineComponent({
         facilityTypeId_op: 'notEqual'
       })
     ])
-    this.facilityTypesByParentTypeId = this.getFacilityTypesByParentTypeId(this.$route.query.type as string)
+    this.facilityTypesByParentTypeId = this.getFacilityTypesByParentTypeId(this.route.query.type as string)
 
     // In accordance with the specified requirements, it is essential to treat RETAIL STORE and WAREHOUSE
     // as default elements within the list. These elements may appear at any index within the list structure.
@@ -174,8 +176,10 @@ export default defineComponent({
         if (!hasError(resp)) {
           const { facilityId } = resp.data
           showToast(translate("Facility created successfully."))
-          this.store.dispatch('facility/updateCurrentFacility', payload),
-          this.router.replace(`/add-facility-address/${facilityId}`)
+          await this.store.dispatch('facility/updateCurrentFacility', payload)
+          await this.createDefaultFacilityLocation(facilityId)
+          await this.openAddressModal(facilityId, payload.facilityName)
+          this.router.replace(`/add-facility-config/${facilityId}`)
         } else {
           throw resp.data;
         }
@@ -189,9 +193,10 @@ export default defineComponent({
         return;
       }
 
-      // creating default facility location
+    },
+    async createDefaultFacilityLocation(facilityId: string) {
       await FacilityService.createFacilityLocation({
-        facilityId: this.formData.facilityId,
+        facilityId,
         locationTypeEnumId: "FLT_PICKLOC",
         areaId: "TL",
         aisleId: "TL",
@@ -199,6 +204,18 @@ export default defineComponent({
         levelId: "LL",
         positionId: "01",
       })
+    },
+    async openAddressModal(facilityId: string, facilityName: string) {
+      const addressModal = await modalController.create({
+        component: FacilityAddressModal,
+        componentProps: {
+          facilityId,
+          facilityName
+        }
+      })
+
+      addressModal.present()
+      await addressModal.onDidDismiss()
     },
     getFacilityTypesByParentTypeId(parentTypeId: string) {
       return parentTypeId ? Object.keys(this.facilityTypes).reduce((facilityTypesByParentTypeId: any, facilityTypeId: string) => {
@@ -226,10 +243,12 @@ export default defineComponent({
   },
   setup() {
     const store = useStore();
+    const route = useRoute();
     const router = useRouter();
 
     return {
       addOutline,
+      route,
       store,
       router,
       translate

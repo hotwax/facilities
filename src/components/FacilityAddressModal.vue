@@ -222,7 +222,7 @@ export default defineComponent({
       }
 
       try {
-        if(this.contactDetails.telecomNumber?.contactMechId) {
+        if(this.contactDetails?.telecomNumber?.contactMechId) {
           resp = await FacilityService.updateFacilityTelecomNumber({
             ...payload,
             contactMechId: this.contactDetails.telecomNumber.contactMechId,
@@ -249,7 +249,7 @@ export default defineComponent({
       }
 
       try {
-        if(this.contactDetails.emailAddress?.contactMechId) {
+        if(this.contactDetails?.emailAddress?.contactMechId) {
           resp = await FacilityService.updateFacilityEmailAddress({
             ...payload,
             contactMechId: this.emailAddress.contactMechId,
