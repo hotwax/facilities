@@ -142,7 +142,7 @@ export const useUtilStore = defineStore("util", {
       const partyRoles = {} as any;
       const params = {
         dataDocumentId: 'ROLE_TYPE_GROUP_MEMBBR_AND_ROLE_TYPE',
-        customParamtersMap: { roleTypeGroupId: "FACILITY_PARTY_ROLE", pageNoLimit: true, orderByField: "sequenceNum" },
+        customParametersMap: { roleTypeGroupId: "FACILITY_PARTY_ROLE", pageNoLimit: true, orderByField: "sequenceNum" },
         filterByDate: true,
         fieldsToSelect: "roleTypeId,description"
       };
@@ -328,22 +328,18 @@ export const useUtilStore = defineStore("util", {
     async fetchOrganizationPartyId() {
       let partyId = "";
       const params = {
-        entityName: "PartyRole",
-        inputFields: { roleTypeId: "INTERNAL_ORGANIZATIO" },
-        noConditionFind: "Y",
-        fieldList: ["partyId"],
-        viewSize: 1
+        roleTypeId: "INTERNAL_ORGANIZATIO",
+        pageSize: 1
       };
 
       try {
         const resp = await api({
-          url: "performFind",
-          method: "POST",
-          data: params,
-          baseURL: commonUtil.getOmsURL()
+          url: "admin/organizations",
+          method: "get",
+          params,
         });
-        if (!commonUtil.hasError(resp)) {
-          partyId = resp.data.docs[0]?.partyId;
+        if (resp.data?.length > 0) {
+          partyId = resp.data[0]?.partyId;
         } else {
           throw resp.data;
         }
@@ -355,13 +351,11 @@ export const useUtilStore = defineStore("util", {
     async generateLatLong(payload: any) {
       try {
         const resp = await api({
-          url: "postcodeLookup",
+          url: "api/geocode",
           method: "POST",
           data: payload,
-          cache: true,
-          baseURL: commonUtil.getOmsURL()
         });
-        if (!commonUtil.hasError(resp)) {
+        if (resp.data) {
           return Promise.resolve(resp.data);
         } else {
           throw resp.data;
@@ -371,17 +365,16 @@ export const useUtilStore = defineStore("util", {
         return Promise.reject(error);
       }
     },
-    async fetchShopifyShops(payload: any) {
+    async fetchShopifyShops() {
       try {
         const resp = await api({
-          url: "performFind",
-          method: "POST",
-          data: payload,
+          url: "oms/shopifyShops/shops",
+          method: "get",
+          params: { pageNoLimit: true },
           cache: true,
-          baseURL: commonUtil.getOmsURL()
         });
-        if (!commonUtil.hasError(resp)) {
-          return Promise.resolve(resp.data.docs);
+        if (!commonUtil.hasError(resp) && resp.data?.length) {
+          return Promise.resolve(resp.data);
         } else {
           throw resp.data;
         }

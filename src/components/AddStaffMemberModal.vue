@@ -60,7 +60,6 @@ import {
 } from "@ionic/vue";
 import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import { commonUtil } from "@common";
 import logger from "@/logger";
 import { DateTime } from "luxon";
@@ -91,41 +90,14 @@ async function findParties() {
   emitter.emit('presentLoader');
 
   parties.value = [];
-  let inputFields = {};
-  if (queryString.value.length > 0) {
-    inputFields = {
-      groupName_value: queryString.value,
-      groupName_op: 'contains',
-      groupName_ic: 'Y',
-      groupName_grp: '1',
-      firstName_value: queryString.value,
-      firstName_op: 'contains',
-      firstName_ic: 'Y',
-      firstName_grp: '2',
-      lastName_value: queryString.value,
-      lastName_op: 'contains',
-      lastName_ic: 'Y',
-      lastName_grp: '3'
-    };
-  }
-
-  const payload = {
-    inputFields: {
-      ...inputFields,
-      roleTypeId: 'APPLICATION_USER'
-    },
-    viewSize: 10,
-    entityName: 'PartyRoleAndPartyDetail',
-    noConditionFind: 'Y',
-    distinct: 'Y',
-    orderBy: "firstName ASC",
-    fieldList: ['partyId', 'firstName', 'groupName', 'lastName']
-  };
 
   try {
-    const resp = await FacilityService.getPartyRoleAndPartyDetails(payload);
+    const resp = await facilityStore.getPartyRoleAndPartyDetails({
+      roleTypeId: 'APPLICATION_USER',
+      keyword: queryString.value || undefined
+    });
     if (!commonUtil.hasError(resp)) {
-      const docs = resp.data.docs;
+      const docs = resp.data.partyRoleAndPartyDetails;
 
       docs.map((party: any) => {
         party.fullName = party.groupName ? party.groupName : party.firstName ? `${party.firstName} ${party.lastName}` : '';

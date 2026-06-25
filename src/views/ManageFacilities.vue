@@ -299,11 +299,11 @@ async function save() {
   const requestPayload = [];
 
   if (facilitiesToUpdateList.length > 0) {
-    requestPayload.push(useFacilityStore().updateFacilitiesToGroup({ facilityList: facilitiesToUpdateList }));
+    requestPayload.push(useFacilityStore().updateFacilitiesToGroup({ facilityGroupId: props.facilityGroupId, facilityList: facilitiesToUpdateList }));
   }
 
   if (facilitiesToAddList.length > 0) {
-    requestPayload.push(useFacilityStore().addFacilitiesToGroup({ facilityList: facilitiesToAddList }));
+    requestPayload.push(useFacilityStore().addFacilitiesToGroup({ facilityGroupId: props.facilityGroupId, facilityList: facilitiesToAddList }));
   }
 
   const responses = await Promise.allSettled(requestPayload);

@@ -159,14 +159,9 @@ async function updateMapping() {
 async function fetchShopifyShops() {
   const utilStore = useUtilStore();
   try {
-    const resp = await utilStore.fetchShopifyShops({
-      entityName: "ShopifyShop",
-      fieldList: ['shopId', 'name'],
-      noConditionFind: 'Y',
-      viewSize: 100
-    });
+    const resp = await utilStore.fetchShopifyShops();
 
-    shopifyShops.value = resp.docs;
+    shopifyShops.value = resp;
   } catch (error) {
     commonUtil.showToast(translate('Failed to fetch shopify shops.'));
     logger.error('Failed to fetch shopify shops.', error);

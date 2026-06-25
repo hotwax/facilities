@@ -108,6 +108,32 @@ export const useFacilityStore = defineStore("facility", {
         data: payload
       })
     },
+    async fetchFacilityGroupInformation(facilityIds: string[]) {
+      let facilitiesGroupInformation = {} as any;
+      try {
+        const resp = await api({
+          url: "oms/dataDocumentView",
+          method: "post",
+          data: {
+            dataDocumentId: "FacilityGroupAndMember",
+            customParametersMap: { facilityId: facilityIds, facilityId_op: "in", pageNoLimit: true },
+            fieldsToSelect: 'facilityGroupId,facilityId,facilityGroupTypeId,fromDate,description,facilityGroupName',
+            distinct: true,
+            filterByDate: true,
+          }
+        });
+        if (resp.data?.entityValueList?.length > 0) {
+          facilitiesGroupInformation = resp.data.entityValueList.reduce((acc: any, item: any) => {
+            if (acc[item.facilityId]) acc[item.facilityId].push(item);
+            else acc[item.facilityId] = [item];
+            return acc;
+          }, {});
+        }
+      } catch (err) {
+        logger.error(err);
+      }
+      return facilitiesGroupInformation;
+    },
     async fetchFacilitiesAdditionalInformation(payload = { viewIndex: 0 }) {
       const cachedFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
       let stateFacilities = this.facilities.list ? JSON.parse(JSON.stringify(this.facilities.list)) : [];
@@ -420,7 +446,7 @@ export const useFacilityStore = defineStore("facility", {
 
       try {
         const resp = await api({
-          url: "oms/facilities/facilityContactDetailByPurpose",
+          url: `oms/facilities/${facility.facilityId}/contacts`,
           method: "get",
           params: payload
         });
@@ -553,6 +579,26 @@ export const useFacilityStore = defineStore("facility", {
       }
       this.current.mappings = mappings;
     },
+    async getPartyRoleAndPartyDetails(payload: {
+      roleTypeId: string,
+      roleTypeId_op?: string,
+      roleTypeId_not?: string,
+      keyword?: string,
+      partyId?: string,
+      partyId_op?: string,
+      partyId_not?: string,
+      fieldsToSelect?: string,
+      pageSize?: number,
+      pageIndex?: number,
+      orderByField?: string
+    }) {
+      const { roleTypeId, ...params } = payload;
+      return api({
+        url: `oms/roles/${roleTypeId}/partyRoleAndPartyDetails`,
+        method: "get",
+        params
+      });
+    },
     async fetchFacilityParties(payload: any) {
       let parties = [];
       const params = {
@@ -672,6 +718,7 @@ export const useFacilityStore = defineStore("facility", {
         await this.fetchVirtualFacilitiesAdditionalDetail(payload);
       }
     },
+    // TODO: Need to revisit this, this is OFBiz based entity api, migrate later.
     async fetchVirtualFacilitiesAdditionalDetail(payload: any) {
       const cachedFacilities = JSON.parse(JSON.stringify(this.virtualFacilities.list));
       let stateFacilities = JSON.parse(JSON.stringify(this.virtualFacilities.list));
@@ -767,19 +814,12 @@ export const useFacilityStore = defineStore("facility", {
       let facility = {};
       try {
         const resp = await api({
-          baseURL: commonUtil.getOmsURL(),
-          url: "performFind",
-          method: "post",
-          data: {
-            inputFields: { facilityId: payload.facilityId },
-            entityName: "FacilityAndProductStore",
-            fieldList: ["facilityId", "facilityName", "description", "facilityTypeId", "parentFacilityTypeId"],
-            filterByDate: "Y",
-            viewSize: 1
-          }
+          url: "oms/facilities/facilitiesAndProductStore",
+          method: "get",
+          params: { facilityId: payload.facilityId, pageSize: 1 }
         });
-        if (!commonUtil.hasError(resp) && resp.data.count) {
-          facility = resp.data.docs[0];
+        if (!commonUtil.hasError(resp) && resp.data.facilities?.length) {
+          facility = resp.data.facilities[0];
         } else {
           throw resp.data;
         }
@@ -1007,6 +1047,17 @@ export const useFacilityStore = defineStore("facility", {
     async removePartyFromFacility(payload: any) {
       return api({ url: `oms/facilities/${payload.facilityId}/parties`, method: "delete", data: payload });
     },
+    async createFacilityCalendar(payload: any) {
+      const { description, ...weekTimings } = payload;
+      return api({
+        url: "oms/calendars/techData/week",
+        method: "post",
+        data: {
+          ...weekTimings,
+          "org.apache.ofbiz.manufacturing.techdata.TechDataCalendar": { description }
+        }
+      });
+    },
     async associateCalendarToFacility(payload: any) {
       return api({ url: `oms/facilities/${payload.facilityId}/calendars`, method: "post", data: payload });
     },
@@ -1091,10 +1142,10 @@ export const useFacilityStore = defineStore("facility", {
       });
     },
     async addFacilitiesToGroup(payload: any) {
-      return api({ url: "oms/facilityGroupMembers", method: "post", data: payload });
+      return api({ url: `oms/facilityGroups/${payload.facilityGroupId}/members`, method: "post", data: payload });
     },
     async updateFacilitiesToGroup(payload: any) {
-      return api({ url: "oms/facilityGroupMembers", method: "put", data: payload });
+      return api({ url: `oms/facilityGroups/${payload.facilityGroupId}/members`, method: "put", data: payload });
     }
   },
   persist: true

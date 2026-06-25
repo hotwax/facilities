@@ -266,22 +266,15 @@ export const useUserStore = defineStore("user", {
     async isUserLoginIdExists(username: string) {
       try {
         const resp = await api({
-          url: 'performFind',
-          method: 'POST',
-          data: {
-            entityName: "UserLogin",
-            inputFields: {
-              userLoginId: username
-            },
-            viewSize: 1,
-            fieldList: ['userLoginId', 'partyId'],
-            distinct: 'Y',
-            noConditionFind: 'Y'
-          },
-          baseURL: commonUtil.getOmsURL()
+          url: 'oms/users',
+          method: 'get',
+          params: {
+            userLoginId: username,
+            pageSize: 1,
+          }
         }) as any;
 
-        return !commonUtil.hasError(resp) && resp.data.docs.length > 0;
+        return resp.data && resp.data.length > 0;
       } catch(err) {
         return false;
       }

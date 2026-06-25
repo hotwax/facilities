@@ -1,6 +1,5 @@
 import { commonUtil, translate } from "@common";
 import { Clipboard } from '@capacitor/clipboard';
-import { FacilityService } from "@/services/FacilityService";
 import { DateTime } from 'luxon';
 import logger from "@/logger";
 import { useFacilityStore } from "@/store/facility";
@@ -61,9 +60,9 @@ const updateFacilityGroup = async (currentFacility: any, facilityGroup: any, isC
     }
     if(!commonUtil.hasError(resp)) {
       commonUtil.showToast(successMessage);
-      const updatedGroupInformation = await FacilityService.fetchFacilityGroupInformation([currentFacility.facilityId])
-      currentFacility.groupInformation = Object.values(updatedGroupInformation)[0];
       const facilityStore = useFacilityStore();
+      const updatedGroupInformation = await facilityStore.fetchFacilityGroupInformation([currentFacility.facilityId])
+      currentFacility.groupInformation = Object.values(updatedGroupInformation)[0];
       // Update the facility list to reflect the change in sell online status
       const facilitiesList = JSON.parse(JSON.stringify(facilityStore.getFacilities));
       const updatedFacilities = facilitiesList.map((facility: any) => {

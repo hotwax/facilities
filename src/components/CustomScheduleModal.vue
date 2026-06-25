@@ -96,7 +96,6 @@ import {
 } from "@ionic/vue";
 import { closeCircle, closeOutline, saveOutline } from "ionicons/icons";
 import { translate } from "@common"
-import { FacilityService } from "@/services/FacilityService";
 import logger from "@/logger";
 import { commonUtil } from "@common";
 import { DateTime } from "luxon";
@@ -141,7 +140,7 @@ function updateDailyTimings() {
 
 async function addCustomSchedule(payload: any) {
   try {
-    let resp = await FacilityService.createFacilityCalendar({ ...payload, description: selectedTimesForWeek.value.description.trim() });
+    let resp = await facilityStore.createFacilityCalendar({ ...payload, description: selectedTimesForWeek.value.description.trim() });
     if (!commonUtil.hasError(resp)) {
       const calendarId = resp.data.calendarId;
 
