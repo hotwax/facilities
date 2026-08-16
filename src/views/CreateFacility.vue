@@ -177,8 +177,16 @@ export default defineComponent({
           const { facilityId } = resp.data
           showToast(translate("Facility created successfully."))
           await this.store.dispatch('facility/updateCurrentFacility', payload)
-          await this.createDefaultFacilityLocation(facilityId)
-          await this.openAddressModal(facilityId, payload.facilityName)
+          try {
+            await this.createDefaultFacilityLocation(facilityId)
+          } catch (err) {
+            logger.error('Failed to create default facility location', err)
+          }
+          try {
+            await this.openAddressModal(facilityId, payload.facilityName)
+          } catch (err) {
+            logger.error('Failed to open address modal', err)
+          }
           this.router.replace(`/add-facility-config/${facilityId}`)
         } else {
           throw resp.data;
