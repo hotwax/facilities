@@ -291,7 +291,7 @@ export default defineComponent({
         }
 
         showToast(translate("Facility configurations created successfully."))
-        this.$router.replace({ path: `/facility-details/${this.facilityId}` })
+        this.router.replace({ path: `/facility-details/${this.facilityId}` })
       } catch (error: any) {
         showToast(error.message)
         logger.error(error.message)

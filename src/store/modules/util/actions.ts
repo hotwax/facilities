@@ -247,9 +247,9 @@ const actions: ActionTree<UtilState, RootState> = {
 
     const params = {
       inputFields: {
-        geoIdTo: "DBIC"
+        geoTypeId: "COUNTRY"
       },
-      entityName: 'GeoAssocAndGeoFrom',
+      entityName: 'Geo',
       fieldList: ['geoName', 'geoId', 'geoCode'],
       noConditionFind: 'Y',
       viewSize: 250
